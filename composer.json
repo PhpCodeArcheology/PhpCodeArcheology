@@ -1,0 +1,17 @@
+{
+    "name": "marcus/php-legacy-analyzer",
+    "type": "project",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Marcus\\PhpLegacyAnalyzer\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Marcus Kober",
+            "email": "hello@marcuskober.de"
+        }
+    ],
+    "require": {}
+}
