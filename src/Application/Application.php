@@ -8,6 +8,17 @@ final class Application
 {
     public function run(array $argv): void
     {
-        (new ArgumentParser())->parse($argv);
+        $config = (new ArgumentParser())->parse($argv);
+
+        try {
+            $config->validate();
+        } catch (ConfigException $e) {
+            echo "Fehler: {$e->getMessage()}";
+        }
+
+        $fileList = new FileList();
+        $fileList->fetch($config);
+
+        var_dump($fileList->getFiles());
     }
 }
