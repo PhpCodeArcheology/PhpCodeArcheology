@@ -1,4 +1,7 @@
 <?php
+
+namespace Marcus;
+
 function test() {
     $x = 2;
 

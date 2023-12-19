@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Marcus\PhpLegacyAnalyzer\Application;
 
-use Error;
+use Marcus\PhpLegacyAnalyzer\Analysis\IdentifyVisitor;
 use Marcus\PhpLegacyAnalyzer\Analysis\LocVisitor;
+use Marcus\PhpLegacyAnalyzer\Metrics\ClassMetrics;
 use Marcus\PhpLegacyAnalyzer\Metrics\FileMetrics;
+use Marcus\PhpLegacyAnalyzer\Metrics\FunctionMetrics;
 use Marcus\PhpLegacyAnalyzer\Metrics\Metrics;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
@@ -25,12 +27,15 @@ readonly class Analyzer
 
     public function analyze(FileList $fileList): void
     {
+        $idVisitor = new IdentifyVisitor($this->metrics);
         $locVisitor = new LocVisitor($this->metrics);
 
         $this->traverser->addVisitor(new NameResolver());
+        $this->traverser->addVisitor($idVisitor);
         $this->traverser->addVisitor($locVisitor);
 
         foreach ($fileList->getFiles() as $file) {
+            $idVisitor->setPath($file);
             $locVisitor->setPath($file);
 
             $phpCode = file_get_contents($file);
@@ -40,21 +45,18 @@ readonly class Analyzer
                 $phpCode = mb_convert_encoding($phpCode, 'UTF-8');
             }
 
-            $loc = count(preg_split('/\r\n|\r|\n/', $phpCode));
-
             $fileMetrics = new FileMetrics($file);
+            $fileMetrics->set('originalEncoding', $encoding);
+            $this->metrics->push($fileMetrics);
 
             $ast = null;
+
             try {
                 $ast = $this->parser->parse($phpCode);
             } catch (\PhpParser\Error $e) {
                 $fileMetrics->set('error', $e->getMessage());
                 echo "Parse error in file $file: " . $e->getMessage();
             }
-
-            $fileMetrics->set('loc', $loc);
-            $fileMetrics->set('originalEncoding', $encoding);
-            $this->metrics->push($fileMetrics);
 
             if (! $ast) {
                 continue;
@@ -64,7 +66,21 @@ readonly class Analyzer
         }
 
         foreach ($this->metrics->getAll() as $metric) {
-            //echo $metric->getName() . PHP_EOL;
+            echo $metric->getName() . PHP_EOL;
+            if ($metric instanceof FileMetrics) {
+                echo "- lloc: " . $metric->get('lloc') . PHP_EOL;
+                echo "- lloc outside: " . $metric->get('llocOutside') . PHP_EOL;
+            }
+            elseif ($metric instanceof ClassMetrics || $metric instanceof  FunctionMetrics) {
+                echo "- lloc: " . $metric->get('lloc') . PHP_EOL;
+
+                if ($metric instanceof ClassMetrics) {
+                    foreach ($metric->get('methods') as $method) {
+                        echo '  - ' . $method->getName() . PHP_EOL;
+                        echo '    - lloc: ' . $method->get('lloc') . PHP_EOL;
+                    }
+                }
+            }
         }
     }
 }

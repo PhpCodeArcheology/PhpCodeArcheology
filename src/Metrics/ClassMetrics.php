@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace Marcus\PhpLegacyAnalyzer\Metrics;
 
 
-class FunctionMetrics implements MetricsInterface
+class ClassMetrics implements MetricsInterface
 {
     use MetricsTrait;
+
     private IdentifierInterface $identifier;
 
     public function __construct(

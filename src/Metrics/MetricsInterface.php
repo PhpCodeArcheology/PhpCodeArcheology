@@ -2,7 +2,7 @@
 
 namespace Marcus\PhpLegacyAnalyzer\Metrics;
 
-interface MetrixInterface
+interface MetricsInterface
 {
     public function getIdentifier(): IdentifierInterface;
 }

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Marcus\PhpLegacyAnalyzer\Metrics;
 
 
-class FileMetrics implements MetrixInterface
+class FileMetrics implements MetricsInterface
 {
     use MetricsTrait;
 

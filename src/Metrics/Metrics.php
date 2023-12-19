@@ -7,7 +7,7 @@ namespace Marcus\PhpLegacyAnalyzer\Metrics;
 class Metrics
 {
     use MetricsTrait;
-    public function push(MetrixInterface $metrics): void
+    public function push(MetricsInterface $metrics): void
     {
         $this->metrics[(string) $metrics->getIdentifier()] = $metrics;
     }
