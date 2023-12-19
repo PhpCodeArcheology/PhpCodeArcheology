@@ -43,16 +43,18 @@ readonly class Analyzer
             $loc = count(preg_split('/\r\n|\r|\n/', $phpCode));
 
             $fileMetrics = new FileMetrics($file);
-            $fileMetrics->set('loc', $loc);
-            $fileMetrics->set('originalEncoding', $encoding);
-            $this->metrics->push($fileMetrics);
 
             $ast = null;
             try {
                 $ast = $this->parser->parse($phpCode);
             } catch (\PhpParser\Error $e) {
+                $fileMetrics->set('error', $e->getMessage());
                 echo "Parse error in file $file: " . $e->getMessage();
             }
+
+            $fileMetrics->set('loc', $loc);
+            $fileMetrics->set('originalEncoding', $encoding);
+            $this->metrics->push($fileMetrics);
 
             if (! $ast) {
                 continue;
