@@ -4,19 +4,34 @@ declare(strict_types=1);
 
 namespace Marcus\PhpLegacyAnalyzer\Application;
 
-class FileList
+final class FileList
 {
     private array $files = [];
 
-    public function fetch(Config $config): void
+    public function __construct(
+        private readonly Config $config
+    )
+    {}
+
+    public function fetch(): void
     {
-        foreach ($config->get('files') as $file) {
+        $exclude = $this->config->has('exclude') ? $this->config->get('exclude') : [];
+
+        foreach ($this->config->get('files') as $file) {
             if (is_dir($file)) {
+                $file = rtrim($file, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
                 $dir = new \RecursiveDirectoryIterator($file);
                 $iterator = new \RecursiveIteratorIterator($dir);
 
+                $pattern = sprintf(
+                    '#^%s%s%s$#',
+                    preg_quote($file, '#'),
+                    ! empty($exclude) ? '((?!' . implode('|', array_map('preg_quote', $exclude)) . ').)+' : '.+',
+                    '\.php'
+                );
+
                 foreach ($iterator as $currentFile) {
-                    if ($currentFile->getExtension() !== 'php') {
+                    if (! preg_match($pattern, (string) $currentFile)) {
                         continue;
                     }
 

@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Marcus\PhpLegacyAnalyzer\Application;
 
+use Marcus\PhpLegacyAnalyzer\Metrics\Metrics;
+use PhpParser\NodeTraverser;
+use PhpParser\ParserFactory;
+
 final class Application
 {
     public function run(array $argv): void
@@ -16,9 +20,13 @@ final class Application
             echo "Fehler: {$e->getMessage()}";
         }
 
-        $fileList = new FileList();
-        $fileList->fetch($config);
+        $fileList = new FileList($config);
+        $fileList->fetch();
 
-        var_dump($fileList->getFiles());
+        $parser = (new ParserFactory())->createForNewestSupportedVersion();
+        $traverser = new NodeTraverser();
+        $metrics = new Metrics();
+        $analyzer = new Analyzer($config, $parser, $traverser, $metrics);
+        $analyzer->analyze($fileList);
     }
 }

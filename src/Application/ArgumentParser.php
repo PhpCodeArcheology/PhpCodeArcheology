@@ -18,6 +18,20 @@ final class ArgumentParser
             array_shift($argv);
         }
 
+        foreach ($argv as $key => $value) {
+            if (preg_match('#\-\-([\w\-]+)=(.*)#', $value, $matches)) {
+                [, $param, $value] = $matches;
+
+                switch ($param) {
+                    case 'exclude':
+                        $config->set($param, explode(',', $value));
+                        break;
+                }
+
+                unset($argv[$key]);
+            }
+        }
+
         $config->set('files', $argv);
 
         return $config;

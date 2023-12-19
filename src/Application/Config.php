@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Marcus\PhpLegacyAnalyzer\Application;
 
-class Config
+final class Config
 {
     private array $config = [];
 

@@ -20,5 +20,8 @@
         "allow-plugins": {
             "pestphp/pest-plugin": true
         }
+    },
+    "require": {
+        "nikic/php-parser": "^4.18"
     }
 }
