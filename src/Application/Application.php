@@ -6,6 +6,7 @@ namespace Marcus\PhpLegacyAnalyzer\Application;
 
 use Marcus\PhpLegacyAnalyzer\Metrics\Metrics;
 use Marcus\PhpLegacyAnalyzer\Metrics\ProjectMetrics;
+use Marcus\PhpLegacyAnalyzer\Report\MarkdownReport;
 use PhpParser\NodeTraverser;
 use PhpParser\ParserFactory;
 
@@ -14,6 +15,7 @@ final class Application
     public function run(array $argv): void
     {
         $config = (new ArgumentParser())->parse($argv);
+        $config->set('runningDir', getcwd());
 
         try {
             $config->validate();
@@ -35,5 +37,8 @@ final class Application
 
         $analyzer = new Analyzer($config, $parser, $traverser, $metrics, $output);
         $analyzer->analyze($fileList);
+
+        $report = new MarkdownReport($config, $metrics);
+        $report->generate();
     }
 }
