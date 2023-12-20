@@ -3,4 +3,4 @@
 ## Todo
 
 - [ ] Maybe rename to PhpLegacyArcheology or PhpLegacyExplorer
-- [ ] Support _interfaces_ and _traits_
+- [x] Support _interfaces_ and _traits_

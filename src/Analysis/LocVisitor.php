@@ -63,7 +63,9 @@ class LocVisitor implements NodeVisitor
 
             $this->functionNodes = [];
         }
-        elseif ($node instanceof Node\Stmt\Class_) {
+        elseif ($node instanceof Node\Stmt\Class_
+            || $node instanceof Node\Stmt\Interface_
+            || $node instanceof Node\Stmt\Trait_) {
             $classId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->namespacedName, $this->path);
             $classMetrics = $this->metrics->get($classId);
 

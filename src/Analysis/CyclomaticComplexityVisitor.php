@@ -51,6 +51,7 @@ class CyclomaticComplexityVisitor implements NodeVisitor
     public function beforeTraverse(array $nodes): void
     {
         $this->getFileMetrics();
+        $this->fileCc = 1;
     }
 
     /**
@@ -58,7 +59,9 @@ class CyclomaticComplexityVisitor implements NodeVisitor
      */
     public function enterNode(Node $node): void
     {
-        if ($node instanceof Node\Stmt\Class_) {
+        if ($node instanceof Node\Stmt\Class_
+            || $node instanceof Node\Stmt\Interface_
+            || $node instanceof Node\Stmt\Trait_) {
             $classId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->namespacedName, $this->path);
             $this->currentClass = $this->metrics->get($classId);
             $this->currentClassCc = 1;

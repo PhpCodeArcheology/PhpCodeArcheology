@@ -14,4 +14,9 @@ class TestClass
     }
 
     private function thisIsASpecialTest() { $x = 3; $y = 4; }
+
+    public static function staticTest()
+    {
+
+    }
 }

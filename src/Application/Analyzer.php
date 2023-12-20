@@ -76,11 +76,15 @@ readonly class Analyzer
                 echo "- lloc outside: " . $metric->get('llocOutside') . PHP_EOL;
                 echo "- cyclo: " . $metric->get('cc') . PHP_EOL;
             }
-            elseif ($metric instanceof ClassMetrics || $metric instanceof  FunctionMetrics) {
+            elseif ($metric instanceof ClassMetrics || $metric instanceof FunctionMetrics) {
                 echo "- lloc: " . $metric->get('lloc') . PHP_EOL;
                 echo "- cyclo: " . $metric->get('cc') . PHP_EOL;
 
                 if ($metric instanceof ClassMetrics) {
+                    echo '- methods: ' . $metric->get('methodCount') . PHP_EOL;
+                    echo '- private methods: ' . $metric->get('privateMethods') . PHP_EOL;
+                    echo '- public methods: ' . $metric->get('publicMethods') . PHP_EOL;
+                    echo '- static methods: ' . $metric->get('staticMethods') . PHP_EOL;
                     foreach ($metric->get('methods') as $method) {
                         echo '  - ' . $method->getName() . PHP_EOL;
                         echo '    - lloc: ' . $method->get('lloc') . PHP_EOL;
