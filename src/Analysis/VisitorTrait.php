@@ -5,12 +5,15 @@ namespace Marcus\PhpLegacyAnalyzer\Analysis;
 use Marcus\PhpLegacyAnalyzer\Metrics\FileIdentifier;
 use Marcus\PhpLegacyAnalyzer\Metrics\FileMetrics;
 use Marcus\PhpLegacyAnalyzer\Metrics\Metrics;
+use Marcus\PhpLegacyAnalyzer\Metrics\ProjectMetrics;
 
 trait VisitorTrait
 {
     private string $path;
 
     private FileMetrics $fileMetrics;
+
+    private ProjectMetrics $projectMetrics;
 
     public function __construct(private Metrics $metrics)
     {

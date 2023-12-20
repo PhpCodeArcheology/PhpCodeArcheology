@@ -17,9 +17,9 @@ class IdentifyVisitor implements NodeVisitor
     /**
      * @inheritDoc
      */
-    public function beforeTraverse(array $nodes)
+    public function beforeTraverse(array $nodes): void
     {
-        // TODO: Implement beforeTraverse() method.
+        $this->projectMetrics = $this->metrics->get('project');
     }
 
     /**
@@ -31,6 +31,8 @@ class IdentifyVisitor implements NodeVisitor
 
         if ($node instanceof Node\Stmt\Function_) {
             $metrics = new FunctionMetrics($this->path, (string) $node->namespacedName);
+            $fnCount = $this->projectMetrics->get('overallFunctions') + 1;
+            $this->projectMetrics->set('overallFunctions', $fnCount);
         }
         elseif ($node instanceof Node\Stmt\Class_
             || $node instanceof Node\Stmt\Interface_
@@ -47,10 +49,21 @@ class IdentifyVisitor implements NodeVisitor
             }
 
             if (method_exists($node, 'isAbstract') && $node->isAbstract()) {
+                $abstractClassCount = $this->projectMetrics->get('overallAbstractClasses') + 1;
+                $this->projectMetrics->set('overallAbstractClasses', $abstractClassCount);
+
                 $metrics->set('abstract', true);
             }
 
+            if ($node instanceof Node\Stmt\Class_) {
+                $classCount = $this->projectMetrics->get('overallClasses') + 1;
+                $this->projectMetrics->set('overallClasses', $classCount);
+            }
+
             if ($node instanceof Node\Stmt\Interface_) {
+                $interfaceCount = $this->projectMetrics->get('overallInterfaces') + 1;
+                $this->projectMetrics->set('overallInterfaces', $interfaceCount);
+
                 $metrics->set('interface', true);
                 $metrics->set('abstract', true);
             }
@@ -63,6 +76,12 @@ class IdentifyVisitor implements NodeVisitor
             $privateCount = 0;
             $publicCount = 0;
             $staticCount = 0;
+
+            $overAllMethodsCount = $this->projectMetrics->get('overallMethods');
+            $overAllPublicMethodsCount = $this->projectMetrics->get('overallPublicMethods');
+            $overAllPrivateMethodsCount = $this->projectMetrics->get('overallPrivateMethods');
+            $overAllStaticMethodsCount = $this->projectMetrics->get('overallStaticMethods');
+
             foreach ($node->stmts as $stmt) {
                 if (! $stmt instanceof Node\Stmt\ClassMethod) {
                     continue;
@@ -75,6 +94,7 @@ class IdentifyVisitor implements NodeVisitor
                     $method->set('private', true);
 
                     ++ $privateCount;
+                    ++ $overAllPrivateMethodsCount;
                 }
 
                 if ($stmt->isPublic()) {
@@ -82,6 +102,7 @@ class IdentifyVisitor implements NodeVisitor
                     $method->set('private', false);
 
                     ++ $publicCount;
+                    ++ $overAllPublicMethodsCount;
                 }
 
                 $method->set('static', false);
@@ -89,10 +110,18 @@ class IdentifyVisitor implements NodeVisitor
                     $method->set('static', true);
 
                     ++ $staticCount;
+                    ++ $overAllStaticMethodsCount;
                 }
 
                 $classMethods[(string) $method->getIdentifier()] = $method;
             }
+
+            $overAllMethodsCount += count($classMethods);
+
+            $this->projectMetrics->set('overallMethods', $overAllMethodsCount);
+            $this->projectMetrics->set('overallPublicMethods', $overAllPublicMethodsCount);
+            $this->projectMetrics->set('overallPrivateMethods', $overAllPrivateMethodsCount);
+            $this->projectMetrics->set('overallStaticMethods', $overAllStaticMethodsCount);
 
             $metrics->set('methods', $classMethods);
             $metrics->set('methodCount', count($classMethods));
@@ -116,8 +145,8 @@ class IdentifyVisitor implements NodeVisitor
     /**
      * @inheritDoc
      */
-    public function afterTraverse(array $nodes)
+    public function afterTraverse(array $nodes): void
     {
-        // TODO: Implement afterTraverse() method.
+        $this->metrics->set('project', $this->projectMetrics);
     }
 }

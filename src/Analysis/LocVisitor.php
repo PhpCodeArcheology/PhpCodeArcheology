@@ -24,6 +24,8 @@ class LocVisitor implements NodeVisitor
      */
     public function beforeTraverse(array $nodes): void
     {
+        $this->projectMetrics = $this->metrics->get('project');
+
         $this->getFileMetrics();
 
         $this->insideLloc = 0;
@@ -39,6 +41,14 @@ class LocVisitor implements NodeVisitor
         $this->fileMetrics->set('loc', $loc);
         $this->fileMetrics->set('cloc', $cloc);
         $this->fileMetrics->set('lloc', $lloc);
+
+        $projectLoc = $this->projectMetrics->get('overallLoc') + $loc;
+        $projectCloc = $this->projectMetrics->get('overallCloc') + $cloc;
+        $projectLloc = $this->projectMetrics->get('overallLloc') + $lloc;
+
+        $this->projectMetrics->set('overallLoc', $projectLoc);
+        $this->projectMetrics->set('overallCloc', $projectCloc);
+        $this->projectMetrics->set('overallLloc', $projectLloc);
     }
 
     /**
@@ -129,6 +139,7 @@ class LocVisitor implements NodeVisitor
         $this->fileMetrics->set('llocOutside', $llocFileOutside);
 
         $this->metrics->set($fileId, $this->fileMetrics);
+        $this->metrics->set('project', $this->projectMetrics);
     }
 
     private function getLinesOfCodeFunction(Node $node): void

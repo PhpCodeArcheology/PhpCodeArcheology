@@ -11,6 +11,7 @@ use Marcus\PhpLegacyAnalyzer\Metrics\ClassMetrics;
 use Marcus\PhpLegacyAnalyzer\Metrics\FileMetrics;
 use Marcus\PhpLegacyAnalyzer\Metrics\FunctionMetrics;
 use Marcus\PhpLegacyAnalyzer\Metrics\Metrics;
+use Marcus\PhpLegacyAnalyzer\Metrics\ProjectMetrics;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\Parser;
@@ -36,6 +37,10 @@ readonly class Analyzer
         $this->traverser->addVisitor($idVisitor);
         $this->traverser->addVisitor($locVisitor);
         $this->traverser->addVisitor($cyCoVisitor);
+
+        $projectMetrics = $this->metrics->get('project');
+        $projectMetrics->set('overallFiles', count($fileList->getFiles()));
+        $this->metrics->set('project', $projectMetrics);
 
         foreach ($fileList->getFiles() as $file) {
             $idVisitor->setPath($file);
@@ -69,7 +74,16 @@ readonly class Analyzer
             $this->traverser->traverse($ast);
         }
 
+        echo PHP_EOL;
         foreach ($this->metrics->getAll() as $metric) {
+            if (! $metric instanceof ProjectMetrics) {
+                continue;
+            }
+
+            foreach ($metric->getAll() as $key => $m) {
+                echo "$key: $m".PHP_EOL;
+            }
+            /*
             echo $metric->getName() . PHP_EOL;
             if ($metric instanceof FileMetrics) {
                 echo "- lloc: " . $metric->get('lloc') . PHP_EOL;
@@ -92,6 +106,7 @@ readonly class Analyzer
                     }
                 }
             }
+            */
         }
     }
 }
