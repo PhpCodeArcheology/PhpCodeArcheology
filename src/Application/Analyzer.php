@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Marcus\PhpLegacyAnalyzer\Application;
 
+use Marcus\PhpLegacyAnalyzer\Analysis\CyclomaticComplexityVisitor;
 use Marcus\PhpLegacyAnalyzer\Analysis\IdentifyVisitor;
 use Marcus\PhpLegacyAnalyzer\Analysis\LocVisitor;
 use Marcus\PhpLegacyAnalyzer\Metrics\ClassMetrics;
@@ -29,14 +30,17 @@ readonly class Analyzer
     {
         $idVisitor = new IdentifyVisitor($this->metrics);
         $locVisitor = new LocVisitor($this->metrics);
+        $cyCoVisitor = new CyclomaticComplexityVisitor($this->metrics);
 
         $this->traverser->addVisitor(new NameResolver());
         $this->traverser->addVisitor($idVisitor);
         $this->traverser->addVisitor($locVisitor);
+        $this->traverser->addVisitor($cyCoVisitor);
 
         foreach ($fileList->getFiles() as $file) {
             $idVisitor->setPath($file);
             $locVisitor->setPath($file);
+            $cyCoVisitor->setPath($file);
 
             $phpCode = file_get_contents($file);
             $encoding = mb_detect_encoding($phpCode);
@@ -70,14 +74,17 @@ readonly class Analyzer
             if ($metric instanceof FileMetrics) {
                 echo "- lloc: " . $metric->get('lloc') . PHP_EOL;
                 echo "- lloc outside: " . $metric->get('llocOutside') . PHP_EOL;
+                echo "- cyclo: " . $metric->get('cc') . PHP_EOL;
             }
             elseif ($metric instanceof ClassMetrics || $metric instanceof  FunctionMetrics) {
                 echo "- lloc: " . $metric->get('lloc') . PHP_EOL;
+                echo "- cyclo: " . $metric->get('cc') . PHP_EOL;
 
                 if ($metric instanceof ClassMetrics) {
                     foreach ($metric->get('methods') as $method) {
                         echo '  - ' . $method->getName() . PHP_EOL;
                         echo '    - lloc: ' . $method->get('lloc') . PHP_EOL;
+                        echo "    - cyclo: " . $method->get('cc') . PHP_EOL;
                     }
                 }
             }

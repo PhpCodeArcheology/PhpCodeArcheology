@@ -13,7 +13,7 @@ class FunctionAndClassIdentifier implements IdentifierInterface
         $this->identifier = hash('sha256', $path . $name);
     }
 
-    public static function ofNameAndPath(string $name, string $path)
+    public static function ofNameAndPath(string $name, string $path): FunctionAndClassIdentifier
     {
         return new FunctionAndClassIdentifier($name, $path);
     }

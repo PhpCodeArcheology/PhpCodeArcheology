@@ -16,7 +16,7 @@ class ClassMetrics implements MetricsInterface
         private string $name
     )
     {
-        $this->identifier = FunctionAndClassIdentifier::ofNameAndPath($this->path, $this->name);
+        $this->identifier = FunctionAndClassIdentifier::ofNameAndPath($this->name, $this->path);
     }
 
     public function getIdentifier(): IdentifierInterface

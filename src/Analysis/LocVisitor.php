@@ -1,43 +1,30 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Marcus\PhpLegacyAnalyzer\Analysis;
 
-use Marcus\PhpLegacyAnalyzer\Metrics\FileIdentifier;
-use Marcus\PhpLegacyAnalyzer\Metrics\FileMetrics;
 use Marcus\PhpLegacyAnalyzer\Metrics\FunctionAndClassIdentifier;
-use Marcus\PhpLegacyAnalyzer\Metrics\Metrics;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
 use PhpParser\PrettyPrinter;
 
 class LocVisitor implements NodeVisitor
 {
+    use VisitorTrait;
+
     private array $functionNodes = [];
 
     private bool $inFunction = false;
 
-    private string $path;
-
-    private FileMetrics $fileMetrics;
-
     private int $insideLloc = 0;
-
-    public function __construct(private Metrics $metrics)
-    {
-    }
-
-    public function setPath(string $path): void
-    {
-        $this->path = $path;
-    }
 
     /**
      * @inheritDoc
      */
     public function beforeTraverse(array $nodes): void
     {
-        $fileId = FileIdentifier::ofPath($this->path);
-        $this->fileMetrics = $this->metrics->get((string) $fileId);
+        $this->getFileMetrics();
 
         $this->insideLloc = 0;
 
@@ -77,7 +64,7 @@ class LocVisitor implements NodeVisitor
             $this->functionNodes = [];
         }
         elseif ($node instanceof Node\Stmt\Class_) {
-            $classId = (string) FunctionAndClassIdentifier::ofNameAndPath($this->path, $node->namespacedName);
+            $classId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->namespacedName, $this->path);
             $classMetrics = $this->metrics->get($classId);
 
             $loc = $node->getEndLine() - $node->getStartLine() + 1;
@@ -93,7 +80,7 @@ class LocVisitor implements NodeVisitor
                     continue;
                 }
 
-                $methodId = (string) FunctionAndClassIdentifier::ofNameAndPath($stmt->name, '');
+                $methodId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $stmt->name, '');
                 $methodMetrics = $methods[$methodId];
 
                 $methodLoc = 0;
@@ -151,7 +138,7 @@ class LocVisitor implements NodeVisitor
         $functionBodyCode = $prettyPrinter->prettyPrint($this->functionNodes);
         [$cloc, $lloc] = $this->getClocAndLloc($functionBodyCode);
 
-        $functionId = (string) FunctionAndClassIdentifier::ofNameAndPath($this->path, $node->namespacedName);
+        $functionId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->namespacedName, $this->path);
 
         $functionMetrics = $this->metrics->get($functionId);
         $functionMetrics->set('loc', $loc);
