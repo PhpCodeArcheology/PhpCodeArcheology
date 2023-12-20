@@ -16,6 +16,7 @@ class ProjectMetrics implements MetricsInterface
 
         $metrics = [
             'overallFiles' => 0,
+            'overallFileErrors' => 0,
             'overallFunctions' => 0,
             'overallClasses' => 0,
             'overallAbstractClasses' => 0,

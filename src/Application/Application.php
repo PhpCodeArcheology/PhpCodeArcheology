@@ -31,7 +31,9 @@ final class Application
         $projectMetrics = new ProjectMetrics(implode(',', $config->get('files')));
         $metrics->set('project', $projectMetrics);
 
-        $analyzer = new Analyzer($config, $parser, $traverser, $metrics);
+        $output = new CliOutput();
+
+        $analyzer = new Analyzer($config, $parser, $traverser, $metrics, $output);
         $analyzer->analyze($fileList);
     }
 }
