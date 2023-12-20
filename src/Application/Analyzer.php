@@ -9,6 +9,7 @@ use Marcus\PhpLegacyAnalyzer\Analysis\IdentifyVisitor;
 use Marcus\PhpLegacyAnalyzer\Analysis\LocVisitor;
 use Marcus\PhpLegacyAnalyzer\Metrics\FileMetrics;
 use Marcus\PhpLegacyAnalyzer\Metrics\Metrics;
+use PhpParser\Error;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\Parser;
@@ -42,13 +43,13 @@ readonly class Analyzer
         $projectMetrics->set('overallFiles', $fileCount);
         $projectFileErrors = $projectMetrics->get('overallFileErrors');
 
-        $fileCount = number_format($fileCount, 0);
+        $fileCount = number_format($fileCount);
 
         foreach ($fileList->getFiles() as $count => $file) {
             $this->output->cls();
             $this->output->out(
                 "Analysing file \033[34m" .
-                number_format($count + 1, 0) .
+                number_format($count + 1) .
                 "\033[0m of \033[32m$fileCount\033[0m... (" .
                 ($projectFileErrors > 0 ? "\033[31m" : '') .
                 $projectFileErrors .
@@ -74,7 +75,7 @@ readonly class Analyzer
 
             try {
                 $ast = $this->parser->parse($phpCode);
-            } catch (\PhpParser\Error $e) {
+            } catch (Error $e) {
                 $fileErrors = $fileMetrics->get('errors') ?? [];
                 $fileErrors[] = $e->getMessage();
                 $fileMetrics->set('errors', $fileErrors);
