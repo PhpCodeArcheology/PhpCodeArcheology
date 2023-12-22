@@ -5,13 +5,11 @@ declare(strict_types=1);
 namespace Marcus\PhpLegacyAnalyzer\Application;
 
 use Marcus\PhpLegacyAnalyzer\Analysis\CyclomaticComplexityVisitor;
+use Marcus\PhpLegacyAnalyzer\Analysis\DependencyVisitor;
 use Marcus\PhpLegacyAnalyzer\Analysis\IdentifyVisitor;
 use Marcus\PhpLegacyAnalyzer\Analysis\LocVisitor;
-use Marcus\PhpLegacyAnalyzer\Metrics\ClassMetrics;
 use Marcus\PhpLegacyAnalyzer\Metrics\FileMetrics;
-use Marcus\PhpLegacyAnalyzer\Metrics\FunctionMetrics;
 use Marcus\PhpLegacyAnalyzer\Metrics\Metrics;
-use Marcus\PhpLegacyAnalyzer\Metrics\MetricsInterface;
 use PhpParser\Error;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
@@ -34,11 +32,13 @@ readonly class Analyzer
         $idVisitor = new IdentifyVisitor($this->metrics);
         $locVisitor = new LocVisitor($this->metrics);
         $cyCoVisitor = new CyclomaticComplexityVisitor($this->metrics);
+        $depVisitor = new DependencyVisitor($this->metrics);
 
         $this->traverser->addVisitor(new NameResolver());
         $this->traverser->addVisitor($idVisitor);
         $this->traverser->addVisitor($locVisitor);
         $this->traverser->addVisitor($cyCoVisitor);
+        $this->traverser->addVisitor($depVisitor);
 
         $fileCount = count($fileList->getFiles());
 
@@ -62,6 +62,7 @@ readonly class Analyzer
             $idVisitor->setPath($file);
             $locVisitor->setPath($file);
             $cyCoVisitor->setPath($file);
+            $depVisitor->setPath($file);
 
             $phpCode = file_get_contents($file);
             $encoding = mb_detect_encoding($phpCode);

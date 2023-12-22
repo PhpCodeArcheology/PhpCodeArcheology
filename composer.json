@@ -5,7 +5,8 @@
     "autoload": {
         "psr-4": {
             "Marcus\\PhpLegacyAnalyzer\\": "src/"
-        }
+        },
+        "files": ["src/functions.php"]
     },
     "authors": [
         {
