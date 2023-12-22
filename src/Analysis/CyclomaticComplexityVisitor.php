@@ -100,7 +100,9 @@ class CyclomaticComplexityVisitor implements NodeVisitor
             $this->currentFunctionCc += $increase;
         }
 
-        if ($node instanceof Node\Stmt\Class_) {
+        if ($node instanceof Node\Stmt\Class_
+            || $node instanceof Node\Stmt\Interface_
+            || $node instanceof Node\Stmt\Trait_) {
             $this->currentClass->set('cc', $this->currentClassCc);
             $this->metrics->set((string) $this->currentClass->getIdentifier(), $this->currentClass);
 

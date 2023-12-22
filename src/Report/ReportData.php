@@ -16,29 +16,29 @@ class ReportData
 
     private ProjectMetrics $projectMetrics;
 
+    private array $overallMetrics = [];
+
     public function __construct(private Metrics $metrics)
     {
         $this->projectMetrics = $this->metrics->get('project');
+        $this->overallMetrics = $this->projectMetrics->getOverallMetrics();
     }
 
     public function generate(): void
     {
         $this->transferOverallData();
         $this->calculateMaxComplexities();
+        $this->predictProgrammingParadigm();
     }
 
     public function getOverallData(): array
     {
-        $overallMetrics = $this->projectMetrics->getOverallMetrics();
-
-        return array_intersect_key($this->data, $overallMetrics);
+        return array_intersect_key($this->data, $this->overallMetrics);
     }
 
     private function transferOverallData(): void
     {
-        $overallMetrics = $this->projectMetrics->getOverallMetrics();
-
-        foreach ($overallMetrics as $key => $value) {
+        foreach ($this->overallMetrics as $key => $value) {
             $this->data[$key] = $this->projectMetrics->get($key);
         }
     }
@@ -53,21 +53,51 @@ class ReportData
             'overallMostComplexFunction' => [],
         ];
 
+        $this->overallMetrics['overallMaxCC'] = 0;
+        $this->overallMetrics['overallAvgCC'] = 0;
+        $this->overallMetrics['overallAvgCCFile'] = 0;
+        $this->overallMetrics['overallAvgCCClass'] = 0;
+        $this->overallMetrics['overallAvgCCMethod'] = 0;
+        $this->overallMetrics['overallAvgCCFunction'] = 0;
+
+        $maxCC = 0;
+        $maxCCFile = 0;
+        $maxCCClass = 0;
+        $maxCCMethod = 0;
+        $maxCCFunction = 0;
+
+        $sumCC = 0;
+        $sumCCFile = 0;
+        $sumCCClass = 0;
+        $sumCCMethod = 0;
+        $sumCCFunction = 0;
+
         foreach ($this->metrics->getAll() as $metric) {
+            $maxCC = $maxCC < $metric->get('cc') ? $metric->get('cc') : $maxCC;
+            $sumCC += $metric->get('cc');
+
             switch (true) {
                 case $metric instanceof FileMetrics:
                     $cc['overallMostComplexFile'][$metric->getName()] = $metric->get('cc');
+                    $maxCCFile = $maxCCFile < $metric->get('cc') ? $metric->get('cc') : $maxCCFile;
+                    $sumCCFile += $metric->get('cc');
                     break;
 
                 case $metric instanceof FunctionMetrics:
                     $cc['overallMostComplexFunction'][$metric->getName()] = $metric->get('cc');
+                    $maxCCFunction = $maxCCFunction < $metric->get('cc') ? $metric->get('cc') : $maxCCFunction;
+                    $sumCCFunction += $metric->get('cc');
                     break;
 
                 case $metric instanceof ClassMetrics:
                     $cc['overallMostComplexClass'][$metric->getName()] = $metric->get('cc');
+                    $maxCCClass = $maxCCClass < $metric->get('cc') ? $metric->get('cc') : $maxCCClass;
+                    $sumCCClass += $metric->get('cc');
 
                     foreach ($metric->get('methods') as $methodMetric) {
                         $cc['overallMostComplexMethod'][$metric->getName() . '::' . $methodMetric->getName()] = $methodMetric->get('cc');
+                        $maxCCMethod = $maxCCMethod < $metric->get('cc') ? $metric->get('cc') : $maxCCMethod;
+                        $sumCCMethod += $metric->get('cc');
                     }
                     break;
             }
@@ -88,5 +118,72 @@ class ReportData
 
             $this->data[$key] = $output;
         }
+
+        $this->data['overallMaxCC'] = $maxCC;
+        $this->data['overallMaxCCFile'] = $maxCCFile;
+        $this->data['overallMaxCCClass'] = $maxCCClass;
+        $this->data['overallMaxCCMethod'] = $maxCCMethod;
+        $this->data['overallMaxCCFunction'] = $maxCCFunction;
+
+        $fileCount = $this->data['overallFiles'];
+        $classCount = $this->data['overallClasses'];
+        $functionCount = $this->data['overallFunctions'];
+        $methodCount = $this->data['overallMethods'];
+
+        $this->data['overallAvgCC'] = $this->getAvgOrZero($sumCC, count($this->metrics->getAll()));
+        $this->data['overallAvgCCFile'] = $this->getAvgOrZero($sumCCFile, $fileCount);
+        $this->data['overallAvgCCClass'] = $this->getAvgOrZero($sumCCClass, $classCount);
+        $this->data['overallAvgCCMethod'] = $this->getAvgOrZero($sumCCMethod, $methodCount);
+        $this->data['overallAvgCCFunction'] = $this->getAvgOrZero($sumCCFunction, $functionCount);
+    }
+
+    private function predictProgrammingParadigm(): void
+    {
+        $classCount = $this->data['overallClasses'];
+        $functionCount = $this->data['overallFunctions'];
+        $methodCount = $this->data['overallMethods'];
+
+        $lloc = $this->data['overallLloc'];
+        $llocOutside = $this->data['overallLlocOutside'];
+        $overallInsideMethodLloc = $this->data['overallInsideMethodLloc'];
+        $overallInsideFuntionLloc = $this->data['overallInsideFuntionLloc'];
+
+        $maxCC = $this->data['overallMaxCC'];
+        $maxCCFile = $this->data['overallMaxCCFile'];
+        $maxCCClass = $this->data['overallMaxCCClass'];
+        $maxCCMethod = $this->data['overallMaxCCMethod'];
+        $maxCCFunction = $this->data['overallMaxCCFunction'];
+
+        $avgCC = $this->data['overallAvgCC'];
+        $avgCCFile = $this->data['overallAvgCCFile'];
+        $avgCCClass = $this->data['overallAvgCCClass'];
+        $avgCCMethod = $this->data['overallAvgCCMethod'];
+        $avgCCFunction = $this->data['overallAvgCCFunction'];
+
+        $methodsToFunctionsScore = $methodCount / ($functionCount + $methodCount);
+        $llocToLlocOutsideScore = $llocOutside / $lloc;
+        $methodsToFunctionsLlocScore = $overallInsideMethodLloc / ($overallInsideFuntionLloc + $overallInsideMethodLloc);
+        $cyclomaticComplexityScore = 1 / $avgCC;
+
+        $weights = [
+            'methodsToFunctions' => 0.2,
+            'llocToLlocOutside' => 0.5,
+            'methodsToFunctionsLloc' => 0.2,
+            'cyclomaticComplexity' => 0.1
+        ];
+
+        $totalScore = ($methodsToFunctionsScore * $weights['methodsToFunctions']) +
+            ($llocToLlocOutsideScore * $weights['llocToLlocOutside']) +
+            ($methodsToFunctionsLlocScore * $weights['methodsToFunctionsLloc']) +
+            ($cyclomaticComplexityScore * $weights['cyclomaticComplexity']);
+    }
+
+    private function getAvgOrZero(int $value, int $count): int|float
+    {
+        if ($count === 0) {
+            return 0;
+        }
+
+        return $value / $count;
     }
 }

@@ -15,10 +15,16 @@ $metrics = [
     'overallLoc' => 'Lines of code',
     'overallCloc' => 'Comment lines',
     'overallLloc' => 'Logical lines of code',
+    'overallMaxCC' => 'Max. cyclomatic complexity',
     'overallMostComplexFile' => 'Most complex file',
     'overallMostComplexClass' => 'Most complex class',
     'overallMostComplexMethod' => 'Most complex method',
     'overallMostComplexFunction' => 'Most complex function',
+    'overallAvgCC' => 'Average complexity',
+    'overallAvgCCFile' => 'Average file complexity',
+    'overallAvgCCClass' => 'Average class complexity',
+    'overallAvgCCMethod' => 'Average method complexity',
+    'overallAvgCCFunction' => 'Average function complexity',
 ];
 
 $data = [];

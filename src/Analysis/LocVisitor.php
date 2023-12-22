@@ -19,6 +19,10 @@ class LocVisitor implements NodeVisitor
 
     private int $insideLloc = 0;
 
+    private int $insideFunctionLloc = 0;
+
+    private int $insideMethodLloc = 0;
+
     /**
      * @inheritDoc
      */
@@ -121,6 +125,7 @@ class LocVisitor implements NodeVisitor
             $this->metrics->push($classMetrics);
 
             $this->insideLloc += $lloc;
+            $this->insideMethodLloc += $lloc;
         }
         elseif ($this->inFunction && str_starts_with($node->getType(), 'Stmt_')) {
             $this->functionNodes[] = $node;
@@ -140,6 +145,18 @@ class LocVisitor implements NodeVisitor
 
         $this->metrics->set($fileId, $this->fileMetrics);
         $this->metrics->set('project', $this->projectMetrics);
+
+        $overallLlocOutside = $this->projectMetrics->get('overallLlocOutside');
+        $overallInsideMethodLloc = $this->projectMetrics->get('overallInsideMethodLloc');
+        $overallInsideFuntionLloc = $this->projectMetrics->get('overallInsideFuntionLloc');
+
+        $overallLlocOutside += $llocFileOutside;
+        $overallInsideMethodLloc += $this->insideMethodLloc;
+        $overallInsideFuntionLloc += $this->insideFunctionLloc;
+
+        $this->projectMetrics->set('overallLlocOutside', $overallLlocOutside);
+        $this->projectMetrics->set('overallInsideMethodLloc', $overallInsideMethodLloc);
+        $this->projectMetrics->set('overallInsideFuntionLloc', $overallInsideFuntionLloc);
     }
 
     private function getLinesOfCodeFunction(Node $node): void
@@ -162,7 +179,9 @@ class LocVisitor implements NodeVisitor
         // Get lloc of whole function (with function declaration and ending curly brackets
         $wholeFunction = $prettyPrinter->prettyPrint([$node]);
         [$wCloc, $wLloc] = $this->getClocAndLloc($wholeFunction);
+
         $this->insideLloc += $wLloc;
+        $this->insideFunctionLloc += $wLloc;
     }
 
     private function getClocAndLloc(string $code): array
