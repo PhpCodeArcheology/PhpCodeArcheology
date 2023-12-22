@@ -22,6 +22,10 @@ trait VisitorTrait
     public function setPath(string $path): void
     {
         $this->path = $path;
+
+        if (method_exists($this, 'afterSetPath')) {
+            $this->afterSetPath();
+        }
     }
 
     private function getFileMetrics(): void

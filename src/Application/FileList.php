@@ -27,7 +27,7 @@ final class FileList
                     '#^%s%s%s$#',
                     preg_quote($file, '#'),
                     ! empty($exclude) ? '((?!' . implode('|', array_map('preg_quote', $exclude)) . ').)+' : '.+',
-                    '\.php'
+                    '(\.php|\.inc)'
                 );
 
                 foreach ($iterator as $currentFile) {

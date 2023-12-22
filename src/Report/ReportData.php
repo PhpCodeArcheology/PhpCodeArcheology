@@ -9,6 +9,7 @@ use Marcus\PhpLegacyAnalyzer\Metrics\FileMetrics;
 use Marcus\PhpLegacyAnalyzer\Metrics\FunctionMetrics;
 use Marcus\PhpLegacyAnalyzer\Metrics\Metrics;
 use Marcus\PhpLegacyAnalyzer\Metrics\ProjectMetrics;
+use phpDocumentor\Reflection\File;
 
 class ReportData
 {
@@ -27,13 +28,20 @@ class ReportData
     public function generate(): void
     {
         $this->transferOverallData();
+        $this->createClassArray();
         $this->calculateMaxComplexities();
+        $this->calculateCoupling();
         $this->predictProgrammingParadigm();
     }
 
     public function getOverallData(): array
     {
         return array_intersect_key($this->data, $this->overallMetrics);
+    }
+
+    public function getClasses(): array
+    {
+        return $this->data['classes'];
     }
 
     private function transferOverallData(): void
@@ -185,5 +193,141 @@ class ReportData
         }
 
         return $value / $count;
+    }
+
+    private function calculateCoupling(): void
+    {
+        $classes = $this->data['classes'];
+
+        // Get all dependencies
+        foreach ($this->metrics->getAll() as $metric) {
+            if ($metric instanceof FileMetrics) {
+                if (! is_array($metric->get('dependencies'))) {
+                    continue;
+                }
+
+                foreach ($metric->get('dependencies') as $dependency) {
+                    if (! isset($classes[$dependency])) {
+                        $classes[$dependency] = [
+                            'id' => null,
+                            'internal' => false,
+                            'uses' => [],
+                            'usedBy' => [],
+                            'usedByFunction' => [],
+                            'usedFromOutside' => [],
+                            'usesCount' => 0,
+                            'usedByCount' => 0,
+                            'usedByFunctionCount' => 0,
+                            'usedFromOutsideCount' => 0,
+                        ];
+                    }
+
+                    $classes[$dependency]['usedFromOutside'][] = $metric->getName();
+                    ++ $classes[$dependency]['usedFromOutsideCount'];
+                }
+
+                continue;
+            }
+
+            if ($metric instanceof FunctionMetrics) {
+                foreach ($metric->get('dependencies') as $dependency) {
+                    if (! isset($classes[$dependency])) {
+                        $classes[$dependency] = [
+                            'id' => null,
+                            'internal' => false,
+                            'uses' => [],
+                            'usedBy' => [],
+                            'usedByFunction' => [],
+                            'usedFromOutside' => [],
+                            'usesCount' => 0,
+                            'usedByCount' => 0,
+                            'usedByFunctionCount' => 0,
+                            'usedFromOutsideCount' => 0,
+                        ];
+                    }
+
+                    $classes[$dependency]['usedByFunction'][] = $metric->getName();
+                    ++ $classes[$dependency]['usedByFunctionCount'];
+                }
+
+                continue;
+            }
+
+            if (! $metric instanceof ClassMetrics) {
+                continue;
+            }
+
+            foreach ($metric->get('dependencies') as $dependency) {
+                if ($metric->getName() === $dependency) {
+                    continue;
+                }
+
+                $classes[$metric->getName()]['uses'][] = $dependency;
+                ++ $classes[$metric->getName()]['usesCount'];
+
+                if (! isset($classes[$dependency])) {
+                    $classes[$dependency] = [
+                        'id' => null,
+                        'internal' => false,
+                        'uses' => [],
+                        'usedBy' => [],
+                        'usedByFunction' => [],
+                        'usedFromOutside' => [],
+                        'usesCount' => 0,
+                        'usedByCount' => 0,
+                        'usedByFunctionCount' => 0,
+                        'usedFromOutsideCount' => 0,
+                    ];
+                }
+
+                $classes[$dependency]['usedBy'][] = $metric->getName();
+                ++ $classes[$dependency]['usedByCount'];
+            }
+        }
+
+        // Save metrics and add to report data
+        foreach ($classes as $className => $class) {
+            $this->data['classes'][$className] = $class;
+
+            if ($class['id'] === null) {
+                continue;
+            }
+
+            $metric = $this->metrics->get($class['id']);
+
+            foreach ($class as $key => $value) {
+                if ($key === 'id') {
+                    continue;
+                }
+
+                $metric->set($key, $value);
+            }
+        }
+    }
+
+    private function createClassArray(): void
+    {
+        $classes = [];
+
+        foreach ($this->metrics->getAll() as $metric) {
+            if (! $metric instanceof ClassMetrics) {
+                continue;
+            }
+
+            $classes[$metric->getName()] = [
+                'id' => (string) $metric->getIdentifier(),
+                'internal' => true,
+                'uses' => [],
+                'usedBy' => [],
+                'usedByFunction' => [],
+                'usedFromOutside' => [],
+                'usesCount' => 0,
+                'usedByCount' => 0,
+                'usedByFunctionCount' => 0,
+                'usedFromOutsideCount' => 0,
+            ];
+        }
+
+        $this->data['classes'] = $classes;
     }
 }

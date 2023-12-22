@@ -26,6 +26,7 @@ class MarkdownReport implements ReportInterface
     public function generate(): void
     {
         $this->renderTemplate('index.php', 'report.md');
+        $this->renderTemplate('class-dependencies.php', 'class-dependencies.md');
     }
 
     private function renderTemplate(string $templateFile, string $outputFile): void

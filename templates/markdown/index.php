@@ -40,3 +40,8 @@ foreach ($metrics as $key => $label) {
 }
 
 echo $this->renderTable($head, $data);
+?>
+
+## Deep dive
+
+- [Class dependencies](class-dependencies.md)
