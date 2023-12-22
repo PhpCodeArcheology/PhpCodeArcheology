@@ -15,16 +15,22 @@ $metrics = [
     'overallLoc' => 'Lines of code',
     'overallCloc' => 'Comment lines',
     'overallLloc' => 'Logical lines of code',
+    'overallMostComplexFile' => 'Most complex file',
+    'overallMostComplexClass' => 'Most complex class',
+    'overallMostComplexMethod' => 'Most complex method',
+    'overallMostComplexFunction' => 'Most complex function',
 ];
-
-$projectMetrics = $this->metrics->get('project');
 
 $data = [];
 
 $head = ['Element', 'Count'];
 
+$overallData = $this->reportData->getOverallData();
+
 foreach ($metrics as $key => $label) {
-    $data[] = [$label, number_format($projectMetrics->get($key))];
+    $value = is_numeric($overallData[$key]) ? number_format($overallData[$key]) : $overallData[$key];
+
+    $data[] = [$label, $value];
 }
 
 echo $this->renderTable($head, $data);

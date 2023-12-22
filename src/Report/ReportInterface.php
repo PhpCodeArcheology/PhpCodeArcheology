@@ -9,7 +9,7 @@ use Marcus\PhpLegacyAnalyzer\Metrics\Metrics;
 
 interface ReportInterface
 {
-    public function __construct(Config $config, Metrics $metrics);
+    public function __construct(Config $config, ReportData $reportData);
 
     public function generate(): void;
 }

@@ -7,6 +7,7 @@ namespace Marcus\PhpLegacyAnalyzer\Application;
 use Marcus\PhpLegacyAnalyzer\Metrics\Metrics;
 use Marcus\PhpLegacyAnalyzer\Metrics\ProjectMetrics;
 use Marcus\PhpLegacyAnalyzer\Report\MarkdownReport;
+use Marcus\PhpLegacyAnalyzer\Report\ReportData;
 use PhpParser\NodeTraverser;
 use PhpParser\ParserFactory;
 
@@ -38,7 +39,10 @@ final class Application
         $analyzer = new Analyzer($config, $parser, $traverser, $metrics, $output);
         $analyzer->analyze($fileList);
 
-        $report = new MarkdownReport($config, $metrics);
+        $reportData = new ReportData($metrics);
+        $reportData->generate();
+
+        $report = new MarkdownReport($config, $reportData);
         $report->generate();
     }
 }

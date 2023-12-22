@@ -7,8 +7,11 @@ namespace Marcus\PhpLegacyAnalyzer\Application;
 use Marcus\PhpLegacyAnalyzer\Analysis\CyclomaticComplexityVisitor;
 use Marcus\PhpLegacyAnalyzer\Analysis\IdentifyVisitor;
 use Marcus\PhpLegacyAnalyzer\Analysis\LocVisitor;
+use Marcus\PhpLegacyAnalyzer\Metrics\ClassMetrics;
 use Marcus\PhpLegacyAnalyzer\Metrics\FileMetrics;
+use Marcus\PhpLegacyAnalyzer\Metrics\FunctionMetrics;
 use Marcus\PhpLegacyAnalyzer\Metrics\Metrics;
+use Marcus\PhpLegacyAnalyzer\Metrics\MetricsInterface;
 use PhpParser\Error;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
@@ -93,8 +96,5 @@ readonly class Analyzer
 
         $projectMetrics->set('overallFileErrors', $projectFileErrors);
         $this->metrics->set('project', $projectMetrics);
-
-        foreach ($this->metrics->getAll() as $metric) {
-        }
     }
 }

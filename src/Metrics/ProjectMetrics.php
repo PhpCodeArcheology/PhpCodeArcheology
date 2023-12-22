@@ -10,11 +10,13 @@ class ProjectMetrics implements MetricsInterface
 
     private IdentifierInterface $identifier;
 
+    private array $overallMetrics = [];
+
     public function __construct(private string $path)
     {
         $this->identifier = ProjectIdentifier::ofPath($this->path);
 
-        $metrics = [
+        $this->overallMetrics = [
             'overallFiles' => 0,
             'overallFileErrors' => 0,
             'overallFunctions' => 0,
@@ -28,9 +30,13 @@ class ProjectMetrics implements MetricsInterface
             'overallLoc' => 0,
             'overallCloc' => 0,
             'overallLloc' => 0,
+            'overallMostComplexFile' => '-',
+            'overallMostComplexClass' => '-',
+            'overallMostComplexMethod' => '-',
+            'overallMostComplexFunction' => '-',
         ];
 
-        foreach ($metrics as $key => $value) {
+        foreach ($this->overallMetrics as $key => $value) {
             $this->set($key, $value);
         }
     }
@@ -43,5 +49,10 @@ class ProjectMetrics implements MetricsInterface
     public function getName(): string
     {
         return 'Project';
+    }
+
+    public function getOverallMetrics(): array
+    {
+        return $this->overallMetrics;
     }
 }

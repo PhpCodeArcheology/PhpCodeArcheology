@@ -13,7 +13,7 @@ class MarkdownReport implements ReportInterface
 
     private string $templateDir = '';
 
-    public function __construct(private Config $config, private Metrics $metrics)
+    public function __construct(private Config $config, private ReportData $reportData)
     {
         $this->outputDir = rtrim($config->get('runningDir'), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'report' . DIRECTORY_SEPARATOR;
         $this->templateDir = realpath(__DIR__ . '/../../templates/markdown') . DIRECTORY_SEPARATOR;
