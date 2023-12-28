@@ -8,6 +8,7 @@ use Marcus\PhpLegacyAnalyzer\Analysis\CyclomaticComplexityVisitor;
 use Marcus\PhpLegacyAnalyzer\Analysis\DependencyVisitor;
 use Marcus\PhpLegacyAnalyzer\Analysis\HalsteadMetricsVisitor;
 use Marcus\PhpLegacyAnalyzer\Analysis\IdentifyVisitor;
+use Marcus\PhpLegacyAnalyzer\Analysis\LcomVisitor;
 use Marcus\PhpLegacyAnalyzer\Analysis\LocVisitor;
 use Marcus\PhpLegacyAnalyzer\Analysis\MaintainabilityIndexVisitor;
 use Marcus\PhpLegacyAnalyzer\Metrics\FileMetrics;
@@ -37,6 +38,7 @@ readonly class Analyzer
         $depVisitor = new DependencyVisitor($this->metrics);
         $halsteadVisitor = new HalsteadMetricsVisitor($this->metrics);
         $maintainabilityVisitor = new MaintainabilityIndexVisitor($this->metrics);
+        $lcomVisitor = new LcomVisitor($this->metrics);
 
         $this->traverser->addVisitor(new NameResolver());
         $this->traverser->addVisitor($idVisitor);
@@ -45,6 +47,7 @@ readonly class Analyzer
         $this->traverser->addVisitor($depVisitor);
         $this->traverser->addVisitor($halsteadVisitor);
         $this->traverser->addVisitor($maintainabilityVisitor);
+        $this->traverser->addVisitor($lcomVisitor);
 
         $fileCount = count($fileList->getFiles());
 
@@ -71,6 +74,7 @@ readonly class Analyzer
             $depVisitor->setPath($file);
             $halsteadVisitor->setPath($file);
             $maintainabilityVisitor->setPath($file);
+            $lcomVisitor->setPath($file);
 
             $phpCode = file_get_contents($file);
             $encoding = mb_detect_encoding($phpCode);

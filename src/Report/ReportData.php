@@ -346,6 +346,7 @@ class ReportData
             'maintainabilityIndex',
             'maintainabilityIndexWithoutComments',
             'commentWeight',
+            'lcom',
         ];
 
         foreach ($this->data['classes'] as $className => $class) {
