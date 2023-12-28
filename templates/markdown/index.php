@@ -45,3 +45,4 @@ echo $this->renderTable($head, $data);
 ## Deep dive
 
 - [Class dependencies](class-dependencies.md)
+- [Class halstead](class-halstead.md)

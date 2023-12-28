@@ -31,6 +31,8 @@ class ReportData
         $this->createClassArray();
         $this->calculateMaxComplexities();
         $this->calculateCoupling();
+        $this->getHalsteadMetrics();
+
         $this->predictProgrammingParadigm();
     }
 
@@ -329,5 +331,32 @@ class ReportData
         }
 
         $this->data['classes'] = $classes;
+    }
+
+    private function getHalsteadMetrics(): void
+    {
+        $halsteadMetrics = [
+            'vocabulary',
+            'length',
+            'calcLength',
+            'volume',
+            'difficulty',
+            'effort',
+            'complexityDensity',
+        ];
+
+        foreach ($this->data['classes'] as $className => $class) {
+            if (! $class['id']) {
+                continue;
+            }
+
+            $classMetrics = $this->metrics->get($class['id']);
+
+            foreach ($halsteadMetrics as $key) {
+                $class[$key] = $classMetrics->get($key);
+            }
+
+            $this->data['classes'][$className] = $class;
+        }
     }
 }
