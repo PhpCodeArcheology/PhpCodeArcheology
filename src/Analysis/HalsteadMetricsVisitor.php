@@ -158,7 +158,7 @@ class HalsteadMetricsVisitor extends NodeVisitorAbstract
             $this->currentMetric = $this->saveToMetric($this->currentMetric, $halstead);
             $this->metrics->set((string) $this->currentMetric->getIdentifier(), $this->currentMetric);
         }
-        elseif ($node instanceof  Node\Stmt\ClassMethod) {
+        elseif ($node instanceof Node\Stmt\ClassMethod) {
             $halstead = $this->calculateMetrics($this->classOperators, $this->classOperands);
             $methods = $this->currentMetric->get('methods');
 

@@ -16,15 +16,15 @@ uasort($classes, function($a, $b) {
 });
 
 ?>
-Class | Vocabulary | Length | calcLength | Volume | Difficulty | Effort | Complexity density
------ | ---------- | ------ | ---------- | ------ | ---------- | ------ | ------------------
+Class | Vocabulary | Length | calcLength | Volume | Difficulty | Effort | Complexity density | MI
+----- | ---------- | ------ | ---------- | ------ | ---------- | ------ | ------------------ | --
 <?php
 foreach ($classes as $className => $classData) {
     if ($classData['internal'] === false) {
         continue;
     }
 
-    printf('%s | %s | %s | %s | %s | %s | %s | %s',
+    printf('%s | %s | %s | %s | %s | %s | %s | %s | %s',
         sprintf('`%s`', $className),
         $classData['vocabulary'],
         $classData['length'],
@@ -32,7 +32,8 @@ foreach ($classes as $className => $classData) {
         number_format($classData['volume'], 2),
         number_format($classData['difficulty'], 2),
         number_format($classData['effort'], 2),
-        $classData['complexityDensity']
+        number_format($classData['complexityDensity'], 2),
+        number_format($classData['maintainabilityIndex'], 2)
     );
 
     echo PHP_EOL;
