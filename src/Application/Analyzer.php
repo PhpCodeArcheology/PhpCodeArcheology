@@ -6,6 +6,7 @@ namespace Marcus\PhpLegacyAnalyzer\Application;
 
 use Marcus\PhpLegacyAnalyzer\Analysis\CyclomaticComplexityVisitor;
 use Marcus\PhpLegacyAnalyzer\Analysis\DependencyVisitor;
+use Marcus\PhpLegacyAnalyzer\Analysis\GlobalsVisitor;
 use Marcus\PhpLegacyAnalyzer\Analysis\HalsteadMetricsVisitor;
 use Marcus\PhpLegacyAnalyzer\Analysis\IdentifyVisitor;
 use Marcus\PhpLegacyAnalyzer\Analysis\LcomVisitor;
@@ -34,6 +35,7 @@ readonly class Analyzer
     {
         $idVisitor = new IdentifyVisitor($this->metrics);
         $locVisitor = new LocVisitor($this->metrics);
+        $globalsVisitor = new GlobalsVisitor($this->metrics);
         $cyCoVisitor = new CyclomaticComplexityVisitor($this->metrics);
         $depVisitor = new DependencyVisitor($this->metrics);
         $halsteadVisitor = new HalsteadMetricsVisitor($this->metrics);
@@ -43,6 +45,7 @@ readonly class Analyzer
         $this->traverser->addVisitor(new NameResolver());
         $this->traverser->addVisitor($idVisitor);
         $this->traverser->addVisitor($locVisitor);
+        $this->traverser->addVisitor($globalsVisitor);
         $this->traverser->addVisitor($cyCoVisitor);
         $this->traverser->addVisitor($depVisitor);
         $this->traverser->addVisitor($halsteadVisitor);
@@ -70,6 +73,7 @@ readonly class Analyzer
 
             $idVisitor->setPath($file);
             $locVisitor->setPath($file);
+            $globalsVisitor->setPath($file);
             $cyCoVisitor->setPath($file);
             $depVisitor->setPath($file);
             $halsteadVisitor->setPath($file);
