@@ -32,6 +32,12 @@ class GlobalsVisitor implements NodeVisitor
 
     private array $superglobalsClass = [];
 
+    private array $variableMap = [];
+
+    private array $functionVariableMap = [];
+
+    private array $classVariableMap = [];
+
     private bool $inFunction = false;
 
     private bool $inClass = false;
@@ -48,6 +54,7 @@ class GlobalsVisitor implements NodeVisitor
     public function beforeTraverse(array $nodes): void
     {
         $this->superglobals = self::GLOBALS;
+        $this->variableMap = [];
     }
 
     /**
@@ -58,11 +65,14 @@ class GlobalsVisitor implements NodeVisitor
         if ($node instanceof Node\Stmt\Function_
             || $node instanceof Node\Stmt\ClassMethod) {
             $this->superglobalsFunction = self::GLOBALS;
+            $this->functionVariableMap = [];
             $this->inFunction = true;
         }
         elseif ($node instanceof Node\Stmt\Class_
+            || $node instanceof Node\Stmt\Interface_
             || $node instanceof Node\Stmt\Trait_) {
             $this->superglobalsClass = self::GLOBALS;
+            $this->classVariableMap = [];
             $this->inClass = true;
 
             $classId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->namespacedName, $this->path);
@@ -109,16 +119,32 @@ class GlobalsVisitor implements NodeVisitor
             if (in_array($node->name, array_keys($this->superglobals))) {
                 ++ $this->superglobals[$node->name];
 
-                if ($this->inFunction && ! $this->inClass) {
+                if ($this->inFunction) {
                     ++ $this->superglobalsFunction[$node->name];
                 }
 
                 if ($this->inClass) {
                     ++ $this->superglobalsClass[$node->name];
+                }
+            }
+            elseif (! in_array($node->name, ['this', 'self'])) {
+                if (! isset($this->variableMap[$node->name])) {
+                    $this->variableMap[$node->name] = 0;
+                }
+                ++ $this->variableMap[$node->name];
 
-                    if ($this->inFunction) {
-                        ++ $this->superglobalsFunction[$node->name];
+                if ($this->inFunction) {
+                    if (! isset($this->functionVariableMap[$node->name])) {
+                        $this->functionVariableMap[$node->name] = 0;
                     }
+                    ++ $this->functionVariableMap[$node->name];
+                }
+
+                if ($this->inClass) {
+                    if (! isset($this->classVariableMap[$node->name])) {
+                        $this->classVariableMap[$node->name] = 0;
+                    }
+                    ++ $this->classVariableMap[$node->name];
                 }
             }
         }
@@ -131,6 +157,7 @@ class GlobalsVisitor implements NodeVisitor
                 $functionId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->namespacedName, $this->path);
                 $functionMetrics = $this->metrics->get($functionId);
                 $functionMetrics->set('superglobals', $this->superglobalsFunction);
+                $functionMetrics->set('variables', $this->functionVariableMap);
                 $this->metrics->set((string) $functionMetrics->getIdentifier(), $functionMetrics);
             }
             else {
@@ -138,16 +165,19 @@ class GlobalsVisitor implements NodeVisitor
                 $methodId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->name, '');
                 $methodMetrics = $methods[$methodId];
                 $methodMetrics->set('superglobals', $this->superglobalsFunction);
+                $methodMetrics->set('variables', $this->functionVariableMap);
                 $methods[$methodId] = $methodMetrics;
                 $this->classMetrics->set('methods', $methods);
                 $this->metrics->set((string) $this->classMetrics->getIdentifier(), $this->classMetrics);
             }
         }
         elseif ($node instanceof Node\Stmt\Class_
+            || $node instanceof Node\Stmt\Interface_
             || $node instanceof Node\Stmt\Trait_) {
             $this->inClass = false;
 
             $this->classMetrics->set('superglobals', $this->superglobalsClass);
+            $this->classMetrics->set('variables', $this->classVariableMap);
             $this->metrics->set((string) $this->classMetrics->getIdentifier(), $this->classMetrics);
         }
     }
@@ -161,5 +191,8 @@ class GlobalsVisitor implements NodeVisitor
         $fileMetrics = $this->metrics->get($fileId);
 
         $fileMetrics->set('superglobals', $this->superglobals);
+        $fileMetrics->set('variable', $this->variableMap);
+
+        $this->metrics->set($fileId, $fileMetrics);
     }
 }

@@ -12,20 +12,23 @@ uasort($classes, function($a, $b) {
 });
 
 ?>
-Class | Used by classes | Uses classes | Used by functions | Used from outside
------ | --------------- | ------------ | ----------------- | -----------------
+Class | Used by classes | Uses classes | Used by functions | Used from outside | Superglobales used | Variables used | Superglobals Metric
+----- | --------------- | ------------ | ----------------- | ----------------- | ------------------ | -------------- | -------------------
 <?php
 foreach ($classes as $className => $classData) {
     if ($classData['internal'] === false) {
         continue;
     }
 
-    printf('%s | %s | %s | %s | %s',
+    printf('%s | %s | %s | %s | %s | %s | %s | %s',
         sprintf('`%s`', $className),
         $classData['usedByCount'],
         $classData['usesCount'],
         $classData['usedByFunctionCount'],
-        $classData['usedFromOutsideCount']
+        $classData['usedFromOutsideCount'],
+        $classData['superglobalsUsed'],
+        $classData['variablesUsed'],
+        $classData['superglobalMetric']
     );
 
     echo PHP_EOL;

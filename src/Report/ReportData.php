@@ -32,6 +32,7 @@ class ReportData
         $this->calculateMaxComplexities();
         $this->calculateCoupling();
         $this->getQualityMetrics();
+        $this->getVariableMetrics();
 
         $this->predictProgrammingParadigm();
     }
@@ -359,6 +360,29 @@ class ReportData
             foreach ($qualityMetrics as $key) {
                 $class[$key] = $classMetrics->get($key);
             }
+
+            $this->data['classes'][$className] = $class;
+        }
+    }
+
+    private function getVariableMetrics()
+    {
+        foreach ($this->data['classes'] as $className => $class) {
+            if (!$class['id']) {
+                continue;
+            }
+
+            $classMetrics = $this->metrics->get($class['id']);
+            $superglobals = $classMetrics->get('superglobals');
+            $variables = $classMetrics->get('variables');
+
+            $class['superglobalsUsed'] = array_sum($superglobals);
+            $class['distinctSuperglobalsUsed'] = count(array_filter($superglobals, fn($variableCount) => $variableCount > 0));
+            $class['variablesUsed'] = array_sum($variables);
+            $class['distinctVariablesUsed'] = count($variables);
+            $class['superglobalMetric'] = $class['variablesUsed'] > 0 ?
+                round(($class['superglobalsUsed'] / ($class['superglobalsUsed'] + $class['variablesUsed'])) * 100, 2)
+                : 0;
 
             $this->data['classes'][$className] = $class;
         }
