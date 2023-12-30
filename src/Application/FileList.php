@@ -16,6 +16,9 @@ final class FileList
     public function fetch(): void
     {
         $exclude = $this->config->has('exclude') ? $this->config->get('exclude') : [];
+        $exclude = array_map(function($path) {
+            return rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+        }, $exclude);
 
         foreach ($this->config->get('files') as $file) {
             if (is_dir($file)) {
