@@ -19,16 +19,21 @@ class ReportData
 
     private array $overallMetrics = [];
 
-    public function __construct(private Metrics $metrics)
+    public function __construct(private readonly Metrics $metrics)
     {
         $this->projectMetrics = $this->metrics->get('project');
         $this->overallMetrics = $this->projectMetrics->getOverallMetrics();
     }
 
+    public function getMetrics(): Metrics
+    {
+        return $this->metrics;
+    }
+
     public function generate(): void
     {
         $this->transferOverallData();
-        $this->createClassArray();
+        $this->createDataArrays();
         $this->calculateMaxComplexities();
         $this->calculateCoupling();
         $this->getQualityMetrics();
@@ -45,6 +50,11 @@ class ReportData
     public function getClasses(): array
     {
         return $this->data['classes'];
+    }
+
+    public function getFiles(): array
+    {
+        return $this->data['files'];
     }
 
     private function transferOverallData(): void
@@ -309,30 +319,63 @@ class ReportData
         }
     }
 
-    private function createClassArray(): void
+    private function createDataArrays(): void
     {
+        $files = [];
         $classes = [];
+        $functions = [];
 
         foreach ($this->metrics->getAll() as $metric) {
-            if (! $metric instanceof ClassMetrics) {
-                continue;
-            }
+            switch (true) {
+                case $metric instanceof FileMetrics:
+                    $data = $metric->getAll();
+                    $data['id'] = (string) $metric->getIdentifier();
+                    $files[$metric->getName()] = $data;
+                    break;
 
-            $classes[$metric->getName()] = [
-                'id' => (string) $metric->getIdentifier(),
-                'internal' => true,
-                'uses' => [],
-                'usedBy' => [],
-                'usedByFunction' => [],
-                'usedFromOutside' => [],
-                'usesCount' => 0,
-                'usedByCount' => 0,
-                'usedByFunctionCount' => 0,
-                'usedFromOutsideCount' => 0,
-            ];
+                case $metric instanceof FunctionMetrics:
+                    $data = $metric->getAll();
+                    $data['id'] = (string) $metric->getIdentifier();
+                    $data['path'] = $metric->getPath();
+                    $functions[$metric->getName()] = $data;
+                    break;
+
+                case $metric instanceof ClassMetrics:
+                    $classes[$metric->getName()] = [
+                        'id' => (string) $metric->getIdentifier(),
+                        'path' => $metric->getPath(),
+                        'internal' => true,
+                        'uses' => [],
+                        'usedBy' => [],
+                        'usedByFunction' => [],
+                        'usedFromOutside' => [],
+                        'usesCount' => 0,
+                        'usedByCount' => 0,
+                        'usedByFunctionCount' => 0,
+                        'usedFromOutsideCount' => 0,
+                    ];
+                    break;
+            }
+        }
+
+        foreach ($files as $path => $data) {
+            $classesInFile = array_filter($classes, function($class) use ($path) {
+               return $path === $class['path'];
+            });
+
+            $functionsInFile = array_filter($functions, function($function) use ($path) {
+                return $path === $function['path'];
+            });
+
+            $data['classes'] = $classesInFile;
+            $data['functions'] = $functionsInFile;
+
+            $files[$path] = $data;
         }
 
         $this->data['classes'] = $classes;
+        $this->data['files'] = $files;
+        $this->data['functions'] = $functions;
     }
 
     private function getQualityMetrics(): void

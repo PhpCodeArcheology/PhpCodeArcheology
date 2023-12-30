@@ -25,12 +25,17 @@ class MarkdownReport implements ReportInterface
 
     public function generate(): void
     {
+        $this->clearReportDir();
+
+        mkdir($this->outputDir . '/files');
+
         $this->renderTemplate('index.php', 'report.md');
+        $this->renderTemplate('files.php', 'files.md');
         $this->renderTemplate('class-dependencies.php', 'class-dependencies.md');
         $this->renderTemplate('class-halstead.php', 'class-halstead.md');
     }
 
-    private function renderTemplate(string $templateFile, string $outputFile): void
+    private function renderTemplate(string $templateFile, string $outputFile, array $data = []): void
     {
         ob_start();
         require $this->templateDir . $templateFile;
@@ -51,5 +56,27 @@ class MarkdownReport implements ReportInterface
         $table = array_map(fn($items) => implode(' | ', $items), $data);
 
         return $header . implode("\n", $table);
+    }
+
+    private function clearReportDir(): void
+    {
+        $this->deleteDirContents($this->outputDir);
+    }
+
+    private function deleteDirContents(string $dir): void
+    {
+        if (!str_ends_with($dir, '/')) {
+            $dir .= '/';
+        }
+
+        $files = glob($dir . '*', GLOB_MARK);
+        foreach ($files as $file) {
+            if (is_dir($file)) {
+                $this->deleteDirContents($file);
+                rmdir($file);
+            } else {
+                unlink($file);
+            }
+        }
     }
 }

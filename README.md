@@ -7,4 +7,4 @@
 - [ ] Add correct path handling
 - [ ] Spaghetti metric for files and overall
 - [ ] Use of globals and super globals
-- [ ] Dependence on super globals of functions, classes and methods
+- [x] Dependence on super globals of functions, classes and methods

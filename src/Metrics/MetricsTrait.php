@@ -25,4 +25,14 @@ trait MetricsTrait
     {
         return $this->metrics;
     }
+
+    public function getKeys(): array
+    {
+        return array_keys($this->metrics);
+    }
+
+    public function getPath(): string
+    {
+        return $this->path;
+    }
 }

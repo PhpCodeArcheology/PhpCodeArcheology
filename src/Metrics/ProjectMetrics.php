@@ -12,7 +12,7 @@ class ProjectMetrics implements MetricsInterface
 
     private array $overallMetrics = [];
 
-    public function __construct(private string $path)
+    public function __construct(private readonly string $path)
     {
         $this->identifier = ProjectIdentifier::ofPath($this->path);
 

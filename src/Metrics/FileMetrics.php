@@ -12,7 +12,7 @@ class FileMetrics implements MetricsInterface
     private IdentifierInterface $identifier;
 
     public function __construct(
-        private string $path
+        private readonly string $path
     )
     {
         $this->identifier = FileIdentifier::ofPath($this->path);
