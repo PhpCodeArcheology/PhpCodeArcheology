@@ -1,0 +1,15 @@
+# PhpLegacyArcheology Report
+
+{{ include('_created.md.twig') }}
+
+## General statistics
+
+| Element | Count |
+|---------|-------|
+{% for element in elements %}
+| {{ element.name }} | {{ element.value }} |
+{% endfor %}
+
+## Detailed statistics
+
+- [Files](files.md)

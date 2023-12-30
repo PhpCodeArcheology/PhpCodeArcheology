@@ -6,14 +6,24 @@ namespace Marcus\PhpLegacyAnalyzer\Report;
 
 use Marcus\PhpLegacyAnalyzer\Application\Config;
 use Marcus\PhpLegacyAnalyzer\Metrics\Metrics;
+use Twig\Environment;
+use Twig\Loader\FilesystemLoader;
+use Twig\TemplateWrapper;
 
 class MarkdownReport implements ReportInterface
 {
     private string $outputDir = '';
 
+    private string $cacheDir = '';
+
     private string $templateDir = '';
 
-    public function __construct(private Config $config, private ReportData $reportData)
+    public function __construct(
+        private Config $config,
+        private ReportData $reportData,
+        private FilesystemLoader $twigLoader,
+        private Environment $twig
+    )
     {
         $this->outputDir = rtrim($config->get('runningDir'), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'report' . DIRECTORY_SEPARATOR;
         $this->templateDir = realpath(__DIR__ . '/../../templates/markdown') . DIRECTORY_SEPARATOR;
@@ -21,6 +31,9 @@ class MarkdownReport implements ReportInterface
         if (! is_dir($this->outputDir)) {
             mkdir(directory: $this->outputDir, recursive: true);
         }
+
+        $this->twigLoader->setPaths($this->templateDir);
+        $this->twig->setCache(false);
     }
 
     public function generate(): void
@@ -29,33 +42,70 @@ class MarkdownReport implements ReportInterface
 
         mkdir($this->outputDir . '/files');
 
-        $this->renderTemplate('index.php', 'report.md');
-        $this->renderTemplate('files.php', 'files.md');
-        $this->renderTemplate('class-dependencies.php', 'class-dependencies.md');
-        $this->renderTemplate('class-halstead.php', 'class-halstead.md');
-    }
+        $createDate = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
 
-    private function renderTemplate(string $templateFile, string $outputFile, array $data = []): void
-    {
-        ob_start();
-        require $this->templateDir . $templateFile;
-        $content = ob_get_clean();
+        $metrics = [
+            'overallFiles' => 'Files',
+            'overallFileErrors' => 'File errors',
+            'overallFunctions' => 'Functions',
+            'overallClasses' => 'Classes',
+            'overallAbstractClasses' => 'Abstract classes',
+            'overallInterfaces' => 'Interfaces',
+            'overallMethods' => 'Methods',
+            'overallPrivateMethods' => 'Private methods',
+            'overallPublicMethods' => 'Public methods',
+            'overallStaticMethods' => 'Static methods',
+            'overallLoc' => 'Lines of code',
+            'overallCloc' => 'Comment lines',
+            'overallLloc' => 'Logical lines of code',
+            'overallMaxCC' => 'Max. cyclomatic complexity',
+            'overallMostComplexFile' => 'Most complex file',
+            'overallMostComplexClass' => 'Most complex class',
+            'overallMostComplexMethod' => 'Most complex method',
+            'overallMostComplexFunction' => 'Most complex function',
+            'overallAvgCC' => 'Average complexity',
+            'overallAvgCCFile' => 'Average file complexity',
+            'overallAvgCCClass' => 'Average class complexity',
+            'overallAvgCCMethod' => 'Average method complexity',
+            'overallAvgCCFunction' => 'Average function complexity',
+        ];
 
-        file_put_contents($this->outputDir . $outputFile, $content);
-    }
+        $overallData = $this->reportData->getOverallData();
 
-    private function renderTable(array $head = [], array $data = []): string
-    {
-        if (empty($data)) {
-            return '';
+        $data = [];
+        foreach ($metrics as $key => $label) {
+            $value = is_numeric($overallData[$key]) ? number_format($overallData[$key]) : $overallData[$key];
+
+            $data[] = ['name' => $label, 'value' => $value];
         }
 
-        $header = implode(' | ', $head) . "\n";
-        $header .= implode(' | ', array_fill(0, count($head), '-')) . "\n";
+        $this->renderTemplate('index.md.twig', [
+            'datetime' => $createDate,
+            'elements' => $data,
+        ], 'index.md');
 
-        $table = array_map(fn($items) => implode(' | ', $items), $data);
+        $files = $this->reportData->getFiles();
+        foreach ($files as $fileName => &$fileData) {
+            $mdFile = 'files/' . $fileData['id'] . '.md';
+            $this->renderTemplate('file.md.twig', [
+                'fileName' => $fileName,
+            ], $mdFile);
 
-        return $header . implode("\n", $table);
+            $fileData['name'] = $fileName;
+        }
+
+        $this->renderTemplate('files.md.twig', [
+            'datetime' => $createDate,
+            'files' => $files,
+        ], 'files.md');
+    }
+
+    private function renderTemplate(string $template, array $data, string $outputFile): void
+    {
+        $templateWrapper = $this->twig->load($template);
+        ob_start();
+        echo $templateWrapper->render($data);
+        file_put_contents($this->outputDir . $outputFile, ob_get_clean());
     }
 
     private function clearReportDir(): void

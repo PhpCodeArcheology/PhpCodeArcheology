@@ -15,7 +15,8 @@
         }
     ],
     "require-dev": {
-        "pestphp/pest": "^2.28"
+        "pestphp/pest": "^2.28",
+        "twig/twig": "^3.8"
     },
     "config": {
         "allow-plugins": {

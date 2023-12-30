@@ -1,0 +1,9 @@
+# Files
+
+{{ include('_created.md.twig') }}
+
+| File  | Loc | Lloc | Cloc |
+|-------|-----|------|------|
+{% for file in files %}
+| [{{ file.name }}](files/{{ file.id }}.md) | {{ file.loc }} | {{ file.lloc }} | {{ file.cloc }} |
+{% endfor %}

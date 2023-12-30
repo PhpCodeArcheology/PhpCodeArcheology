@@ -10,6 +10,8 @@ use Marcus\PhpLegacyAnalyzer\Report\MarkdownReport;
 use Marcus\PhpLegacyAnalyzer\Report\ReportData;
 use PhpParser\NodeTraverser;
 use PhpParser\ParserFactory;
+use Twig\Environment;
+use Twig\Loader\FilesystemLoader;
 
 final class Application
 {
@@ -42,7 +44,9 @@ final class Application
         $reportData = new ReportData($metrics);
         $reportData->generate();
 
-        $report = new MarkdownReport($config, $reportData);
+        $twigLoader = new FilesystemLoader();
+        $twig = new Environment($twigLoader);
+        $report = new MarkdownReport($config, $reportData, $twigLoader, $twig);
         $report->generate();
     }
 }
