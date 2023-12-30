@@ -34,7 +34,7 @@ class ReportData
         $this->getQualityMetrics();
         $this->getVariableMetrics();
 
-        $this->predictProgrammingParadigm();
+        //$this->predictProgrammingParadigm();
     }
 
     public function getOverallData(): array
@@ -290,6 +290,7 @@ class ReportData
 
         // Save metrics and add to report data
         foreach ($classes as $className => $class) {
+            $class['instability'] = ($class['usesCount'] + $class['usedByCount']) > 0 ? $class['usesCount'] / ($class['usesCount'] + $class['usedByCount']) : 0;
             $this->data['classes'][$className] = $class;
 
             if ($class['id'] === null) {
@@ -375,13 +376,16 @@ class ReportData
             $classMetrics = $this->metrics->get($class['id']);
             $superglobals = $classMetrics->get('superglobals');
             $variables = $classMetrics->get('variables');
+            $constants = $classMetrics->get('constants');
 
             $class['superglobalsUsed'] = array_sum($superglobals);
             $class['distinctSuperglobalsUsed'] = count(array_filter($superglobals, fn($variableCount) => $variableCount > 0));
             $class['variablesUsed'] = array_sum($variables);
             $class['distinctVariablesUsed'] = count($variables);
+            $class['constantsUsed'] = array_sum($constants);
+            $class['distinctConstantsUsed'] = count($constants);
             $class['superglobalMetric'] = $class['variablesUsed'] > 0 ?
-                round(($class['superglobalsUsed'] / ($class['superglobalsUsed'] + $class['variablesUsed'])) * 100, 2)
+                round((($class['superglobalsUsed'] + $class['constantsUsed']) / ($class['superglobalsUsed'] + $class['variablesUsed'] + $class['constantsUsed'])) * 100, 2)
                 : 0;
 
             $this->data['classes'][$className] = $class;

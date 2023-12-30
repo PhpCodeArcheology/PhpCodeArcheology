@@ -38,6 +38,12 @@ class GlobalsVisitor implements NodeVisitor
 
     private array $classVariableMap = [];
 
+    private array $constantMap = [];
+
+    private array $functionConstantMap = [];
+
+    private array $classConstantMap = [];
+
     private bool $inFunction = false;
 
     private bool $inClass = false;
@@ -66,6 +72,7 @@ class GlobalsVisitor implements NodeVisitor
             || $node instanceof Node\Stmt\ClassMethod) {
             $this->superglobalsFunction = self::GLOBALS;
             $this->functionVariableMap = [];
+            $this->functionConstantMap = [];
             $this->inFunction = true;
         }
         elseif ($node instanceof Node\Stmt\Class_
@@ -73,6 +80,7 @@ class GlobalsVisitor implements NodeVisitor
             || $node instanceof Node\Stmt\Trait_) {
             $this->superglobalsClass = self::GLOBALS;
             $this->classVariableMap = [];
+            $this->classConstantMap = [];
             $this->inClass = true;
 
             $classId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->namespacedName, $this->path);
@@ -92,17 +100,6 @@ class GlobalsVisitor implements NodeVisitor
                     $this->constantsDefined[$constantName] = 0;
                 }
                 ++ $this->constantsDefined[$constantName];
-            }
-        }
-
-        if ($node instanceof Node\Expr\ConstFetch) {
-            $constantName = $node->name->toString();
-
-            if (!in_array(strtolower($constantName), ['true', 'false', 'null'])) {
-                if (! isset($this->constantsUsed[$constantName])) {
-                    $this->constantsUsed[$constantName] = 0;
-                }
-                ++ $this->constantsUsed[$constantName];
             }
         }
         */
@@ -149,6 +146,32 @@ class GlobalsVisitor implements NodeVisitor
             }
         }
 
+        if ($node instanceof Node\Expr\ConstFetch) {
+            $constantName = $node->name->toString();
+
+            if (! in_array(strtolower($constantName), ['true', 'false', 'null']) && ! defined($constantName)) {
+                if (! isset($this->constantMap[$constantName])) {
+                    $this->constantMap[$constantName] = 0;
+                }
+                ++ $this->constantMap[$constantName];
+
+                if ($this->inFunction) {
+                    if (! isset($this->functionConstantMap[$constantName])) {
+                        $this->functionConstantMap[$constantName] = 0;
+                    }
+                    ++ $this->functionConstantMap[$constantName];
+                }
+
+                if ($this->inClass) {
+                    if (! isset($this->classConstantMap[$constantName])) {
+                        $this->classConstantMap[$constantName] = 0;
+                    }
+                    ++ $this->classConstantMap[$constantName];
+                }
+            }
+        }
+
+
         if ($node instanceof Node\Stmt\Function_
             || $node instanceof Node\Stmt\ClassMethod) {
             $this->inFunction = false;
@@ -158,6 +181,7 @@ class GlobalsVisitor implements NodeVisitor
                 $functionMetrics = $this->metrics->get($functionId);
                 $functionMetrics->set('superglobals', $this->superglobalsFunction);
                 $functionMetrics->set('variables', $this->functionVariableMap);
+                $functionMetrics->set('constants', $this->functionConstantMap);
                 $this->metrics->set((string) $functionMetrics->getIdentifier(), $functionMetrics);
             }
             else {
@@ -166,6 +190,7 @@ class GlobalsVisitor implements NodeVisitor
                 $methodMetrics = $methods[$methodId];
                 $methodMetrics->set('superglobals', $this->superglobalsFunction);
                 $methodMetrics->set('variables', $this->functionVariableMap);
+                $methodMetrics->set('constants', $this->functionVariableMap);
                 $methods[$methodId] = $methodMetrics;
                 $this->classMetrics->set('methods', $methods);
                 $this->metrics->set((string) $this->classMetrics->getIdentifier(), $this->classMetrics);
@@ -178,6 +203,7 @@ class GlobalsVisitor implements NodeVisitor
 
             $this->classMetrics->set('superglobals', $this->superglobalsClass);
             $this->classMetrics->set('variables', $this->classVariableMap);
+            $this->classMetrics->set('constants', $this->classConstantMap);
             $this->metrics->set((string) $this->classMetrics->getIdentifier(), $this->classMetrics);
         }
     }
@@ -191,7 +217,8 @@ class GlobalsVisitor implements NodeVisitor
         $fileMetrics = $this->metrics->get($fileId);
 
         $fileMetrics->set('superglobals', $this->superglobals);
-        $fileMetrics->set('variable', $this->variableMap);
+        $fileMetrics->set('variables', $this->variableMap);
+        $fileMetrics->set('constants', $this->constantMap);
 
         $this->metrics->set($fileId, $fileMetrics);
     }
