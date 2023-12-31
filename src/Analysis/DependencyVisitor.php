@@ -63,6 +63,9 @@ class DependencyVisitor implements NodeVisitor
             || $node instanceof Node\Stmt\Trait_
             || $node instanceof Node\Stmt\Enum_) {
 
+            $extends = [];
+            $interfaces = [];
+
             if (isset($node->extends)) {
                 $extends = is_array($node->extends) ? $node->extends : [$node->extends];
 
@@ -72,9 +75,9 @@ class DependencyVisitor implements NodeVisitor
             }
 
             if (isset($node->implements)) {
-                $implements = is_array($node->implements) ? $node->implements : [$node->implements];
+                $interfaces = is_array($node->implements) ? $node->implements : [$node->implements];
 
-                foreach ($implements as $class) {
+                foreach ($interfaces as $class) {
                     $this->setDependency($class);
                 }
             }
@@ -90,6 +93,8 @@ class DependencyVisitor implements NodeVisitor
             $classId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->namespacedName, $this->path);
             $classMetrics = $this->metrics->get($classId);
             $classMetrics->set('dependencies', $this->classDependencies);
+            $classMetrics->set('interfaces', $interfaces);
+            $classMetrics->set('extends', $extends);
 
             $this->insideClass = false;
         }

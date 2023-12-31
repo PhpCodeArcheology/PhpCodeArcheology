@@ -10,6 +10,8 @@ use Marcus\PhpLegacyAnalyzer\Calculators\ProjectCalculator;
 use Marcus\PhpLegacyAnalyzer\Calculators\VariablesCalculator;
 use Marcus\PhpLegacyAnalyzer\Metrics\Metrics;
 use Marcus\PhpLegacyAnalyzer\Metrics\ProjectMetrics;
+use Marcus\PhpLegacyAnalyzer\Predictions\PredictionService;
+use Marcus\PhpLegacyAnalyzer\Predictions\TooLongPrediction;
 use Marcus\PhpLegacyAnalyzer\Report\MarkdownReport;
 use Marcus\PhpLegacyAnalyzer\Report\MetricsSplitter;
 use Marcus\PhpLegacyAnalyzer\Report\ReportData;
@@ -53,6 +55,11 @@ final class Application
             new ProjectCalculator(),
         ], $metrics);
         $calculators->calculate();
+
+        $predictions = new PredictionService([
+            new TooLongPrediction(),
+        ], $metrics);
+        $predictions->predict();
 
         $splitter = new MetricsSplitter($metrics);
         $splitter->split();
