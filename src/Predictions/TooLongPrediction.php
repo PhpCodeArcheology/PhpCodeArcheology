@@ -15,7 +15,7 @@ class TooLongPrediction implements PredictionInterface
 
     public function predict(Metrics $metrics): void
     {
-        foreach ($metrics->getAll() as $metric) {
+        foreach ($metrics->getAll() as $key => $metric) {
             if (is_array($metric) || $metric instanceof ProjectMetrics) {
                 continue;
             }
@@ -26,7 +26,8 @@ class TooLongPrediction implements PredictionInterface
                 $metric instanceof FunctionMetrics => 40,
             };
 
-            $metric->set('tooLong', $metric->get('lloc') > $maxLloc);
+            $metric->set('tooLong', ($metric->get('lloc') > $maxLloc));
+            $metrics->set($key, $metric);
 
             if (! $metric instanceof ClassMetrics) {
                 continue;
@@ -38,6 +39,7 @@ class TooLongPrediction implements PredictionInterface
                 $methods[$methodId] = $methodMetric;
             }
             $metric->set('methods', $methods);
+            $metrics->set($key, $metric);
         }
     }
 }
