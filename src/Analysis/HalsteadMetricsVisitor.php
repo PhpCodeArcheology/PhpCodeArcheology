@@ -47,7 +47,8 @@ class HalsteadMetricsVisitor extends NodeVisitorAbstract
     {
         if ($node instanceof Node\Stmt\Class_
             || $node instanceof Node\Stmt\Interface_
-            || $node instanceof Node\Stmt\Trait_) {
+            || $node instanceof Node\Stmt\Trait_
+            || $node instanceof Node\Stmt\Enum_) {
 
             $this->insideClass = true;
             $this->classOperators = [];
@@ -146,7 +147,8 @@ class HalsteadMetricsVisitor extends NodeVisitorAbstract
 
         if ($node instanceof Node\Stmt\Class_
             || $node instanceof Node\Stmt\Interface_
-            || $node instanceof Node\Stmt\Trait_) {
+            || $node instanceof Node\Stmt\Trait_
+            || $node instanceof Node\Stmt\Enum_) {
 
             $halstead = $this->calculateMetrics($this->classOperators, $this->classOperands);
             $this->currentMetric = $this->saveToMetric($this->currentMetric, $halstead);

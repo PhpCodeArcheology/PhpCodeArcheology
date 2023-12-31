@@ -6,7 +6,7 @@ namespace Marcus\PhpLegacyAnalyzer\Application;
 
 use Marcus\PhpLegacyAnalyzer\Calculators\CalculatorService;
 use Marcus\PhpLegacyAnalyzer\Calculators\CouplingCalculator;
-use Marcus\PhpLegacyAnalyzer\Calculators\QualityCalculator;
+use Marcus\PhpLegacyAnalyzer\Calculators\ProjectCalculator;
 use Marcus\PhpLegacyAnalyzer\Calculators\VariablesCalculator;
 use Marcus\PhpLegacyAnalyzer\Metrics\Metrics;
 use Marcus\PhpLegacyAnalyzer\Metrics\ProjectMetrics;
@@ -50,6 +50,7 @@ final class Application
         $calculators = new CalculatorService([
             new VariablesCalculator(),
             new CouplingCalculator(),
+            new ProjectCalculator(),
         ], $metrics);
         $calculators->calculate();
 

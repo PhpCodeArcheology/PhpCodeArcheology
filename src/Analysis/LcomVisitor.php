@@ -83,7 +83,8 @@ class LcomVisitor implements NodeVisitor
             $this->inMethod = false;
         }
         elseif ($node instanceof Node\Stmt\Class_
-            || $node instanceof Node\Stmt\Trait_) {
+            || $node instanceof Node\Stmt\Trait_
+            || $node instanceof Node\Stmt\Enum_) {
 
             $lcom = 0;
             foreach ($this->graph->getNodes() as $graphNode) {

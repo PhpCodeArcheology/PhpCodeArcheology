@@ -41,7 +41,8 @@ class DependencyVisitor implements NodeVisitor
     {
         if ($node instanceof Node\Stmt\Class_
             || $node instanceof Node\Stmt\Interface_
-            || $node instanceof Node\Stmt\Trait_) {
+            || $node instanceof Node\Stmt\Trait_
+            || $node instanceof Node\Stmt\Enum_) {
 
             $this->insideClass = true;
             $this->classDependencies = [];
@@ -59,7 +60,8 @@ class DependencyVisitor implements NodeVisitor
     {
         if ($node instanceof Node\Stmt\Class_
             || $node instanceof Node\Stmt\Interface_
-            || $node instanceof Node\Stmt\Trait_) {
+            || $node instanceof Node\Stmt\Trait_
+            || $node instanceof Node\Stmt\Enum_) {
 
             if (isset($node->extends)) {
                 $extends = is_array($node->extends) ? $node->extends : [$node->extends];

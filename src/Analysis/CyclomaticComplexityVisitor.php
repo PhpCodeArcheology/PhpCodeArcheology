@@ -61,7 +61,8 @@ class CyclomaticComplexityVisitor implements NodeVisitor
     {
         if ($node instanceof Node\Stmt\Class_
             || $node instanceof Node\Stmt\Interface_
-            || $node instanceof Node\Stmt\Trait_) {
+            || $node instanceof Node\Stmt\Trait_
+            || $node instanceof Node\Stmt\Enum_) {
             $classId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->namespacedName, $this->path);
             $this->currentClass = $this->metrics->get($classId);
             $this->currentClassCc = 1;

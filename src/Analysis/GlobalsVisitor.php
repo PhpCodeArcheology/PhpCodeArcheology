@@ -77,7 +77,8 @@ class GlobalsVisitor implements NodeVisitor
         }
         elseif ($node instanceof Node\Stmt\Class_
             || $node instanceof Node\Stmt\Interface_
-            || $node instanceof Node\Stmt\Trait_) {
+            || $node instanceof Node\Stmt\Trait_
+            || $node instanceof Node\Stmt\Enum_) {
             $this->superglobalsClass = self::GLOBALS;
             $this->classVariableMap = [];
             $this->classConstantMap = [];
@@ -198,7 +199,8 @@ class GlobalsVisitor implements NodeVisitor
         }
         elseif ($node instanceof Node\Stmt\Class_
             || $node instanceof Node\Stmt\Interface_
-            || $node instanceof Node\Stmt\Trait_) {
+            || $node instanceof Node\Stmt\Trait_
+            || $node instanceof Node\Stmt\Enum_) {
             $this->inClass = false;
 
             $this->classMetrics->set('superglobals', $this->superglobalsClass);

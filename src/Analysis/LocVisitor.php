@@ -46,13 +46,13 @@ class LocVisitor implements NodeVisitor
         $this->fileMetrics->set('cloc', $cloc);
         $this->fileMetrics->set('lloc', $lloc);
 
-        $projectLoc = $this->projectMetrics->get('overallLoc') + $loc;
-        $projectCloc = $this->projectMetrics->get('overallCloc') + $cloc;
-        $projectLloc = $this->projectMetrics->get('overallLloc') + $lloc;
+        $projectLoc = $this->projectMetrics->get('OverallLoc') + $loc;
+        $projectCloc = $this->projectMetrics->get('OverallCloc') + $cloc;
+        $projectLloc = $this->projectMetrics->get('OverallLloc') + $lloc;
 
-        $this->projectMetrics->set('overallLoc', $projectLoc);
-        $this->projectMetrics->set('overallCloc', $projectCloc);
-        $this->projectMetrics->set('overallLloc', $projectLloc);
+        $this->projectMetrics->set('OverallLoc', $projectLoc);
+        $this->projectMetrics->set('OverallCloc', $projectCloc);
+        $this->projectMetrics->set('OverallLloc', $projectLloc);
     }
 
     /**
@@ -79,7 +79,8 @@ class LocVisitor implements NodeVisitor
         }
         elseif ($node instanceof Node\Stmt\Class_
             || $node instanceof Node\Stmt\Interface_
-            || $node instanceof Node\Stmt\Trait_) {
+            || $node instanceof Node\Stmt\Trait_
+            || $node instanceof Node\Stmt\Enum_) {
             $classId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->namespacedName, $this->path);
             $classMetrics = $this->metrics->get($classId);
 
@@ -146,17 +147,17 @@ class LocVisitor implements NodeVisitor
         $this->metrics->set($fileId, $this->fileMetrics);
         $this->metrics->set('project', $this->projectMetrics);
 
-        $overallLlocOutside = $this->projectMetrics->get('overallLlocOutside');
-        $overallInsideMethodLloc = $this->projectMetrics->get('overallInsideMethodLloc');
-        $overallInsideFuntionLloc = $this->projectMetrics->get('overallInsideFuntionLloc');
+        $OverallLlocOutside = $this->projectMetrics->get('OverallLlocOutside');
+        $OverallInsideMethodLloc = $this->projectMetrics->get('OverallInsideMethodLloc');
+        $OverallInsideFuntionLloc = $this->projectMetrics->get('OverallInsideFuntionLloc');
 
-        $overallLlocOutside += $llocFileOutside;
-        $overallInsideMethodLloc += $this->insideMethodLloc;
-        $overallInsideFuntionLloc += $this->insideFunctionLloc;
+        $OverallLlocOutside += $llocFileOutside;
+        $OverallInsideMethodLloc += $this->insideMethodLloc;
+        $OverallInsideFuntionLloc += $this->insideFunctionLloc;
 
-        $this->projectMetrics->set('overallLlocOutside', $overallLlocOutside);
-        $this->projectMetrics->set('overallInsideMethodLloc', $overallInsideMethodLloc);
-        $this->projectMetrics->set('overallInsideFuntionLloc', $overallInsideFuntionLloc);
+        $this->projectMetrics->set('OverallLlocOutside', $OverallLlocOutside);
+        $this->projectMetrics->set('OverallInsideMethodLloc', $OverallInsideMethodLloc);
+        $this->projectMetrics->set('OverallInsideFuntionLloc', $OverallInsideFuntionLloc);
     }
 
     private function getLinesOfCodeFunction(Node $node): void

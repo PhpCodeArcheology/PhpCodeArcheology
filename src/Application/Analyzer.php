@@ -55,8 +55,8 @@ readonly class Analyzer
         $fileCount = count($fileList->getFiles());
 
         $projectMetrics = $this->metrics->get('project');
-        $projectMetrics->set('overallFiles', $fileCount);
-        $projectFileErrors = $projectMetrics->get('overallFileErrors');
+        $projectMetrics->set('OverallFiles', $fileCount);
+        $projectFileErrors = $projectMetrics->get('OverallFileErrors');
 
         $fileCount = number_format($fileCount);
 
@@ -114,7 +114,7 @@ readonly class Analyzer
         $this->output->outNl('Analysis is ready. ' . memory_get_peak_usage() . " bytes of memory max");
         $this->output->outNl();
 
-        $projectMetrics->set('overallFileErrors', $projectFileErrors);
+        $projectMetrics->set('OverallFileErrors', $projectFileErrors);
         $this->metrics->set('project', $projectMetrics);
     }
 }

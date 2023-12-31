@@ -32,7 +32,8 @@ class MaintainabilityIndexVisitor implements NodeVisitor
     {
         if ($node instanceof Node\Stmt\Class_
             || $node instanceof Node\Stmt\Interface_
-            || $node instanceof Node\Stmt\Trait_) {
+            || $node instanceof Node\Stmt\Trait_
+            || $node instanceof Node\Stmt\Enum_) {
 
             $classId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->namespacedName, $this->path);
             $this->currentMetric = $this->metrics->get($classId);
@@ -55,7 +56,8 @@ class MaintainabilityIndexVisitor implements NodeVisitor
         if ($node instanceof Node\Stmt\Class_
             || $node instanceof Node\Stmt\Trait_
             || $node instanceof Node\Stmt\Interface_
-            || $node instanceof Node\Stmt\Function_) {
+            || $node instanceof Node\Stmt\Function_
+            || $node instanceof Node\Stmt\Enum_) {
 
             $this->currentMetric = $this->calculateIndex($this->currentMetric);
             $this->metrics->set((string) $this->currentMetric->getIdentifier(), $this->currentMetric);

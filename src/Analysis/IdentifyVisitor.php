@@ -7,6 +7,7 @@ namespace Marcus\PhpLegacyAnalyzer\Analysis;
 use Marcus\PhpLegacyAnalyzer\Metrics\ClassMetrics;
 use Marcus\PhpLegacyAnalyzer\Metrics\FunctionMetrics;
 use Marcus\PhpLegacyAnalyzer\Metrics\MetricsInterface;
+use PhpParser\Builder\Enum_;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
 
@@ -19,6 +20,8 @@ class IdentifyVisitor implements NodeVisitor
     private array $interfaces = [];
 
     private array $traits = [];
+
+    private array $enums = [];
 
     private array $functions = [];
 
@@ -41,19 +44,21 @@ class IdentifyVisitor implements NodeVisitor
 
         if ($node instanceof Node\Stmt\Function_) {
             $metrics = new FunctionMetrics($this->path, (string) $node->namespacedName);
-            $fnCount = $this->projectMetrics->get('overallFunctions') + 1;
-            $this->projectMetrics->set('overallFunctions', $fnCount);
+            $fnCount = $this->projectMetrics->get('OverallFunctions') + 1;
+            $this->projectMetrics->set('OverallFunctions', $fnCount);
 
             $this->functions[(string) $metrics->getIdentifier()] = $metrics->getName();
         }
         elseif ($node instanceof Node\Stmt\Class_
             || $node instanceof Node\Stmt\Interface_
-            || $node instanceof Node\Stmt\Trait_) {
+            || $node instanceof Node\Stmt\Trait_
+            || $node instanceof Node\Stmt\Enum_) {
 
             $metrics = new ClassMetrics($this->path, (string) $node->namespacedName);
             $metrics->set('interface', false);
             $metrics->set('trait', false);
             $metrics->set('abstract', false);
+            $metrics->set('enum', false);
             $metrics->set('final', false);
 
             if (method_exists($node, 'isFinal') && $node->isFinal()) {
@@ -61,22 +66,27 @@ class IdentifyVisitor implements NodeVisitor
             }
 
             if (method_exists($node, 'isAbstract') && $node->isAbstract()) {
-                $abstractClassCount = $this->projectMetrics->get('overallAbstractClasses') + 1;
-                $this->projectMetrics->set('overallAbstractClasses', $abstractClassCount);
+                $abstractClassCount = $this->projectMetrics->get('OverallAbstractClasses') + 1;
+                $this->projectMetrics->set('OverallAbstractClasses', $abstractClassCount);
 
                 $metrics->set('abstract', true);
             }
 
             if ($node instanceof Node\Stmt\Class_) {
-                $classCount = $this->projectMetrics->get('overallClasses') + 1;
-                $this->projectMetrics->set('overallClasses', $classCount);
+                $classCount = $this->projectMetrics->get('OverallClasses') + 1;
+                $this->projectMetrics->set('OverallClasses', $classCount);
 
                 $this->classes[(string) $metrics->getIdentifier()] = $metrics->getName();
             }
 
+            if ($node instanceof Enum_) {
+                $metrics->set('enum', true);
+                $this->enums[(string) $metrics->getIdentifier()] = $metrics->getName();
+            }
+
             if ($node instanceof Node\Stmt\Interface_) {
-                $interfaceCount = $this->projectMetrics->get('overallInterfaces') + 1;
-                $this->projectMetrics->set('overallInterfaces', $interfaceCount);
+                $interfaceCount = $this->projectMetrics->get('OverallInterfaces') + 1;
+                $this->projectMetrics->set('OverallInterfaces', $interfaceCount);
 
                 $metrics->set('interface', true);
                 $metrics->set('abstract', true);
@@ -95,10 +105,10 @@ class IdentifyVisitor implements NodeVisitor
             $publicCount = 0;
             $staticCount = 0;
 
-            $overAllMethodsCount = $this->projectMetrics->get('overallMethods');
-            $overAllPublicMethodsCount = $this->projectMetrics->get('overallPublicMethods');
-            $overAllPrivateMethodsCount = $this->projectMetrics->get('overallPrivateMethods');
-            $overAllStaticMethodsCount = $this->projectMetrics->get('overallStaticMethods');
+            $overAllMethodsCount = $this->projectMetrics->get('OverallMethods');
+            $overAllPublicMethodsCount = $this->projectMetrics->get('OverallPublicMethods');
+            $overAllPrivateMethodsCount = $this->projectMetrics->get('OverallPrivateMethods');
+            $overAllStaticMethodsCount = $this->projectMetrics->get('OverallStaticMethods');
 
             foreach ($node->stmts as $stmt) {
                 if (! $stmt instanceof Node\Stmt\ClassMethod) {
@@ -141,10 +151,10 @@ class IdentifyVisitor implements NodeVisitor
 
             $overAllMethodsCount += count($classMethods);
 
-            $this->projectMetrics->set('overallMethods', $overAllMethodsCount);
-            $this->projectMetrics->set('overallPublicMethods', $overAllPublicMethodsCount);
-            $this->projectMetrics->set('overallPrivateMethods', $overAllPrivateMethodsCount);
-            $this->projectMetrics->set('overallStaticMethods', $overAllStaticMethodsCount);
+            $this->projectMetrics->set('OverallMethods', $overAllMethodsCount);
+            $this->projectMetrics->set('OverallPublicMethods', $overAllPublicMethodsCount);
+            $this->projectMetrics->set('OverallPrivateMethods', $overAllPrivateMethodsCount);
+            $this->projectMetrics->set('OverallStaticMethods', $overAllStaticMethodsCount);
 
             $metrics->set('methods', $classMethods);
             $metrics->set('methodCount', count($classMethods));
@@ -173,6 +183,7 @@ class IdentifyVisitor implements NodeVisitor
         $this->metrics->set('classes', $this->classes);
         $this->metrics->set('interfaces', $this->interfaces);
         $this->metrics->set('traits', $this->traits);
+        $this->metrics->set('enums', $this->enums);
         $this->metrics->set('functions', $this->functions);
         $this->metrics->set('methods', $this->methods);
 

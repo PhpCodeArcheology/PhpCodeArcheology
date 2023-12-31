@@ -31,30 +31,30 @@ class ReportData
 
     private function predictProgrammingParadigm(): void
     {
-        $classCount = $this->data['overallClasses'];
-        $functionCount = $this->data['overallFunctions'];
-        $methodCount = $this->data['overallMethods'];
+        $classCount = $this->data['OverallClasses'];
+        $functionCount = $this->data['OverallFunctions'];
+        $methodCount = $this->data['OverallMethods'];
 
-        $lloc = $this->data['overallLloc'];
-        $llocOutside = $this->data['overallLlocOutside'];
-        $overallInsideMethodLloc = $this->data['overallInsideMethodLloc'];
-        $overallInsideFuntionLloc = $this->data['overallInsideFuntionLloc'];
+        $lloc = $this->data['OverallLloc'];
+        $llocOutside = $this->data['OverallLlocOutside'];
+        $OverallInsideMethodLloc = $this->data['OverallInsideMethodLloc'];
+        $OverallInsideFuntionLloc = $this->data['OverallInsideFuntionLloc'];
 
-        $maxCC = $this->data['overallMaxCC'];
-        $maxCCFile = $this->data['overallMaxCCFile'];
-        $maxCCClass = $this->data['overallMaxCCClass'];
-        $maxCCMethod = $this->data['overallMaxCCMethod'];
-        $maxCCFunction = $this->data['overallMaxCCFunction'];
+        $maxCC = $this->data['OverallMaxCC'];
+        $maxCCFile = $this->data['OverallMaxCCFile'];
+        $maxCCClass = $this->data['OverallMaxCCClass'];
+        $maxCCMethod = $this->data['OverallMaxCCMethod'];
+        $maxCCFunction = $this->data['OverallMaxCCFunction'];
 
-        $avgCC = $this->data['overallAvgCC'];
-        $avgCCFile = $this->data['overallAvgCCFile'];
-        $avgCCClass = $this->data['overallAvgCCClass'];
-        $avgCCMethod = $this->data['overallAvgCCMethod'];
-        $avgCCFunction = $this->data['overallAvgCCFunction'];
+        $avgCC = $this->data['OverallAvgCC'];
+        $avgCCFile = $this->data['OverallAvgCCFile'];
+        $avgCCClass = $this->data['OverallAvgCCClass'];
+        $avgCCMethod = $this->data['OverallAvgCCMethod'];
+        $avgCCFunction = $this->data['OverallAvgCCFunction'];
 
         $methodsToFunctionsScore = $methodCount / ($functionCount + $methodCount);
         $llocToLlocOutsideScore = $llocOutside / $lloc;
-        $methodsToFunctionsLlocScore = $overallInsideMethodLloc / ($overallInsideFuntionLloc + $overallInsideMethodLloc);
+        $methodsToFunctionsLlocScore = $OverallInsideMethodLloc / ($OverallInsideFuntionLloc + $OverallInsideMethodLloc);
         $cyclomaticComplexityScore = 1 / $avgCC;
 
         $weights = [
