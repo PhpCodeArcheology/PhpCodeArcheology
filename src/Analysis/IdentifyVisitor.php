@@ -14,6 +14,16 @@ class IdentifyVisitor implements NodeVisitor
 {
     use VisitorTrait;
 
+    private array $classes = [];
+
+    private array $interfaces = [];
+
+    private array $traits = [];
+
+    private array $functions = [];
+
+    private array $methods = [];
+
     /**
      * @inheritDoc
      */
@@ -33,6 +43,8 @@ class IdentifyVisitor implements NodeVisitor
             $metrics = new FunctionMetrics($this->path, (string) $node->namespacedName);
             $fnCount = $this->projectMetrics->get('overallFunctions') + 1;
             $this->projectMetrics->set('overallFunctions', $fnCount);
+
+            $this->functions[(string) $metrics->getIdentifier()] = $metrics->getName();
         }
         elseif ($node instanceof Node\Stmt\Class_
             || $node instanceof Node\Stmt\Interface_
@@ -58,6 +70,8 @@ class IdentifyVisitor implements NodeVisitor
             if ($node instanceof Node\Stmt\Class_) {
                 $classCount = $this->projectMetrics->get('overallClasses') + 1;
                 $this->projectMetrics->set('overallClasses', $classCount);
+
+                $this->classes[(string) $metrics->getIdentifier()] = $metrics->getName();
             }
 
             if ($node instanceof Node\Stmt\Interface_) {
@@ -66,10 +80,14 @@ class IdentifyVisitor implements NodeVisitor
 
                 $metrics->set('interface', true);
                 $metrics->set('abstract', true);
+
+                $this->interfaces[(string) $metrics->getIdentifier()] = $metrics->getName();
             }
 
             if ($node instanceof Node\Stmt\Trait_) {
                 $metrics->set('trait', true);
+
+                $this->traits[(string) $metrics->getIdentifier()] = $metrics->getName();
             }
 
             $classMethods = [];
@@ -88,6 +106,11 @@ class IdentifyVisitor implements NodeVisitor
                 }
 
                 $method = new FunctionMetrics(path: '', name: (string) $stmt->name);
+
+                if (! isset($this->methods[(string) $metrics->getIdentifier()])) {
+                    $this->methods[(string) $metrics->getIdentifier()] = [];
+                }
+                $this->methods[(string) $metrics->getIdentifier()][(string) $method->getIdentifier()] = $method->getName();
 
                 if ($stmt->isPrivate() || $stmt->isProtected()) {
                     $method->set('public', false);
@@ -147,6 +170,12 @@ class IdentifyVisitor implements NodeVisitor
      */
     public function afterTraverse(array $nodes): void
     {
+        $this->metrics->set('classes', $this->classes);
+        $this->metrics->set('interfaces', $this->interfaces);
+        $this->metrics->set('traits', $this->traits);
+        $this->metrics->set('functions', $this->functions);
+        $this->metrics->set('methods', $this->methods);
+
         $this->metrics->set('project', $this->projectMetrics);
     }
 }

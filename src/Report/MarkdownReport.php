@@ -14,8 +14,6 @@ class MarkdownReport implements ReportInterface
 {
     private string $outputDir = '';
 
-    private string $cacheDir = '';
-
     private string $templateDir = '';
 
     public function __construct(
@@ -42,62 +40,16 @@ class MarkdownReport implements ReportInterface
 
         mkdir($this->outputDir . '/files');
 
-        $createDate = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
+        $templateData = $this->reportData->getProjectData();
+        $this->renderTemplate('index.md.twig', $templateData->getTemplateData(), 'index.md');
 
-        $metrics = [
-            'overallFiles' => 'Files',
-            'overallFileErrors' => 'File errors',
-            'overallFunctions' => 'Functions',
-            'overallClasses' => 'Classes',
-            'overallAbstractClasses' => 'Abstract classes',
-            'overallInterfaces' => 'Interfaces',
-            'overallMethods' => 'Methods',
-            'overallPrivateMethods' => 'Private methods',
-            'overallPublicMethods' => 'Public methods',
-            'overallStaticMethods' => 'Static methods',
-            'overallLoc' => 'Lines of code',
-            'overallCloc' => 'Comment lines',
-            'overallLloc' => 'Logical lines of code',
-            'overallMaxCC' => 'Max. cyclomatic complexity',
-            'overallMostComplexFile' => 'Most complex file',
-            'overallMostComplexClass' => 'Most complex class',
-            'overallMostComplexMethod' => 'Most complex method',
-            'overallMostComplexFunction' => 'Most complex function',
-            'overallAvgCC' => 'Average complexity',
-            'overallAvgCCFile' => 'Average file complexity',
-            'overallAvgCCClass' => 'Average class complexity',
-            'overallAvgCCMethod' => 'Average method complexity',
-            'overallAvgCCFunction' => 'Average function complexity',
-        ];
+        $templateData = $this->reportData->getFiles();
+        $this->renderTemplate('files.md.twig', $templateData->getTemplateData(), 'files.md');
 
-        $overallData = $this->reportData->getOverallData();
-
-        $data = [];
-        foreach ($metrics as $key => $label) {
-            $value = is_numeric($overallData[$key]) ? number_format($overallData[$key]) : $overallData[$key];
-
-            $data[] = ['name' => $label, 'value' => $value];
+        foreach ($templateData->getFiles() as $fileData) {
+            $fileData['createDate'] = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
+            $this->renderTemplate('file.md.twig', $fileData, 'files/' . $fileData['id'] . '.md');
         }
-
-        $this->renderTemplate('index.md.twig', [
-            'datetime' => $createDate,
-            'elements' => $data,
-        ], 'index.md');
-
-        $files = $this->reportData->getFiles();
-        foreach ($files as $fileName => &$fileData) {
-            $mdFile = 'files/' . $fileData['id'] . '.md';
-            $this->renderTemplate('file.md.twig', [
-                'fileName' => $fileName,
-            ], $mdFile);
-
-            $fileData['name'] = $fileName;
-        }
-
-        $this->renderTemplate('files.md.twig', [
-            'datetime' => $createDate,
-            'files' => $files,
-        ], 'files.md');
     }
 
     private function renderTemplate(string $template, array $data, string $outputFile): void

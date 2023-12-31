@@ -1,1 +1,24 @@
-# {{ fileName }}
+# {{ name }}
+
+{% if classes is not empty %}
+## Classes
+
+| Class | Loc | Lloc | Cloc | Instability |
+|-------|-----|------|------|-------------|
+{% for class in classes %}
+| [{{ class.name }}](classes/{{ class.id }}.md) | {{ class.loc }} | {{ class.lloc }} | {{ class.cloc }} | {{ class.instability }} |
+
+{% endfor %}
+{% endif %}
+{% if functions is not empty %}
+## Functions
+
+| Function | Loc | Lloc | Cloc |
+|----------|-----|------|------|
+{% for function in functions %}
+| [{{ function.name }}](functions/{{ function.id }}.md) | {{ function.loc }} | {{ function.lloc }} | {{ function.cloc }} |
+{% endfor %}
+
+{% endif %}
+
+{{ include('_created.md.twig') }}

@@ -1,9 +1,9 @@
 # Files
 
-{{ include('_created.md.twig') }}
-
-| File  | Loc | Lloc | Cloc |
-|-------|-----|------|------|
+| File  | Loc | Lloc | Cloc | Cyclomatic Complexity | Difficulty | Effort | Complexity Density | Maintainability Index |
+|-------|-----|------|------|-----------------------|------------|--------|--------------------|-----------------------|
 {% for file in files %}
-| [{{ file.name }}](files/{{ file.id }}.md) | {{ file.loc }} | {{ file.lloc }} | {{ file.cloc }} |
+| [{{ file.name }}](files/{{ file.id }}.md) | {{ file.loc }} | {{ file.lloc }} | {{ file.cloc }} | {{ file.cc }} | {{ file.difficulty|number_format(2) }} | {{ file.effort|number_format(2) }} | {{ file.complexityDensity|number_format(2) }} | {{ file.maintainabilityIndex|number_format(2) }} |
 {% endfor %}
+
+{{ include('_created.md.twig') }}
