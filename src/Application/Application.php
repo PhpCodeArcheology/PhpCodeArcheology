@@ -6,6 +6,7 @@ namespace Marcus\PhpLegacyAnalyzer\Application;
 
 use Marcus\PhpLegacyAnalyzer\Calculators\CalculatorService;
 use Marcus\PhpLegacyAnalyzer\Calculators\CouplingCalculator;
+use Marcus\PhpLegacyAnalyzer\Calculators\FilenameCalculator;
 use Marcus\PhpLegacyAnalyzer\Calculators\ProjectCalculator;
 use Marcus\PhpLegacyAnalyzer\Calculators\VariablesCalculator;
 use Marcus\PhpLegacyAnalyzer\Metrics\Metrics;
@@ -50,6 +51,7 @@ final class Application
         $analyzer->analyze($fileList);
 
         $calculators = new CalculatorService([
+            new FilenameCalculator(),
             new VariablesCalculator(),
             new CouplingCalculator(),
             new ProjectCalculator(),
