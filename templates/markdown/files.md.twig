@@ -1,9 +1,9 @@
 # Files
 
-| File  | Loc | Lloc | Cloc | Cyclomatic Complexity | Difficulty | Effort | Complexity Density | Maintainability Index | Too Long |
-|-------|-----|------|------|-----------------------|------------|--------|--------------------|-----------------------|----------|
+| File  | Loc | Lloc | Cloc | HTML loc | Cyclomatic Complexity | Difficulty | Effort | Complexity Density | Maintainability Index | Too Long |
+|-------|-----|------|------|----------|-----------------------|------------|--------|--------------------|-----------------------|----------|
 {% for file in files %}
-| [{{ file.dirName }}/**{{ file.fileName }}**](files/{{ file.id }}.md) | {{ file.loc }} | {{ file.lloc }} | {{ file.cloc }} | {{ file.cc }} | {{ file.difficulty|number_format(2) }} | {{ file.effort|number_format(2) }} | {{ file.complexityDensity|number_format(2) }} | {{ file.maintainabilityIndex|number_format(2) }} | {{ file.tooLong ? 'Yes' : 'No' }} |
+| [{{ file.dirName }}/**{{ file.fileName }}**](files/{{ file.id }}.md) | {{ file.loc }} | {{ file.lloc }} | {{ file.cloc }} | {{ file.htmlLoc }} | {{ file.cc }} | {{ file.difficulty|number_format(2) }} | {{ file.effort|number_format(2) }} | {{ file.complexityDensity|number_format(2) }} | {{ file.maintainabilityIndex|number_format(2) }} | {{ file.tooLong ? 'Yes' : 'No' }} |
 {% endfor %}
 
 {{ include('_created.md.twig') }}

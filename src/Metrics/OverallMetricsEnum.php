@@ -18,6 +18,7 @@ enum OverallMetricsEnum: string{
     case OverallLoc = 'Lines of code';
     case OverallCloc = 'Comment lines';
     case OverallLloc = 'Logical lines of code';
+    case OverallHtmlLoc = 'HTML lines of code';
     case OverallMaxCC = 'Max. cyclomatic complexity';
     case OverallMostComplexFile = 'Most complex file';
     case OverallMostComplexClass = 'Most complex class';
