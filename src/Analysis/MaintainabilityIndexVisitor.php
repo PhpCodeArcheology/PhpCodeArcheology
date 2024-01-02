@@ -14,7 +14,10 @@ class MaintainabilityIndexVisitor implements NodeVisitor
 {
     use VisitorTrait;
 
-    private MetricsInterface $currentMetric;
+    /**
+     * @var MetricsInterface[]
+     */
+    private array $currentMetric = [];
 
 
     /**
@@ -37,14 +40,14 @@ class MaintainabilityIndexVisitor implements NodeVisitor
 
             $className = (string) ClassName::ofNode($node);
             $classId = (string) FunctionAndClassIdentifier::ofNameAndPath($className, $this->path);
-            $this->currentMetric = $this->metrics->get($classId);
+            $this->currentMetric[] = $this->metrics->get($classId);
         }
         elseif ($node instanceof Node\Stmt\Function_
             || $node instanceof Node\Stmt\ClassMethod) {
 
             if ($node instanceof Node\Stmt\Function_) {
                 $functionId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->namespacedName, $this->path);
-                $this->currentMetric = $this->metrics->get($functionId);
+                $this->currentMetric[] = $this->metrics->get($functionId);
             }
         }
     }
@@ -59,19 +62,22 @@ class MaintainabilityIndexVisitor implements NodeVisitor
             || $node instanceof Node\Stmt\Interface_
             || $node instanceof Node\Stmt\Function_
             || $node instanceof Node\Stmt\Enum_) {
+            $currentMetric = array_pop($this->currentMetric);
 
-            $this->currentMetric = $this->calculateIndex($this->currentMetric);
-            $this->metrics->set((string) $this->currentMetric->getIdentifier(), $this->currentMetric);
+            $currentMetric = $this->calculateIndex($currentMetric);
+            $this->metrics->set((string) $currentMetric->getIdentifier(), $currentMetric);
         }
         elseif ($node instanceof Node\Stmt\ClassMethod) {
-            $methods = $this->currentMetric->get('methods');
+            $currentMetric = end($this->currentMetric);
 
-            $methodId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->name, (string) $this->currentMetric->getIdentifier());
+            $methods = $currentMetric->get('methods');
+
+            $methodId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->name, (string) $currentMetric->getIdentifier());
             $methodMetrics = $methods[$methodId];
             $methods[$methodId] = $this->calculateIndex($methodMetrics);
 
-            $this->currentMetric->set('methods', $methods);
-            $this->metrics->set((string) $this->currentMetric->getIdentifier(), $this->currentMetric);
+            $currentMetric->set('methods', $methods);
+            $this->metrics->set((string) $currentMetric->getIdentifier(), $currentMetric);
         }
     }
 

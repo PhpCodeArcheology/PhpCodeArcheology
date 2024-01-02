@@ -81,6 +81,9 @@ class ProjectCalculator implements CalculatorInterface
 
         foreach ($data as $key => $ccValues) {
             if (empty($ccValues)) {
+                if (is_array($ccValues)) {
+                    $data[$key] = '-';
+                }
                 continue;
             }
 
@@ -95,10 +98,10 @@ class ProjectCalculator implements CalculatorInterface
             $data[$key] = $output;
         }
 
-        $fileCount = $projectMetrics->get('OverallFiles');
-        $classCount = $projectMetrics->get('OverallClasses');
-        $functionCount = $projectMetrics->get('OverallFunctions');
-        $methodCount = $projectMetrics->get('OverallMethods');
+        $fileCount = $projectMetrics->get('OverallFiles') ?? 0;
+        $classCount = $projectMetrics->get('OverallClasses') ?? 0;
+        $functionCount = $projectMetrics->get('OverallFunctions') ?? 0;
+        $methodCount = $projectMetrics->get('OverallMethods') ?? 0;
 
         $data['OverallMaxCC'] = $maxCC;
         $data['OverallMaxCCFile'] = $maxCCFile;

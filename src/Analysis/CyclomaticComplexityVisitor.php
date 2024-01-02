@@ -38,9 +38,12 @@ class CyclomaticComplexityVisitor implements NodeVisitor
 
     private int $fileCc = 1;
 
-    private ?ClassMetrics $currentClass = null;
+    /**
+     * @var ClassMetrics[]
+     */
+    private array $currentClass = [];
 
-    private int $currentClassCc = 1;
+    private array $classCc = [];
 
     private ?FunctionMetrics $currentFunction = null;
 
@@ -67,13 +70,14 @@ class CyclomaticComplexityVisitor implements NodeVisitor
 
             $className = (string) ClassName::ofNode($node);
             $classId = (string) FunctionAndClassIdentifier::ofNameAndPath($className, $this->path);
-            $this->currentClass = $this->metrics->get($classId);
-            $this->currentClassCc = 1;
+            $this->currentClass[] = $this->metrics->get($classId);
+            $this->classCc[$classId] = 1;
         }
         elseif ($node instanceof Node\Stmt\ClassMethod) {
-            $methods = $this->currentClass->get('methods');
+            $currentClass = end($this->currentClass);
+            $methods = $currentClass->get('methods');
 
-            $functionId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->name, (string) $this->currentClass->getIdentifier());
+            $functionId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->name, (string) $currentClass->getIdentifier());
             $this->currentFunction = $methods[$functionId];
             $this->currentFunctionCc = 1;
         }
@@ -93,8 +97,9 @@ class CyclomaticComplexityVisitor implements NodeVisitor
 
         $this->fileCc += $increase;
 
-        if ($this->currentClass) {
-            $this->currentClassCc += $increase;
+        if (!empty($this->currentClass)) {
+            $currentClass = end($this->currentClass);
+            $this->classCc[(string) $currentClass->getIdentifier()] += $increase;
 
             if ($this->currentFunction) {
                 $this->currentFunctionCc += $increase;
@@ -109,16 +114,18 @@ class CyclomaticComplexityVisitor implements NodeVisitor
             || $node instanceof Node\Stmt\Trait_
             || $node instanceof Node\Stmt\Enum_) {
 
-            $this->currentClass->set('cc', $this->currentClassCc);
-            $this->metrics->set((string) $this->currentClass->getIdentifier(), $this->currentClass);
+            $currentClass = array_pop($this->currentClass);
 
-            $this->currentClass = null;
+            $currentClass->set('cc', $this->classCc[(string) $currentClass->getIdentifier()]);
+            $this->metrics->set((string) $currentClass->getIdentifier(), $currentClass);
         }
         elseif ($node instanceof Node\Stmt\ClassMethod) {
-            $methods = $this->currentClass->get('methods');
+            $currentClass = end($this->currentClass);
+
+            $methods = $currentClass->get('methods');
             $this->currentFunction->set('cc', $this->currentFunctionCc);
             $methods[(string) $this->currentFunction->getIdentifier()] = $this->currentFunction;
-            $this->metrics->set((string) $this->currentClass->getIdentifier(), $this->currentClass);
+            $this->metrics->set((string) $currentClass->getIdentifier(), $currentClass);
         }
         elseif ($node instanceof Node\Stmt\Function_) {
             $this->currentFunction->set('cc', $this->currentFunctionCc);

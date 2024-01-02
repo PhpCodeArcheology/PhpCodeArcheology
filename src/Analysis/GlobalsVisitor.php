@@ -9,8 +9,6 @@ use Marcus\PhpLegacyAnalyzer\Metrics\FunctionAndClassIdentifier;
 use Marcus\PhpLegacyAnalyzer\Metrics\MetricsInterface;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
-use PhpParser\PrettyPrinter\Standard;
-use function Marcus\PhpLegacyAnalyzer\getNodeName;
 
 class GlobalsVisitor implements NodeVisitor
 {
@@ -50,7 +48,10 @@ class GlobalsVisitor implements NodeVisitor
 
     private bool $inClass = false;
 
-    private MetricsInterface $classMetrics;
+    /**
+     * @var MetricsInterface[]
+     */
+    private array $classMetrics = [];
 
     private array $constantsDefined = [];
 
@@ -88,7 +89,7 @@ class GlobalsVisitor implements NodeVisitor
 
             $className = (string) ClassName::ofNode($node);
             $classId = (string) FunctionAndClassIdentifier::ofNameAndPath($className, $this->path);
-            $this->classMetrics = $this->metrics->get($classId);
+            $this->classMetrics[] = $this->metrics->get($classId);
         }
 
         // TODO: Extract this to a constant visitor or integrate it here
@@ -189,17 +190,19 @@ class GlobalsVisitor implements NodeVisitor
                 $this->metrics->set((string) $functionMetrics->getIdentifier(), $functionMetrics);
             }
             else {
-                $methods = $this->classMetrics->get('methods');
+                $classMetrics = end($this->classMetrics);
 
-                $methodId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->name, (string) $this->classMetrics->getIdentifier());
+                $methods = $classMetrics->get('methods');
+
+                $methodId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->name, (string) $classMetrics->getIdentifier());
                 $methodMetrics = $methods[$methodId];
                 $methodMetrics->set('superglobals', $this->superglobalsFunction);
                 $methodMetrics->set('variables', $this->functionVariableMap);
                 $methodMetrics->set('constants', $this->functionVariableMap);
                 $methods[$methodId] = $methodMetrics;
 
-                $this->classMetrics->set('methods', $methods);
-                $this->metrics->set((string) $this->classMetrics->getIdentifier(), $this->classMetrics);
+                $classMetrics->set('methods', $methods);
+                $this->metrics->set((string) $classMetrics->getIdentifier(), $classMetrics);
             }
         }
         elseif ($node instanceof Node\Stmt\Class_
@@ -208,10 +211,12 @@ class GlobalsVisitor implements NodeVisitor
             || $node instanceof Node\Stmt\Enum_) {
             $this->inClass = false;
 
-            $this->classMetrics->set('superglobals', $this->superglobalsClass);
-            $this->classMetrics->set('variables', $this->classVariableMap);
-            $this->classMetrics->set('constants', $this->classConstantMap);
-            $this->metrics->set((string) $this->classMetrics->getIdentifier(), $this->classMetrics);
+            $classMetrics = array_pop($this->classMetrics);
+
+            $classMetrics->set('superglobals', $this->superglobalsClass);
+            $classMetrics->set('variables', $this->classVariableMap);
+            $classMetrics->set('constants', $this->classConstantMap);
+            $this->metrics->set((string) $classMetrics->getIdentifier(), $classMetrics);
         }
     }
 

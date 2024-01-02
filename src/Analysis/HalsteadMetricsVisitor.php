@@ -30,7 +30,10 @@ class HalsteadMetricsVisitor extends NodeVisitorAbstract
 
     private bool $insideFunction = false;
 
-    private MetricsInterface $currentMetric;
+    /**
+     * @var MetricsInterface[]
+     */
+    private array $currentMetric = [];
 
     /**
      * @inheritDoc
@@ -56,7 +59,7 @@ class HalsteadMetricsVisitor extends NodeVisitorAbstract
 
             $className = (string) ClassName::ofNode($node);
             $classId = (string) FunctionAndClassIdentifier::ofNameAndPath($className, $this->path);
-            $this->currentMetric = $this->metrics->get($classId);
+            $this->currentMetric[] = $this->metrics->get($classId);
         }
         elseif ($node instanceof Node\Stmt\Function_
             || $node instanceof  Node\Stmt\ClassMethod) {
@@ -66,7 +69,7 @@ class HalsteadMetricsVisitor extends NodeVisitorAbstract
 
             if ($node instanceof Node\Stmt\Function_) {
                 $functionId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->namespacedName, $this->path);
-                $this->currentMetric = $this->metrics->get($functionId);
+                $this->currentMetric[] = $this->metrics->get($functionId);
             }
         }
     }
@@ -151,26 +154,32 @@ class HalsteadMetricsVisitor extends NodeVisitorAbstract
             || $node instanceof Node\Stmt\Trait_
             || $node instanceof Node\Stmt\Enum_) {
 
+            $currentMetric = array_pop($this->currentMetric);
+
             $halstead = $this->calculateMetrics($this->classOperators, $this->classOperands);
-            $this->currentMetric = $this->saveToMetric($this->currentMetric, $halstead);
-            $this->metrics->set((string) $this->currentMetric->getIdentifier(), $this->currentMetric);
+            $currentMetric = $this->saveToMetric($currentMetric, $halstead);
+            $this->metrics->set((string) $currentMetric->getIdentifier(), $currentMetric);
 
         }
         elseif ($node instanceof Node\Stmt\Function_) {
+            $currentMetric = array_pop($this->currentMetric);
+
             $halstead = $this->calculateMetrics($this->functionOperators, $this->functionOperands);
-            $this->currentMetric = $this->saveToMetric($this->currentMetric, $halstead);
-            $this->metrics->set((string) $this->currentMetric->getIdentifier(), $this->currentMetric);
+            $currentMetric = $this->saveToMetric($currentMetric, $halstead);
+            $this->metrics->set((string) $currentMetric->getIdentifier(), $currentMetric);
         }
         elseif ($node instanceof Node\Stmt\ClassMethod) {
-            $halstead = $this->calculateMetrics($this->classOperators, $this->classOperands);
-            $methods = $this->currentMetric->get('methods');
+            $currentMetric = end($this->currentMetric);
 
-            $methodId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->name, (string) $this->currentMetric->getIdentifier());
+            $halstead = $this->calculateMetrics($this->classOperators, $this->classOperands);
+            $methods = $currentMetric->get('methods');
+
+            $methodId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->name, (string) $currentMetric->getIdentifier());
             $methodMetrics = $methods[$methodId];
 
             $methods[$methodId] = $this->saveToMetric($methodMetrics, $halstead);
-            $this->currentMetric->set('methods', $methods);
-            $this->metrics->set((string) $this->currentMetric->getIdentifier(), $this->currentMetric);
+            $currentMetric->set('methods', $methods);
+            $this->metrics->set((string) $currentMetric->getIdentifier(), $currentMetric);
         }
     }
 
