@@ -34,6 +34,8 @@ use Twig\Loader\FilesystemLoader;
 
 final class Application
 {
+    const VERSION = '0.0.1';
+
     /**
      * @throws ConfigFileExtensionNotSupportedException
      * @throws MultipleConfigFilesException
