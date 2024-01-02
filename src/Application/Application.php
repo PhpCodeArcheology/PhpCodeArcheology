@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Marcus\PhpLegacyAnalyzer\Application;
 
-use Marcus\PhpLegacyAnalyzer\Application\ConfigFile\ConfigFileExtensionNotSupportedException;
 use Marcus\PhpLegacyAnalyzer\Application\ConfigFile\ConfigFileFinder;
-use Marcus\PhpLegacyAnalyzer\Application\ConfigFile\MultipleConfigFilesException;
+use Marcus\PhpLegacyAnalyzer\Application\ConfigFile\Exceptions\ConfigFileExtensionNotSupportedException;
+use Marcus\PhpLegacyAnalyzer\Application\ConfigFile\Exceptions\MultipleConfigFilesException;
 use Marcus\PhpLegacyAnalyzer\Calculators\CalculatorService;
 use Marcus\PhpLegacyAnalyzer\Calculators\CouplingCalculator;
 use Marcus\PhpLegacyAnalyzer\Calculators\FilenameCalculator;

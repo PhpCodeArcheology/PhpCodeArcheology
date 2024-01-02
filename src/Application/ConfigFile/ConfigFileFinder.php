@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Marcus\PhpLegacyAnalyzer\Application\ConfigFile;
 
 use Marcus\PhpLegacyAnalyzer\Application\Config;
+use Marcus\PhpLegacyAnalyzer\Application\ConfigFile\Exceptions\ConfigFileExtensionNotSupportedException;
+use Marcus\PhpLegacyAnalyzer\Application\ConfigFile\Exceptions\MultipleConfigFilesException;
 
 class ConfigFileFinder
 {
