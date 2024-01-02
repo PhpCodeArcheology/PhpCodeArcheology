@@ -24,6 +24,7 @@
         }
     },
     "require": {
-        "nikic/php-parser": "^4.18"
+        "nikic/php-parser": "^4.18",
+        "symfony/yaml": "^7.0"
     }
 }

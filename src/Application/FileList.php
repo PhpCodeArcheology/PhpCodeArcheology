@@ -26,11 +26,17 @@ final class FileList
                 $dir = new \RecursiveDirectoryIterator($file);
                 $iterator = new \RecursiveIteratorIterator($dir);
 
+                $extensions = $this->config->get('extensions') ?? ['php'];
+                $extensionPattern = array_map(function($extension) {
+                    $extension = ltrim($extension, '.');
+                    return '\.' . $extension;
+                }, $extensions);
+
                 $pattern = sprintf(
-                    '#^%s%s%s$#',
+                    '#^%s%s(%s)$#',
                     preg_quote($file, '#'),
                     ! empty($exclude) ? '((?!' . implode('|', array_map('preg_quote', $exclude)) . ').)+' : '.+',
-                    '(\.php|\.inc)'
+                    implode('|', $extensionPattern)
                 );
 
                 foreach ($iterator as $currentFile) {

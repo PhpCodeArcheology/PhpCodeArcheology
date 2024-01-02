@@ -27,12 +27,16 @@ class FilenameCalculator implements CalculatorInterface
     public function afterTraverse(): void
     {
         $commonPath = $this->findCommonPath($this->files);
-        if (! str_ends_with($commonPath, '/')) {
+
+        if ($commonPath && ! str_ends_with($commonPath, '/')) {
             $commonPath .= '/';
         }
 
         foreach ($this->files as $key => $fileName) {
-            $projectPath = str_replace($commonPath, '', $fileName);
+            $projectPath = $fileName;
+            if ($commonPath) {
+                $projectPath = str_replace($commonPath, '', $fileName);
+            }
             $pathInfo = pathinfo($projectPath);
 
             $fileMetric = $this->metrics->get($key);

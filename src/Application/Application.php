@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Marcus\PhpLegacyAnalyzer\Application;
 
+use Marcus\PhpLegacyAnalyzer\Application\ConfigFile\ConfigFileExtensionNotSupportedException;
+use Marcus\PhpLegacyAnalyzer\Application\ConfigFile\ConfigFileFinder;
+use Marcus\PhpLegacyAnalyzer\Application\ConfigFile\MultipleConfigFilesException;
 use Marcus\PhpLegacyAnalyzer\Calculators\CalculatorService;
 use Marcus\PhpLegacyAnalyzer\Calculators\CouplingCalculator;
 use Marcus\PhpLegacyAnalyzer\Calculators\FilenameCalculator;
@@ -29,15 +32,23 @@ use Twig\Loader\FilesystemLoader;
 
 final class Application
 {
+    /**
+     * @throws ConfigFileExtensionNotSupportedException
+     * @throws MultipleConfigFilesException
+     */
     public function run(array $argv): void
     {
         $config = (new ArgumentParser())->parse($argv);
         $config->set('runningDir', getcwd());
 
+        $configFileFinder = new ConfigFileFinder($config);
+        $configFileFinder->checkRunningDir();
+
         try {
             $config->validate();
         } catch (ConfigException $e) {
             echo "Fehler: {$e->getMessage()}";
+            exit;
         }
 
         $fileList = new FileList($config);
