@@ -14,6 +14,7 @@ use Marcus\PhpLegacyAnalyzer\Metrics\ProjectMetrics;
 use Marcus\PhpLegacyAnalyzer\Predictions\GodClassPrediction;
 use Marcus\PhpLegacyAnalyzer\Predictions\PredictionInterface;
 use Marcus\PhpLegacyAnalyzer\Predictions\PredictionService;
+use Marcus\PhpLegacyAnalyzer\Predictions\TooComplexPrediction;
 use Marcus\PhpLegacyAnalyzer\Predictions\TooLongPrediction;
 use Marcus\PhpLegacyAnalyzer\Report\MarkdownReport;
 use Marcus\PhpLegacyAnalyzer\Report\MetricsSplitter;
@@ -63,6 +64,7 @@ final class Application
         $predictions = new PredictionService([
             new TooLongPrediction(),
             new GodClassPrediction(),
+            new TooComplexPrediction(),
         ], $metrics);
         $predictions->predict();
 
