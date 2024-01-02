@@ -11,6 +11,8 @@ use Marcus\PhpLegacyAnalyzer\Calculators\ProjectCalculator;
 use Marcus\PhpLegacyAnalyzer\Calculators\VariablesCalculator;
 use Marcus\PhpLegacyAnalyzer\Metrics\Metrics;
 use Marcus\PhpLegacyAnalyzer\Metrics\ProjectMetrics;
+use Marcus\PhpLegacyAnalyzer\Predictions\GodClassPrediction;
+use Marcus\PhpLegacyAnalyzer\Predictions\PredictionInterface;
 use Marcus\PhpLegacyAnalyzer\Predictions\PredictionService;
 use Marcus\PhpLegacyAnalyzer\Predictions\TooLongPrediction;
 use Marcus\PhpLegacyAnalyzer\Report\MarkdownReport;
@@ -60,8 +62,15 @@ final class Application
 
         $predictions = new PredictionService([
             new TooLongPrediction(),
+            new GodClassPrediction(),
         ], $metrics);
         $predictions->predict();
+
+        $problems = $predictions->getProblemCount();
+        $projectMetrics->set('OverallInformationCount', $problems[PredictionInterface::INFO]);
+        $projectMetrics->set('OverallWarningCount', $problems[PredictionInterface::WARNING]);
+        $projectMetrics->set('OverallErrorCount', $problems[PredictionInterface::ERROR]);
+        $metrics->set('project', $projectMetrics);
 
         $splitter = new MetricsSplitter($metrics);
         $splitter->split();

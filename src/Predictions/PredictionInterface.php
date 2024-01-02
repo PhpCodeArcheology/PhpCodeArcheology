@@ -8,5 +8,11 @@ use Marcus\PhpLegacyAnalyzer\Metrics\Metrics;
 
 interface PredictionInterface
 {
-    public function predict(Metrics $metrics): void;
+    const INFO = 0;
+    const WARNING = 1;
+    const ERROR = 2;
+
+    public function predict(Metrics $metrics): int;
+
+    public function getLevel(): int;
 }
