@@ -21,6 +21,8 @@ class ConfigFileParserJson implements ConfigFileParserInterface
     {
         $data = json_decode($json, true);
 
+        $config->set('configFileDir', dirname($this->file));
+
         if (isset($data['include'])) {
             $config->set('files', $data['include']);
         }
@@ -31,6 +33,10 @@ class ConfigFileParserJson implements ConfigFileParserInterface
 
         if (isset($data['extensions'])) {
             $config->set('extensions', $data['extensions']);
+        }
+
+        if (isset($data['reportType'])) {
+            $config->set('reportType', $data['reportType']);
         }
     }
 }

@@ -24,6 +24,8 @@ use Marcus\PhpLegacyAnalyzer\Predictions\TooMuchHtmlPrediction;
 use Marcus\PhpLegacyAnalyzer\Report\MarkdownReport;
 use Marcus\PhpLegacyAnalyzer\Report\MetricsSplitter;
 use Marcus\PhpLegacyAnalyzer\Report\ReportData;
+use Marcus\PhpLegacyAnalyzer\Report\ReportFactory;
+use Marcus\PhpLegacyAnalyzer\Report\ReportTypeNotSupported;
 use PhpParser\NodeTraverser;
 use PhpParser\ParserFactory;
 use Twig\Environment;
@@ -35,6 +37,7 @@ final class Application
     /**
      * @throws ConfigFileExtensionNotSupportedException
      * @throws MultipleConfigFilesException
+     * @throws ReportTypeNotSupported
      */
     public function run(array $argv): void
     {
@@ -100,7 +103,7 @@ final class Application
         ]);
         $twig->addExtension(new DebugExtension());
 
-        $report = new MarkdownReport($config, $reportData, $twigLoader, $twig);
+        $report = ReportFactory::create($config->get('reportType'), $config, $reportData, $twigLoader, $twig);
         $report->generate();
     }
 }

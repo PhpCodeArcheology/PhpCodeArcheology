@@ -6,3 +6,4 @@ exclude:
 extensions:
   - "php"
 reportDir: "report"
+reportType: "html"

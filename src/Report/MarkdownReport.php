@@ -12,9 +12,7 @@ use Twig\TemplateWrapper;
 
 class MarkdownReport implements ReportInterface
 {
-    private string $outputDir = '';
-
-    private string $templateDir = '';
+    use ReportTrait;
 
     public function __construct(
         private Config $config,
@@ -49,36 +47,6 @@ class MarkdownReport implements ReportInterface
         foreach ($templateData->getFiles() as $fileData) {
             $fileData['createDate'] = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
             $this->renderTemplate('file.md.twig', $fileData, 'files/' . $fileData['id'] . '.md');
-        }
-    }
-
-    private function renderTemplate(string $template, array $data, string $outputFile): void
-    {
-        $templateWrapper = $this->twig->load($template);
-        ob_start();
-        echo $templateWrapper->render($data);
-        file_put_contents($this->outputDir . $outputFile, ob_get_clean());
-    }
-
-    private function clearReportDir(): void
-    {
-        $this->deleteDirContents($this->outputDir);
-    }
-
-    private function deleteDirContents(string $dir): void
-    {
-        if (!str_ends_with($dir, '/')) {
-            $dir .= '/';
-        }
-
-        $files = glob($dir . '*', GLOB_MARK);
-        foreach ($files as $file) {
-            if (is_dir($file)) {
-                $this->deleteDirContents($file);
-                rmdir($file);
-            } else {
-                unlink($file);
-            }
         }
     }
 }
