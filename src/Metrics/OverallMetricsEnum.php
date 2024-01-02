@@ -32,6 +32,9 @@ enum OverallMetricsEnum: string{
     case OverallAvgCCClass = 'Average class complexity';
     case OverallAvgCCMethod = 'Average method complexity';
     case OverallAvgCCFunction = 'Average function complexity';
+    case OverallCommentWeight = 'Average comment weight';
+    case OverallAvgLcom = 'Average LCOM';
+    case OverallAvgMI = 'Average Maintainability Index';
     case OverallAvgUsesCount = 'Average class dependencies count';
     case OverallAvgUsedByCount = 'Average class usage count';
     case OverallAvgInstability = 'Average class instability';

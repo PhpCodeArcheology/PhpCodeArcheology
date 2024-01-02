@@ -26,7 +26,7 @@ class LcomVisitor implements NodeVisitor
     /**
      * @inheritDoc
      */
-    public function beforeTraverse(array $nodes)
+    public function beforeTraverse(array $nodes): void
     {
         $this->graph = new Graph();
     }

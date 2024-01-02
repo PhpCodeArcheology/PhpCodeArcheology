@@ -30,6 +30,11 @@ class ProjectCalculator implements CalculatorInterface
     private int $sumCCFunction;
     private int $metricCount;
 
+    private int $lcomSum;
+
+    private float $miSum;
+    private float $commentWeightSum;
+
     public function beforeTraverse(): void
     {
         $this->projectMetrics = $this->metrics->get('project');
@@ -60,6 +65,9 @@ class ProjectCalculator implements CalculatorInterface
         $this->sumCCFunction = 0;
 
         $this->metricCount = 0;
+        $this->lcomSum = 0;
+        $this->miSum = 0;
+        $this->commentWeightSum = 0;
     }
 
     public function calculate(MetricsInterface $metrics): void
@@ -69,6 +77,8 @@ class ProjectCalculator implements CalculatorInterface
 
         $this->maxCC = $this->maxCC < $metrics->get('cc') ? $metrics->get('cc') : $this->maxCC;
         $this->sumCC += $metrics->get('cc');
+        $this->miSum += $metrics->get('maintainabilityIndex');
+        $this->commentWeightSum += $metrics->get('commentWeight');
 
         switch (true) {
             case $metrics instanceof FileMetrics:
@@ -87,6 +97,8 @@ class ProjectCalculator implements CalculatorInterface
                 $this->data['OverallMostComplexClass'][$metrics->getName()] = $metrics->get('cc');
                 $this->maxCCClass = $this->maxCCClass < $metrics->get('cc') ? $metrics->get('cc') : $this->maxCCClass;
                 $this->sumCCClass += $metrics->get('cc');
+
+                $this->lcomSum += $metrics->get('lcom');
 
                 foreach ($metrics->get('methods') as $methodMetric) {
                     $this->data['OverallMostComplexMethod'][$metrics->getName() . '::' . $methodMetric->getName()] = $methodMetric->get('cc');
@@ -133,6 +145,9 @@ class ProjectCalculator implements CalculatorInterface
         $this->data['OverallAvgCCClass'] = $this->getAvgOrZero($this->sumCCClass, $classCount);
         $this->data['OverallAvgCCMethod'] = $this->getAvgOrZero($this->sumCCMethod, $methodCount);
         $this->data['OverallAvgCCFunction'] = $this->getAvgOrZero($this->sumCCFunction, $functionCount);
+        $this->data['OverallAvgLcom'] = $this->getAvgOrZero($this->lcomSum, $classCount);
+        $this->data['OverallAvgMI'] = $this->getAvgOrZero($this->miSum, $this->metricCount);
+        $this->data['OverallCommentWeight'] = $this->getAvgOrZero($this->commentWeightSum, $this->metricCount);
 
         foreach ($this->data as $key => $value) {
             $this->projectMetrics->set($key, $value);
@@ -142,7 +157,7 @@ class ProjectCalculator implements CalculatorInterface
 
     }
 
-    private function getAvgOrZero(int $value, int $count): int|float
+    private function getAvgOrZero(int|float $value, int $count): int|float
     {
         if ($count === 0) {
             return 0;
