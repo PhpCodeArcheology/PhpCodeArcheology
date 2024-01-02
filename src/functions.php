@@ -34,9 +34,6 @@ function getNodeName(mixed $node): ?string
         return '{' . $prettyPrinter->prettyPrint([$node]) . '}';
     }
 
-    if ($node instanceof Class_) {
-    }
-
     if (isset($node->class)) {
         return getNodeName($node->class);
     }
