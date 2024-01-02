@@ -10,6 +10,7 @@ use Marcus\PhpLegacyAnalyzer\Metrics\FunctionAndClassIdentifier;
 use PhpParser\Builder\Class_;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
+use PhpParser\PrettyPrinter\Standard;
 use function Marcus\PhpLegacyAnalyzer\getNodeName;
 
 class LcomVisitor implements NodeVisitor
@@ -57,7 +58,8 @@ class LcomVisitor implements NodeVisitor
                 && isset($node->var->name)
                 && getNodeName($node->var) === 'this') {
 
-                $name = getNodeName($node->name) . '()';
+                $nodeName = getNodeName($node->name);
+                $name = $nodeName . '()';
                 if (! $this->graph->has($name)) {
                     $this->graph->insert(new GraphNode($name));
                 }
@@ -91,7 +93,8 @@ class LcomVisitor implements NodeVisitor
                 $lcom += $this->traverseNodes($graphNode);
             }
 
-            $classId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->namespacedName, $this->path);
+            $className = (string) ClassName::ofNode($node);
+            $classId = (string) FunctionAndClassIdentifier::ofNameAndPath($className, $this->path);
             $classMetrics = $this->metrics->get($classId);
             $classMetrics->set('lcom', $lcom);
             $this->metrics->set($classId, $classMetrics);

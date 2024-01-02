@@ -4,13 +4,20 @@ declare(strict_types=1);
 
 namespace Marcus\PhpLegacyAnalyzer;
 
+use PhpParser\Node\Expr\BinaryOp\Concat;
+use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\New_;
 use PhpParser\Node\Expr\StaticCall;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Name;
 use PhpParser\Node\Name\FullyQualified;
+use PhpParser\Node\Stmt\Class_;
+use PhpParser\PrettyPrinter\Standard;
 
-function getNodeName(mixed $node):mixed {
+function getNodeName(mixed $node): ?string
+{
+    $prettyPrinter = new Standard();
+
     if (is_string($node)) {
         return $node;
     }
@@ -21,6 +28,13 @@ function getNodeName(mixed $node):mixed {
 
     if ($node instanceof New_ || $node instanceof StaticCall) {
         return getNodeName($node->class);
+    }
+
+    if ($node instanceof Concat) {
+        return '{' . $prettyPrinter->prettyPrint([$node]) . '}';
+    }
+
+    if ($node instanceof Class_) {
     }
 
     if (isset($node->class)) {
@@ -39,9 +53,13 @@ function getNodeName(mixed $node):mixed {
         return getNodeName($node->name);
     }
 
+    if (isset($node->name) && null === $node->name) {
+        return 'anonymous@' . spl_object_hash($node);
+    }
+
     if (isset($node->name)) {
         return (string) $node->name;
     }
 
-    return $node;
+    return null;
 }

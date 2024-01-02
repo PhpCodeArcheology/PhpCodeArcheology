@@ -27,12 +27,25 @@ class IdentifyVisitor implements NodeVisitor
 
     private array $methods = [];
 
+    private bool $inFunction = false;
+
+    private bool $inClass = false;
+
+    private array $outputCount = [
+        'overall' => 0,
+        'file' => 0,
+        'classes' => 0,
+        'functions' => 0,
+        'methods' => 0,
+    ];
+
     /**
      * @inheritDoc
      */
     public function beforeTraverse(array $nodes): void
     {
         $this->projectMetrics = $this->metrics->get('project');
+        $this->outputCount['file'] = 0;
     }
 
     /**
@@ -48,18 +61,28 @@ class IdentifyVisitor implements NodeVisitor
             $this->projectMetrics->set('OverallFunctions', $fnCount);
 
             $this->functions[(string) $metrics->getIdentifier()] = $metrics->getName();
+            $this->inFunction = true;
+            $this->outputCount['functions'] = 0;
+        }
+        elseif ($node instanceof Node\Stmt\ClassMethod) {
+            $this->inFunction = true;
+            $this->outputCount['methods'] = 0;
         }
         elseif ($node instanceof Node\Stmt\Class_
             || $node instanceof Node\Stmt\Interface_
             || $node instanceof Node\Stmt\Trait_
             || $node instanceof Node\Stmt\Enum_) {
+            $this->inClass = true;
+            $this->outputCount['classes'] = 0;
 
-            $metrics = new ClassMetrics($this->path, (string) $node->namespacedName);
+            $className = (string) ClassName::ofNode($node);
+            $metrics = new ClassMetrics($this->path, $className);
             $metrics->set('interface', false);
             $metrics->set('trait', false);
             $metrics->set('abstract', false);
             $metrics->set('enum', false);
             $metrics->set('final', false);
+            $metrics->set('anonymous', str_starts_with($className, 'anonymous@'));
 
             if (method_exists($node, 'isFinal') && $node->isFinal()) {
                 $metrics->set('final', true);
@@ -115,7 +138,7 @@ class IdentifyVisitor implements NodeVisitor
                     continue;
                 }
 
-                $method = new FunctionMetrics(path: '', name: (string) $stmt->name);
+                $method = new FunctionMetrics(path: (string) $metrics->getIdentifier(), name: (string) $stmt->name);
 
                 if (! isset($this->methods[(string) $metrics->getIdentifier()])) {
                     $this->methods[(string) $metrics->getIdentifier()] = [];
@@ -171,8 +194,34 @@ class IdentifyVisitor implements NodeVisitor
     /**
      * @inheritDoc
      */
-    public function leaveNode(Node $node)
+    public function leaveNode(Node $node): void
     {
+        switch (true) {
+            case $node instanceof Node\Stmt\Echo_:
+            case $node instanceof Node\Expr\Print_:
+                $this->countOutput();
+                break;
+
+            case $node instanceof Node\Expr\FuncCall:
+                $functionName = $node->name instanceof Node\Name ? $node->name->toString() : null;
+                if ($functionName === 'printf') {
+                    $this->countOutput();
+                }
+                break;
+        }
+
+        if ($node instanceof Node\Stmt\Function_) {
+            $this->inFunction = false;
+        }
+        elseif ($node instanceof Node\Stmt\ClassMethod) {
+            $this->inFunction = false;
+        }
+        elseif ($node instanceof Node\Stmt\Class_
+            || $node instanceof Node\Stmt\Interface_
+            || $node instanceof Node\Stmt\Trait_
+            || $node instanceof Node\Stmt\Enum_) {
+            $this->inClass = false;
+        }
     }
 
     /**
@@ -187,6 +236,25 @@ class IdentifyVisitor implements NodeVisitor
         $this->metrics->set('functions', $this->functions);
         $this->metrics->set('methods', $this->methods);
 
+        $this->projectMetrics->set('OverallOutputStatements', $this->outputCount['overall']);
+
         $this->metrics->set('project', $this->projectMetrics);
+    }
+
+    private function countOutput(): void
+    {
+        ++ $this->outputCount['overall'];
+        ++ $this->outputCount['file'];
+
+        if ($this->inClass) {
+            ++ $this->outputCount['classes'];
+
+            if ($this->inFunction) {
+                ++ $this->outputCount['methods'];
+            }
+        }
+        elseif ($this->inFunction) {
+            ++ $this->outputCount['functions'];
+        }
     }
 }

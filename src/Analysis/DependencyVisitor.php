@@ -8,6 +8,7 @@ use Marcus\PhpLegacyAnalyzer\Metrics\FileIdentifier;
 use Marcus\PhpLegacyAnalyzer\Metrics\FunctionAndClassIdentifier;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
+use PhpParser\PrettyPrinter\Standard;
 use function Marcus\PhpLegacyAnalyzer\getNodeName;
 
 class DependencyVisitor implements NodeVisitor
@@ -90,7 +91,8 @@ class DependencyVisitor implements NodeVisitor
                 $this->getFunctionDependencies($stmt);
             }
 
-            $classId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->namespacedName, $this->path);
+            $className = (string) ClassName::ofNode($node);
+            $classId = (string) FunctionAndClassIdentifier::ofNameAndPath($className, $this->path);
             $classMetrics = $this->metrics->get($classId);
             $classMetrics->set('dependencies', $this->classDependencies);
             $classMetrics->set('interfaces', $interfaces);

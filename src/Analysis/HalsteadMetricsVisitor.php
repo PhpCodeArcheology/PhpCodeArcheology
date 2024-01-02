@@ -54,7 +54,8 @@ class HalsteadMetricsVisitor extends NodeVisitorAbstract
             $this->classOperators = [];
             $this->classOperands = [];
 
-            $classId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->namespacedName, $this->path);
+            $className = (string) ClassName::ofNode($node);
+            $classId = (string) FunctionAndClassIdentifier::ofNameAndPath($className, $this->path);
             $this->currentMetric = $this->metrics->get($classId);
         }
         elseif ($node instanceof Node\Stmt\Function_
@@ -164,7 +165,7 @@ class HalsteadMetricsVisitor extends NodeVisitorAbstract
             $halstead = $this->calculateMetrics($this->classOperators, $this->classOperands);
             $methods = $this->currentMetric->get('methods');
 
-            $methodId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->name, '');
+            $methodId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->name, (string) $this->currentMetric->getIdentifier());
             $methodMetrics = $methods[$methodId];
 
             $methods[$methodId] = $this->saveToMetric($methodMetrics, $halstead);

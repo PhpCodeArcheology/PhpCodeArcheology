@@ -109,7 +109,8 @@ class LocVisitor implements NodeVisitor
             || $node instanceof Node\Stmt\Enum_) {
             $this->inClass = false;
 
-            $classId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->namespacedName, $this->path);
+            $className = (string) ClassName::ofNode($node);
+            $classId = (string) FunctionAndClassIdentifier::ofNameAndPath($className, $this->path);
             $classMetrics = $this->metrics->get($classId);
 
             $loc = $node->getEndLine() - $node->getStartLine() + 1;
@@ -125,7 +126,7 @@ class LocVisitor implements NodeVisitor
                     continue;
                 }
 
-                $methodId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $stmt->name, '');
+                $methodId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $stmt->name, (string) $classMetrics->getIdentifier());
                 $methodMetrics = $methods[$methodId];
 
                 $methodLoc = 0;

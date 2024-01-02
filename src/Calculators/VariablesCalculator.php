@@ -14,9 +14,9 @@ class VariablesCalculator implements CalculatorInterface
         foreach ($metrics->get('classes') as $classId => $className) {
             $classMetrics = $metrics->get($classId);
 
-            $superglobals = $classMetrics->get('superglobals');
-            $variables = $classMetrics->get('variables');
-            $constants = $classMetrics->get('constants');
+            $superglobals = $classMetrics->get('superglobals') ?? [];
+            $variables = $classMetrics->get('variables') ?? [];
+            $constants = $classMetrics->get('constants') ?? [];
 
             $superglobalsUsed = array_sum($superglobals);
             $distinctSuperglobalsUsed = count(array_filter($superglobals, fn($variableCount) => $variableCount > 0));

@@ -9,6 +9,7 @@ use Marcus\PhpLegacyAnalyzer\Metrics\FunctionAndClassIdentifier;
 use Marcus\PhpLegacyAnalyzer\Metrics\FunctionMetrics;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
+use function Marcus\PhpLegacyAnalyzer\getNodeName;
 
 /**
  * Calculate cyclomatic complexity
@@ -63,14 +64,16 @@ class CyclomaticComplexityVisitor implements NodeVisitor
             || $node instanceof Node\Stmt\Interface_
             || $node instanceof Node\Stmt\Trait_
             || $node instanceof Node\Stmt\Enum_) {
-            $classId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->namespacedName, $this->path);
+
+            $className = (string) ClassName::ofNode($node);
+            $classId = (string) FunctionAndClassIdentifier::ofNameAndPath($className, $this->path);
             $this->currentClass = $this->metrics->get($classId);
             $this->currentClassCc = 1;
         }
         elseif ($node instanceof Node\Stmt\ClassMethod) {
             $methods = $this->currentClass->get('methods');
 
-            $functionId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->name, '');
+            $functionId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->name, (string) $this->currentClass->getIdentifier());
             $this->currentFunction = $methods[$functionId];
             $this->currentFunctionCc = 1;
         }
@@ -103,7 +106,9 @@ class CyclomaticComplexityVisitor implements NodeVisitor
 
         if ($node instanceof Node\Stmt\Class_
             || $node instanceof Node\Stmt\Interface_
-            || $node instanceof Node\Stmt\Trait_) {
+            || $node instanceof Node\Stmt\Trait_
+            || $node instanceof Node\Stmt\Enum_) {
+
             $this->currentClass->set('cc', $this->currentClassCc);
             $this->metrics->set((string) $this->currentClass->getIdentifier(), $this->currentClass);
 
@@ -114,14 +119,10 @@ class CyclomaticComplexityVisitor implements NodeVisitor
             $this->currentFunction->set('cc', $this->currentFunctionCc);
             $methods[(string) $this->currentFunction->getIdentifier()] = $this->currentFunction;
             $this->metrics->set((string) $this->currentClass->getIdentifier(), $this->currentClass);
-
-            $this->currentFunction = null;
         }
         elseif ($node instanceof Node\Stmt\Function_) {
             $this->currentFunction->set('cc', $this->currentFunctionCc);
             $this->metrics->set((string) $this->currentFunction->getIdentifier(), $this->currentFunction);
-
-            $this->currentFunction = null;
         }
     }
 
