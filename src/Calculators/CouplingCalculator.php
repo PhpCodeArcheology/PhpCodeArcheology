@@ -16,6 +16,12 @@ class CouplingCalculator implements CalculatorInterface
 
     private array $classes = [];
 
+    private int $usedByCount = 0;
+
+    private int $usesCount = 0;
+
+    private float $instability = 0;
+
     public function beforeTraverse(): void
     {
         $this->classes = $this->metrics->get('classes');
@@ -61,7 +67,21 @@ class CouplingCalculator implements CalculatorInterface
             $instability = ($usesCount + $usedByCount) > 0 ? $usesCount / ($usesCount + $usedByCount) : 0;
             $metric->set('instability', $instability);
             $this->metrics->set($classId, $metric);
+
+            $this->usesCount += $usesCount;
+            $this->usedByCount += $usedByCount;
+            $this->instability += $instability;
         }
+
+        $avgUsesCount = $this->usesCount / count($this->classes);
+        $avgUsedByCount = $this->usedByCount / count($this->classes);
+        $avgInstability = $this->instability / count($this->classes);
+
+        $projectMetrics = $this->metrics->get('project');
+        $projectMetrics->set('OverallAvgUsesCount', $avgUsesCount);
+        $projectMetrics->set('OverallAvgUsedByCount', $avgUsedByCount);
+        $projectMetrics->set('OverallAvgInstability', $avgInstability);
+        $this->metrics->set('project', $projectMetrics);
     }
 
     private function handeClass(ClassMetrics $metric): ClassMetrics

@@ -24,7 +24,7 @@ class ProjectDataProvider implements ReportDataProviderInterface
         foreach ($metrics as $key => $label) {
             $value = $projectMetrics->get($key);
             $value = $value ?? '-';
-            $value = is_numeric($value) ? number_format($value) : $value;
+            $value = is_numeric($value) ? number_format($value, is_float($value) ? 2 : 0) : $value;
 
             $data[] = ['name' => $label, 'value' => $value];
         }
