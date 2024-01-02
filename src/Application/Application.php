@@ -51,12 +51,12 @@ final class Application
         $analyzer->analyze($fileList);
 
         $calculators = new CalculatorService([
-            new FilenameCalculator(),
-            new VariablesCalculator(),
-            new CouplingCalculator(),
-            new ProjectCalculator(),
+            new FilenameCalculator($metrics),
+            new VariablesCalculator($metrics),
+            new CouplingCalculator($metrics),
+            new ProjectCalculator($metrics),
         ], $metrics);
-        $calculators->calculate();
+        $calculators->run();
 
         $predictions = new PredictionService([
             new TooLongPrediction(),

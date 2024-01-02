@@ -6,39 +6,42 @@ namespace Marcus\PhpLegacyAnalyzer\Calculators;
 
 use Marcus\PhpLegacyAnalyzer\Metrics\FileMetrics;
 use Marcus\PhpLegacyAnalyzer\Metrics\Metrics;
+use Marcus\PhpLegacyAnalyzer\Metrics\MetricsInterface;
 
 class FilenameCalculator implements CalculatorInterface
 {
+    use CalculatorTrait;
 
-    public function calculate(Metrics $metrics): void
+    private array $files = [];
+
+    public function calculate(MetricsInterface $metrics): void
     {
-        $files = [];
-
-        foreach ($metrics->getAll() as $key => $metric) {
-            if (! $metric instanceof FileMetrics) {
-                continue;
-            }
-
-            $fileName = $metric->getName();
-            $files[$key] = $fileName;
+        if (! $metrics instanceof FileMetrics) {
+            return;
         }
 
-        $commonPath = $this->findCommonPath($files);
+        $fileName = $metrics->getName();
+        $this->files[(string) $metrics->getIdentifier()] = $fileName;
+    }
+
+    public function afterTraverse(): void
+    {
+        $commonPath = $this->findCommonPath($this->files);
         if (! str_ends_with($commonPath, '/')) {
             $commonPath .= '/';
         }
 
-        foreach ($files as $key => $fileName) {
+        foreach ($this->files as $key => $fileName) {
             $projectPath = str_replace($commonPath, '', $fileName);
             $pathInfo = pathinfo($projectPath);
 
-            $fileMetric = $metrics->get($key);
+            $fileMetric = $this->metrics->get($key);
             $fileMetric->set('fullName', $fileName);
             $fileMetric->set('projectPath', $projectPath);
             $fileMetric->set('dirName', $pathInfo['dirname']);
             $fileMetric->set('fileName', $pathInfo['basename']);
             $fileMetric->set('projectPath', $projectPath);
-            $metrics->set($key, $fileMetric);
+            $this->metrics->set($key, $fileMetric);
         }
     }
 

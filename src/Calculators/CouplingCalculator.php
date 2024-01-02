@@ -8,53 +8,63 @@ use Marcus\PhpLegacyAnalyzer\Metrics\ClassMetrics;
 use Marcus\PhpLegacyAnalyzer\Metrics\FileMetrics;
 use Marcus\PhpLegacyAnalyzer\Metrics\FunctionMetrics;
 use Marcus\PhpLegacyAnalyzer\Metrics\Metrics;
+use Marcus\PhpLegacyAnalyzer\Metrics\MetricsInterface;
 
 class CouplingCalculator implements CalculatorInterface
 {
-    public function calculate(Metrics $metrics): void
+    use CalculatorTrait;
+
+    private array $classes = [];
+
+    public function beforeTraverse(): void
     {
-        $classes = $metrics->get('classes');
+        $this->classes = $this->metrics->get('classes');
+    }
 
-        foreach ($metrics->getAll() as $key => $metric) {
-            switch (true) {
-                case $metric instanceof FileMetrics:
-                    if (!is_array($metric->get('dependencies'))) {
-                        break;
-                    }
+    public function calculate(MetricsInterface $metrics): void
+    {
+        $key = (string) $metrics->getIdentifier();
 
-                    $metric = $this->handleFile($metric, $classes);
+        switch (true) {
+            case $metrics instanceof FileMetrics:
+                if (!is_array($metrics->get('dependencies'))) {
                     break;
+                }
 
-                case $metric instanceof ClassMetrics:
-                    $metric = $this->handeClass($metric, $classes);
+                $metrics = $this->handleFile($metrics);
+                break;
+
+            case $metrics instanceof ClassMetrics:
+                $metrics = $this->handeClass($metrics);
+                break;
+
+            case $metrics instanceof FunctionMetrics:
+                if (!is_array($metrics->get('dependencies'))) {
                     break;
+                }
 
-                case $metric instanceof FunctionMetrics:
-                    if (!is_array($metric->get('dependencies'))) {
-                        break;
-                    }
-
-                    $metric = $this->handleFunction($metric, $classes);
-                    break;
-            }
-
-            $metrics->set($key, $metric);
+                $metrics = $this->handleFunction($metrics);
+                break;
         }
 
+        $metrics->set($key, $metrics);
+    }
 
-        foreach ($classes as $classId => $className) {
-            $metric = $metrics->get($classId);
+    public function afterTraverse(): void
+    {
+        foreach ($this->classes as $classId => $className) {
+            $metric = $this->metrics->get($classId);
 
             $usesCount = $metric->get('usesCount');
             $usedByCount = $metric->get('usedByCount');
 
             $instability = ($usesCount + $usedByCount) > 0 ? $usesCount / ($usesCount + $usedByCount) : 0;
             $metric->set('instability', $instability);
-            $metrics->set($classId, $metric);
+            $this->metrics->set($classId, $metric);
         }
     }
 
-    private function handeClass(ClassMetrics $metric, array $classes): ClassMetrics
+    private function handeClass(ClassMetrics $metric): ClassMetrics
     {
         $uses = $metric->get('uses') ?? [];
         $usesCount = $metric->get('usesCount') ?? 0;
@@ -69,7 +79,7 @@ class CouplingCalculator implements CalculatorInterface
             ++ $usesCount;
             $uses[] = $dependency;
 
-            $classKey = array_search($dependency, $classes);
+            $classKey = array_search($dependency, $this->classes);
             if (! $classKey) {
                 continue;
             }
@@ -86,13 +96,13 @@ class CouplingCalculator implements CalculatorInterface
         return $metric;
     }
 
-    private function handleFile(FileMetrics $metric, array $classes): FileMetrics
+    private function handleFile(FileMetrics $metric): FileMetrics
     {
         $usedFromOutside = $metric->get('usedFromOutside') ?? [];
         $usedFromOutsideCount = $metric->get('usedFromOutsideCount') ?? 0;
 
         foreach ($metric->get('dependencies') as $dependency) {
-            $classKey = array_search($dependency, $classes);
+            $classKey = array_search($dependency, $this->classes);
             if (!$classKey) {
                 continue;
             }
@@ -107,13 +117,13 @@ class CouplingCalculator implements CalculatorInterface
         return $metric;
     }
 
-    private function handleFunction(FunctionMetrics $metric, array $classes): FunctionMetrics
+    private function handleFunction(FunctionMetrics $metric): FunctionMetrics
     {
         $usedByFunction = $metric->get('usedByFunction') ?? [];
         $usedByFunctionCount = $metric->get('usedByFunctionCount') ?? 0;
 
         foreach ($metric->get('dependencies') as $dependency) {
-            $classKey = array_search($dependency, $classes);
+            $classKey = array_search($dependency, $this->classes);
             if (!$classKey) {
                 continue;
             }

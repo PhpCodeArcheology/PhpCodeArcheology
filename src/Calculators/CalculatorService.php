@@ -20,10 +20,31 @@ readonly class CalculatorService
     {
     }
 
-    public function calculate(): void
+    public function run(): void
+    {
+        $this->maybeCallMethod('beforeTraverse');
+
+        foreach ($this->metrics->getAll() as $metric) {
+            if (is_array($metric)) {
+                continue;
+            }
+
+            foreach ($this->calculators as $calculator) {
+                $calculator->calculate($metric);
+            }
+        }
+
+        $this->maybeCallMethod('afterTraverse');
+    }
+
+    private function maybeCallMethod(string $method): void
     {
         foreach ($this->calculators as $calculator) {
-            $calculator->calculate($this->metrics);
+            if (! method_exists($calculator, $method)) {
+                continue;
+            }
+
+            $calculator->$method();
         }
     }
 }

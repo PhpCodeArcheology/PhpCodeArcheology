@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Marcus\PhpLegacyAnalyzer\Calculators;
 
-use Marcus\PhpLegacyAnalyzer\Metrics\Metrics;
+use Marcus\PhpLegacyAnalyzer\Metrics\MetricsInterface;
 
 interface CalculatorInterface
 {
-    public function calculate(Metrics $metrics);
+    public function calculate(MetricsInterface $metrics);
 }

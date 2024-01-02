@@ -5,14 +5,20 @@ declare(strict_types=1);
 namespace Marcus\PhpLegacyAnalyzer\Calculators;
 
 use Marcus\PhpLegacyAnalyzer\Metrics\Metrics;
+use Marcus\PhpLegacyAnalyzer\Metrics\MetricsInterface;
 
 class VariablesCalculator implements CalculatorInterface
 {
+    use CalculatorTrait;
 
-    public function calculate(Metrics $metrics): void
+    public function calculate(MetricsInterface $metrics): void
     {
-        foreach ($metrics->get('classes') as $classId => $className) {
-            $classMetrics = $metrics->get($classId);
+    }
+
+    public function afterTraverse(): void
+    {
+        foreach ($this->metrics->get('classes') as $classId => $className) {
+            $classMetrics = $this->metrics->get($classId);
 
             $superglobals = $classMetrics->get('superglobals') ?? [];
             $variables = $classMetrics->get('variables') ?? [];
@@ -36,7 +42,7 @@ class VariablesCalculator implements CalculatorInterface
             $classMetrics->set('distinctConstantsUsed', $distinctConstantsUsed);
             $classMetrics->set('superglobalMetric', $superglobalMetric);
 
-            $metrics->set($classId, $classMetrics);
+            $this->metrics->set($classId, $classMetrics);
         }
     }
 }
