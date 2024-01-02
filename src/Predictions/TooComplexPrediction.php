@@ -25,12 +25,12 @@ class TooComplexPrediction implements PredictionInterface
                         $methodCc += $method->get('cc');
 
                         if ($method->get('cc') <= 10) {
-                            $method->set('tooComplex', false);
+                            $method->set('predictionTooComplex', false);
                             continue;
                         }
 
                         ++ $problemCount;
-                        $method->set('tooComplex', true);
+                        $method->set('predictionTooComplex', true);
                         $methods[$methodKey] = $method;
                     }
 
@@ -44,13 +44,13 @@ class TooComplexPrediction implements PredictionInterface
 
                     $metric->set('methods', $methods);
                     $metric->set('avgMethodCc', $avgMethodCc);
-                    $metric->set('tooComplex', $classTooComplex);
+                    $metric->set('predictionTooComplex', $classTooComplex);
                     break;
 
                 case $metric instanceof FunctionMetrics:
                     $maxComplexity = $metric->get('lloc') > 20 ? 20 : 10;
                     $tooComplex = $metric->get('cc') > $maxComplexity;
-                    $metric->set('tooComplex', $tooComplex);
+                    $metric->set('predictionTooComplex', $tooComplex);
                     if ($tooComplex) {
                         ++ $problemCount;
                     }

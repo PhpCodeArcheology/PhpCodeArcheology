@@ -29,7 +29,7 @@ class TooLongPrediction implements PredictionInterface
             };
 
             $isTooLong = $metric->get('lloc') > $maxLloc;
-            $metric->set('tooLong', $isTooLong);
+            $metric->set('predictionTooLong', $isTooLong);
             $metrics->set($key, $metric);
 
             if ($isTooLong) {
@@ -43,7 +43,7 @@ class TooLongPrediction implements PredictionInterface
             $methods = $metric->get('methods');
             foreach ($methods as $methodId => $methodMetric) {
                 $isTooLong = $methodMetric->get('lloc') > 30;
-                $methodMetric->set('tooLong', $isTooLong);
+                $methodMetric->set('predictionTooLong', $isTooLong);
                 $methods[$methodId] = $methodMetric;
 
                 if ($isTooLong) {

@@ -45,7 +45,7 @@ class GodClassPrediction implements PredictionInterface
                 ++ $problemCount;
             }
 
-            $metric->set('godObject', $maybeIsGodObject);
+            $metric->set('predictionGodObject', $maybeIsGodObject);
             $metric->set('godObjectSuspectIndex', $suspectIndex);
             $metrics->set((string) $metric->getIdentifier(), $metric);
         }

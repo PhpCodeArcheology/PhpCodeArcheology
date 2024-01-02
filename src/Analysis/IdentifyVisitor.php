@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Marcus\PhpLegacyAnalyzer\Analysis;
 
 use Marcus\PhpLegacyAnalyzer\Metrics\ClassMetrics;
+use Marcus\PhpLegacyAnalyzer\Metrics\FileIdentifier;
+use Marcus\PhpLegacyAnalyzer\Metrics\FunctionAndClassIdentifier;
 use Marcus\PhpLegacyAnalyzer\Metrics\FunctionMetrics;
 use Marcus\PhpLegacyAnalyzer\Metrics\MetricsInterface;
 use PhpParser\Builder\Enum_;
@@ -212,6 +214,11 @@ class IdentifyVisitor implements NodeVisitor
 
         if ($node instanceof Node\Stmt\Function_) {
             $this->inFunction = false;
+
+            $functionId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->namespacedName, $this->path);
+            $functionMetrics = $this->metrics->get($functionId);
+            $functionMetrics->set('outputCount', $this->outputCount['functions']);
+            $this->metrics->set($functionId, $functionMetrics);
         }
         elseif ($node instanceof Node\Stmt\ClassMethod) {
             $this->inFunction = false;
@@ -221,6 +228,12 @@ class IdentifyVisitor implements NodeVisitor
             || $node instanceof Node\Stmt\Trait_
             || $node instanceof Node\Stmt\Enum_) {
             $this->inClass = false;
+
+            $className = (string) ClassName::ofNode($node);
+            $classId = (string) FunctionAndClassIdentifier::ofNameAndPath($className, $this->path);
+            $classMetrics = $this->metrics->get($classId);
+            $classMetrics->set('outputCount', $this->outputCount['classes']);
+            $this->metrics->set($classId, $classMetrics);
         }
     }
 
@@ -239,6 +252,11 @@ class IdentifyVisitor implements NodeVisitor
         $this->projectMetrics->set('OverallOutputStatements', $this->outputCount['overall']);
 
         $this->metrics->set('project', $this->projectMetrics);
+
+        $fileId = (string) FileIdentifier::ofPath($this->path);
+        $fileMetrics = $this->metrics->get($fileId);
+        $fileMetrics->set('outputCount', $this->outputCount['file']);
+        $this->metrics->set($fileId, $fileMetrics);
     }
 
     private function countOutput(): void
