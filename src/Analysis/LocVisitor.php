@@ -48,8 +48,12 @@ class LocVisitor implements NodeVisitor
         $lastNode = $nodes[array_key_last($nodes)];
         $loc = $lastNode->getEndLine();
 
+        $nodesWithoutHtml = array_filter($nodes, function($node) {
+            return !$node instanceof Node\Stmt\InlineHTML;
+        });
+
         $prettyPrinter = new PrettyPrinter\Standard();
-        $code = $prettyPrinter->prettyPrint($nodes);
+        $code = $prettyPrinter->prettyPrint($nodesWithoutHtml);
 
         [$cloc, $lloc] = $this->getClocAndLloc($code);
 
@@ -129,17 +133,14 @@ class LocVisitor implements NodeVisitor
                 $methodId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $stmt->name, (string) $classMetrics->getIdentifier());
                 $methodMetrics = $methods[$methodId];
 
-                $methodLoc = 0;
-                $methodCloc = 0;
-                $methodLloc = 0;
-                if ($stmt->stmts && count($stmt->stmts) > 0) {
-                    $firstMethodStmt = $stmt->stmts[0];
-                    $lastMethodStmt = $stmt->stmts[array_key_last($stmt->stmts)];
+                $methodLoc = $stmt->getEndLine() - $stmt->getStartLine() + 1;
 
-                    $methodLoc = $lastMethodStmt->getEndLine() - $firstMethodStmt->getStartLine() + 1;
+                $methodBodyCode = $prettyPrinter->prettyPrint($stmt->stmts);
+                [$methodCloc, $methodLloc] = $this->getClocAndLloc($methodBodyCode);
 
-                    $methodBodyCode = $prettyPrinter->prettyPrint($stmt->stmts);
-                    [$methodCloc, $methodLloc] = $this->getClocAndLloc($methodBodyCode);
+                if (count($stmt->stmts) === 0) {
+                    $methodLloc = 0;
+                    $methodCloc = 0;
                 }
 
                 $methodMetrics->set('loc', $methodLoc);
