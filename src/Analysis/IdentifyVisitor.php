@@ -9,7 +9,6 @@ use Marcus\PhpLegacyAnalyzer\Metrics\FileIdentifier;
 use Marcus\PhpLegacyAnalyzer\Metrics\FunctionAndClassIdentifier;
 use Marcus\PhpLegacyAnalyzer\Metrics\FunctionMetrics;
 use Marcus\PhpLegacyAnalyzer\Metrics\MetricsInterface;
-use PhpParser\Builder\Enum_;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
 
@@ -104,7 +103,7 @@ class IdentifyVisitor implements NodeVisitor
                 $this->classes[(string) $metrics->getIdentifier()] = $metrics->getName();
             }
 
-            if ($node instanceof Enum_) {
+            if ($node instanceof Node\Stmt\Enum_) {
                 $metrics->set('enum', true);
                 $this->enums[(string) $metrics->getIdentifier()] = $metrics->getName();
             }
