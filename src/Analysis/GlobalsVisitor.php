@@ -44,14 +44,15 @@ class GlobalsVisitor implements NodeVisitor
 
     private array $classConstantMap = [];
 
-    private bool $inFunction = false;
-
-    private bool $inClass = false;
-
     /**
      * @var MetricsInterface[]
      */
     private array $classMetrics = [];
+
+    /**
+     * @var MetricsInterface[]
+     */
+    private array $functionMetrics = [];
 
     private array $constantsDefined = [];
 
@@ -64,6 +65,7 @@ class GlobalsVisitor implements NodeVisitor
     {
         $this->superglobals = self::GLOBALS;
         $this->variableMap = [];
+        $this->classMetrics = [];
     }
 
     /**
@@ -73,21 +75,35 @@ class GlobalsVisitor implements NodeVisitor
     {
         if ($node instanceof Node\Stmt\Function_
             || $node instanceof Node\Stmt\ClassMethod) {
-            $this->superglobalsFunction = self::GLOBALS;
-            $this->functionVariableMap = [];
-            $this->functionConstantMap = [];
-            $this->inFunction = true;
+            $functionName = strval($node->namespacedName ?? $node->name);
+
+            $this->superglobalsFunction[$functionName] = self::GLOBALS;
+            $this->functionVariableMap[$functionName] = [];
+            $this->functionConstantMap[$functionName] = [];
+
+            if ($node instanceof Node\Stmt\Function_) {
+                $functionId = (string) FunctionAndClassIdentifier::ofNameAndPath($functionName, $this->path);
+                $this->functionMetrics[] = $this->metrics->get($functionId);
+            }
+            else {
+                $classMetrics = end($this->classMetrics);
+                $methodId = (string) FunctionAndClassIdentifier::ofNameAndPath($functionName, (string) $classMetrics->getIdentifier());
+                $methods = $classMetrics->get('methods');
+                $this->functionMetrics[] = $methods[$methodId];
+
+            }
         }
         elseif ($node instanceof Node\Stmt\Class_
             || $node instanceof Node\Stmt\Interface_
             || $node instanceof Node\Stmt\Trait_
             || $node instanceof Node\Stmt\Enum_) {
-            $this->superglobalsClass = self::GLOBALS;
-            $this->classVariableMap = [];
-            $this->classConstantMap = [];
-            $this->inClass = true;
 
             $className = (string) ClassName::ofNode($node);
+
+            $this->superglobalsClass[$className] = self::GLOBALS;
+            $this->classVariableMap[$className] = [];
+            $this->classConstantMap[$className] = [];
+
             $classId = (string) FunctionAndClassIdentifier::ofNameAndPath($className, $this->path);
             $this->classMetrics[] = $this->metrics->get($classId);
         }
@@ -115,18 +131,30 @@ class GlobalsVisitor implements NodeVisitor
      */
     public function leaveNode(Node $node): void
     {
+        $classMetrics = end($this->classMetrics);
+        $className = null;
+        if ($classMetrics) {
+            $className = $classMetrics->getName();
+        }
+
+        $functionMetrics = end($this->functionMetrics);
+        $functionName = null;
+        if ($functionMetrics) {
+            $functionName = $functionMetrics->getName();
+        }
+
         if ($node instanceof Node\Expr\Variable
             && is_string($node->name)) {
 
             if (in_array($node->name, array_keys($this->superglobals))) {
                 ++ $this->superglobals[$node->name];
 
-                if ($this->inFunction) {
-                    ++ $this->superglobalsFunction[$node->name];
+                if (count($this->functionMetrics) > 0) {
+                    ++ $this->superglobalsFunction[$functionName][$node->name];
                 }
 
-                if ($this->inClass) {
-                    ++ $this->superglobalsClass[$node->name];
+                if (count($this->classMetrics) > 0) {
+                    ++ $this->superglobalsClass[$className][$node->name];
                 }
             }
             elseif (! in_array($node->name, ['this', 'self'])) {
@@ -135,18 +163,18 @@ class GlobalsVisitor implements NodeVisitor
                 }
                 ++ $this->variableMap[$node->name];
 
-                if ($this->inFunction) {
-                    if (! isset($this->functionVariableMap[$node->name])) {
-                        $this->functionVariableMap[$node->name] = 0;
+                if (count($this->functionMetrics) > 0) {
+                    if (! isset($this->functionVariableMap[$functionName][$node->name])) {
+                        $this->functionVariableMap[$functionName][$node->name] = 0;
                     }
-                    ++ $this->functionVariableMap[$node->name];
+                    ++ $this->functionVariableMap[$functionName][$node->name];
                 }
 
-                if ($this->inClass) {
-                    if (! isset($this->classVariableMap[$node->name])) {
-                        $this->classVariableMap[$node->name] = 0;
+                if (count($this->classMetrics) > 0) {
+                    if (! isset($this->classVariableMap[$className][$node->name])) {
+                        $this->classVariableMap[$className][$node->name] = 0;
                     }
-                    ++ $this->classVariableMap[$node->name];
+                    ++ $this->classVariableMap[$className][$node->name];
                 }
             }
         }
@@ -160,18 +188,18 @@ class GlobalsVisitor implements NodeVisitor
                 }
                 ++ $this->constantMap[$constantName];
 
-                if ($this->inFunction) {
-                    if (! isset($this->functionConstantMap[$constantName])) {
-                        $this->functionConstantMap[$constantName] = 0;
+                if (count($this->functionMetrics) > 0) {
+                    if (! isset($this->functionConstantMap[$functionName][$constantName])) {
+                        $this->functionConstantMap[$functionName][$constantName] = 0;
                     }
-                    ++ $this->functionConstantMap[$constantName];
+                    ++ $this->functionConstantMap[$functionName][$constantName];
                 }
 
-                if ($this->inClass) {
-                    if (! isset($this->classConstantMap[$constantName])) {
-                        $this->classConstantMap[$constantName] = 0;
+                if (count($this->classMetrics) > 0) {
+                    if (! isset($this->classConstantMap[$className][$constantName])) {
+                        $this->classConstantMap[$className][$constantName] = 0;
                     }
-                    ++ $this->classConstantMap[$constantName];
+                    ++ $this->classConstantMap[$className][$constantName];
                 }
             }
         }
@@ -179,26 +207,28 @@ class GlobalsVisitor implements NodeVisitor
 
         if ($node instanceof Node\Stmt\Function_
             || $node instanceof Node\Stmt\ClassMethod) {
-            $this->inFunction = false;
 
             if ($node instanceof Node\Stmt\Function_) {
-                $functionId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->namespacedName, $this->path);
-                $functionMetrics = $this->metrics->get($functionId);
-                $functionMetrics->set('superglobals', $this->superglobalsFunction);
-                $functionMetrics->set('variables', $this->functionVariableMap);
-                $functionMetrics->set('constants', $this->functionConstantMap);
+                $functionMetrics = array_pop($this->functionMetrics);
+                $functionName = $functionMetrics->getName();
+                $functionMetrics->set('superglobals', $this->superglobalsFunction[$functionName]);
+                $functionMetrics->set('variables', $this->functionVariableMap[$functionName]);
+                $functionMetrics->set('constants', $this->functionConstantMap[$functionName]);
                 $this->metrics->set((string) $functionMetrics->getIdentifier(), $functionMetrics);
             }
             else {
                 $classMetrics = end($this->classMetrics);
 
+                array_pop($this->functionMetrics);
+
                 $methods = $classMetrics->get('methods');
 
                 $methodId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->name, (string) $classMetrics->getIdentifier());
                 $methodMetrics = $methods[$methodId];
-                $methodMetrics->set('superglobals', $this->superglobalsFunction);
-                $methodMetrics->set('variables', $this->functionVariableMap);
-                $methodMetrics->set('constants', $this->functionVariableMap);
+                $methodName = $methodMetrics->getName();
+                $methodMetrics->set('superglobals', $this->superglobalsFunction[$methodName]);
+                $methodMetrics->set('variables', $this->functionVariableMap[$methodName]);
+                $methodMetrics->set('constants', $this->functionVariableMap[$methodName]);
                 $methods[$methodId] = $methodMetrics;
 
                 $classMetrics->set('methods', $methods);
@@ -209,13 +239,12 @@ class GlobalsVisitor implements NodeVisitor
             || $node instanceof Node\Stmt\Interface_
             || $node instanceof Node\Stmt\Trait_
             || $node instanceof Node\Stmt\Enum_) {
-            $this->inClass = false;
-
             $classMetrics = array_pop($this->classMetrics);
+            $className = $classMetrics->getName();
 
-            $classMetrics->set('superglobals', $this->superglobalsClass);
-            $classMetrics->set('variables', $this->classVariableMap);
-            $classMetrics->set('constants', $this->classConstantMap);
+            $classMetrics->set('superglobals', $this->superglobalsClass[$className]);
+            $classMetrics->set('variables', $this->classVariableMap[$className]);
+            $classMetrics->set('constants', $this->classConstantMap[$className]);
             $this->metrics->set((string) $classMetrics->getIdentifier(), $classMetrics);
         }
     }
