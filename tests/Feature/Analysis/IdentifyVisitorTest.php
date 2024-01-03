@@ -5,45 +5,23 @@ declare(strict_types=1);
 namespace Test\Feature\Analysis;
 
 use Marcus\PhpLegacyAnalyzer\Analysis\IdentifyVisitor;
-use Marcus\PhpLegacyAnalyzer\Metrics\FileMetrics;
-use Marcus\PhpLegacyAnalyzer\Metrics\Metrics;
-use Marcus\PhpLegacyAnalyzer\Metrics\ProjectMetrics;
-use PhpParser\NodeTraverser;
-use PhpParser\NodeVisitor\NameResolver;
-use PhpParser\ParserFactory;
+
+require_once __DIR__ . '/test_helpers.php';
 
 $testFunctions = require __DIR__ . '/fileprovider/test-functions-provider.php';
 $testClasses = require __DIR__ . '/fileprovider/test-classes-provider.php';
 $testMethods = require __DIR__ . '/fileprovider/test-methods-provider.php';
-function runAnalyzer(string $file): Metrics
+
+function getVisitors(): array
 {
-    $code = file_get_contents($file);
-
-    $projectMetrics = new ProjectMetrics(dirname($file));
-
-    $metrics = new Metrics();
-    $metrics->set('project', $projectMetrics);
-
-    $identifyVisitor = new IdentifyVisitor($metrics);
-    $identifyVisitor->setPath($file);
-
-    $fileMetrics = new FileMetrics($file);
-    $metrics->push($fileMetrics);
-
-    $parser = (new ParserFactory())->createForNewestSupportedVersion();
-    $traverser = new NodeTraverser();
-
-    $traverser->addVisitor(new NameResolver());
-    $traverser->addVisitor($identifyVisitor);
-
-    $stmts = $parser->parse($code);
-    $traverser->traverse($stmts);
-
-    return $metrics;
+    return [
+        IdentifyVisitor::class,
+    ];
 }
 
 it('detects functions correctly', function($testFile, $expected) {
-    $metrics = runAnalyzer($testFile);
+    $metrics = getMetricsForVisitors($testFile, getVisitors());
+
     $projectMetrics = $metrics->get('project');
 
     $functions = $metrics->get('functions');
@@ -62,7 +40,8 @@ it('detects functions correctly', function($testFile, $expected) {
 })->with($testFunctions);
 
 it('detects classes correctly', function($testFile, $expected) {
-    $metrics = runAnalyzer($testFile);
+    $metrics = getMetricsForVisitors($testFile, getVisitors());
+
     $projectMetrics = $metrics->get('project');
 
     $classes = $metrics->get('classes');
@@ -85,7 +64,8 @@ it('detects classes correctly', function($testFile, $expected) {
 })->with($testClasses);
 
 it('detects methods correctly', function($testFile, $expected) {
-    $metrics = runAnalyzer($testFile);
+    $metrics = getMetricsForVisitors($testFile, getVisitors());
+
     $projectMetrics = $metrics->get('project');
 
     $classes = $metrics->get('classes');
@@ -128,8 +108,7 @@ it('detects methods correctly', function($testFile, $expected) {
 it('detects correct class types', function() {
     $testFile = __DIR__ . '/testfiles/class-types.php';
 
-    $metrics = runAnalyzer($testFile);
-    $projectMetrics = $metrics->get('project');
+    $metrics = getMetricsForVisitors($testFile, getVisitors());
 
     expect(count($metrics->get('classes')))->toBe(1)
         ->and(count($metrics->get('interfaces')))->toBe(1)
