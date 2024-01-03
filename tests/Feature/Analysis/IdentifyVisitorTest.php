@@ -12,7 +12,7 @@ $testFunctions = require __DIR__ . '/fileprovider/test-functions-provider.php';
 $testClasses = require __DIR__ . '/fileprovider/test-classes-provider.php';
 $testMethods = require __DIR__ . '/fileprovider/test-methods-provider.php';
 
-function getVisitors(): array
+function getIdVisitors(): array
 {
     return [
         IdentifyVisitor::class,
@@ -20,7 +20,7 @@ function getVisitors(): array
 }
 
 it('detects functions correctly', function($testFile, $expected) {
-    $metrics = getMetricsForVisitors($testFile, getVisitors());
+    $metrics = getMetricsForVisitors($testFile, getIdVisitors());
 
     $projectMetrics = $metrics->get('project');
 
@@ -40,7 +40,7 @@ it('detects functions correctly', function($testFile, $expected) {
 })->with($testFunctions);
 
 it('detects classes correctly', function($testFile, $expected) {
-    $metrics = getMetricsForVisitors($testFile, getVisitors());
+    $metrics = getMetricsForVisitors($testFile, getIdVisitors());
 
     $projectMetrics = $metrics->get('project');
 
@@ -64,7 +64,7 @@ it('detects classes correctly', function($testFile, $expected) {
 })->with($testClasses);
 
 it('detects methods correctly', function($testFile, $expected) {
-    $metrics = getMetricsForVisitors($testFile, getVisitors());
+    $metrics = getMetricsForVisitors($testFile, getIdVisitors());
 
     $projectMetrics = $metrics->get('project');
 
@@ -108,7 +108,7 @@ it('detects methods correctly', function($testFile, $expected) {
 it('detects correct class types', function() {
     $testFile = __DIR__ . '/testfiles/class-types.php';
 
-    $metrics = getMetricsForVisitors($testFile, getVisitors());
+    $metrics = getMetricsForVisitors($testFile, getIdVisitors());
 
     expect(count($metrics->get('classes')))->toBe(1)
         ->and(count($metrics->get('interfaces')))->toBe(1)
