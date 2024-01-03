@@ -135,10 +135,11 @@ class LocVisitor implements NodeVisitor
 
                 $methodLoc = $stmt->getEndLine() - $stmt->getStartLine() + 1;
 
-                $methodBodyCode = $prettyPrinter->prettyPrint($stmt->stmts);
+                $methodBodyNodes = $stmt->stmts ? $stmt->stmts : [];
+                $methodBodyCode = $prettyPrinter->prettyPrint($methodBodyNodes);
                 [$methodCloc, $methodLloc] = $this->getClocAndLloc($methodBodyCode);
 
-                if (count($stmt->stmts) === 0) {
+                if (count($methodBodyNodes) === 0) {
                     $methodLloc = 0;
                     $methodCloc = 0;
                 }
