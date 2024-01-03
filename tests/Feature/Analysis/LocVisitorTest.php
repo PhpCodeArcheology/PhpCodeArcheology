@@ -22,7 +22,7 @@ function getLocVisitors(): array
     ];
 }
 
-it('counts loc, lloc and cloc correctly', function($testFile, $expections) {
+it('counts loc, lloc and cloc correctly', function($testFile, $expected) {
     $metrics = getMetricsForVisitors($testFile, getLocVisitors());
 
     $projectMetrics = $metrics->get('project');
@@ -76,15 +76,15 @@ it('counts loc, lloc and cloc correctly', function($testFile, $expections) {
         }
     }
 
-    expect($loc)->toBe($expections['loc'])
-        ->and($lloc)->toBe($expections['lloc'])
-        ->and($cloc)->toBe($expections['cloc']);
+    expect($loc)->toBe($expected['loc'])
+        ->and($lloc)->toBe($expected['lloc'])
+        ->and($cloc)->toBe($expected['cloc']);
 
-    foreach ($expections['file'] as $key => $value) {
+    foreach ($expected['file'] as $key => $value) {
         expect($fileData[$key])->toBe($value);
     }
 
-    foreach ($expections['functions'] as $functionExpectation) {
+    foreach ($expected['functions'] as $functionExpectation) {
         $data = $functionData[$functionExpectation['name']];
 
         expect($data['loc'])->toBe($functionExpectation['loc'])
@@ -93,7 +93,7 @@ it('counts loc, lloc and cloc correctly', function($testFile, $expections) {
 
     }
 
-    foreach ($expections['classes'] as $classExpectation) {
+    foreach ($expected['classes'] as $classExpectation) {
         $data = $classData[$classExpectation['name']];
 
         expect($data['loc'])->toBe($classExpectation['loc'])
