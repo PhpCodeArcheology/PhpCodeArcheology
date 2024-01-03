@@ -1,9 +1,8 @@
 ---
 include:
   - "src"
-  - "examples"
 exclude:
 extensions:
   - "php"
 reportDir: "report"
-reportType: "html"
+reportType: "markdown"
