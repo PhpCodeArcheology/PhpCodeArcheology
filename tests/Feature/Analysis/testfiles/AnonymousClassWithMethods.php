@@ -9,10 +9,15 @@ class AnonymousClassWithMethods
         return new class {
           public function testMethod2()
           {
+              $x = 1;
           }
 
           private function testMethod3()
           {
+              // Test
+              $y = 2;
+
+              return 'foo';
           }
         };
     }
