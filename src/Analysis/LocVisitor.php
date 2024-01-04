@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace Marcus\PhpLegacyAnalyzer\Analysis;
 
+use Marcus\PhpLegacyAnalyzer\Metrics\ClassMetrics;
 use Marcus\PhpLegacyAnalyzer\Metrics\FunctionAndClassIdentifier;
+use Marcus\PhpLegacyAnalyzer\Metrics\FunctionMetrics;
+use Marcus\PhpLegacyAnalyzer\Metrics\MetricsInterface;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
 use PhpParser\PrettyPrinter;
@@ -15,9 +18,20 @@ class LocVisitor implements NodeVisitor
 
     private array $functionNodes = [];
 
-    private bool $inFunction = false;
+    /**
+     * @var FunctionMetrics[]
+     */
+    private array $currentFunction = [];
 
-    private bool $inClass = false;
+    /**
+     * @var ClassMetrics[]
+     */
+    private array $currentClass = [];
+
+    /**
+     * @var string[]
+     */
+    private array $currentMethodName = [];
 
     private int $insideLloc = 0;
 
@@ -27,11 +41,11 @@ class LocVisitor implements NodeVisitor
 
     private int $fileHtmlLoc = 0;
 
-    private int $classHtmlLoc = 0;
+    private array $classHtmlLoc = [];
 
-    private int $functionHtmlLoc = 0;
+    private array $functionHtmlLoc = [];
 
-    private int $methodHtmlLoc = 0;
+    private array $methodHtmlLoc = [];
 
     /**
      * @inheritDoc
@@ -75,18 +89,31 @@ class LocVisitor implements NodeVisitor
      */
     public function enterNode(Node $node): void
     {
-        if ($node instanceof Node\Stmt\Function_
-            || $node instanceof Node\Stmt\ClassMethod) {
-            $this->inFunction = true;
-            $this->functionHtmlLoc = 0;
-            $this->methodHtmlLoc = 0;
+        if ($node instanceof Node\Stmt\Function_) {
+            $functionId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->namespacedName, $this->path);
+            $functionMetrics = $this->metrics->get($functionId);
+            $this->currentFunction[] = $functionMetrics;
+            $this->functionHtmlLoc[$functionMetrics->getName()] = 0;
+        }
+        if ($node instanceof Node\Stmt\ClassMethod) {
+            $currentClass = end($this->currentClass);
+
+            if (! isset($this->methodHtmlLoc[$currentClass->getName()])) {
+                $this->methodHtmlLoc[$currentClass->getName()] = [];
+            }
+            $this->methodHtmlLoc[$currentClass->getName()][(string) $node->name] = 0;
+            $this->currentMethodName[] = (string) $node->name;
         }
         if ($node instanceof Node\Stmt\Class_
             || $node instanceof Node\Stmt\Trait_
             || $node instanceof Node\Stmt\Interface_
             || $node instanceof Node\Stmt\Enum_) {
-            $this->inClass = true;
-            $this->classHtmlLoc = 0;
+
+            $className = (string) ClassName::ofNode($node);
+            $classId = (string) FunctionAndClassIdentifier::ofNameAndPath($className, $this->path);
+            $classMetrics = $this->metrics->get($classId);
+            $this->currentClass[] = $classMetrics;
+            $this->classHtmlLoc[$className] = 0;
         }
     }
 
@@ -96,26 +123,25 @@ class LocVisitor implements NodeVisitor
     public function leaveNode(Node $node): void
     {
         if ($node instanceof Node\Stmt\Function_) {
-            $this->inFunction = false;
 
-            $this->getLinesOfCodeFunction($node);
+            $functionMetrics = array_pop($this->currentFunction);
+            $this->getLinesOfCodeFunction($node, $functionMetrics->getName());
+            $this->functionNodes[$functionMetrics->getName()] = [];
 
-            $this->functionNodes = [];
-
-            $functionId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->namespacedName, $this->path);
-            $functionMetrics = $this->metrics->get($functionId);
+            $functionId = (string) $functionMetrics->getIdentifier();
             $functionMetrics->set('htmlLoc', $this->functionHtmlLoc);
             $this->metrics->set($functionId, $functionMetrics);
+
         }
         elseif ($node instanceof Node\Stmt\Class_
             || $node instanceof Node\Stmt\Interface_
             || $node instanceof Node\Stmt\Trait_
             || $node instanceof Node\Stmt\Enum_) {
-            $this->inClass = false;
 
-            $className = (string) ClassName::ofNode($node);
-            $classId = (string) FunctionAndClassIdentifier::ofNameAndPath($className, $this->path);
-            $classMetrics = $this->metrics->get($classId);
+            $classMetrics = array_pop($this->currentClass);
+
+            $className = $classMetrics->getName();
+            $classId = (string) $classMetrics->getIdentifier();
 
             $loc = $node->getEndLine() - $node->getStartLine() + 1;
 
@@ -123,64 +149,66 @@ class LocVisitor implements NodeVisitor
             $classCode = $prettyPrinter->prettyPrint([$node]);
             [$cloc, $lloc] = $this->getClocAndLloc($classCode);
 
-            $methods = $classMetrics->get('methods');
-
-            foreach ($node->stmts as $stmt) {
-                if (! $stmt instanceof Node\Stmt\ClassMethod) {
-                    continue;
-                }
-
-                $methodId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $stmt->name, (string) $classMetrics->getIdentifier());
-                $methodMetrics = $methods[$methodId];
-
-                $methodLoc = $stmt->getEndLine() - $stmt->getStartLine() + 1;
-
-                $methodBodyNodes = $stmt->stmts ? $stmt->stmts : [];
-                $methodBodyCode = $prettyPrinter->prettyPrint($methodBodyNodes);
-                [$methodCloc, $methodLloc] = $this->getClocAndLloc($methodBodyCode);
-
-                if (count($methodBodyNodes) === 0) {
-                    $methodLloc = 0;
-                    $methodCloc = 0;
-                }
-
-                $methodMetrics->set('loc', $methodLoc);
-                $methodMetrics->set('cloc', $methodCloc);
-                $methodMetrics->set('lloc', $methodLloc);
-                $methods[$methodId] = $methodMetrics;
-            }
-
             $classMetrics->set('loc', $loc);
             $classMetrics->set('cloc', $cloc);
             $classMetrics->set('lloc', $lloc);
-            $classMetrics->set('htmlLoc', $this->classHtmlLoc);
-            $classMetrics->set('methods', $methods);
+            $classMetrics->set('htmlLoc', $this->classHtmlLoc[$className]);
 
-            $this->metrics->push($classMetrics);
+            $this->metrics->set($classId, $classMetrics);
 
             $this->insideLloc += $lloc;
             $this->insideMethodLloc += $lloc;
         }
         elseif ($node instanceof Node\Stmt\ClassMethod) {
-            $this->inFunction = false;
+            $prettyPrinter = new PrettyPrinter\Standard();
+
+            $classMetrics = end($this->currentClass);
+            $methods = $classMetrics->get('methods');
+
+            $methodName = array_pop($this->currentMethodName);
+            $methodId = (string) FunctionAndClassIdentifier::ofNameAndPath($methodName, (string) $classMetrics->getIdentifier());
+            $methodMetric = $methods[$methodId];
+
+            $methodLoc = $node->getEndLine() - $node->getStartLine() + 1;
+            $methodBodyNodes = $node->stmts ? $node->stmts : [];
+            $methodBodyCode = $prettyPrinter->prettyPrint($methodBodyNodes);
+            [$methodCloc, $methodLloc] = $this->getClocAndLloc($methodBodyCode);
+
+            if (count($methodBodyNodes) === 0) {
+                $methodLloc = 0;
+                $methodCloc = 0;
+            }
+
+            $methodMetric->set('loc', $methodLoc);
+            $methodMetric->set('cloc', $methodCloc);
+            $methodMetric->set('lloc', $methodLloc);
+            $methodMetric->set('htmlLoc', $this->methodHtmlLoc[$classMetrics->getName()][$methodMetric->getName()]);
+
+            $methods[$methodId] = $methodMetric;
+
+            $classMetrics->set('methods', $methods);
+            $this->metrics->set((string) $classMetrics->getIdentifier(), $classMetrics);
         }
         elseif ($node instanceof Node\Stmt\InlineHTML) {
             $htmlLoc = $node->getEndLine() - $node->getStartLine();
             $this->fileHtmlLoc += $htmlLoc;
 
-            if ($this->inClass) {
-                $this->classHtmlLoc += $htmlLoc;
+            if (count($this->currentClass) > 0) {
+                $currentClass = end($this->currentClass);
+                $className = $currentClass->getName();
+                $this->classHtmlLoc[$className] += $htmlLoc;
 
-                if ($this->inFunction) {
-                    $this->methodHtmlLoc += $htmlLoc;
+                if (count($this->currentMethodName)) {
+
+                    $this->methodHtmlLoc[$currentClass->getName()][end($this->currentMethodName)] += $htmlLoc;
                 }
             }
-            elseif ($this->inFunction) {
-                $this->functionHtmlLoc += $htmlLoc;
+            elseif (count($this->currentFunction) > 0) {
+                $this->functionHtmlLoc[end($this->currentFunction)->getName()] += $htmlLoc;
             }
         }
-        elseif ($this->inFunction && str_starts_with($node->getType(), 'Stmt_')) {
-            $this->functionNodes[] = $node;
+        elseif (count($this->currentFunction) > 0 && str_starts_with($node->getType(), 'Stmt_')) {
+            $this->functionNodes[end($this->currentFunction)->getName()][] = $node;
         }
     }
 
@@ -215,13 +243,15 @@ class LocVisitor implements NodeVisitor
         $this->projectMetrics->set('OverallHtmlLoc', $OverallHtmlLoc);
     }
 
-    private function getLinesOfCodeFunction(Node $node): void
+    private function getLinesOfCodeFunction(Node\Stmt\Function_ $node, string $functionName): void
     {
         $loc = $node->getEndLine() - $node->getStartLine() + 1;
 
         // Get cloc and lloc from function body
         $prettyPrinter = new PrettyPrinter\Standard();
-        $functionBodyCode = $prettyPrinter->prettyPrint($this->functionNodes);
+
+        $fnNodes = $this->functionNodes[$functionName] ?? [];
+        $functionBodyCode = $prettyPrinter->prettyPrint($fnNodes);
         [$cloc, $lloc] = $this->getClocAndLloc($functionBodyCode);
 
         $functionId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->namespacedName, $this->path);

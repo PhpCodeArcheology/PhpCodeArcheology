@@ -31,9 +31,10 @@ it('counts loc, lloc and cloc correctly', function($testFile, $expected) {
     $lloc = $projectMetrics->get('OverallLloc');
     $cloc = $projectMetrics->get('OverallCloc');
 
-    $fileData = [];
-    $functionData = [];
-    $classData = [];
+    expect($loc)->toBe($expected['loc'])
+        ->and($lloc)->toBe($expected['lloc'])
+        ->and($cloc)->toBe($expected['cloc']);
+
 
     foreach ($metrics->getAll() as $metric) {
         switch (true) {
@@ -45,67 +46,59 @@ it('counts loc, lloc and cloc correctly', function($testFile, $expected) {
                     'llocOutside' => $metric->get('llocOutside'),
                     'htmlLoc' => $metric->get('htmlLoc'),
                 ];
+
+                expect($fileData)->toBe($expected['file']);
                 break;
 
             case $metric instanceof FunctionMetrics:
-                $functionData[$metric->getName()] = [
+                $fnName = $metric->getName();
+
+                if (! isset($expected['functions'][$fnName])) {
+                    break;
+                }
+
+                $functionData = [
                     'loc' => $metric->get('loc'),
                     'lloc' => $metric->get('lloc'),
                     'cloc' => $metric->get('cloc'),
                 ];
+
+                expect($functionData)->toBe($expected['functions'][$fnName]);
                 break;
 
             case $metric instanceof ClassMetrics:
-                $classMethods = $metric->get('methods');
-                $methods = [];
-                foreach ($classMethods as $methodMetric) {
-                    $methods[$methodMetric->getName()] = [
+                $className = $metric->getName();
+                $className = str_starts_with($className, 'anonymous') ? 'anonymous' : $className;
+
+                if (! isset($expected['classes'][$className])) {
+                    break;
+                }
+
+                $classData = [
+                    'loc' => $metric->get('loc'),
+                    'lloc' => $metric->get('lloc'),
+                    'cloc' => $metric->get('cloc'),
+                ];
+
+                expect($classData)->toBe($expected['classes'][$className]['data']);
+
+                $methods = $metric->get('methods');
+                foreach ($methods as $methodMetric) {
+                    $methodName = $methodMetric->getName();
+
+                    if (! isset($expected['classes'][$className]['methods'][$methodName])) {
+                        continue;
+                    }
+
+                    $methodsData = [
                         'loc' => $methodMetric->get('loc'),
                         'lloc' => $methodMetric->get('lloc'),
                         'cloc' => $methodMetric->get('cloc'),
                     ];
-                }
 
-                $classData[$metric->getName()] = [
-                    'loc' => $metric->get('loc'),
-                    'lloc' => $metric->get('lloc'),
-                    'cloc' => $metric->get('cloc'),
-                    'methods' => $methods,
-                ];
+                    expect($methodsData)->toBe($expected['classes'][$className]['methods'][$methodName]);
+                }
                 break;
         }
     }
-
-    expect($loc)->toBe($expected['loc'])
-        ->and($lloc)->toBe($expected['lloc'])
-        ->and($cloc)->toBe($expected['cloc']);
-
-    foreach ($expected['file'] as $key => $value) {
-        expect($fileData[$key])->toBe($value);
-    }
-
-    foreach ($expected['functions'] as $functionExpectation) {
-        $data = $functionData[$functionExpectation['name']];
-
-        expect($data['loc'])->toBe($functionExpectation['loc'])
-            ->and($data['lloc'])->toBe($functionExpectation['lloc'])
-            ->and($data['cloc'])->toBe($functionExpectation['cloc']);
-
-    }
-
-    foreach ($expected['classes'] as $classExpectation) {
-        $data = $classData[$classExpectation['name']];
-
-        expect($data['loc'])->toBe($classExpectation['loc'])
-            ->and($data['lloc'])->toBe($classExpectation['lloc'])
-            ->and($data['cloc'])->toBe($classExpectation['cloc']);
-
-        foreach ($classExpectation['methods'] as $methodExpectation) {
-            $methodData = $classData[$classExpectation['name']]['methods'][$methodExpectation['name']];
-
-            expect($methodData['loc'])->toBe($methodExpectation['loc'])
-                ->and($methodData['lloc'])->toBe($methodExpectation['lloc']);
-        }
-    }
-
 })->with($locTests);
