@@ -42,8 +42,6 @@ it('detects the dependencies correctly', function($testFile, $expects) {
                     break;
                 }
 
-                echo PHP_EOL.$fnName;
-
                 $fnExpects = $expects['functions'][$fnName];
 
                 expect(count($dependencies))->toBe($fnExpects['dependencyCount']);
