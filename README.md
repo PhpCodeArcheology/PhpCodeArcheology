@@ -10,3 +10,6 @@
 - [x] Dependence on super globals of functions, classes and methods
 - [x] Before using data providers there has to be some kind of data creation, because wie need to have all data before using providers
 - [ ] Detect code in comments
+- [ ] Add cli counter for processing data after traverse files
+- [ ] Add max lcom
+- [ ] Add min maintainability index

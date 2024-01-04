@@ -53,7 +53,6 @@ it('calculates cyclomatic complexity correctly', function($testFile, $expected) 
                 $methods = $metrics->get('methods');
 
                 if (!isset($expected['classes'][$className])) {
-                    var_dump($className);
                     break;
                 }
 

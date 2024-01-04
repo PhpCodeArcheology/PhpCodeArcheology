@@ -84,7 +84,7 @@ class CyclomaticComplexityVisitor implements NodeVisitor
             $methodMetric = $methods[$methodId];
             $methodName = $methodMetric->getName();
 
-            $this->currentFunction[$methodName] = $methodMetric;
+            $this->currentFunction[] = $methodMetric;
             $this->functionCc[$currentClass->getName()][$methodName] = 1;
         }
         elseif ($node instanceof Node\Stmt\Function_) {
@@ -136,6 +136,9 @@ class CyclomaticComplexityVisitor implements NodeVisitor
 
                 if (count($this->currentFunction) > 0) {
                     $currentFunction = end($this->currentFunction);
+                    if (!isset($this->functionCc[$currentClass->getName()][$currentFunction->getName()])) {
+                        $this->functionCc[$currentClass->getName()][$currentFunction->getName()] = 1;
+                    }
                     $this->functionCc[$currentClass->getName()][$currentFunction->getName()] += $increase;
                 }
             }

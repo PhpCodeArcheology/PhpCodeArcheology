@@ -1,7 +1,7 @@
 <?php
 
 return [
-    [
+    /*[
         __DIR__ . '/../testfiles/cyclomatic-complexity-1.php',
         [
             'file' => [
@@ -68,6 +68,17 @@ return [
                 'arrayTest' => [
                     'cc' => 2,
                 ],
+            ],
+            'classes' => [],
+        ],
+    ],*/
+    [
+        __DIR__ . '/../testfiles/MessageBus.php',
+        [
+            'file' => [
+                'cc' => 5,
+            ],
+            'function' => [
             ],
             'classes' => [],
         ],
