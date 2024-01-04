@@ -82,12 +82,16 @@ class HalsteadMetricsVisitor extends NodeVisitorAbstract
         if ($node instanceof Node\Expr\BinaryOp
             || $node instanceof Node\Expr\AssignOp
             || $node instanceof Node\Stmt\If_
+            || $node instanceof Node\Stmt\ElseIf_
+            || $node instanceof Node\Stmt\Else_
             || $node instanceof Node\Stmt\For_
             || $node instanceof Node\Stmt\Foreach_
             || $node instanceof Node\Stmt\Switch_
+            || $node instanceof Node\Expr\Match_
             || $node instanceof Node\Stmt\Catch_
             || $node instanceof Node\Stmt\Return_
             || $node instanceof Node\Stmt\While_
+            || $node instanceof Node\Stmt\Do_
             || $node instanceof Node\Expr\Assign
             || $node instanceof Node\Expr\Ternary
             || $node instanceof Node\Expr\BooleanNot
@@ -171,7 +175,7 @@ class HalsteadMetricsVisitor extends NodeVisitorAbstract
         elseif ($node instanceof Node\Stmt\ClassMethod) {
             $currentMetric = end($this->currentMetric);
 
-            $halstead = $this->calculateMetrics($this->classOperators, $this->classOperands);
+            $halstead = $this->calculateMetrics($this->functionOperators, $this->functionOperands);
             $methods = $currentMetric->get('methods');
 
             $methodId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->name, (string) $currentMetric->getIdentifier());
