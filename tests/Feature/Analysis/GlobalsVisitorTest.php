@@ -9,7 +9,6 @@ use Marcus\PhpLegacyAnalyzer\Analysis\IdentifyVisitor;
 use Marcus\PhpLegacyAnalyzer\Metrics\ClassMetrics;
 use Marcus\PhpLegacyAnalyzer\Metrics\FileMetrics;
 use Marcus\PhpLegacyAnalyzer\Metrics\FunctionMetrics;
-use phpDocumentor\Reflection\File;
 
 require_once __DIR__ . '/test_helpers.php';
 
@@ -26,7 +25,7 @@ function getGlobalsVisitors(): array
 it('counts globals correctly', function($testFile, $expected) {
     $metrics = getMetricsForVisitors($testFile, getGlobalsVisitors());
 
-    foreach ($metrics->getAll() as $key => $metrics) {
+    foreach ($metrics->getAll() as $metrics) {
         switch (true) {
             case $metrics instanceof FileMetrics:
                 $superglobals = $metrics->get('superglobals');

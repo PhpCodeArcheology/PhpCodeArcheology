@@ -34,4 +34,17 @@ return [
             'methodNamesAnonymousClass' => ['testMethod2', 'testMethod3'],
         ],
     ],
+    [
+        __DIR__ . '/../testfiles/cyclomatic-complexity-2.php',
+        [
+            'classCount' => 2,
+            'methodCount' => 3,
+            'methodNames' => createMethodNames(3),
+            'publicMethods' => 3,
+            'privateMethods' => null,
+            'staticMethods' => null,
+            'methodCountAnonymousClass' => 1,
+            'methodNamesAnonymousClass' => ['testMethod3'],
+        ],
+    ],
 ];
