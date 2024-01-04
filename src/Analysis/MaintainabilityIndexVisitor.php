@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace Marcus\PhpLegacyAnalyzer\Analysis;
 
+use Marcus\PhpLegacyAnalyzer\Metrics\ClassMetricsFactory;
 use Marcus\PhpLegacyAnalyzer\Metrics\FileIdentifier;
-use Marcus\PhpLegacyAnalyzer\Metrics\FunctionAndClassIdentifier;
+use Marcus\PhpLegacyAnalyzer\Metrics\FunctionMetricsFactory;
 use Marcus\PhpLegacyAnalyzer\Metrics\MetricsInterface;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
@@ -43,16 +44,21 @@ class MaintainabilityIndexVisitor implements NodeVisitor
             || $node instanceof Node\Stmt\Trait_
             || $node instanceof Node\Stmt\Enum_) {
 
-            $className = (string) ClassName::ofNode($node);
-            $classId = (string) FunctionAndClassIdentifier::ofNameAndPath($className, $this->path);
-            $this->currentClass[] = $this->metrics->get($classId);
+            $this->currentClass[] = ClassMetricsFactory::createFromMetricsByNodeAndPath(
+                $this->metrics,
+                $node,
+                $this->path
+            );
         }
         elseif ($node instanceof Node\Stmt\Function_
             || $node instanceof Node\Stmt\ClassMethod) {
 
             if ($node instanceof Node\Stmt\Function_) {
-                $functionId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->namespacedName, $this->path);
-                $this->currentFunction[] = $this->metrics->get($functionId);
+                $this->currentFunction[] = FunctionMetricsFactory::createFromMetricsByNameAndPath(
+                    $this->metrics,
+                    $node->namespacedName,
+                    $this->path
+                );
             }
         }
     }
@@ -66,8 +72,8 @@ class MaintainabilityIndexVisitor implements NodeVisitor
             || $node instanceof Node\Stmt\Trait_
             || $node instanceof Node\Stmt\Interface_
             || $node instanceof Node\Stmt\Enum_) {
-            $currentMetric = array_pop($this->currentClass);
 
+            $currentMetric = array_pop($this->currentClass);
             $currentMetric = $this->calculateIndex($currentMetric);
 
             $this->metrics->set((string) $currentMetric->getIdentifier(), $currentMetric);
@@ -83,9 +89,13 @@ class MaintainabilityIndexVisitor implements NodeVisitor
 
             $methods = $currentMetric->get('methods');
 
-            $methodId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->name, (string) $currentMetric->getIdentifier());
-            $methodMetrics = $methods[$methodId];
-            $methods[$methodId] = $this->calculateIndex($methodMetrics);
+            $methodMetrics = FunctionMetricsFactory::createFromMethodsByNameAndClassMetrics(
+                $methods,
+                $node->name,
+                $currentMetric
+            );
+
+            $methods[(string) $methodMetrics->getIdentifier()] = $this->calculateIndex($methodMetrics);
 
             $currentMetric->set('methods', $methods);
             $this->metrics->set((string) $currentMetric->getIdentifier(), $currentMetric);

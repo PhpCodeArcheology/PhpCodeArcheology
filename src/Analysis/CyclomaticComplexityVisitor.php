@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Marcus\PhpLegacyAnalyzer\Analysis;
 
 use Marcus\PhpLegacyAnalyzer\Metrics\ClassMetrics;
-use Marcus\PhpLegacyAnalyzer\Metrics\FunctionAndClassIdentifier;
+use Marcus\PhpLegacyAnalyzer\Metrics\ClassMetricsFactory;
 use Marcus\PhpLegacyAnalyzer\Metrics\FunctionMetrics;
+use Marcus\PhpLegacyAnalyzer\Metrics\FunctionMetricsFactory;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
-use function Marcus\PhpLegacyAnalyzer\getNodeName;
 
 /**
  * Calculate cyclomatic complexity
@@ -71,28 +71,38 @@ class CyclomaticComplexityVisitor implements NodeVisitor
             || $node instanceof Node\Stmt\Trait_
             || $node instanceof Node\Stmt\Enum_) {
 
-            $className = (string) ClassName::ofNode($node);
-            $classId = (string) FunctionAndClassIdentifier::ofNameAndPath($className, $this->path);
-            $this->currentClass[] = $this->metrics->get($classId);
-            $this->classCc[$className] = 1;
+            $classMetrics = ClassMetricsFactory::createFromMetricsByNodeAndPath(
+                $this->metrics,
+                $node,
+                $this->path
+            );
+
+            $this->currentClass[] = $classMetrics;
+            $this->classCc[$classMetrics->getName()] = 1;
         }
         elseif ($node instanceof Node\Stmt\ClassMethod) {
             $currentClass = end($this->currentClass);
             $methods = $currentClass->get('methods');
 
-            $methodId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->name, (string) $currentClass->getIdentifier());
-            $methodMetric = $methods[$methodId];
+            $methodMetric = FunctionMetricsFactory::createFromMethodsByNameAndClassMetrics(
+                $methods,
+                $node->name,
+                $currentClass
+            );
             $methodName = $methodMetric->getName();
 
             $this->currentFunction[] = $methodMetric;
             $this->functionCc[$currentClass->getName()][$methodName] = 1;
         }
         elseif ($node instanceof Node\Stmt\Function_) {
-            $functionId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->namespacedName, $this->path);
-            $functionMetrics = $this->metrics->get($functionId);
-            $functionName = $functionMetrics->getName();
+            $functionMetrics = FunctionMetricsFactory::createFromMetricsByNameAndPath(
+                $this->metrics,
+                $node->namespacedName,
+                $this->path
+            );
+
             $this->currentFunction[] = $functionMetrics;
-            $this->functionCc[$functionName] = 1;
+            $this->functionCc[$functionMetrics->getName()] = 1;
         }
     }
 

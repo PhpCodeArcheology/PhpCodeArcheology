@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Marcus\PhpLegacyAnalyzer\Analysis;
 
+use Marcus\PhpLegacyAnalyzer\Metrics\ClassMetricsFactory;
 use Marcus\PhpLegacyAnalyzer\Metrics\FileIdentifier;
 use Marcus\PhpLegacyAnalyzer\Metrics\FunctionAndClassIdentifier;
+use Marcus\PhpLegacyAnalyzer\Metrics\FunctionMetricsFactory;
 use Marcus\PhpLegacyAnalyzer\Metrics\MetricsInterface;
 use PhpParser\Node;
 use PhpParser\NodeVisitorAbstract;
@@ -57,9 +59,11 @@ class HalsteadMetricsVisitor extends NodeVisitorAbstract
             $this->classOperators = [];
             $this->classOperands = [];
 
-            $className = (string) ClassName::ofNode($node);
-            $classId = (string) FunctionAndClassIdentifier::ofNameAndPath($className, $this->path);
-            $this->currentMetric[] = $this->metrics->get($classId);
+            $this->currentMetric[] = ClassMetricsFactory::createFromMetricsByNodeAndPath(
+                $this->metrics,
+                $node,
+                $this->path
+            );
         }
         elseif ($node instanceof Node\Stmt\Function_
             || $node instanceof  Node\Stmt\ClassMethod) {
@@ -68,8 +72,11 @@ class HalsteadMetricsVisitor extends NodeVisitorAbstract
             $this->functionOperands = [];
 
             if ($node instanceof Node\Stmt\Function_) {
-                $functionId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->namespacedName, $this->path);
-                $this->currentMetric[] = $this->metrics->get($functionId);
+                $this->currentMetric[] = FunctionMetricsFactory::createFromMetricsByNameAndPath(
+                    $this->metrics,
+                    $node->namespacedName,
+                    $this->path
+                );
             }
         }
     }

@@ -11,8 +11,8 @@ class FunctionMetrics implements MetricsInterface
     private IdentifierInterface $identifier;
 
     public function __construct(
-        private string $path,
-        private string $name
+        private readonly string $path,
+        private readonly string $name
     )
     {
         $this->identifier = FunctionAndClassIdentifier::ofNameAndPath($this->name, $this->path);

@@ -15,7 +15,7 @@ trait VisitorTrait
 
     private ProjectMetrics $projectMetrics;
 
-    public function __construct(private Metrics $metrics)
+    public function __construct(private readonly Metrics $metrics)
     {
     }
 

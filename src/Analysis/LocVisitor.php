@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace Marcus\PhpLegacyAnalyzer\Analysis;
 
 use Marcus\PhpLegacyAnalyzer\Metrics\ClassMetrics;
+use Marcus\PhpLegacyAnalyzer\Metrics\ClassMetricsFactory;
 use Marcus\PhpLegacyAnalyzer\Metrics\FunctionAndClassIdentifier;
 use Marcus\PhpLegacyAnalyzer\Metrics\FunctionMetrics;
-use Marcus\PhpLegacyAnalyzer\Metrics\MetricsInterface;
+use Marcus\PhpLegacyAnalyzer\Metrics\FunctionMetricsFactory;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
 use PhpParser\PrettyPrinter;
@@ -90,8 +91,13 @@ class LocVisitor implements NodeVisitor
     public function enterNode(Node $node): void
     {
         if ($node instanceof Node\Stmt\Function_) {
-            $functionId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->namespacedName, $this->path);
-            $functionMetrics = $this->metrics->get($functionId);
+
+            $functionMetrics = FunctionMetricsFactory::createFromMetricsByNameAndPath(
+                $this->metrics,
+                $node->namespacedName,
+                $this->path
+            );
+
             $this->currentFunction[] = $functionMetrics;
             $this->functionHtmlLoc[$functionMetrics->getName()] = 0;
         }
@@ -109,11 +115,14 @@ class LocVisitor implements NodeVisitor
             || $node instanceof Node\Stmt\Interface_
             || $node instanceof Node\Stmt\Enum_) {
 
-            $className = (string) ClassName::ofNode($node);
-            $classId = (string) FunctionAndClassIdentifier::ofNameAndPath($className, $this->path);
-            $classMetrics = $this->metrics->get($classId);
+            $classMetrics = ClassMetricsFactory::createFromMetricsByNodeAndPath(
+                $this->metrics,
+                $node,
+                $this->path
+            );
+
             $this->currentClass[] = $classMetrics;
-            $this->classHtmlLoc[$className] = 0;
+            $this->classHtmlLoc[$classMetrics->getName()] = 0;
         }
     }
 
@@ -254,12 +263,16 @@ class LocVisitor implements NodeVisitor
         $functionBodyCode = $prettyPrinter->prettyPrint($fnNodes);
         [$cloc, $lloc] = $this->getClocAndLloc($functionBodyCode);
 
-        $functionId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->namespacedName, $this->path);
+        $functionMetrics = FunctionMetricsFactory::createFromMetricsByNameAndPath(
+            $this->metrics,
+            $node->namespacedName,
+            $this->path
+        );
 
-        $functionMetrics = $this->metrics->get($functionId);
         $functionMetrics->set('loc', $loc);
         $functionMetrics->set('cloc', $cloc);
         $functionMetrics->set('lloc', $lloc);
+
         $this->metrics->push($functionMetrics);
 
         // Get lloc of whole function (with function declaration and ending curly brackets

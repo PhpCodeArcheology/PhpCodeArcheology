@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace Marcus\PhpLegacyAnalyzer\Analysis;
 
+use Marcus\PhpLegacyAnalyzer\Metrics\ClassMetricsFactory;
 use Marcus\PhpLegacyAnalyzer\Metrics\FileIdentifier;
-use Marcus\PhpLegacyAnalyzer\Metrics\FunctionAndClassIdentifier;
+use Marcus\PhpLegacyAnalyzer\Metrics\FunctionMetricsFactory;
 use Marcus\PhpLegacyAnalyzer\Metrics\MetricsInterface;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
@@ -54,12 +55,14 @@ class DependencyVisitor implements NodeVisitor
             || $node instanceof Node\Stmt\Trait_
             || $node instanceof Node\Stmt\Enum_) {
 
-            $className = (string) ClassName::ofNode($node);
+            $classMetrics = ClassMetricsFactory::createFromMetricsByNodeAndPath(
+                $this->metrics,
+                $node,
+                $this->path
+            );
 
-            $this->classDependencies[$className] = [];
-
-            $classId = (string) FunctionAndClassIdentifier::ofNameAndPath($className, $this->path);
-            $this->currentClassMetrics[] = $this->metrics->get($classId);
+            $this->classDependencies[$classMetrics->getName()] = [];
+            $this->currentClassMetrics[] = $classMetrics;
         }
         elseif ($node instanceof Node\Stmt\Function_) {
             $this->insideFunction = true;
@@ -120,11 +123,14 @@ class DependencyVisitor implements NodeVisitor
         elseif ($node instanceof Node\Stmt\Function_) {
             $this->getFunctionDependencies($node);
 
-            $functionId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->namespacedName, $this->path);
-            $functionMetrics = $this->metrics->get($functionId);
+            $functionMetrics = FunctionMetricsFactory::createFromMetricsByNameAndPath(
+                $this->metrics,
+                $node->namespacedName,
+                $this->path
+            );
             $functionMetrics->set('dependencies', $this->functionDependencies);
 
-            $this->metrics->set($functionId, $functionMetrics);
+            $this->metrics->set((string) $functionMetrics->getIdentifier(), $functionMetrics);
 
             $this->insideFunction = false;
         }
@@ -132,15 +138,15 @@ class DependencyVisitor implements NodeVisitor
             $this->getFunctionDependencies($node);
 
             $currentClassMetrics = end($this->currentClassMetrics);
-            $className = $currentClassMetrics->getName();
-
             $methods = $currentClassMetrics->get('methods');
-            $classId = (string) $currentClassMetrics->getIdentifier();
-            $methodId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->name, $classId);
-            $methodMetric = $methods[$methodId];
 
-            $methodMetric->set('dependencies', $this->methodDependencies[$className]);
-            $methods[$methodId] = $methodMetric;
+            $methodMetric = FunctionMetricsFactory::createFromMethodsByNameAndClassMetrics(
+                $methods,
+                $node->name,
+                $currentClassMetrics
+            );
+            $methodMetric->set('dependencies', $this->methodDependencies[$currentClassMetrics->getName()]);
+            $methods[(string) $methodMetric->getIdentifier()] = $methodMetric;
             $currentClassMetrics->set('methods', $methods);
 
             $this->insideMethod = false;

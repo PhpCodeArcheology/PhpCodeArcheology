@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace Marcus\PhpLegacyAnalyzer\Analysis;
 
 use Marcus\PhpLegacyAnalyzer\Metrics\ClassMetrics;
+use Marcus\PhpLegacyAnalyzer\Metrics\ClassMetricsFactory;
 use Marcus\PhpLegacyAnalyzer\Metrics\FileIdentifier;
-use Marcus\PhpLegacyAnalyzer\Metrics\FunctionAndClassIdentifier;
 use Marcus\PhpLegacyAnalyzer\Metrics\FunctionMetrics;
+use Marcus\PhpLegacyAnalyzer\Metrics\FunctionMetricsFactory;
 use Marcus\PhpLegacyAnalyzer\Metrics\MetricsInterface;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
@@ -214,10 +215,14 @@ class IdentifyVisitor implements NodeVisitor
         if ($node instanceof Node\Stmt\Function_) {
             $this->inFunction = false;
 
-            $functionId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->namespacedName, $this->path);
-            $functionMetrics = $this->metrics->get($functionId);
+            $functionMetrics = FunctionMetricsFactory::createFromMetricsByNameAndPath(
+                $this->metrics,
+                $node->namespacedName,
+                $this->path
+            );
+
             $functionMetrics->set('outputCount', $this->outputCount['functions']);
-            $this->metrics->set($functionId, $functionMetrics);
+            $this->metrics->set((string) $functionMetrics->getIdentifier(), $functionMetrics);
         }
         elseif ($node instanceof Node\Stmt\ClassMethod) {
             $this->inFunction = false;
@@ -228,11 +233,13 @@ class IdentifyVisitor implements NodeVisitor
             || $node instanceof Node\Stmt\Enum_) {
             $this->inClass = false;
 
-            $className = (string) ClassName::ofNode($node);
-            $classId = (string) FunctionAndClassIdentifier::ofNameAndPath($className, $this->path);
-            $classMetrics = $this->metrics->get($classId);
+            $classMetrics = ClassMetricsFactory::createFromMetricsByNodeAndPath(
+                $this->metrics,
+                $node,
+                $this->path
+            );
             $classMetrics->set('outputCount', $this->outputCount['classes']);
-            $this->metrics->set($classId, $classMetrics);
+            $this->metrics->set((string) $classMetrics->getIdentifier(), $classMetrics);
         }
     }
 

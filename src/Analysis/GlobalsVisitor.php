@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace Marcus\PhpLegacyAnalyzer\Analysis;
 
+use Marcus\PhpLegacyAnalyzer\Metrics\ClassMetricsFactory;
 use Marcus\PhpLegacyAnalyzer\Metrics\FileIdentifier;
-use Marcus\PhpLegacyAnalyzer\Metrics\FunctionAndClassIdentifier;
+use Marcus\PhpLegacyAnalyzer\Metrics\FunctionMetricsFactory;
 use Marcus\PhpLegacyAnalyzer\Metrics\MetricsInterface;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
@@ -82,15 +83,21 @@ class GlobalsVisitor implements NodeVisitor
             $this->functionConstantMap[$functionName] = [];
 
             if ($node instanceof Node\Stmt\Function_) {
-                $functionId = (string) FunctionAndClassIdentifier::ofNameAndPath($functionName, $this->path);
-                $this->functionMetrics[] = $this->metrics->get($functionId);
+                $this->functionMetrics[] = FunctionMetricsFactory::createFromMetricsByNameAndPath(
+                    $this->metrics,
+                    $functionName,
+                    $this->path
+                );
             }
             else {
                 $classMetrics = end($this->classMetrics);
-                $methodId = (string) FunctionAndClassIdentifier::ofNameAndPath($functionName, (string) $classMetrics->getIdentifier());
                 $methods = $classMetrics->get('methods');
-                $this->functionMetrics[] = $methods[$methodId];
 
+                $this->functionMetrics[] = FunctionMetricsFactory::createFromMethodsByNameAndClassMetrics(
+                    $methods,
+                    $functionName,
+                    $classMetrics
+                );
             }
         }
         elseif ($node instanceof Node\Stmt\Class_
@@ -98,14 +105,17 @@ class GlobalsVisitor implements NodeVisitor
             || $node instanceof Node\Stmt\Trait_
             || $node instanceof Node\Stmt\Enum_) {
 
-            $className = (string) ClassName::ofNode($node);
+            $classMetrics = ClassMetricsFactory::createFromMetricsByNodeAndPath(
+                $this->metrics,
+                $node,
+                $this->path
+            );
 
-            $this->superglobalsClass[$className] = self::GLOBALS;
-            $this->classVariableMap[$className] = [];
-            $this->classConstantMap[$className] = [];
+            $this->superglobalsClass[$classMetrics->getName()] = self::GLOBALS;
+            $this->classVariableMap[$classMetrics->getName()] = [];
+            $this->classConstantMap[$classMetrics->getName()] = [];
 
-            $classId = (string) FunctionAndClassIdentifier::ofNameAndPath($className, $this->path);
-            $this->classMetrics[] = $this->metrics->get($classId);
+            $this->classMetrics[] = $classMetrics;
         }
 
         // TODO: Extract this to a constant visitor or integrate it here
@@ -223,13 +233,17 @@ class GlobalsVisitor implements NodeVisitor
 
                 $methods = $classMetrics->get('methods');
 
-                $methodId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->name, (string) $classMetrics->getIdentifier());
-                $methodMetrics = $methods[$methodId];
+                $methodMetrics = FunctionMetricsFactory::createFromMethodsByNameAndClassMetrics(
+                    $methods,
+                    $node->name,
+                    $classMetrics
+                );
+
                 $methodName = $methodMetrics->getName();
                 $methodMetrics->set('superglobals', $this->superglobalsFunction[$methodName]);
                 $methodMetrics->set('variables', $this->functionVariableMap[$methodName]);
                 $methodMetrics->set('constants', $this->functionVariableMap[$methodName]);
-                $methods[$methodId] = $methodMetrics;
+                $methods[(string) $methodMetrics->getIdentifier()] = $methodMetrics;
 
                 $classMetrics->set('methods', $methods);
                 $this->metrics->set((string) $classMetrics->getIdentifier(), $classMetrics);
