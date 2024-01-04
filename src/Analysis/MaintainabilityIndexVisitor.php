@@ -17,7 +17,12 @@ class MaintainabilityIndexVisitor implements NodeVisitor
     /**
      * @var MetricsInterface[]
      */
-    private array $currentMetric = [];
+    private array $currentClass = [];
+
+    /**
+     * @var MetricsInterface[]
+     */
+    private array $currentFunction = [];
 
 
     /**
@@ -40,14 +45,14 @@ class MaintainabilityIndexVisitor implements NodeVisitor
 
             $className = (string) ClassName::ofNode($node);
             $classId = (string) FunctionAndClassIdentifier::ofNameAndPath($className, $this->path);
-            $this->currentMetric[] = $this->metrics->get($classId);
+            $this->currentClass[] = $this->metrics->get($classId);
         }
         elseif ($node instanceof Node\Stmt\Function_
             || $node instanceof Node\Stmt\ClassMethod) {
 
             if ($node instanceof Node\Stmt\Function_) {
                 $functionId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->namespacedName, $this->path);
-                $this->currentMetric[] = $this->metrics->get($functionId);
+                $this->currentFunction[] = $this->metrics->get($functionId);
             }
         }
     }
@@ -60,15 +65,21 @@ class MaintainabilityIndexVisitor implements NodeVisitor
         if ($node instanceof Node\Stmt\Class_
             || $node instanceof Node\Stmt\Trait_
             || $node instanceof Node\Stmt\Interface_
-            || $node instanceof Node\Stmt\Function_
             || $node instanceof Node\Stmt\Enum_) {
-            $currentMetric = array_pop($this->currentMetric);
+            $currentMetric = array_pop($this->currentClass);
+
+            $currentMetric = $this->calculateIndex($currentMetric);
+
+            $this->metrics->set((string) $currentMetric->getIdentifier(), $currentMetric);
+        }
+        elseif ($node instanceof Node\Stmt\Function_) {
+            $currentMetric = array_pop($this->currentFunction);
 
             $currentMetric = $this->calculateIndex($currentMetric);
             $this->metrics->set((string) $currentMetric->getIdentifier(), $currentMetric);
         }
         elseif ($node instanceof Node\Stmt\ClassMethod) {
-            $currentMetric = end($this->currentMetric);
+            $currentMetric = end($this->currentClass);
 
             $methods = $currentMetric->get('methods');
 
