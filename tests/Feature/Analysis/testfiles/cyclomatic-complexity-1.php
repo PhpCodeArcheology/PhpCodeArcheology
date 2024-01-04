@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 function cycloTest($x) {
+    // Comment
     if ($x === 3) {
         return 4;
     }
