@@ -6,9 +6,9 @@ namespace Marcus\PhpLegacyAnalyzer\Analysis;
 
 use Marcus\PhpLegacyAnalyzer\Metrics\FileIdentifier;
 use Marcus\PhpLegacyAnalyzer\Metrics\FunctionAndClassIdentifier;
+use Marcus\PhpLegacyAnalyzer\Metrics\MetricsInterface;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
-use PhpParser\PrettyPrinter\Standard;
 use function Marcus\PhpLegacyAnalyzer\getNodeName;
 
 class DependencyVisitor implements NodeVisitor
@@ -21,9 +21,18 @@ class DependencyVisitor implements NodeVisitor
 
     private bool $insideFunction = false;
 
+    private bool $insideMethod = false;
+
+    /**
+     * @var MetricsInterface[]
+     */
+    private array $currentClassMetrics = [];
+
     private array $classDependencies = [];
 
     private array $functionDependencies = [];
+
+    private array $methodDependencies = [];
 
     private array $outsideDependencies = [];
 
@@ -45,12 +54,23 @@ class DependencyVisitor implements NodeVisitor
             || $node instanceof Node\Stmt\Trait_
             || $node instanceof Node\Stmt\Enum_) {
 
-            $this->insideClass = true;
-            $this->classDependencies = [];
+            $className = (string) ClassName::ofNode($node);
+
+            $this->classDependencies[$className] = [];
+
+            $classId = (string) FunctionAndClassIdentifier::ofNameAndPath($className, $this->path);
+            $this->currentClassMetrics[] = $this->metrics->get($classId);
         }
         elseif ($node instanceof Node\Stmt\Function_) {
             $this->insideFunction = true;
             $this->functionDependencies = [];
+        }
+        elseif ($node instanceof Node\Stmt\ClassMethod) {
+            $currentClassMetrics = end($this->currentClassMetrics);
+            $className = $currentClassMetrics->getName();
+
+            $this->insideMethod = true;
+            $this->methodDependencies[$className] = [];
         }
     }
 
@@ -70,35 +90,32 @@ class DependencyVisitor implements NodeVisitor
             if (isset($node->extends)) {
                 $extends = is_array($node->extends) ? $node->extends : [$node->extends];
 
-                foreach ($extends as $class) {
-                    $this->setDependency($class);
+                foreach ($extends as $id => $class) {
+                    $className = $this->setDependency($class);
+
+                    if (! $className) {
+                        continue;
+                    }
+
+                    $extends[$id] = $className;
                 }
             }
 
             if (isset($node->implements)) {
                 $interfaces = is_array($node->implements) ? $node->implements : [$node->implements];
 
-                foreach ($interfaces as $class) {
-                    $this->setDependency($class);
+                foreach ($interfaces as $id => $interface) {
+                    $interfaces[$id] = $this->setDependency($interface);
                 }
             }
 
-            foreach ($node->stmts as $stmt) {
-                if (! $stmt instanceof Node\Stmt\ClassMethod) {
-                    continue;
-                }
+            $currentClassMetrics = array_pop($this->currentClassMetrics);
 
-                $this->getFunctionDependencies($stmt);
-            }
+            $currentClassMetrics->set('dependencies', $this->classDependencies[$currentClassMetrics->getName()]);
+            $currentClassMetrics->set('interfaces', $interfaces);
+            $currentClassMetrics->set('extends', $extends);
 
-            $className = (string) ClassName::ofNode($node);
-            $classId = (string) FunctionAndClassIdentifier::ofNameAndPath($className, $this->path);
-            $classMetrics = $this->metrics->get($classId);
-            $classMetrics->set('dependencies', $this->classDependencies);
-            $classMetrics->set('interfaces', $interfaces);
-            $classMetrics->set('extends', $extends);
-
-            $this->insideClass = false;
+            $this->metrics->set((string) $currentClassMetrics->getIdentifier(), $currentClassMetrics);
         }
         elseif ($node instanceof Node\Stmt\Function_) {
             $this->getFunctionDependencies($node);
@@ -107,7 +124,26 @@ class DependencyVisitor implements NodeVisitor
             $functionMetrics = $this->metrics->get($functionId);
             $functionMetrics->set('dependencies', $this->functionDependencies);
 
+            $this->metrics->set($functionId, $functionMetrics);
+
             $this->insideFunction = false;
+        }
+        elseif ($node instanceof Node\Stmt\ClassMethod) {
+            $this->getFunctionDependencies($node);
+
+            $currentClassMetrics = end($this->currentClassMetrics);
+            $className = $currentClassMetrics->getName();
+
+            $methods = $currentClassMetrics->get('methods');
+            $classId = (string) $currentClassMetrics->getIdentifier();
+            $methodId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->name, $classId);
+            $methodMetric = $methods[$methodId];
+
+            $methodMetric->set('dependencies', $this->methodDependencies[$className]);
+            $methods[$methodId] = $methodMetric;
+            $currentClassMetrics->set('methods', $methods);
+
+            $this->insideMethod = false;
         }
 
         switch (true) {
@@ -130,42 +166,55 @@ class DependencyVisitor implements NodeVisitor
         $this->metrics->set($fileId, $fileMetrics);
     }
 
-    private function setDependency(mixed $dependency): void
+    private function setDependency(mixed $dependency): ?string
     {
         $dependency = getNodeName($dependency);
+
+        if (! $dependency) {
+            return null;
+        }
 
         $dependencyLowercase = strtolower((string) $dependency);
 
         if ($dependencyLowercase === 'self' || $dependencyLowercase === 'parent') {
-            return;
+            return null;
         }
 
-        if ($this->insideClass) {
-            if (in_array((string) $dependency, $this->classDependencies)) {
-                return;
+        if (count($this->currentClassMetrics) > 0) {
+            $currentClassMetrics = end($this->currentClassMetrics);
+            $className = $currentClassMetrics->getName();
+
+            if (in_array((string) $dependency, $this->classDependencies[$className])) {
+                return null;
             }
 
-            $this->classDependencies[] = (string) $dependency;
-            return;
+            $this->classDependencies[$className][] = (string) $dependency;
+
+            if ($this->insideMethod) {
+                $this->methodDependencies[$className][] = (string) $dependency;
+            }
         }
         elseif ($this->insideFunction) {
             if (in_array((string) $dependency, $this->functionDependencies)) {
-                return;
+                return null;
             }
 
             $this->functionDependencies[] = (string) $dependency;
         }
         else {
             if (in_array((string) $dependency, $this->outsideDependencies)) {
-                return;
+                return null;
             }
 
             $this->outsideDependencies[] = (string) $dependency;
         }
+
+        return $dependency;
     }
 
-    private function getFunctionDependencies(Node\Stmt\ClassMethod|Node\Stmt\Function_ $stmt): void
+    private function getFunctionDependencies(Node\Stmt\Function_|Node\Stmt\ClassMethod $stmt): void
     {
+
         foreach ($stmt->getParams() as $parameter) {
             if (! isset($parameter->type)
                 || ! $parameter->type instanceof Node\Name\FullyQualified) {
