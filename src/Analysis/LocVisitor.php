@@ -129,7 +129,7 @@ class LocVisitor implements NodeVisitor
             $this->functionNodes[$functionMetrics->getName()] = [];
 
             $functionId = (string) $functionMetrics->getIdentifier();
-            $functionMetrics->set('htmlLoc', $this->functionHtmlLoc);
+            $functionMetrics->set('htmlLoc', $this->functionHtmlLoc[$functionMetrics->getName()]);
             $this->metrics->set($functionId, $functionMetrics);
 
         }
