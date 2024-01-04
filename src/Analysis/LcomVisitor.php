@@ -21,7 +21,10 @@ class LcomVisitor implements NodeVisitor
 
     private GraphNode $fromNode;
 
-    private bool $inMethod = false;
+    /**
+     * @var string[]
+     */
+    private array $currentMethodName = [];
 
     /**
      * @inheritDoc
@@ -36,8 +39,13 @@ class LcomVisitor implements NodeVisitor
      */
     public function enterNode(Node $node): void
     {
-        if ($node instanceof Node\Stmt\ClassMethod) {
-            $this->inMethod = true;
+        if ($node instanceof Node\Stmt\Class_
+            || $node instanceof Node\Stmt\Trait_
+            || $node instanceof Node\Stmt\Enum_) {
+            $this->graph = new Graph();
+        }
+        elseif ($node instanceof Node\Stmt\ClassMethod) {
+            $this->currentMethodName[] = (string) $node->name;
 
             $graphNodeName = $node->name . '()';
             if (! $this->graph->has($graphNodeName)) {
@@ -53,7 +61,7 @@ class LcomVisitor implements NodeVisitor
      */
     public function leaveNode(Node $node): void
     {
-        if ($this->inMethod && $node instanceof Node\Expr\MethodCall) {
+        if (count($this->currentMethodName) > 0 && $node instanceof Node\Expr\MethodCall) {
             if (! $node->var instanceof Node\Expr\New_
                 && isset($node->var->name)
                 && getNodeName($node->var) === 'this') {
@@ -68,7 +76,7 @@ class LcomVisitor implements NodeVisitor
             }
         }
 
-        if ($this->inMethod
+        if (count($this->currentMethodName) > 0
             && $node instanceof Node\Expr\PropertyFetch
             && isset ($node->var->name)
             && $node->var->name === 'this') {
@@ -82,7 +90,7 @@ class LcomVisitor implements NodeVisitor
         }
 
         if ($node instanceof Node\Stmt\ClassMethod) {
-            $this->inMethod = false;
+            array_pop($this->currentMethodName);
         }
         elseif ($node instanceof Node\Stmt\Class_
             || $node instanceof Node\Stmt\Trait_
