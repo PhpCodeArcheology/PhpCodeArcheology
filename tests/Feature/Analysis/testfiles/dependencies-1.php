@@ -9,6 +9,14 @@ use PhpParser\NodeTraverser;
 interface FooInterface
 {}
 
+abstract class AbstractClass
+{
+
+}
+
+class X extends AbstractClass
+{}
+
 class FooClass implements FooInterface
 {
     public function __construct(

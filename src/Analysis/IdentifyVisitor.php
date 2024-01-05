@@ -84,6 +84,7 @@ class IdentifyVisitor implements NodeVisitor
             $metrics->set('abstract', false);
             $metrics->set('enum', false);
             $metrics->set('final', false);
+            $metrics->set('realClass', false);
             $metrics->set('anonymous', str_starts_with($className, 'anonymous@'));
 
             if (method_exists($node, 'isFinal') && $node->isFinal()) {
@@ -102,6 +103,7 @@ class IdentifyVisitor implements NodeVisitor
                 $this->projectMetrics->set('OverallClasses', $classCount);
 
                 $this->classes[(string) $metrics->getIdentifier()] = $metrics->getName();
+                $metrics->set('realClass', true);
             }
 
             if ($node instanceof Node\Stmt\Enum_) {

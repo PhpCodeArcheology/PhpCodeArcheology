@@ -22,6 +22,10 @@ class CouplingCalculator implements CalculatorInterface
 
     private float $instability = 0;
 
+    private int $abstractClasses = 0;
+
+    private int $concreteClasses = 0;
+
     public function beforeTraverse(): void
     {
         $this->classes = $this->metrics->get('classes');
@@ -64,8 +68,19 @@ class CouplingCalculator implements CalculatorInterface
             $usesCount = $metric->get('usesCount');
             $usedByCount = $metric->get('usedByCount');
 
+            /**
+             * @see https://kariera.future-processing.pl/blog/object-oriented-metrics-by-robert-martin/
+             */
             $instability = ($usesCount + $usedByCount) > 0 ? $usesCount / ($usesCount + $usedByCount) : 0;
             $metric->set('instability', $instability);
+
+            /**
+             * @see https://kariera.future-processing.pl/blog/object-oriented-metrics-by-robert-martin/
+             */
+            $abstractness = $this->calculateClassAbstractness($metric);
+
+            $metric->set('abstractness', $abstractness);
+
             $this->metrics->set($classId, $metric);
 
             $this->usesCount += $usesCount;
@@ -77,11 +92,41 @@ class CouplingCalculator implements CalculatorInterface
         $avgUsedByCount = $this->usedByCount / count($this->classes);
         $avgInstability = $this->instability / count($this->classes);
 
+        $overallAbstractness = $this->abstractClasses / ($this->abstractClasses + $this->concreteClasses);
+
         $projectMetrics = $this->metrics->get('project');
         $projectMetrics->set('OverallAvgUsesCount', $avgUsesCount);
         $projectMetrics->set('OverallAvgUsedByCount', $avgUsedByCount);
         $projectMetrics->set('OverallAvgInstability', $avgInstability);
+        $projectMetrics->set('OverallAbstractness', $overallAbstractness);
         $this->metrics->set('project', $projectMetrics);
+    }
+
+    private function calculateClassAbstractness(ClassMetrics $classMetrics): float
+    {
+        $abstractCount = count($classMetrics->get('interfaces'));
+        $concreteCount = 0;
+
+        foreach ($classMetrics->get('extends') as $className) {
+            if (! in_array($className, $this->classes)) {
+                continue;
+            }
+
+            $classId = array_search($className, $this->classes);
+            $dependencyMetrics = $this->metrics->get($classId);
+            if ($dependencyMetrics->get('abstract')) {
+                ++ $abstractCount;
+                continue;
+            }
+
+            ++ $concreteCount;
+        }
+
+        if ($abstractCount + $concreteCount === 0) {
+            return 0;
+        }
+
+        return $abstractCount / ($abstractCount + $concreteCount);
     }
 
     private function handeClass(ClassMetrics $metric): ClassMetrics
@@ -90,6 +135,12 @@ class CouplingCalculator implements CalculatorInterface
         $usesCount = $metric->get('usesCount') ?? 0;
         $usedBy = $metric->get('usedBy') ?? [];
         $usedByCount = $metric->get('usedByCount') ?? 0;
+
+        if ($metric->get('realClass') && $metric->get('abstract') || $metric->get('interface')) {
+            ++ $this->abstractClasses;
+        } elseif ($metric->get('realClass')) {
+            ++ $this->concreteClasses;
+        }
 
         foreach ($metric->get('dependencies') as $dependency) {
             if ($metric->getName() === $dependency) {

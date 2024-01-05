@@ -3,10 +3,10 @@
 {% if classes is not empty %}
 ## Classes
 
-| Class | Loc | Lloc | Cloc | HTML loc | Instability | Too Long |
-|-------|-----|------|------|----------|-------------|----------|
+| Class | Loc | Lloc | Cloc | HTML loc | Instability | Abstractness | Too Long |
+|-------|-----|------|------|----------|-------------|--------------|----------|
 {% for class in classes %}
-| [{{ class.name }}](classes/{{ class.id }}.md) | {{ class.loc }} | {{ class.lloc }} | {{ class.cloc }} | {{ class.htmlLoc }} | {{ class.instability }} | {{ class.tooLong ? 'Yes' : 'No' }} |
+| [{{ class.name }}](classes/{{ class.id }}.md) | {{ class.loc }} | {{ class.lloc }} | {{ class.cloc }} | {{ class.htmlLoc }} | {{ class.instability }} | {{ class.abstractness }} | {{ class.tooLong ? 'Yes' : 'No' }} |
 {% endfor %}
 {% endif %}
 {% if functions is not empty %}
