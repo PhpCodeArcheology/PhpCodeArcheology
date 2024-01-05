@@ -38,10 +38,11 @@ enum OverallMetricsEnum: string{
     case OverallAvgUsesCount = 'Average class dependencies count';
     case OverallAvgUsedByCount = 'Average class usage count';
     case OverallAvgInstability = 'Average class instability';
+    case OverallAbstractness = 'Project abstractness';
+    case OverallDistanceFromMainline = 'Distance from Mainline';
     case OverallInformationCount = 'Informations';
     case OverallWarningCount = 'Warnings';
     case OverallErrorCount = 'Errors';
-
 
     public static function keys(): array
     {

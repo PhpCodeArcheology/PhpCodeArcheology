@@ -16,6 +16,8 @@ class CouplingCalculator implements CalculatorInterface
 
     private array $classes = [];
 
+    private array $interfaces = [];
+
     private int $usedByCount = 0;
 
     private int $usesCount = 0;
@@ -29,6 +31,7 @@ class CouplingCalculator implements CalculatorInterface
     public function beforeTraverse(): void
     {
         $this->classes = $this->metrics->get('classes');
+        $this->interfaces = $this->metrics->get('interfaces');
     }
 
     public function calculate(MetricsInterface $metrics): void
@@ -68,18 +71,27 @@ class CouplingCalculator implements CalculatorInterface
             $usesCount = $metric->get('usesCount');
             $usedByCount = $metric->get('usedByCount');
 
+            $usesInProjectCount = $metric->get('usesInProjectCount') ?? 0;
+            $usedByInProjectCount = $metric->get('usedByInProjectCount') ?? 0;
+
             /**
              * @see https://kariera.future-processing.pl/blog/object-oriented-metrics-by-robert-martin/
              */
-            $instability = ($usesCount + $usedByCount) > 0 ? $usesCount / ($usesCount + $usedByCount) : 0;
-            $metric->set('instability', $instability);
+            $instability = ($usesInProjectCount + $usedByInProjectCount) > 0 ? $usesInProjectCount / ($usesInProjectCount + $usedByInProjectCount) : 0;
 
             /**
              * @see https://kariera.future-processing.pl/blog/object-oriented-metrics-by-robert-martin/
              */
             $abstractness = $this->calculateClassAbstractness($metric);
 
+            /**
+             * @see https://kariera.future-processing.pl/blog/object-oriented-metrics-by-robert-martin/
+             */
+            $distanceFromMainline = $abstractness + $instability - 1;
+
+            $metric->set('instability', $instability);
             $metric->set('abstractness', $abstractness);
+            $metric->set('distanceFromMainline', $distanceFromMainline);
 
             $this->metrics->set($classId, $metric);
 
@@ -93,12 +105,15 @@ class CouplingCalculator implements CalculatorInterface
         $avgInstability = $this->instability / count($this->classes);
 
         $overallAbstractness = $this->abstractClasses / ($this->abstractClasses + $this->concreteClasses);
+        $overallDistanceFromMainline = $overallAbstractness + $avgInstability - 1;
 
         $projectMetrics = $this->metrics->get('project');
+
         $projectMetrics->set('OverallAvgUsesCount', $avgUsesCount);
         $projectMetrics->set('OverallAvgUsedByCount', $avgUsedByCount);
         $projectMetrics->set('OverallAvgInstability', $avgInstability);
         $projectMetrics->set('OverallAbstractness', $overallAbstractness);
+        $projectMetrics->set('OverallDistanceFromMainline', $overallDistanceFromMainline);
         $this->metrics->set('project', $projectMetrics);
     }
 
@@ -136,6 +151,11 @@ class CouplingCalculator implements CalculatorInterface
         $usedBy = $metric->get('usedBy') ?? [];
         $usedByCount = $metric->get('usedByCount') ?? 0;
 
+        $usesInProject = $metric->get('usesInProject') ?? [];
+        $usesInProjectCount = $metric->get('usesInProjectCount') ?? 0;
+        $usedByInProject = $metric->get('usedByInProject') ?? [];
+        $usedByInProjectCount = $metric->get('usedByInProjectCount') ?? 0;
+
         if ($metric->get('realClass') && $metric->get('abstract') || $metric->get('interface')) {
             ++ $this->abstractClasses;
         } elseif ($metric->get('realClass')) {
@@ -150,6 +170,11 @@ class CouplingCalculator implements CalculatorInterface
             ++ $usesCount;
             $uses[] = $dependency;
 
+            if (in_array($dependency, $this->classes) || in_array($dependency, $this->interfaces) ) {
+                ++ $usesInProjectCount;
+                $usesInProject[] = $dependency;
+            }
+
             $classKey = array_search($dependency, $this->classes);
             if (! $classKey) {
                 continue;
@@ -157,12 +182,19 @@ class CouplingCalculator implements CalculatorInterface
 
             $usedBy[] = $metric->getName();
             ++ $usedByCount;
+
+            ++ $usedByInProjectCount;
+            $usedByInProject[] = $dependency;
         }
 
         $metric->set('uses', $uses);
         $metric->set('usesCount', $usesCount);
         $metric->set('usedBy', $usedBy);
         $metric->set('usedByCount', $usedByCount);
+        $metric->set('usesInProject', $usesInProject);
+        $metric->set('usesInProjectCount', $usesInProjectCount);
+        $metric->set('usedByInProject', $usedByInProject);
+        $metric->set('usedByInProjectCount', $usedByInProjectCount);
 
         return $metric;
     }
