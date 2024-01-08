@@ -16,6 +16,12 @@
     </div>
   {% endif %}
 
+  <div class="my-8 grid sm:grid-cols-3 gap-3">
+    {% for element in file.detailData %}
+      {% include('parts/metric-tile.html.twig') %}
+    {% endfor %}
+  </div>
+
   {% if file.functions|length > 0 %}
     <h3 class="mt-8 mb-3 text-xl font-semibold font-display">Functions</h3>
     <div class="relative overflow-x-auto">
@@ -234,8 +240,7 @@
                 <span class="text-white/40">{{ class.filePath }}</span><br>
                 <a href="../classes/{{ class.id }}.html" class="font-semibold inline-block" title="{{ class.name }}">{{ class.name }}</a>
               {% else %}
-                <span class="text-white/40">{{ class.filePath }}</span>
-                {% if class.namespace %}<span class="text-white/40">{{ class.namespace }}</span><br>{% endif %}
+                {% if class.namespace %}<span class="inline-block whitespace-nowrap text-white/40">{{ class.namespace }}</span><br>{% endif %}
                 <a href="../classes/{{ class.id }}.html" class="font-semibold inline-block" title="{{ class.name }}">{{ class.singleName }}</a>
               {% endif %}
             </td>

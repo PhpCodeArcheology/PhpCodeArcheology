@@ -13,3 +13,4 @@
 - [ ] Add cli counter for processing data after traverse files
 - [ ] Add max lcom
 - [ ] Add min maintainability index
+- [ ] Add Metrics Manager! A manager class that holds categorized metrics

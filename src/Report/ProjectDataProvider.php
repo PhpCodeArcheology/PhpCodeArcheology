@@ -26,7 +26,7 @@ class ProjectDataProvider implements ReportDataProviderInterface
             $value = $value ?? '-';
             $value = is_numeric($value) ? number_format($value, is_float($value) ? 2 : 0) : $value;
 
-            $data[] = ['name' => $label, 'value' => $value];
+            $data[] = ['label' => $label, 'value' => $value];
         }
 
         $this->templateData['elements'] = $data;
