@@ -5,4 +5,4 @@ exclude:
 extensions:
   - "php"
 reportDir: "report"
-reportType: "markdown"
+reportType: "html"

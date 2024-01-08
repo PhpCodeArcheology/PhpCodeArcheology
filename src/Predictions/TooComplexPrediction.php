@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Marcus\PhpLegacyAnalyzer\Predictions;
 
 use Marcus\PhpLegacyAnalyzer\Metrics\ClassMetrics;
+use Marcus\PhpLegacyAnalyzer\Metrics\FileMetrics;
 use Marcus\PhpLegacyAnalyzer\Metrics\FunctionMetrics;
 use Marcus\PhpLegacyAnalyzer\Metrics\Metrics;
 
@@ -47,6 +48,7 @@ class TooComplexPrediction implements PredictionInterface
                     $metric->set('predictionTooComplex', $classTooComplex);
                     break;
 
+                case $metric instanceof FileMetrics:
                 case $metric instanceof FunctionMetrics:
                     $maxComplexity = $metric->get('lloc') > 20 ? 20 : 10;
                     $tooComplex = $metric->get('cc') > $maxComplexity;

@@ -26,6 +26,10 @@ final class ArgumentParser
                     case 'exclude':
                         $config->set($param, explode(',', $value));
                         break;
+
+                    case 'report-type':
+                        $config->set('reportType', $value);
+                        break;
                 }
 
                 unset($argv[$key]);

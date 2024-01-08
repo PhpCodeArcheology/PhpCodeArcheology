@@ -1,5 +1,16 @@
 {% include('parts/header.html.twig') %}
 
-<h1>PhpLegacyArcheology</h1>
+<div class="mt-6 lg:flex-1">
+  <h1 class="mb-6 text-3xl foot-medium font-display">Project metrics</h1>
+
+  <p>This is an overview of the project metrics as a whole. This list gives you a quick glimpse on
+  what is going on in your project.</p>
+
+  <div class="my-8 grid sm:grid-cols-3 gap-3">
+    {% for element in elements %}
+      {% include('parts/metric-tile.html.twig') %}
+    {% endfor %}
+  </div>
+</div>
 
 {% include('parts/footer.html.twig') %}

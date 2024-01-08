@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Marcus\PhpLegacyAnalyzer\Report;
 
+use DeepCopy\Filter\ChainableFilter;
 use Marcus\PhpLegacyAnalyzer\Metrics\ClassMetrics;
 use Marcus\PhpLegacyAnalyzer\Metrics\FileMetrics;
 use Marcus\PhpLegacyAnalyzer\Metrics\FunctionMetrics;
@@ -27,6 +28,11 @@ class ReportData
     public function getFiles(): FilesDataProvider
     {
         return new FilesDataProvider($this->metrics);
+    }
+
+    public function getClassAIChartData(): ChartDataProvider
+    {
+        return new ChartDataProvider($this->metrics);
     }
 
     private function predictProgrammingParadigm(): void
