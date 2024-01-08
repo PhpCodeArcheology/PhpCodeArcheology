@@ -60,17 +60,25 @@ class LocVisitor implements NodeVisitor
         $this->insideLloc = 0;
         $this->fileHtmlLoc = 0;
 
-        $lastNode = $nodes[array_key_last($nodes)];
-        $loc = $lastNode->getEndLine();
+        $loc = 0;
+        $cloc = 0;
+        $lloc = 0;
 
-        $nodesWithoutHtml = array_filter($nodes, function($node) {
-            return !$node instanceof Node\Stmt\InlineHTML;
-        });
+        if (array_key_last($nodes) !== null) {
+            $lastNode = $nodes[array_key_last($nodes)];
+            $loc = $lastNode ? $lastNode->getEndLine() : 0;
+        }
 
-        $prettyPrinter = new PrettyPrinter\Standard();
-        $code = $prettyPrinter->prettyPrint($nodesWithoutHtml);
+        if ($loc > 0) {
+            $nodesWithoutHtml = array_filter($nodes, function($node) {
+                return !$node instanceof Node\Stmt\InlineHTML;
+            });
 
-        [$cloc, $lloc] = $this->getClocAndLloc($code);
+            $prettyPrinter = new PrettyPrinter\Standard();
+            $code = $prettyPrinter->prettyPrint($nodesWithoutHtml);
+
+            [$cloc, $lloc] = $this->getClocAndLloc($code);
+        }
 
         $this->fileMetrics->set('loc', $loc);
         $this->fileMetrics->set('cloc', $cloc);

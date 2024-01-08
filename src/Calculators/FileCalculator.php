@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace Marcus\PhpLegacyAnalyzer\Calculators;
 
 use Marcus\PhpLegacyAnalyzer\Metrics\FileMetrics;
+use Marcus\PhpLegacyAnalyzer\Metrics\FileMetricsEnum;
 use Marcus\PhpLegacyAnalyzer\Metrics\Metrics;
 use Marcus\PhpLegacyAnalyzer\Metrics\MetricsInterface;
 
-class FilenameCalculator implements CalculatorInterface
+class FileCalculator implements CalculatorInterface
 {
     use CalculatorTrait;
 
@@ -40,11 +41,20 @@ class FilenameCalculator implements CalculatorInterface
             $pathInfo = pathinfo($projectPath);
 
             $fileMetric = $this->metrics->get($key);
+
             $fileMetric->set('fullName', $fileName);
             $fileMetric->set('projectPath', $projectPath);
             $fileMetric->set('dirName', $pathInfo['dirname']);
             $fileMetric->set('fileName', $pathInfo['basename']);
             $fileMetric->set('projectPath', $projectPath);
+
+            if (count($fileMetric->get('errors')) > 0 || ! $fileMetric->get('loc')) {
+                $metrics = FileMetricsEnum::values();
+                foreach ($metrics as $metricKey) {
+                    $fileMetric->set($metricKey, 0);
+                }
+            }
+
             $this->metrics->set($key, $fileMetric);
         }
     }

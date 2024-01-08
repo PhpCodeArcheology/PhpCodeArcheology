@@ -9,7 +9,7 @@ use Marcus\PhpLegacyAnalyzer\Application\ConfigFile\Exceptions\ConfigFileExtensi
 use Marcus\PhpLegacyAnalyzer\Application\ConfigFile\Exceptions\MultipleConfigFilesException;
 use Marcus\PhpLegacyAnalyzer\Calculators\CalculatorService;
 use Marcus\PhpLegacyAnalyzer\Calculators\CouplingCalculator;
-use Marcus\PhpLegacyAnalyzer\Calculators\FilenameCalculator;
+use Marcus\PhpLegacyAnalyzer\Calculators\FileCalculator;
 use Marcus\PhpLegacyAnalyzer\Calculators\ProjectCalculator;
 use Marcus\PhpLegacyAnalyzer\Calculators\VariablesCalculator;
 use Marcus\PhpLegacyAnalyzer\Metrics\Metrics;
@@ -72,7 +72,7 @@ final class Application
         $analyzer->analyze($fileList);
 
         $calculators = new CalculatorService([
-            new FilenameCalculator($metrics),
+            new FileCalculator($metrics),
             new VariablesCalculator($metrics),
             new CouplingCalculator($metrics),
             new ProjectCalculator($metrics),

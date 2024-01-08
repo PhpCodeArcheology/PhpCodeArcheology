@@ -90,6 +90,7 @@ readonly class Analyzer
 
             $fileMetrics = new FileMetrics($file);
             $fileMetrics->set('originalEncoding', $encoding);
+            $fileMetrics->set('errors', []);
             $this->metrics->push($fileMetrics);
 
             $ast = null;

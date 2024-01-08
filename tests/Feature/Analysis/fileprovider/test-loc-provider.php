@@ -2,6 +2,21 @@
 
 return [
     [
+        __DIR__ . '/../testfiles/empty-file.php',
+        [
+            'loc' => 0,
+            'lloc' => 0,
+            'cloc' => 0,
+            'file' => [
+                'loc' => 0,
+                'lloc' => 0,
+                'cloc' => 0,
+                'llocOutside' => 0,
+                'htmlLoc' => 0,
+            ],
+        ],
+    ],
+    [
         __DIR__ . '/../testfiles/loc.php',
         [
             'loc' => 33,

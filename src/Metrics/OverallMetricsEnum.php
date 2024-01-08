@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Marcus\PhpLegacyAnalyzer\Metrics;
 
-use Marcus\PhpLegacyAnalyzer\Predictions\PredictionInterface;
-
 enum OverallMetricsEnum: string{
     case OverallFiles = 'Files';
     case OverallFileErrors = 'File errors';
