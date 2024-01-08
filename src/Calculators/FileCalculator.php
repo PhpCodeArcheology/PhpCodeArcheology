@@ -33,6 +33,10 @@ class FileCalculator implements CalculatorInterface
             $commonPath .= '/';
         }
 
+        $projectMetrics = $this->metrics->get('project');
+        $projectMetrics->set('commonPath', $commonPath);
+        $this->metrics->set('project', $projectMetrics);
+
         foreach ($this->files as $key => $fileName) {
             $projectPath = $fileName;
             if ($commonPath) {
@@ -56,6 +60,14 @@ class FileCalculator implements CalculatorInterface
             }
 
             $this->metrics->set($key, $fileMetric);
+        }
+
+        foreach ($this->metrics->getAll() as &$metrics) {
+            if (is_array($metrics) || $metrics instanceof FileMetrics) {
+                continue;
+            }
+
+            $metrics->set('filePath', str_replace($commonPath, '', $metrics->getPath()));
         }
     }
 

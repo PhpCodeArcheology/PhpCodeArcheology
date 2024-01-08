@@ -14,14 +14,6 @@ class FilesDataProvider implements ReportDataProviderInterface
     {
         $files = $this->metrics->get('project')->get('files');
 
-        uasort($files, function($a, $b) {
-           if ($a['name'] === $b['name']) {
-               return 0;
-           }
-
-           return strnatcasecmp($a['name'], $b['name']);
-        });
-
         $this->templateData['files'] = $files;
         $this->files = $files;
     }

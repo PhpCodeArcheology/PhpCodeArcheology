@@ -12,6 +12,7 @@ use Marcus\PhpLegacyAnalyzer\Metrics\FunctionMetricsFactory;
 use Marcus\PhpLegacyAnalyzer\Metrics\MetricsInterface;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
+use function Marcus\PhpLegacyAnalyzer\getNodeName;
 
 class IdentifyVisitor implements NodeVisitor
 {
@@ -59,6 +60,13 @@ class IdentifyVisitor implements NodeVisitor
 
         if ($node instanceof Node\Stmt\Function_) {
             $metrics = new FunctionMetrics($this->path, (string) $node->namespacedName);
+            $metrics->set('singleName', (string) $node->name);
+            $namespace = str_replace((string) $node->name, '', (string) $node->namespacedName);
+            $namespace = rtrim($namespace, '\\');
+            $metrics->set('namespace', $namespace);
+
+            $this->handleParameters($node, $metrics);
+
             $fnCount = $this->projectMetrics->get('OverallFunctions') + 1;
             $this->projectMetrics->set('OverallFunctions', $fnCount);
 
@@ -86,6 +94,12 @@ class IdentifyVisitor implements NodeVisitor
             $metrics->set('final', false);
             $metrics->set('realClass', false);
             $metrics->set('anonymous', str_starts_with($className, 'anonymous@'));
+
+            $metrics->set('singleName', (string) $node->name);
+            $namespace = str_replace((string) $node->name, '', (string) $node->namespacedName);
+            $namespace = rtrim($namespace, '\\');
+            $metrics->set('namespace', $namespace);
+
 
             if (method_exists($node, 'isFinal') && $node->isFinal()) {
                 $metrics->set('final', true);
@@ -143,11 +157,16 @@ class IdentifyVisitor implements NodeVisitor
                 }
 
                 $method = new FunctionMetrics(path: (string) $metrics->getIdentifier(), name: (string) $stmt->name);
+                $method->set('name', $method->getName());
+
+                $this->handleParameters($stmt, $method);
 
                 if (! isset($this->methods[(string) $metrics->getIdentifier()])) {
                     $this->methods[(string) $metrics->getIdentifier()] = [];
                 }
                 $this->methods[(string) $metrics->getIdentifier()][(string) $method->getIdentifier()] = $method->getName();
+
+                $method->set('protected', $stmt->isProtected());
 
                 if ($stmt->isPrivate() || $stmt->isProtected()) {
                     $method->set('public', false);
@@ -282,5 +301,35 @@ class IdentifyVisitor implements NodeVisitor
         elseif ($this->inFunction) {
             ++ $this->outputCount['functions'];
         }
+    }
+
+    private function handleParameters(Node\Stmt\Function_|Node\Stmt\ClassMethod $node, FunctionMetrics $metrics): void
+    {
+        $parameters = [];
+
+        foreach ($node->getParams() as $parameter) {
+            $type = null;
+
+            if ($parameter->type !== null) {
+                switch (true) {
+                    case $parameter->type instanceof Node\Name\FullyQualified:
+                    case $parameter->type instanceof Node\Name:
+                        $type = getNodeName($parameter->type);
+                        break;
+
+                    case $parameter->type instanceof Node\Identifier:
+                    case $parameter->type instanceof Node\Expr\Variable:
+                        $type = $parameter->type->name;
+                        break;
+                }
+            }
+
+            $parameters[] = [
+                'name' => '$' . (string) $parameter->var->name,
+                'type' => $type,
+            ];
+        }
+
+        $metrics->set('parameters', $parameters);
     }
 }

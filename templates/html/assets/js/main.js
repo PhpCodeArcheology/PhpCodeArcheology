@@ -24,9 +24,16 @@
       let value1 = td1[column].dataset.sort;
       let value2 = td2[column].dataset.sort;
 
-      if (currentSort[2] === 'number') {
-        value1 = parseFloat(value1);
-        value2 = parseFloat(value2);
+      switch (currentSort[2]) {
+        case 'number':
+          value1 = parseFloat(value1);
+          value2 = parseFloat(value2);
+          break;
+
+        case 'string':
+          value1 = value1.toLowerCase();
+          value2 = value2.toLowerCase();
+          break;
       }
 
       if (value1 === value2) {
@@ -42,6 +49,10 @@
       return value1 > value2 ? -1 : 1;
     }
 
+    Array.from(tBody.querySelectorAll('tr'))
+      .sort(sortTable)
+      .forEach(tr => tBody.appendChild(tr));
+
     sortableHeaders.forEach((th, thId) => {
       th.classList.add('cursor-pointer');
 
@@ -55,9 +66,11 @@
           currentSort = [thId, 'asc', th.dataset.sortable];
         }
 
+        table.classList.add('opacity-0.5');
         Array.from(tBody.querySelectorAll('tr'))
           .sort(sortTable)
           .forEach(tr => tBody.appendChild(tr));
+        table.classList.remove('opacity-0.5');
       });
     });
   });

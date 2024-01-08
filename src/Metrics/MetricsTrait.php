@@ -4,6 +4,9 @@ namespace Marcus\PhpLegacyAnalyzer\Metrics;
 
 trait MetricsTrait
 {
+    /**
+     * @var MetricsInterface[]|array[]
+     */
     private array $metrics = [];
 
     public function get(string $key): mixed
@@ -21,6 +24,9 @@ trait MetricsTrait
         return isset($this->metrics[$key]);
     }
 
+    /**
+     * @return array[]|FileMetrics[]
+     */
     public function getAll(): array
     {
         return $this->metrics;

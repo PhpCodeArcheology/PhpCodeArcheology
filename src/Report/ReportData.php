@@ -35,6 +35,11 @@ class ReportData
         return new ChartDataProvider($this->metrics);
     }
 
+    public function getClasses(): ClassDataProvider
+    {
+        return new ClassDataProvider($this->metrics);
+    }
+
     private function predictProgrammingParadigm(): void
     {
         $classCount = $this->data['OverallClasses'];

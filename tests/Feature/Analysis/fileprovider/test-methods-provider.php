@@ -13,7 +13,7 @@ return [
     [
         __DIR__ . '/../testfiles/ClassWithMethods.php',
         [
-            'classCount' => 1,
+            'classCount' => 2,
             'methodCount' => 7,
             'methodNames' => createMethodNames(7),
             'publicMethods' => 4,

@@ -43,7 +43,10 @@ class HtmlReport implements ReportInterface
     public function generate(): void
     {
         $this->clearReportDir();
+
         mkdir(directory: $this->outputDir . 'assets', recursive: true);
+        mkdir($this->outputDir . 'files');
+        mkdir($this->outputDir . 'classes');
 
         $fc = new FileCopier();
         $fc->setFiles([
@@ -53,6 +56,9 @@ class HtmlReport implements ReportInterface
 
         $this->generateIndexPage();
         $this->generateFilesPage();
+        $this->generateFilesPages();
+        $this->generateClassPage();
+        $this->generateClassPages();
         $this->generateClassChartPage();
     }
 
@@ -93,5 +99,55 @@ class HtmlReport implements ReportInterface
         $data['currentPage'] = 'classes-chart.html';
         $data['usesCharts'] = true;
         $this->renderTemplate('classes-chart.html.twig', $data, 'classes-chart.html');
+    }
+
+    private function generateFilesPages(): void
+    {
+        $templateData = $this->reportData->getFiles();
+        $data = $templateData->getTemplateData();
+
+        foreach ($data['files'] as $fileKey => $fileData) {
+            $outputFile = 'files/' . $fileData['id'] . '.html';
+
+            $templateData = $data;
+            unset($templateData['files']);
+            $templateData['file'] = $fileData;
+
+            $templateData['pageTitle'] = 'File metrics';
+            $templateData['currentPage'] = $outputFile;
+            $templateData['isSubdir'] = true;
+
+            $this->renderTemplate('single-file.html.twig', $templateData, $outputFile);
+        }
+
+    }
+
+    private function generateClassPages()
+    {
+        $templateData = $this->reportData->getClasses();
+        $data = $templateData->getTemplateData();
+
+        foreach ($data['classes'] as $classKey => $classData) {
+            $outputFile = 'classes/' . $classData['id'] . '.html';
+
+            $templateData = $data;
+            unset($templateData['classes']);
+            $templateData['class'] = $classData;
+
+            $templateData['pageTitle'] = 'Class metrics';
+            $templateData['currentPage'] = $outputFile;
+            $templateData['isSubdir'] = true;
+
+            $this->renderTemplate('single-class.html.twig', $templateData, $outputFile);
+        }
+    }
+
+    private function generateClassPage()
+    {
+        $templateData = $this->reportData->getClasses();
+        $data = $templateData->getTemplateData();
+        $data['pageTitle'] = 'Class metrics';
+        $data['currentPage'] = 'classes-list.html';
+        $this->renderTemplate('classes.html.twig', $data, 'classes-list.html');
     }
 }
