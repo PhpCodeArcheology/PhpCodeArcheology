@@ -60,7 +60,7 @@ class CouplingCalculator implements CalculatorInterface
                 break;
         }
 
-        $metrics->set($key, $metrics);
+        $this->metrics->set($key, $metrics);
     }
 
     public function afterTraverse(): void
