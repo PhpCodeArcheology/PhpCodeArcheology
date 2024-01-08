@@ -655,6 +655,10 @@ video {
   max-width: 100%;
 }
 
+.max-w-\[80vw\] {
+  max-width: 80vw;
+}
+
 .border-collapse {
   border-collapse: collapse;
 }
@@ -1085,6 +1089,14 @@ video {
 
   .lg\:w-60 {
     width: 15rem;
+  }
+
+  .lg\:w-5\/6 {
+    width: 83.333333%;
+  }
+
+  .lg\:w-1\/6 {
+    width: 16.666667%;
   }
 
   .lg\:flex-1 {

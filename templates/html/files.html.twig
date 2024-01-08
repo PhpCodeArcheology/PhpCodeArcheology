@@ -1,6 +1,6 @@
 {% include('parts/header.html.twig') %}
 
-<div class="mt-6 lg:flex-1 max-w-full">
+<div class="mt-6 lg:w-5/6">
   <h1 class="mb-6 text-3xl foot-medium font-display">Files</h1>
 
   <p>This is an overview of the project metrics as a whole. This list gives you a quick glimpse on
@@ -76,7 +76,7 @@
         {% for file in files %}
           <tr class="even:bg-cyan-950/45 odd:bg-cyan-950/85">
             <td class="border border-slate-500 text-left px-2 py-0.5" data-sort="{{ file.dirName }}/{{ file.fileName }}">
-              <span class="text-white/40">{{ file.dirName }}/</span><br><span class="font-semibold inline-block" title="{{ file.dirName }}/{{ file.fileName }}">{{ file.fileName }}</span>
+              <span class="text-white/40">{{ file.dirName }}/</span><br><span class="font-semibold inline-block{% if file.errors|length > 0 %} bg-red-900{% endif %}" title="{{ file.dirName }}/{{ file.fileName }}">{{ file.fileName }}{% if file.errors|length > 0 %}  ({{ file.errors|length }} error{% if file.errors|length > 1 %}s{% endif %}){% endif %}</span>
             </td>
             <td class="border border-slate-500 text-right px-2 py-0.5" data-sort="{{ file.loc }}">
               <span class="inline-block px-1.5 py-0.5{% if file.predictionTooLong %} rounded-md bg-yellow-700{% endif %}">{{ file.loc }}</span>
