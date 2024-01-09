@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Marcus\PhpLegacyAnalyzer\Report;
 
+use Marcus\PhpLegacyAnalyzer\Application\CliOutput;
 use Marcus\PhpLegacyAnalyzer\Application\Config;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
@@ -18,14 +19,15 @@ class ReportFactory
         Config $config,
         ReportData $reportData,
         FilesystemLoader $twigLoader,
-        Environment $twig
+        Environment $twig,
+        CliOutput $output
     ): ReportInterface
     {
         $type = strtolower($type ?? 'markdown');
 
         return match ($type) {
-            'markdown' => new MarkdownReport($config, $reportData, $twigLoader, $twig),
-            'html' => new HtmlReport($config, $reportData, $twigLoader, $twig),
+            'markdown' => new MarkdownReport($config, $reportData, $twigLoader, $twig, $output),
+            'html' => new HtmlReport($config, $reportData, $twigLoader, $twig, $output),
             default => throw new ReportTypeNotSupported("Report type $type not supported."),
         };
     }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Marcus\PhpLegacyAnalyzer\Report;
 
+use Marcus\PhpLegacyAnalyzer\Application\CliOutput;
 use Marcus\PhpLegacyAnalyzer\Metrics\ClassMetrics;
 use Marcus\PhpLegacyAnalyzer\Metrics\FileMetrics;
 use Marcus\PhpLegacyAnalyzer\Metrics\FunctionMetrics;
@@ -16,7 +17,7 @@ use Marcus\PhpLegacyAnalyzer\Metrics\Metrics;
  */
 readonly class MetricsSplitter
 {
-    public function __construct(private Metrics $metrics)
+    public function __construct(private Metrics $metrics, private CliOutput $output)
     {
     }
 
@@ -26,7 +27,19 @@ readonly class MetricsSplitter
         $classes = [];
         $functions = [];
 
+        $count = 0;
+        $countSum = number_format(count($this->metrics->getAll()));
         foreach ($this->metrics->getAll() as $metric) {
+            $this->output->cls();
+            $this->output->out(
+                "Splitting metric \033[34m" .
+                number_format($count + 1) .
+                "\033[0m of \033[32m$countSum\033[0m... " .
+                memory_get_usage() . " bytes of memory"
+            );
+
+            ++ $count;
+
             switch (true) {
                 case $metric instanceof FileMetrics:
                     $data = $metric->getAll();
@@ -55,7 +68,21 @@ readonly class MetricsSplitter
             }
         }
 
+        $this->output->outNl();
+
+        $count = 0;
+        $countSum = number_format(count($files));
         foreach ($files as &$data) {
+            $this->output->cls();
+            $this->output->out(
+                "Setting up file \033[34m" .
+                number_format($count + 1) .
+                "\033[0m of \033[32m$countSum\033[0m... " .
+                memory_get_usage() . " bytes of memory"
+            );
+
+            ++ $count;
+
             $path = $data['name'];
 
             $classesInFile = array_filter($classes, function($class) use ($path) {
@@ -69,6 +96,8 @@ readonly class MetricsSplitter
             $data['classes'] = $classesInFile;
             $data['functions'] = $functionsInFile;
         }
+
+        $this->output->outNl();
 
         $projectMetrics = $this->metrics->get('project');
         $projectMetrics->set('files', $files);

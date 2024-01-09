@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Marcus\PhpLegacyAnalyzer\Report;
 
+use Marcus\PhpLegacyAnalyzer\Application\CliOutput;
 use Marcus\PhpLegacyAnalyzer\Application\Config;
 use Twig\Environment;
 use Twig\Error\LoaderError;
@@ -21,7 +22,8 @@ class HtmlReport implements ReportInterface
         private readonly Config           $config,
         private readonly ReportData       $reportData,
         private readonly FilesystemLoader $twigLoader,
-        private readonly Environment      $twig)
+        private readonly Environment      $twig,
+        private readonly CliOutput        $output)
     {
         $this->outputDir = rtrim($config->get('runningDir'), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'report' . DIRECTORY_SEPARATOR;
         $this->templateDir = realpath(__DIR__ . '/../../templates/html') . DIRECTORY_SEPARATOR;
@@ -54,12 +56,39 @@ class HtmlReport implements ReportInterface
         ]);
         $fc->copyFilesTo(rtrim($this->outputDir . '/assets', DIRECTORY_SEPARATOR));
 
-        $this->generateIndexPage();
-        $this->generateFilesPage();
-        $this->generateFilesPages();
-        $this->generateClassPage();
-        $this->generateClassPages();
-        $this->generateClassChartPage();
+        $this->generateReportFiles();
+    }
+
+    private function generateReportFiles(): void
+    {
+        $createMethods = [
+            'indexPage',
+            'filePage',
+            'filesPages',
+            'classPage',
+            'classesPages',
+            'classesChartPage',
+        ];
+
+        $count = 0;
+        $countSum = count($createMethods);
+        foreach ($createMethods as $method) {
+            $this->output->cls();
+            $this->output->out(
+                "Creating report part \033[34m" .
+                number_format($count + 1) .
+                "\033[0m of \033[32m$countSum\033[0m... " .
+                memory_get_usage() . " bytes of memory"
+            );
+
+            ++ $count;
+
+            $methodName = sprintf('generate%s', ucfirst($method));
+            $this->$methodName();
+        }
+
+        $this->output->outNl("\033[32m"."Report ready.\033[0m");
+        $this->output->outNl();
     }
 
     /**
@@ -82,7 +111,7 @@ class HtmlReport implements ReportInterface
      * @throws RuntimeError
      * @throws LoaderError
      */
-    private function generateFilesPage(): void
+    private function generateFilePage(): void
     {
         $templateData = $this->reportData->getFiles();
         $data = $templateData->getTemplateData();
@@ -91,7 +120,7 @@ class HtmlReport implements ReportInterface
         $this->renderTemplate('files.html.twig', $data, 'files.html');
     }
 
-    private function generateClassChartPage(): void
+    private function generateClassesChartPage(): void
     {
         $templateData = $this->reportData->getClassAIChartData();
         $data = $templateData->getTemplateData();
@@ -122,7 +151,7 @@ class HtmlReport implements ReportInterface
 
     }
 
-    private function generateClassPages()
+    private function generateClassesPages()
     {
         $templateData = $this->reportData->getClasses();
         $data = $templateData->getTemplateData();

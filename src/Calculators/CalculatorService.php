@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Marcus\PhpLegacyAnalyzer\Calculators;
 
+use Marcus\PhpLegacyAnalyzer\Application\CliOutput;
 use Marcus\PhpLegacyAnalyzer\Metrics\Metrics;
 
 readonly class CalculatorService
@@ -16,7 +17,8 @@ readonly class CalculatorService
         /**
          * @var Metrics
          */
-        private Metrics $metrics)
+        private Metrics $metrics,
+        private CliOutput $output)
     {
     }
 
@@ -24,10 +26,24 @@ readonly class CalculatorService
     {
         $this->maybeCallMethod('beforeTraverse');
 
+        $count = 0;
+        $metricCount = number_format(count(array_filter($this->metrics->getAll(), function ($metric) {
+            return ! is_array($metric);
+        })));
         foreach ($this->metrics->getAll() as $metric) {
             if (is_array($metric)) {
                 continue;
             }
+
+            $this->output->cls();
+            $this->output->out(
+                "Running calculator on metric \033[34m" .
+                number_format($count + 1) .
+                "\033[0m of \033[32m$metricCount\033[0m... " .
+                memory_get_usage() . " bytes of memory"
+            );
+
+            ++ $count;
 
             foreach ($this->calculators as $calculator) {
                 $calculator->calculate($metric);
@@ -35,6 +51,8 @@ readonly class CalculatorService
         }
 
         $this->maybeCallMethod('afterTraverse');
+
+        $this->output->outNl();
     }
 
     private function maybeCallMethod(string $method): void

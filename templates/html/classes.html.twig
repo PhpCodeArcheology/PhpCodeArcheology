@@ -111,19 +111,19 @@
           <td class="border border-slate-500 text-right px-2 py-0.5" data-sort="{{ class.methods|length }}">
             <span class="inline-block px-1.5 py-0.5">{{ class.methods|length }}</span>
           </td>
-          <td class="border border-slate-500 text-right px-2 py-0.5" data-sort="{{ function.loc }}">
+          <td class="border border-slate-500 text-right px-2 py-0.5" data-sort="{{ class.loc }}">
             <span class="inline-block px-1.5 py-0.5{% if class.predictionTooLong %} rounded-md bg-yellow-700{% endif %}">{{ class.loc }}</span>
           </td>
-          <td class="border border-slate-500 text-right px-2 py-0.5" data-sort="{{ function.lloc }}">
+          <td class="border border-slate-500 text-right px-2 py-0.5" data-sort="{{ class.lloc }}">
             <span class="inline-block px-1.5 py-0.5{% if class.predictionTooLong %} rounded-md bg-yellow-700{% endif %}">{{ class.lloc }}</span>
           </td>
-          <td class="border border-slate-500 text-right px-2 py-0.5" data-sort="{{ function.cloc }}">
+          <td class="border border-slate-500 text-right px-2 py-0.5" data-sort="{{ class.cloc }}">
             <span class="inline-block px-1.5 py-0.5{% if class.cloc == 0 %} rounded-md bg-yellow-700{% endif %}">{{ class.cloc }}</span>
           </td>
           <td class="border border-slate-500 text-right px-2 py-0.5" data-sort="{{ class.htmlPercentage }}">
             <span class="inline-block px-1.5 py-0.5{% if class.predictionTooMuchHtml == true %} rounded-md bg-yellow-700{% endif %}">{{ class.htmlPercentage|number_format(2) }}%</span>
           </td>
-          <td class="border border-slate-500 text-right px-2 py-0.5" data-sort="{{ function.avgMethodCc }}">
+          <td class="border border-slate-500 text-right px-2 py-0.5" data-sort="{{ class.avgMethodCc }}">
             <span class="inline-block px-1.5 py-0.5{% if class.predictionTooComplex %} rounded-md bg-red-900{% endif %}">{{ class.avgMethodCc|number_format(2) }}</span>
           </td>
           <td class="border border-slate-500 text-right px-2 py-0.5" data-sort="{{ class.maintainabilityIndex }}">

@@ -56,7 +56,7 @@ readonly class Analyzer
 
         $projectMetrics = $this->metrics->get('project');
         $projectMetrics->set('OverallFiles', $fileCount);
-        $projectFileErrors = $projectMetrics->get('OverallFileErrors');
+        $projectFileErrors = $projectMetrics->get('OverallFileErrors') ?? 0;
 
         $fileCount = number_format($fileCount);
 
@@ -111,8 +111,6 @@ readonly class Analyzer
             $this->traverser->traverse($ast);
         }
 
-        $this->output->outNl();
-        $this->output->outNl('Analysis is ready. ' . memory_get_peak_usage() . " bytes of memory max");
         $this->output->outNl();
 
         $projectMetrics->set('OverallFileErrors', $projectFileErrors);

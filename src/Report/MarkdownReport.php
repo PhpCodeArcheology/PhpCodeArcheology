@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Marcus\PhpLegacyAnalyzer\Report;
 
+use Marcus\PhpLegacyAnalyzer\Application\CliOutput;
 use Marcus\PhpLegacyAnalyzer\Application\Config;
 use Marcus\PhpLegacyAnalyzer\Metrics\Metrics;
 use Twig\Environment;
@@ -18,7 +19,8 @@ class MarkdownReport implements ReportInterface
         private Config $config,
         private ReportData $reportData,
         private FilesystemLoader $twigLoader,
-        private Environment $twig
+        private Environment $twig,
+        private CliOutput $output
     )
     {
         $this->outputDir = rtrim($config->get('runningDir'), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'report' . DIRECTORY_SEPARATOR;

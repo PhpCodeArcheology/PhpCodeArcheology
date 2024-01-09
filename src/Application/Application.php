@@ -76,7 +76,7 @@ final class Application
             new VariablesCalculator($metrics),
             new CouplingCalculator($metrics),
             new ProjectCalculator($metrics),
-        ], $metrics);
+        ], $metrics, $output);
         $calculators->run();
 
         $predictions = new PredictionService([
@@ -85,7 +85,7 @@ final class Application
             new TooComplexPrediction(),
             new TooDependentPrediction(),
             new TooMuchHtmlPrediction(),
-        ], $metrics);
+        ], $metrics, $output);
         $predictions->predict();
 
         $problems = $predictions->getProblemCount();
@@ -94,7 +94,7 @@ final class Application
         $projectMetrics->set('OverallErrorCount', $problems[PredictionInterface::ERROR]);
         $metrics->set('project', $projectMetrics);
 
-        $splitter = new MetricsSplitter($metrics);
+        $splitter = new MetricsSplitter($metrics, $output);
         $splitter->split();
 
         $reportData = new ReportData($metrics);
@@ -105,7 +105,14 @@ final class Application
         ]);
         $twig->addExtension(new DebugExtension());
 
-        $report = ReportFactory::create($config->get('reportType'), $config, $reportData, $twigLoader, $twig);
+        $report = ReportFactory::create(
+            $config->get('reportType'),
+            $config,
+            $reportData,
+            $twigLoader,
+            $twig,
+            $output
+        );
         $report->generate();
     }
 }
