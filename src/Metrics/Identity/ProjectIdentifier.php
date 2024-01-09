@@ -13,7 +13,7 @@ class ProjectIdentifier implements IdentifierInterface
         $this->identifier = hash('sha256', $path);
     }
 
-    public static function ofPath(string $path)
+    public static function ofPath(string $path): ProjectIdentifier
     {
         return new ProjectIdentifier($path);
     }

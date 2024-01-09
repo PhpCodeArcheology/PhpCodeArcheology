@@ -12,6 +12,7 @@ use PhpCodeArch\Analysis\IdentifyVisitor;
 use PhpCodeArch\Analysis\LcomVisitor;
 use PhpCodeArch\Analysis\LocVisitor;
 use PhpCodeArch\Analysis\MaintainabilityIndexVisitor;
+use PhpCodeArch\Analysis\PackageVisitor;
 use PhpCodeArch\Metrics\FileMetrics\FileMetrics;
 use PhpCodeArch\Metrics\Metrics;
 use PhpParser\Error;
@@ -41,6 +42,7 @@ readonly class Analyzer
         $halsteadVisitor = new HalsteadMetricsVisitor($this->metrics);
         $maintainabilityVisitor = new MaintainabilityIndexVisitor($this->metrics);
         $lcomVisitor = new LcomVisitor($this->metrics);
+        $packageVisitor = new PackageVisitor($this->metrics);
 
         $this->traverser->addVisitor(new NameResolver());
         $this->traverser->addVisitor($idVisitor);
@@ -51,6 +53,7 @@ readonly class Analyzer
         $this->traverser->addVisitor($halsteadVisitor);
         $this->traverser->addVisitor($maintainabilityVisitor);
         $this->traverser->addVisitor($lcomVisitor);
+        $this->traverser->addVisitor($packageVisitor);
 
         $fileCount = count($fileList->getFiles());
 
@@ -80,6 +83,7 @@ readonly class Analyzer
             $halsteadVisitor->setPath($file);
             $maintainabilityVisitor->setPath($file);
             $lcomVisitor->setPath($file);
+            $packageVisitor->setPath($file);
 
             $phpCode = file_get_contents($file);
             $encoding = mb_detect_encoding($phpCode);

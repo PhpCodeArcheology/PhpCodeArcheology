@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace Test\Feature\Analysis;
 
+use PhpCodeArch\Application\FileList;
 use PhpCodeArch\Metrics\FileMetrics\FileMetrics;
 use PhpCodeArch\Metrics\Metrics;
 use PhpCodeArch\Metrics\ProjectMetrics\ProjectMetrics;
@@ -27,20 +28,31 @@ use PhpParser\ParserFactory;
  * @return array The array includes the source code, the metrics object, the created parser
  *               and the traverser
  */
-function setupAnalyzer(string $file): array
-{
-    $code = file_get_contents($file);
 
-    $projectMetrics = new ProjectMetrics(dirname($file));
+function setupCore(): array
+{
+    $projectMetrics = new ProjectMetrics(dirname(''));
 
     $metrics = new Metrics();
     $metrics->set('project', $projectMetrics);
 
-    $fileMetrics = new FileMetrics($file);
-    $metrics->push($fileMetrics);
-
     $parser = (new ParserFactory())->createForNewestSupportedVersion();
     $traverser = new NodeTraverser();
+
+    return [
+        $metrics,
+        $parser,
+        $traverser,
+    ];
+}
+function setupAnalyzer(string $file): array
+{
+    $code = file_get_contents($file);
+
+    [$metrics, $parser, $traverser] = setupCore();
+
+    $fileMetrics = new FileMetrics($file);
+    $metrics->push($fileMetrics);
 
     return [
         $code,
@@ -106,3 +118,35 @@ function getMetricsForVisitors(string $file, array $visitors): Metrics
     return getMetrics($file, $visitors);
 }
 
+function getMetricsForMultipleFilesAndVisitors(array $files, array $visitors): Metrics
+{
+    [
+        $metrics,
+        $parser,
+        $traverser,
+    ] = setupCore();
+
+    $traverser->addVisitor(new NameResolver());
+
+    $visitorObjects = [];
+    foreach ($visitors as $visitor) {
+        $visitorObject = new $visitor($metrics);
+        $traverser->addVisitor($visitorObject);
+        $visitorObjects[] = $visitorObject;
+    }
+
+    foreach ($files as $file) {
+        array_walk($visitorObjects, function($visitor) use ($file) {
+            $visitor->setPath($file);
+        });
+
+        $phpCode = file_get_contents($file);
+
+        $fileMetrics = new FileMetrics($file);
+        $metrics->push($fileMetrics);
+
+        parseCode($phpCode, $parser, $traverser);
+    }
+
+    return $metrics;
+}

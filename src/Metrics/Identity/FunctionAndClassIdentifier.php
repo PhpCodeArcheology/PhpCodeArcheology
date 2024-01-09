@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Metrics\Identity;
 
-class FunctionAndClassIdentifier implements IdentifierInterface
+readonly class FunctionAndClassIdentifier implements IdentifierInterface
 {
     private string $identifier;
 

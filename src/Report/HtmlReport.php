@@ -6,7 +6,7 @@ namespace PhpCodeArch\Report;
 
 use PhpCodeArch\Application\CliOutput;
 use PhpCodeArch\Application\Config;
-use PhpCodeArch\Report\Data\ReportData;
+use PhpCodeArch\Report\Data\DataProviderFactory;
 use PhpCodeArch\Report\Helper\FileCopier;
 use Twig\Environment;
 use Twig\Error\LoaderError;
@@ -21,11 +21,11 @@ class HtmlReport implements ReportInterface
     private string $assetDir;
 
     public function __construct(
-        private readonly Config           $config,
-        private readonly ReportData       $reportData,
-        private readonly FilesystemLoader $twigLoader,
-        private readonly Environment      $twig,
-        private readonly CliOutput        $output)
+        private readonly Config              $config,
+        private readonly DataProviderFactory $dataProviderFactory,
+        private readonly FilesystemLoader    $twigLoader,
+        private readonly Environment         $twig,
+        private readonly CliOutput           $output)
     {
         $this->outputDir = rtrim($config->get('runningDir'), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'report' . DIRECTORY_SEPARATOR;
         $this->templateDir = realpath(__DIR__ . '/../../templates/html') . DIRECTORY_SEPARATOR;
@@ -70,6 +70,7 @@ class HtmlReport implements ReportInterface
             'classPage',
             'classesPages',
             'classesChartPage',
+            'packagesPage',
         ];
 
         $count = 0;
@@ -100,7 +101,7 @@ class HtmlReport implements ReportInterface
      */
     private function generateIndexPage(): void
     {
-        $templateData = $this->reportData->getProjectData();
+        $templateData = $this->dataProviderFactory->getProjectData();
         $data = $templateData->getTemplateData();
         $data['pageTitle'] = 'Project metrics';
         $data['currentPage'] = 'index.html';
@@ -115,7 +116,7 @@ class HtmlReport implements ReportInterface
      */
     private function generateFilePage(): void
     {
-        $templateData = $this->reportData->getFiles();
+        $templateData = $this->dataProviderFactory->getFiles();
         $data = $templateData->getTemplateData();
         $data['pageTitle'] = 'Project metrics';
         $data['currentPage'] = 'files.html';
@@ -124,7 +125,7 @@ class HtmlReport implements ReportInterface
 
     private function generateClassesChartPage(): void
     {
-        $templateData = $this->reportData->getClassAIChartData();
+        $templateData = $this->dataProviderFactory->getClassAIChartData();
         $data = $templateData->getTemplateData();
         $data['pageTitle'] = 'Class chart';
         $data['currentPage'] = 'classes-chart.html';
@@ -134,7 +135,7 @@ class HtmlReport implements ReportInterface
 
     private function generateFilesPages(): void
     {
-        $templateData = $this->reportData->getFiles();
+        $templateData = $this->dataProviderFactory->getFiles();
         $data = $templateData->getTemplateData();
 
         foreach ($data['files'] as $fileKey => $fileData) {
@@ -155,7 +156,7 @@ class HtmlReport implements ReportInterface
 
     private function generateClassesPages()
     {
-        $templateData = $this->reportData->getClasses();
+        $templateData = $this->dataProviderFactory->getClasses();
         $data = $templateData->getTemplateData();
 
         foreach ($data['classes'] as $classKey => $classData) {
@@ -175,10 +176,19 @@ class HtmlReport implements ReportInterface
 
     private function generateClassPage()
     {
-        $templateData = $this->reportData->getClasses();
+        $templateData = $this->dataProviderFactory->getClasses();
         $data = $templateData->getTemplateData();
         $data['pageTitle'] = 'Class metrics';
         $data['currentPage'] = 'classes-list.html';
         $this->renderTemplate('classes.html.twig', $data, 'classes-list.html');
+    }
+
+    private function generatePackagesPage(): void
+    {
+        $templateData = $this->dataProviderFactory->getPackages();
+        $data = $templateData->getTemplateData();
+        $data['pageTitle'] = 'Project metrics';
+        $data['currentPage'] = 'packages-list.html';
+        $this->renderTemplate('packages-list.html.twig', $data, 'packages-list.html');
     }
 }

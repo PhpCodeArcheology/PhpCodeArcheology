@@ -6,7 +6,7 @@ namespace PhpCodeArch\Report;
 
 use PhpCodeArch\Application\CliOutput;
 use PhpCodeArch\Application\Config;
-use PhpCodeArch\Report\Data\ReportData;
+use PhpCodeArch\Report\Data\DataProviderFactory;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
 
@@ -15,11 +15,11 @@ class MarkdownReport implements ReportInterface
     use ReportTrait;
 
     public function __construct(
-        private Config $config,
-        private ReportData $reportData,
-        private FilesystemLoader $twigLoader,
-        private Environment $twig,
-        private CliOutput $output
+        private Config              $config,
+        private DataProviderFactory $reportData,
+        private FilesystemLoader    $twigLoader,
+        private Environment         $twig,
+        private CliOutput           $output
     )
     {
         $this->outputDir = rtrim($config->get('runningDir'), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'report' . DIRECTORY_SEPARATOR;

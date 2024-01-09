@@ -8,6 +8,7 @@ use PhpCodeArch\Metrics\ClassMetrics\ClassMetrics;
 use PhpCodeArch\Metrics\FileMetrics\FileMetrics;
 use PhpCodeArch\Metrics\FunctionMetrics\FunctionMetrics;
 use PhpCodeArch\Metrics\Metrics;
+use PhpCodeArch\Metrics\PackageMetrics\PackageMetrics;
 use PhpCodeArch\Metrics\ProjectMetrics\ProjectMetrics;
 
 class TooLongPrediction implements PredictionInterface
@@ -18,7 +19,9 @@ class TooLongPrediction implements PredictionInterface
         $problemCount = 0;
 
         foreach ($metrics->getAll() as $key => $metric) {
-            if (is_array($metric) || $metric instanceof ProjectMetrics) {
+            if (is_array($metric)
+                || $metric instanceof ProjectMetrics
+                || $metric instanceof PackageMetrics) {
                 continue;
             }
 

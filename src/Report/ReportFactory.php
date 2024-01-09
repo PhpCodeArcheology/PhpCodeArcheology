@@ -6,7 +6,7 @@ namespace PhpCodeArch\Report;
 
 use PhpCodeArch\Application\CliOutput;
 use PhpCodeArch\Application\Config;
-use PhpCodeArch\Report\Data\ReportData;
+use PhpCodeArch\Report\Data\DataProviderFactory;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
 
@@ -16,12 +16,12 @@ class ReportFactory
      * @throws ReportTypeNotSupported
      */
     public static function create(
-        ?string $type,
-        Config $config,
-        ReportData $reportData,
-        FilesystemLoader $twigLoader,
-        Environment $twig,
-        CliOutput $output
+        ?string             $type,
+        Config              $config,
+        DataProviderFactory $reportData,
+        FilesystemLoader    $twigLoader,
+        Environment         $twig,
+        CliOutput           $output
     ): ReportInterface
     {
         $type = strtolower($type ?? 'markdown');

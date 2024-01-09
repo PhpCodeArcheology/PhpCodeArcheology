@@ -6,18 +6,18 @@ namespace PhpCodeArch\Report;
 
 use PhpCodeArch\Application\CliOutput;
 use PhpCodeArch\Application\Config;
-use PhpCodeArch\Report\Data\ReportData;
+use PhpCodeArch\Report\Data\DataProviderFactory;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
 
 interface ReportInterface
 {
     public function __construct(
-        Config $config,
-        ReportData $reportData,
-        FilesystemLoader $twigLoader,
-        Environment $twig,
-        CliOutput $output);
+        Config              $config,
+        DataProviderFactory $reportData,
+        FilesystemLoader    $twigLoader,
+        Environment         $twig,
+        CliOutput           $output);
 
     public function generate(): void;
 }

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Metrics\Identity;
 
-class FileIdentifier implements IdentifierInterface
+readonly class FileIdentifier implements IdentifierInterface
 {
     private string $identifier;
 
@@ -13,7 +13,7 @@ class FileIdentifier implements IdentifierInterface
         $this->identifier = hash('sha256', $path);
     }
 
-    public static function ofPath(string $path)
+    public static function ofPath(string $path): FileIdentifier
     {
         return new FileIdentifier($path);
     }

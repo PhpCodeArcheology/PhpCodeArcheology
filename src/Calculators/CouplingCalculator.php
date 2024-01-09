@@ -71,12 +71,11 @@ class CouplingCalculator implements CalculatorInterface
             $usedByCount = $metric->get('usedByCount');
 
             $usesInProjectCount = $metric->get('usesInProjectCount') ?? 0;
-            $usedByInProjectCount = $metric->get('usedByInProjectCount') ?? 0;
 
             /**
              * @see https://kariera.future-processing.pl/blog/object-oriented-metrics-by-robert-martin/
              */
-            $instability = ($usesInProjectCount + $usedByInProjectCount) > 0 ? $usesInProjectCount / ($usesInProjectCount + $usedByInProjectCount) : 0;
+            $instability = ($usesInProjectCount + $usedByCount) > 0 ? $usesInProjectCount / ($usesInProjectCount + $usedByCount) : 0;
 
             /**
              * @see https://kariera.future-processing.pl/blog/object-oriented-metrics-by-robert-martin/
@@ -147,13 +146,12 @@ class CouplingCalculator implements CalculatorInterface
     {
         $uses = $metric->get('uses') ?? [];
         $usesCount = $metric->get('usesCount') ?? 0;
-        $usedBy = $metric->get('usedBy') ?? [];
-        $usedByCount = $metric->get('usedByCount') ?? 0;
 
         $usesInProject = $metric->get('usesInProject') ?? [];
         $usesInProjectCount = $metric->get('usesInProjectCount') ?? 0;
-        $usedByInProject = $metric->get('usedByInProject') ?? [];
-        $usedByInProjectCount = $metric->get('usedByInProjectCount') ?? 0;
+
+        $usedBy = $metric->get('usedBy') ?? [];
+        $usedByCount = $metric->get('usedByCount') ?? 0;
 
         if ($metric->get('realClass') && $metric->get('abstract') || $metric->get('interface')) {
             ++ $this->abstractClasses;
@@ -170,6 +168,7 @@ class CouplingCalculator implements CalculatorInterface
             $uses[] = $dependency;
 
             if (in_array($dependency, $this->classes) || in_array($dependency, $this->interfaces) ) {
+                // Counts only dependencies inside current project
                 ++ $usesInProjectCount;
                 $usesInProject[] = $dependency;
             }
@@ -179,11 +178,16 @@ class CouplingCalculator implements CalculatorInterface
                 continue;
             }
 
-            $usedBy[] = $metric->getName();
-            ++ $usedByCount;
+            $usedByMetric = $this->metrics->get($classKey);
 
-            ++ $usedByInProjectCount;
-            $usedByInProject[] = $dependency;
+            $classUsedBy = $usedByMetric->get('usedBy') ?? [];
+            $classUsedByCount = $usedByMetric->get('usedByCount') ?? 0;
+
+            $classUsedBy[] = $metric->getName();
+            ++ $classUsedByCount;
+
+            $usedByMetric->set('usedBy', $classUsedBy);
+            $usedByMetric->set('usedByCount', $classUsedByCount);
         }
 
         $metric->set('uses', $uses);
@@ -192,8 +196,6 @@ class CouplingCalculator implements CalculatorInterface
         $metric->set('usedByCount', $usedByCount);
         $metric->set('usesInProject', $usesInProject);
         $metric->set('usesInProjectCount', $usesInProjectCount);
-        $metric->set('usedByInProject', $usedByInProject);
-        $metric->set('usedByInProjectCount', $usedByInProjectCount);
 
         return $metric;
     }

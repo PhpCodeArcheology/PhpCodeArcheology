@@ -8,9 +8,10 @@ use PhpCodeArch\Metrics\Metrics;
 use PhpCodeArch\Report\DataProvider\ChartDataProvider;
 use PhpCodeArch\Report\DataProvider\ClassDataProvider;
 use PhpCodeArch\Report\DataProvider\FilesDataProvider;
+use PhpCodeArch\Report\DataProvider\PackagesDataProvider;
 use PhpCodeArch\Report\DataProvider\ProjectDataProvider;
 
-class ReportData
+class DataProviderFactory
 {
     private array $data = [];
 
@@ -36,6 +37,11 @@ class ReportData
     public function getClasses(): ClassDataProvider
     {
         return new ClassDataProvider($this->metrics);
+    }
+
+    public function getPackages(): PackagesDataProvider
+    {
+        return new PackagesDataProvider($this->metrics);
     }
 
     private function predictProgrammingParadigm(): void

@@ -21,7 +21,7 @@ use PhpCodeArch\Predictions\TooComplexPrediction;
 use PhpCodeArch\Predictions\TooDependentPrediction;
 use PhpCodeArch\Predictions\TooLongPrediction;
 use PhpCodeArch\Predictions\TooMuchHtmlPrediction;
-use PhpCodeArch\Report\Data\ReportData;
+use PhpCodeArch\Report\Data\DataProviderFactory;
 use PhpCodeArch\Report\Helper\MetricsSplitter;
 use PhpCodeArch\Report\ReportFactory;
 use PhpCodeArch\Report\ReportTypeNotSupported;
@@ -31,7 +31,7 @@ use Twig\Environment;
 use Twig\Extension\DebugExtension;
 use Twig\Loader\FilesystemLoader;
 
-final class Application
+final readonly class Application
 {
     const VERSION = '0.0.1';
 
@@ -96,7 +96,7 @@ final class Application
         $splitter = new MetricsSplitter($metrics, $output);
         $splitter->split();
 
-        $reportData = new ReportData($metrics);
+        $reportData = new DataProviderFactory($metrics);
 
         $twigLoader = new FilesystemLoader();
         $twig = new Environment($twigLoader, [
