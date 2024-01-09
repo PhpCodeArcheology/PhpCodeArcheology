@@ -2,12 +2,8 @@
 
 declare(strict_types=1);
 
-namespace Marcus\PhpLegacyAnalyzer\Report;
+namespace Marcus\PhpLegacyAnalyzer\Report\DataProvider;
 
-use Marcus\PhpLegacyAnalyzer\Metrics\ClassMetrics;
-use Marcus\PhpLegacyAnalyzer\Metrics\FileMetrics;
-use Marcus\PhpLegacyAnalyzer\Metrics\FunctionMetrics;
-use Marcus\PhpLegacyAnalyzer\Metrics\MetricsInterface;
 use Marcus\PhpLegacyAnalyzer\Metrics\OverallMetricsEnum;
 
 class ProjectDataProvider implements ReportDataProviderInterface

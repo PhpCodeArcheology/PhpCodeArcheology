@@ -6,6 +6,7 @@ namespace Marcus\PhpLegacyAnalyzer\Report;
 
 use Marcus\PhpLegacyAnalyzer\Application\CliOutput;
 use Marcus\PhpLegacyAnalyzer\Application\Config;
+use Marcus\PhpLegacyAnalyzer\Report\Data\ReportData;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
 

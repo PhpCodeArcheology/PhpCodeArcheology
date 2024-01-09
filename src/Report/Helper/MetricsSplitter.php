@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Marcus\PhpLegacyAnalyzer\Report;
+namespace Marcus\PhpLegacyAnalyzer\Report\Helper;
 
 use Marcus\PhpLegacyAnalyzer\Application\CliOutput;
 use Marcus\PhpLegacyAnalyzer\Metrics\ClassMetrics;

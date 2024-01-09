@@ -2,9 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Marcus\PhpLegacyAnalyzer\Report;
-
-use Marcus\PhpLegacyAnalyzer\Metrics\Metrics;
+namespace Marcus\PhpLegacyAnalyzer\Report\DataProvider;
 
 class ChartDataProvider implements ReportDataProviderInterface
 {

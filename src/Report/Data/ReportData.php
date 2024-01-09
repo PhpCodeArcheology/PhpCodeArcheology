@@ -2,15 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Marcus\PhpLegacyAnalyzer\Report;
+namespace Marcus\PhpLegacyAnalyzer\Report\Data;
 
-use DeepCopy\Filter\ChainableFilter;
-use Marcus\PhpLegacyAnalyzer\Metrics\ClassMetrics;
-use Marcus\PhpLegacyAnalyzer\Metrics\FileMetrics;
-use Marcus\PhpLegacyAnalyzer\Metrics\FunctionMetrics;
 use Marcus\PhpLegacyAnalyzer\Metrics\Metrics;
-use Marcus\PhpLegacyAnalyzer\Metrics\ProjectMetrics;
-use phpDocumentor\Reflection\File;
+use Marcus\PhpLegacyAnalyzer\Report\DataProvider\ChartDataProvider;
+use Marcus\PhpLegacyAnalyzer\Report\DataProvider\ClassDataProvider;
+use Marcus\PhpLegacyAnalyzer\Report\DataProvider\FilesDataProvider;
+use Marcus\PhpLegacyAnalyzer\Report\DataProvider\ProjectDataProvider;
 
 class ReportData
 {

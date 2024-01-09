@@ -2,10 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Marcus\PhpLegacyAnalyzer\Report;
+namespace Marcus\PhpLegacyAnalyzer\Report\DataProvider;
 
 use Marcus\PhpLegacyAnalyzer\Metrics\Metric;
-use Marcus\PhpLegacyAnalyzer\Metrics\Metrics;
 
 class FilesDataProvider implements ReportDataProviderInterface
 {
