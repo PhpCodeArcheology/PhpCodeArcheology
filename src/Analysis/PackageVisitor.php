@@ -16,7 +16,7 @@ class PackageVisitor implements NodeVisitor
 {
     use VisitorTrait;
 
-    private array $packages = ['global'];
+    private array $packages = ['_global'];
 
     private string $fileNamespace = '';
 
@@ -24,7 +24,7 @@ class PackageVisitor implements NodeVisitor
 
     public function beforeTraverse(array $nodes): void
     {
-        $this->fileNamespace = 'global';
+        $this->fileNamespace = '_global';
         $this->currentPackageMetric = null;
     }
 
@@ -32,11 +32,6 @@ class PackageVisitor implements NodeVisitor
     {
         if ($node instanceof Node\Stmt\Namespace_) {
             $this->fileNamespace = (string) $node->name;
-
-            if (! in_array($this->fileNamespace, $this->packages)) {
-                $this->packages[] = $this->fileNamespace;
-            }
-
             $this->currentPackageMetric = $this->getCurrentPackageMetric();
 
             $this->setFileCount();
@@ -49,19 +44,23 @@ class PackageVisitor implements NodeVisitor
             || $node instanceof Node\Stmt\Interface_
             || $node instanceof Node\Stmt\Trait_
             || $node instanceof Node\Stmt\Enum_) {
-            $this->currentPackageMetric = $this->getCurrentPackageMetric();
+
+            $package = $this->detectPackage($node);
+            $this->currentPackageMetric = $this->getCurrentPackageMetric($package);
 
             $classMetric = ClassMetricsFactory::createFromMetricsByNodeAndPath($this->metrics, $node, $this->path);
             $classId = (string) $classMetric->getIdentifier();
-            $classMetric->set('package', $this->fileNamespace);
+            $classMetric->set('package', $package);
             $this->metrics->set($classId, $classMetric);
 
             $classes = $this->currentPackageMetric->get('classes') ?? [];
             $classes[] = $classId;
             $this->currentPackageMetric->set('classes', $classes);
+            $this->metrics->set((string) $this->currentPackageMetric->getIdentifier(), $this->currentPackageMetric);
         }
         elseif ($node instanceof Node\Stmt\Function_) {
-            $this->currentPackageMetric = $this->getCurrentPackageMetric();
+            $package = $this->detectPackage($node);
+            $this->currentPackageMetric = $this->getCurrentPackageMetric($package);
 
             $fnMetric = FunctionMetricsFactory::createFromMetricsByNameAndPath($this->metrics, $node->namespacedName, $this->path);
             $fnId = (string) $fnMetric->getIdentifier();
@@ -72,6 +71,7 @@ class PackageVisitor implements NodeVisitor
             $functions[] = $fnId;
 
             $this->currentPackageMetric->set('functions', $functions);
+            $this->metrics->set((string) $this->currentPackageMetric->getIdentifier(), $this->currentPackageMetric);
         }
     }
 
@@ -98,14 +98,22 @@ class PackageVisitor implements NodeVisitor
         $this->metrics->set((string) $this->currentPackageMetric->getIdentifier(), $this->currentPackageMetric);
     }
 
-    private function getCurrentPackageMetric(): PackageMetrics
+    private function getCurrentPackageMetric(?string $packageName = null): PackageMetrics
     {
-        if ($this->currentPackageMetric !== null) {
+        if (! $packageName) {
+            $packageName = $this->fileNamespace;
+        }
+
+        if ($this->currentPackageMetric !== null && $this->currentPackageMetric->getName() === $packageName) {
             return $this->currentPackageMetric;
         }
 
-        $packageId = (string) PackageIdentifier::ofNamespace($this->fileNamespace);
+        $packageId = (string) PackageIdentifier::ofNamespace($packageName);
         if ($this->metrics->get($packageId) === null) {
+            if (! in_array($packageName, $this->packages)) {
+                $this->packages[] = $packageName;
+            }
+
             return new PackageMetrics($packageId);
         }
 
@@ -122,6 +130,24 @@ class PackageVisitor implements NodeVisitor
 
         $files[] = $this->path;
         $this->currentPackageMetric->set('files', $files);
+    }
+
+    private function detectPackage(Node $node): string
+    {
+        $package = $this->fileNamespace;
+
+        $docBlock = $node->getDocComment();
+        $docBlock = $docBlock ? $docBlock->getText() : '';
+
+        if (preg_match('/^\s*\* @package (.*)/m', $docBlock, $matches)) {
+            $package = trim($matches[1]);
+        }
+
+        if (preg_match('/^\s*\* @subpackage (.*)/m', $docBlock, $matches)) {
+            $package = $package . '\\' . trim($matches[1]);
+        }
+
+        return $package;
     }
 
 }
