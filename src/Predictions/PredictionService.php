@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Marcus\PhpLegacyAnalyzer\Predictions;
+namespace PhpCodeArch\Predictions;
 
-use Marcus\PhpLegacyAnalyzer\Application\CliOutput;
-use Marcus\PhpLegacyAnalyzer\Metrics\Metrics;
+use PhpCodeArch\Application\CliOutput;
+use PhpCodeArch\Metrics\Metrics;
 
 class PredictionService
 {

@@ -1,6 +1,8 @@
 <?php
 
-namespace Marcus\PhpLegacyAnalyzer\Metrics;
+namespace PhpCodeArch\Metrics;
+
+use PhpCodeArch\Metrics\Identity\IdentifierInterface;
 
 interface MetricsInterface
 {

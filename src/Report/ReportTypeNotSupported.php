@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Marcus\PhpLegacyAnalyzer\Report;
+namespace PhpCodeArch\Report;
 
 class ReportTypeNotSupported extends \Exception
 {

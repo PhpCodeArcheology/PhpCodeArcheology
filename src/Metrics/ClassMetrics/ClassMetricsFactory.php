@@ -2,9 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Marcus\PhpLegacyAnalyzer\Metrics;
+namespace PhpCodeArch\Metrics\ClassMetrics;
 
-use Marcus\PhpLegacyAnalyzer\Analysis\ClassName;
+use PhpCodeArch\Analysis\ClassName;
+use PhpCodeArch\Metrics\Identity\FunctionAndClassIdentifier;
+use PhpCodeArch\Metrics\Metrics;
 use PhpParser\Node;
 
 class ClassMetricsFactory

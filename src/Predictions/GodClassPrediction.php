@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Marcus\PhpLegacyAnalyzer\Predictions;
+namespace PhpCodeArch\Predictions;
 
-use Marcus\PhpLegacyAnalyzer\Metrics\ClassMetrics;
-use Marcus\PhpLegacyAnalyzer\Metrics\Metrics;
+use PhpCodeArch\Metrics\ClassMetrics\ClassMetrics;
+use PhpCodeArch\Metrics\Metrics;
 
 class GodClassPrediction implements PredictionInterface
 {

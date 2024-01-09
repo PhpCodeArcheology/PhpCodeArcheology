@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Marcus\PhpLegacyAnalyzer\Analysis;
+namespace PhpCodeArch\Analysis;
 
 use PhpParser\Node;
 

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Marcus\PhpLegacyAnalyzer\Metrics;
+namespace PhpCodeArch\Metrics\Identity;
 
 class FunctionAndClassIdentifier implements IdentifierInterface
 {

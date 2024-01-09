@@ -1,12 +1,14 @@
 {
-    "name": "marcus/php-legacy-analyzer",
+    "name": "marcus/php-code-archeology",
     "type": "project",
     "license": "MIT",
     "autoload": {
         "psr-4": {
-            "Marcus\\PhpLegacyAnalyzer\\": "src/"
+            "PhpCodeArch\\": "src/"
         },
-        "files": ["src/functions.php"]
+        "files": [
+          "src/functions.php"
+        ]
     },
     "authors": [
         {

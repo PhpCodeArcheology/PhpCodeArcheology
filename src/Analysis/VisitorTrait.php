@@ -1,11 +1,11 @@
 <?php
 
-namespace Marcus\PhpLegacyAnalyzer\Analysis;
+namespace PhpCodeArch\Analysis;
 
-use Marcus\PhpLegacyAnalyzer\Metrics\FileIdentifier;
-use Marcus\PhpLegacyAnalyzer\Metrics\FileMetrics;
-use Marcus\PhpLegacyAnalyzer\Metrics\Metrics;
-use Marcus\PhpLegacyAnalyzer\Metrics\ProjectMetrics;
+use PhpCodeArch\Metrics\FileMetrics\FileMetrics;
+use PhpCodeArch\Metrics\Identity\FileIdentifier;
+use PhpCodeArch\Metrics\Metrics;
+use PhpCodeArch\Metrics\ProjectMetrics\ProjectMetrics;
 
 trait VisitorTrait
 {

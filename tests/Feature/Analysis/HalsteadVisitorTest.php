@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Test\Feature\Analysis;
 
-use Marcus\PhpLegacyAnalyzer\Analysis\HalsteadMetricsVisitor;
-use Marcus\PhpLegacyAnalyzer\Analysis\IdentifyVisitor;
-use Marcus\PhpLegacyAnalyzer\Metrics\ClassMetrics;
-use Marcus\PhpLegacyAnalyzer\Metrics\FileMetrics;
-use Marcus\PhpLegacyAnalyzer\Metrics\FunctionMetrics;
-use Marcus\PhpLegacyAnalyzer\Metrics\MetricsInterface;
+use PhpCodeArch\Analysis\HalsteadMetricsVisitor;
+use PhpCodeArch\Analysis\IdentifyVisitor;
+use PhpCodeArch\Metrics\ClassMetrics\ClassMetrics;
+use PhpCodeArch\Metrics\FileMetrics\FileMetrics;
+use PhpCodeArch\Metrics\FunctionMetrics\FunctionMetrics;
+use PhpCodeArch\Metrics\MetricsInterface;
 
 require_once __DIR__ . '/test_helpers.php';
 

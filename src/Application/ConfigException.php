@@ -1,6 +1,6 @@
 <?php
 
-namespace Marcus\PhpLegacyAnalyzer\Application;
+namespace PhpCodeArch\Application;
 
 class ConfigException extends \Exception
 {

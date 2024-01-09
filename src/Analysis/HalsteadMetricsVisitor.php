@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Marcus\PhpLegacyAnalyzer\Analysis;
+namespace PhpCodeArch\Analysis;
 
-use Marcus\PhpLegacyAnalyzer\Metrics\ClassMetricsFactory;
-use Marcus\PhpLegacyAnalyzer\Metrics\FileIdentifier;
-use Marcus\PhpLegacyAnalyzer\Metrics\FunctionAndClassIdentifier;
-use Marcus\PhpLegacyAnalyzer\Metrics\FunctionMetricsFactory;
-use Marcus\PhpLegacyAnalyzer\Metrics\MetricsInterface;
+use PhpCodeArch\Metrics\ClassMetrics\ClassMetricsFactory;
+use PhpCodeArch\Metrics\FunctionMetrics\FunctionMetricsFactory;
+use PhpCodeArch\Metrics\Identity\FileIdentifier;
+use PhpCodeArch\Metrics\Identity\FunctionAndClassIdentifier;
+use PhpCodeArch\Metrics\MetricsInterface;
 use PhpParser\Node;
 use PhpParser\NodeVisitorAbstract;
 

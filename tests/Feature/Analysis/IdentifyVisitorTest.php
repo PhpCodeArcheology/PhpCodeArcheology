@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Test\Feature\Analysis;
 
-use Marcus\PhpLegacyAnalyzer\Analysis\IdentifyVisitor;
+use PhpCodeArch\Analysis\IdentifyVisitor;
 
 require_once __DIR__ . '/test_helpers.php';
 

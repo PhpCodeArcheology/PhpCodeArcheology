@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Marcus\PhpLegacyAnalyzer\Report\Data;
+namespace PhpCodeArch\Report\Data;
 
-use Marcus\PhpLegacyAnalyzer\Metrics\Metrics;
-use Marcus\PhpLegacyAnalyzer\Report\DataProvider\ChartDataProvider;
-use Marcus\PhpLegacyAnalyzer\Report\DataProvider\ClassDataProvider;
-use Marcus\PhpLegacyAnalyzer\Report\DataProvider\FilesDataProvider;
-use Marcus\PhpLegacyAnalyzer\Report\DataProvider\ProjectDataProvider;
+use PhpCodeArch\Metrics\Metrics;
+use PhpCodeArch\Report\DataProvider\ChartDataProvider;
+use PhpCodeArch\Report\DataProvider\ClassDataProvider;
+use PhpCodeArch\Report\DataProvider\FilesDataProvider;
+use PhpCodeArch\Report\DataProvider\ProjectDataProvider;
 
 class ReportData
 {

@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Marcus\PhpLegacyAnalyzer\Report;
+namespace PhpCodeArch\Report;
 
-use Marcus\PhpLegacyAnalyzer\Application\CliOutput;
-use Marcus\PhpLegacyAnalyzer\Application\Config;
-use Marcus\PhpLegacyAnalyzer\Report\Data\ReportData;
+use PhpCodeArch\Application\CliOutput;
+use PhpCodeArch\Application\Config;
+use PhpCodeArch\Report\Data\ReportData;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
 

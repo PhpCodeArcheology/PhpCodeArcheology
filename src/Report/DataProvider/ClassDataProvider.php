@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Marcus\PhpLegacyAnalyzer\Report\DataProvider;
+namespace PhpCodeArch\Report\DataProvider;
 
 class ClassDataProvider implements ReportDataProviderInterface
 {

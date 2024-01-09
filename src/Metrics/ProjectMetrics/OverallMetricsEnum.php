@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Marcus\PhpLegacyAnalyzer\Metrics;
+namespace PhpCodeArch\Metrics\ProjectMetrics;
 
 enum OverallMetricsEnum: string{
     case OverallFiles = 'Files';

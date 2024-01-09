@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Marcus\PhpLegacyAnalyzer\Application\ConfigFile;
+namespace PhpCodeArch\Application\ConfigFile;
 
-use Marcus\PhpLegacyAnalyzer\Application\Config;
-use Marcus\PhpLegacyAnalyzer\Application\ConfigFile\Exceptions\ConfigFileNotFoundException;
+use PhpCodeArch\Application\Config;
+use PhpCodeArch\Application\ConfigFile\Exceptions\ConfigFileNotFoundException;
 use Symfony\Component\Yaml\Yaml;
 
 class ConfigFileParserYaml extends ConfigFileParserJson implements ConfigFileParserInterface

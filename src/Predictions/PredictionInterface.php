@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Marcus\PhpLegacyAnalyzer\Predictions;
+namespace PhpCodeArch\Predictions;
 
-use Marcus\PhpLegacyAnalyzer\Metrics\Metrics;
+use PhpCodeArch\Metrics\Metrics;
 
 interface PredictionInterface
 {

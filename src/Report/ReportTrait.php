@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Marcus\PhpLegacyAnalyzer\Report;
+namespace PhpCodeArch\Report;
 
 use Twig\Error\LoaderError;
 use Twig\Error\RuntimeError;

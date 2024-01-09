@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
-namespace Marcus\PhpLegacyAnalyzer\Analysis;
+namespace PhpCodeArch\Analysis;
 
-use Marcus\PhpLegacyAnalyzer\Metrics\ClassMetrics;
-use Marcus\PhpLegacyAnalyzer\Metrics\ClassMetricsFactory;
-use Marcus\PhpLegacyAnalyzer\Metrics\FileIdentifier;
-use Marcus\PhpLegacyAnalyzer\Metrics\FunctionMetrics;
-use Marcus\PhpLegacyAnalyzer\Metrics\FunctionMetricsFactory;
-use Marcus\PhpLegacyAnalyzer\Metrics\MetricsInterface;
+use PhpCodeArch\Metrics\ClassMetrics\ClassMetrics;
+use PhpCodeArch\Metrics\ClassMetrics\ClassMetricsFactory;
+use PhpCodeArch\Metrics\FunctionMetrics\FunctionMetrics;
+use PhpCodeArch\Metrics\FunctionMetrics\FunctionMetricsFactory;
+use PhpCodeArch\Metrics\Identity\FileIdentifier;
+use PhpCodeArch\Metrics\MetricsInterface;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
-use function Marcus\PhpLegacyAnalyzer\getNodeName;
+use function PhpCodeArch\getNodeName;
 
 class IdentifyVisitor implements NodeVisitor
 {

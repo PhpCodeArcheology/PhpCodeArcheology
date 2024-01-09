@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Test\Feature\Analysis;
 
-use Marcus\PhpLegacyAnalyzer\Analysis\DependencyVisitor;
-use Marcus\PhpLegacyAnalyzer\Analysis\IdentifyVisitor;
-use Marcus\PhpLegacyAnalyzer\Metrics\ClassMetrics;
-use Marcus\PhpLegacyAnalyzer\Metrics\FileMetrics;
-use Marcus\PhpLegacyAnalyzer\Metrics\FunctionMetrics;
+use PhpCodeArch\Analysis\DependencyVisitor;
+use PhpCodeArch\Analysis\IdentifyVisitor;
+use PhpCodeArch\Metrics\ClassMetrics\ClassMetrics;
+use PhpCodeArch\Metrics\FileMetrics\FileMetrics;
+use PhpCodeArch\Metrics\FunctionMetrics\FunctionMetrics;
 
 require_once __DIR__ . '/test_helpers.php';
 

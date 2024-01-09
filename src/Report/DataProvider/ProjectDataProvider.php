@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Marcus\PhpLegacyAnalyzer\Report\DataProvider;
+namespace PhpCodeArch\Report\DataProvider;
 
-use Marcus\PhpLegacyAnalyzer\Metrics\OverallMetricsEnum;
+use PhpCodeArch\Metrics\ProjectMetrics\OverallMetricsEnum;
 
 class ProjectDataProvider implements ReportDataProviderInterface
 {

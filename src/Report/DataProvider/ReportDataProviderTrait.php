@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Marcus\PhpLegacyAnalyzer\Report\DataProvider;
+namespace PhpCodeArch\Report\DataProvider;
 
-use Marcus\PhpLegacyAnalyzer\Application\Application;
-use Marcus\PhpLegacyAnalyzer\Metrics\Metrics;
+use PhpCodeArch\Application\Application;
+use PhpCodeArch\Metrics\Metrics;
 
 trait ReportDataProviderTrait
 {

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Marcus\PhpLegacyAnalyzer\Report\Helper;
+namespace PhpCodeArch\Report\Helper;
 
 class FileCopier
 {

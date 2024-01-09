@@ -2,8 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Marcus\PhpLegacyAnalyzer\Metrics;
+namespace PhpCodeArch\Metrics\FunctionMetrics;
 
+
+use PhpCodeArch\Metrics\Identity\FunctionAndClassIdentifier;
+use PhpCodeArch\Metrics\Identity\IdentifierInterface;
+use PhpCodeArch\Metrics\MetricsInterface;
+use PhpCodeArch\Metrics\MetricsTrait;
 
 class FunctionMetrics implements MetricsInterface
 {

@@ -12,9 +12,9 @@ declare(strict_types=1);
 
 namespace Test\Feature\Analysis;
 
-use Marcus\PhpLegacyAnalyzer\Metrics\FileMetrics;
-use Marcus\PhpLegacyAnalyzer\Metrics\Metrics;
-use Marcus\PhpLegacyAnalyzer\Metrics\ProjectMetrics;
+use PhpCodeArch\Metrics\FileMetrics\FileMetrics;
+use PhpCodeArch\Metrics\Metrics;
+use PhpCodeArch\Metrics\ProjectMetrics\ProjectMetrics;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\Parser;

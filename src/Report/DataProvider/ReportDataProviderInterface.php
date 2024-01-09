@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Marcus\PhpLegacyAnalyzer\Report\DataProvider;
+namespace PhpCodeArch\Report\DataProvider;
 
-use Marcus\PhpLegacyAnalyzer\Metrics\Metrics;
+use PhpCodeArch\Metrics\Metrics;
 
 interface ReportDataProviderInterface
 {

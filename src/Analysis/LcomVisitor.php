@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Marcus\PhpLegacyAnalyzer\Analysis;
+namespace PhpCodeArch\Analysis;
 
-use Marcus\PhpLegacyAnalyzer\Graph\Graph;
-use Marcus\PhpLegacyAnalyzer\Graph\Node as GraphNode;
-use Marcus\PhpLegacyAnalyzer\Metrics\ClassMetricsFactory;
+use PhpCodeArch\Graph\Graph;
+use PhpCodeArch\Graph\Node as GraphNode;
+use PhpCodeArch\Metrics\ClassMetrics\ClassMetricsFactory;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
-use function Marcus\PhpLegacyAnalyzer\getNodeName;
+use function PhpCodeArch\getNodeName;
 
 class LcomVisitor implements NodeVisitor
 {

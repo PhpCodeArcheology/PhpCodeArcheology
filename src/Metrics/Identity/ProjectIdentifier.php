@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Marcus\PhpLegacyAnalyzer\Metrics;
+namespace PhpCodeArch\Metrics\Identity;
 
-class FileIdentifier implements IdentifierInterface
+class ProjectIdentifier implements IdentifierInterface
 {
     private string $identifier;
 
@@ -15,7 +15,7 @@ class FileIdentifier implements IdentifierInterface
 
     public static function ofPath(string $path)
     {
-        return new FileIdentifier($path);
+        return new ProjectIdentifier($path);
     }
 
     public function __toString(): string
@@ -23,7 +23,7 @@ class FileIdentifier implements IdentifierInterface
         return $this->identifier;
     }
 
-    public function equals(FileIdentifier $other): bool
+    public function equals(ProjectIdentifier $other): bool
     {
         return $this->identifier === (string) $other;
     }

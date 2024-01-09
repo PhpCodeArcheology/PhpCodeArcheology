@@ -2,13 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Marcus\PhpLegacyAnalyzer\Calculators;
+namespace PhpCodeArch\Calculators;
 
-use Marcus\PhpLegacyAnalyzer\Metrics\ClassMetrics;
-use Marcus\PhpLegacyAnalyzer\Metrics\FileMetrics;
-use Marcus\PhpLegacyAnalyzer\Metrics\FunctionMetrics;
-use Marcus\PhpLegacyAnalyzer\Metrics\Metrics;
-use Marcus\PhpLegacyAnalyzer\Metrics\MetricsInterface;
+use PhpCodeArch\Metrics\ClassMetrics\ClassMetrics;
+use PhpCodeArch\Metrics\FileMetrics\FileMetrics;
+use PhpCodeArch\Metrics\FunctionMetrics\FunctionMetrics;
+use PhpCodeArch\Metrics\MetricsInterface;
 
 class CouplingCalculator implements CalculatorInterface
 {

@@ -2,12 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Marcus\PhpLegacyAnalyzer\Calculators;
+namespace PhpCodeArch\Calculators;
 
-use Marcus\PhpLegacyAnalyzer\Metrics\FileMetrics;
-use Marcus\PhpLegacyAnalyzer\Metrics\FileMetricsEnum;
-use Marcus\PhpLegacyAnalyzer\Metrics\Metrics;
-use Marcus\PhpLegacyAnalyzer\Metrics\MetricsInterface;
+use PhpCodeArch\Metrics\FileMetrics\FileMetrics;
+use PhpCodeArch\Metrics\FileMetrics\FileMetricsEnum;
+use PhpCodeArch\Metrics\MetricsInterface;
 
 class FileCalculator implements CalculatorInterface
 {

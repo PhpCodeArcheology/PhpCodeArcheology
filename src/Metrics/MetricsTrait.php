@@ -1,6 +1,8 @@
 <?php
 
-namespace Marcus\PhpLegacyAnalyzer\Metrics;
+namespace PhpCodeArch\Metrics;
+
+use PhpCodeArch\Metrics\FileMetrics\FileMetrics;
 
 trait MetricsTrait
 {

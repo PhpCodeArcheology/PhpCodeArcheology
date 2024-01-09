@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Marcus\PhpLegacyAnalyzer\Application\ConfigFile;
+namespace PhpCodeArch\Application\ConfigFile;
 
-use Marcus\PhpLegacyAnalyzer\Application\Config;
+use PhpCodeArch\Application\Config;
 
 interface ConfigFileParserInterface
 {

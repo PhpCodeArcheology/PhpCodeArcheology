@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Marcus\PhpLegacyAnalyzer\Application;
+namespace PhpCodeArch\Application;
 
 final class Config
 {

@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Marcus\PhpLegacyAnalyzer\Calculators;
+namespace PhpCodeArch\Calculators;
 
-use Marcus\PhpLegacyAnalyzer\Metrics\Metrics;
-use Marcus\PhpLegacyAnalyzer\Metrics\MetricsInterface;
+use PhpCodeArch\Metrics\Metrics;
+use PhpCodeArch\Metrics\MetricsInterface;
 
 class VariablesCalculator implements CalculatorInterface
 {

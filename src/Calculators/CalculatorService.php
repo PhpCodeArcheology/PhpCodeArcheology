@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Marcus\PhpLegacyAnalyzer\Calculators;
+namespace PhpCodeArch\Calculators;
 
-use Marcus\PhpLegacyAnalyzer\Application\CliOutput;
-use Marcus\PhpLegacyAnalyzer\Metrics\Metrics;
+use PhpCodeArch\Application\CliOutput;
+use PhpCodeArch\Metrics\Metrics;
 
 readonly class CalculatorService
 {

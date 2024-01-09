@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Marcus\PhpLegacyAnalyzer\Application\ConfigFile;
+namespace PhpCodeArch\Application\ConfigFile;
 
-use Marcus\PhpLegacyAnalyzer\Application\ConfigFile\Exceptions\ConfigFileExtensionNotSupportedException;
+use PhpCodeArch\Application\ConfigFile\Exceptions\ConfigFileExtensionNotSupportedException;
 use Symfony\Component\Yaml\Yaml;
 
 class ConfigFileParserFactory

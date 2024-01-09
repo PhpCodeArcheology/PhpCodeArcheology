@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Test\Feature\Analysis;
 
-use Marcus\PhpLegacyAnalyzer\Analysis\IdentifyVisitor;
-use Marcus\PhpLegacyAnalyzer\Analysis\LcomVisitor;
-use Marcus\PhpLegacyAnalyzer\Metrics\ClassMetrics;
+use PhpCodeArch\Analysis\IdentifyVisitor;
+use PhpCodeArch\Analysis\LcomVisitor;
+use PhpCodeArch\Metrics\ClassMetrics\ClassMetrics;
 
 require_once __DIR__ . '/test_helpers.php';
 

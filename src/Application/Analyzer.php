@@ -2,18 +2,18 @@
 
 declare(strict_types=1);
 
-namespace Marcus\PhpLegacyAnalyzer\Application;
+namespace PhpCodeArch\Application;
 
-use Marcus\PhpLegacyAnalyzer\Analysis\CyclomaticComplexityVisitor;
-use Marcus\PhpLegacyAnalyzer\Analysis\DependencyVisitor;
-use Marcus\PhpLegacyAnalyzer\Analysis\GlobalsVisitor;
-use Marcus\PhpLegacyAnalyzer\Analysis\HalsteadMetricsVisitor;
-use Marcus\PhpLegacyAnalyzer\Analysis\IdentifyVisitor;
-use Marcus\PhpLegacyAnalyzer\Analysis\LcomVisitor;
-use Marcus\PhpLegacyAnalyzer\Analysis\LocVisitor;
-use Marcus\PhpLegacyAnalyzer\Analysis\MaintainabilityIndexVisitor;
-use Marcus\PhpLegacyAnalyzer\Metrics\FileMetrics;
-use Marcus\PhpLegacyAnalyzer\Metrics\Metrics;
+use PhpCodeArch\Analysis\CyclomaticComplexityVisitor;
+use PhpCodeArch\Analysis\DependencyVisitor;
+use PhpCodeArch\Analysis\GlobalsVisitor;
+use PhpCodeArch\Analysis\HalsteadMetricsVisitor;
+use PhpCodeArch\Analysis\IdentifyVisitor;
+use PhpCodeArch\Analysis\LcomVisitor;
+use PhpCodeArch\Analysis\LocVisitor;
+use PhpCodeArch\Analysis\MaintainabilityIndexVisitor;
+use PhpCodeArch\Metrics\FileMetrics\FileMetrics;
+use PhpCodeArch\Metrics\Metrics;
 use PhpParser\Error;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
