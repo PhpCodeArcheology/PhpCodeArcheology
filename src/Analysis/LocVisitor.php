@@ -304,7 +304,7 @@ class LocVisitor implements NodeVisitor
         $code = preg_replace('!/\*.*?\*/!s', '', $code);
 
         // count and remove single line comments
-        $code = preg_replace_callback('!(\'[^\']*\'|"[^"]*")|((?:#|\/\/).*$)!m', function (array $matches) use (&$cloc) {
+        $code = preg_replace_callback('!(\'[^\']*\'|"[^"]*")|((?:#|//).*$)!m', function (array $matches) use (&$cloc) {
             if (isset($matches[2])) {
                 $cloc += 1;
             }

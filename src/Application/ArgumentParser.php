@@ -19,7 +19,7 @@ final class ArgumentParser
         }
 
         foreach ($argv as $key => $value) {
-            if (preg_match('#\-\-([\w\-]+)=(.*)#', $value, $matches)) {
+            if (preg_match('#--([\w\-]+)=(.*)#', $value, $matches)) {
                 [, $param, $value] = $matches;
 
                 switch ($param) {
