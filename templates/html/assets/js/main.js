@@ -25,6 +25,8 @@
       let value2 = td2[column].dataset.sort;
 
       switch (currentSort[2]) {
+        case 'int':
+        case 'float':
         case 'number':
           value1 = parseFloat(value1);
           value2 = parseFloat(value2);
