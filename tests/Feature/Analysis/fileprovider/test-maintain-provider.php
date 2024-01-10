@@ -108,7 +108,7 @@ return [
         [
             'file' => [
                 'halstead' => [
-                    'mi' => 50,
+                    'mi' => 171,
                     'miWOC' => 50,
                     'cW' => 0,
                 ],
@@ -116,7 +116,7 @@ return [
             'functions' => [
                 'emptyFunction' => [
                     'halstead' => [
-                        'mi' => 50,
+                        'mi' => 171,
                         'miWOC' => 50,
                         'cW' => 0,
                     ],
@@ -125,7 +125,7 @@ return [
             'classes' => [
                 'emptyClass' => [
                     'halstead' => [
-                        'mi' => 50,
+                        'mi' => 171,
                         'miWOC' => 50,
                         'cW' => 0,
                     ],
@@ -133,14 +133,14 @@ return [
                 ],
                 'emptyMethodClass' => [
                     'halstead' => [
-                        'mi' => 50,
+                        'mi' => 171,
                         'miWOC' => 50,
                         'cW' => 0,
                     ],
                     'methods' => [
                         'emptyMethod' => [
                             'halstead' => [
-                                'mi' => 50,
+                                'mi' => 171,
                                 'miWOC' => 50,
                                 'cW' => 0,
                             ],

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Test\Feature\Calculators;
 
 use PhpCodeArch\Calculators\CouplingCalculator;
+use PhpCodeArch\Calculators\Helpers\PackageInstabilityAbstractnessCalculator;
 use PhpCodeArch\Metrics\ClassMetrics\ClassMetrics;
 use PhpCodeArch\Metrics\Metrics;
 use PhpCodeArch\Metrics\ProjectMetrics\ProjectMetrics;
@@ -25,6 +26,7 @@ beforeEach(function() {
                 ],
                 'interfaces' => [],
                 'extends' => [],
+                'package' => '_global',
             ],
             'expected' => [
                 'instability' => 1,
@@ -42,6 +44,7 @@ beforeEach(function() {
                 ],
                 'interfaces' => [],
                 'extends' => [],
+                'package' => '_global',
             ],
             'expected' => [
                 'instability' => 0,
@@ -60,6 +63,7 @@ beforeEach(function() {
                 ],
                 'interfaces' => [],
                 'extends' => [],
+                'package' => '_global',
             ],
             'expected' => [
                 'instability' => 0.5,
@@ -78,6 +82,7 @@ beforeEach(function() {
                 ],
                 'interfaces' => [],
                 'extends' => [],
+                'package' => '_global',
             ],
             'expected' => [
                 'instability' => 1,
@@ -95,6 +100,7 @@ beforeEach(function() {
                 ],
                 'interfaces' => [],
                 'extends' => [],
+                'package' => '_global',
             ],
             'expected' => [
                 'instability' => 0,
@@ -125,7 +131,8 @@ beforeEach(function() {
     $projectMetrics = new ProjectMetrics('');
     $this->metrics->set('project', $projectMetrics);
 
-    $couplingCalculator = new CouplingCalculator($this->metrics);
+    $packageIACalc = new PackageInstabilityAbstractnessCalculator($this->metrics);
+    $couplingCalculator = new CouplingCalculator($this->metrics, $packageIACalc);
 
     $couplingCalculator->beforeTraverse();
 
