@@ -1,4 +1,5 @@
 /node_modules/
 /report/
+/tmp/
 /vendor/
-test.txt
+debug.txt

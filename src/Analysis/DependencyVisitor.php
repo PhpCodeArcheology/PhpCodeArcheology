@@ -31,6 +31,14 @@ class DependencyVisitor implements NodeVisitor
 
     private array $classDependencies = [];
 
+    /**
+     * Directly used classes (not in extend or implement)
+     * @var array
+     */
+    private array $classUses = [];
+
+    private array $classTraits = [];
+
     private array $functionDependencies = [];
 
     private array $methodDependencies = [];
@@ -62,6 +70,8 @@ class DependencyVisitor implements NodeVisitor
             );
 
             $this->classDependencies[$classMetrics->getName()] = [];
+            $this->classUses[$classMetrics->getName()] = [];
+            $this->classTraits[$classMetrics->getName()] = [];
             $this->currentClassMetrics[] = $classMetrics;
         }
         elseif ($node instanceof Node\Stmt\Function_) {
@@ -115,6 +125,8 @@ class DependencyVisitor implements NodeVisitor
             $currentClassMetrics = array_pop($this->currentClassMetrics);
 
             $currentClassMetrics->set('dependencies', $this->classDependencies[$currentClassMetrics->getName()]);
+            $currentClassMetrics->set('usedClasses', $this->classUses[$currentClassMetrics->getName()]);
+            $currentClassMetrics->set('traits', $this->classTraits[$currentClassMetrics->getName()]);
             $currentClassMetrics->set('interfaces', $interfaces);
             $currentClassMetrics->set('extends', $extends);
 
@@ -156,6 +168,14 @@ class DependencyVisitor implements NodeVisitor
             case $node instanceof Node\Expr\New_:
             case $node instanceof Node\Expr\StaticCall:
                 $this->setDependency($node);
+                $this->setUses($node);
+                break;
+
+            case $node instanceof Node\Stmt\TraitUse:
+                foreach ($node->traits as $trait) {
+                    $this->setDependency($trait);
+                    $this->setTrait($trait);
+                }
                 break;
         }
     }
@@ -174,15 +194,9 @@ class DependencyVisitor implements NodeVisitor
 
     private function setDependency(mixed $dependency): ?string
     {
-        $dependency = getNodeName($dependency);
+        $dependency = $this->checkDependency($dependency);
 
-        if (! $dependency) {
-            return null;
-        }
-
-        $dependencyLowercase = strtolower((string) $dependency);
-
-        if ($dependencyLowercase === 'self' || $dependencyLowercase === 'parent') {
+        if ($dependency === false) {
             return null;
         }
 
@@ -190,29 +204,90 @@ class DependencyVisitor implements NodeVisitor
             $currentClassMetrics = end($this->currentClassMetrics);
             $className = $currentClassMetrics->getName();
 
-            if (in_array((string) $dependency, $this->classDependencies[$className])) {
+            if (in_array($dependency, $this->classDependencies[$className])) {
                 return null;
             }
 
-            $this->classDependencies[$className][] = (string) $dependency;
+            $this->classDependencies[$className][] = $dependency;
 
             if ($this->insideMethod) {
-                $this->methodDependencies[$className][] = (string) $dependency;
+                $this->methodDependencies[$className][] = $dependency;
             }
         }
         elseif ($this->insideFunction) {
-            if (in_array((string) $dependency, $this->functionDependencies)) {
+            if (in_array($dependency, $this->functionDependencies)) {
                 return null;
             }
 
-            $this->functionDependencies[] = (string) $dependency;
+            $this->functionDependencies[] = $dependency;
         }
         else {
-            if (in_array((string) $dependency, $this->outsideDependencies)) {
+            if (in_array($dependency, $this->outsideDependencies)) {
                 return null;
             }
 
-            $this->outsideDependencies[] = (string) $dependency;
+            $this->outsideDependencies[] = $dependency;
+        }
+
+        return $dependency;
+    }
+
+    private function setUses(mixed $dependency): void
+    {
+        $dependency = $this->checkDependency($dependency);
+
+        if ($dependency === false) {
+            return;
+        }
+
+        if (count($this->currentClassMetrics) === 0) {
+            return;
+        }
+
+        $currentClassMetrics = end($this->currentClassMetrics);
+        $className = $currentClassMetrics->getName();
+
+        if (in_array($dependency, $this->classUses[$className])) {
+            return;
+        }
+
+        $this->classUses[$className][] = $dependency;
+    }
+
+    private function setTrait(mixed $dependency): void
+    {
+        $dependency = $this->checkDependency($dependency);
+
+        if ($dependency === false) {
+            return;
+        }
+
+        if (count($this->currentClassMetrics) === 0) {
+            return;
+        }
+
+        $currentClassMetrics = end($this->currentClassMetrics);
+        $className = $currentClassMetrics->getName();
+
+        if (in_array($dependency, $this->classTraits[$className])) {
+            return;
+        }
+
+        $this->classTraits[$className][] = $dependency;
+    }
+
+    private function checkDependency(mixed $dependency): string|false
+    {
+        $dependency = getNodeName($dependency);
+
+        if (! $dependency) {
+            return false;
+        }
+
+        $dependencyLowercase = strtolower((string) $dependency);
+
+        if ($dependencyLowercase === 'self' || $dependencyLowercase === 'parent') {
+            return false;
         }
 
         return $dependency;

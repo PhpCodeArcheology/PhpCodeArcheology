@@ -23,6 +23,7 @@ final class ArgumentParser
                 [, $param, $value] = $matches;
 
                 switch ($param) {
+                    case 'extensions':
                     case 'exclude':
                         $config->set($param, explode(',', $value));
                         break;

@@ -3,6 +3,10 @@
 <div class="mt-6 lg:w-5/6">
   <h1 class="mb-6 text-3xl font-semibold font-display">Packages</h1>
 
+  <div class="w-full">
+    <div id="ai-chart" class="w-full h-[50vh]"></div>
+  </div>
+
   <div class="relative overflow-x-auto">
     <table class="sortable my-6 w-full border-collapse border border-slate-500 text-sm rounded-xl transition-opacity" data-currentsort="0:asc:string">
       <thead class="bg-cyan-950/25">
@@ -10,6 +14,42 @@
         <th class="border border-slate-500 text-left px-2 py-0.5" data-sortable="string">
             <span class="label-box flex justify-between items-center gap-1">
               <span class="label-name">Package</span>
+              <span class="sort-icon transition-all opacity-0"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M12.53 16.28a.75.75 0 0 1-1.06 0l-7.5-7.5a.75.75 0 0 1 1.06-1.06L12 14.69l6.97-6.97a.75.75 0 1 1 1.06 1.06l-7.5 7.5Z" clip-rule="evenodd" /></svg></span>
+            </span>
+        </th>
+        <th class="border border-slate-500 text-left px-2 py-0.5" data-sortable="int">
+            <span class="label-box flex justify-between items-center gap-1">
+              <span class="label-name">Classes</span>
+              <span class="sort-icon transition-all opacity-0"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M12.53 16.28a.75.75 0 0 1-1.06 0l-7.5-7.5a.75.75 0 0 1 1.06-1.06L12 14.69l6.97-6.97a.75.75 0 1 1 1.06 1.06l-7.5 7.5Z" clip-rule="evenodd" /></svg></span>
+            </span>
+        </th>
+        <th class="border border-slate-500 text-left px-2 py-0.5" data-sortable="int">
+            <span class="label-box flex justify-between items-center gap-1">
+              <span class="label-name">Uses</span>
+              <span class="sort-icon transition-all opacity-0"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M12.53 16.28a.75.75 0 0 1-1.06 0l-7.5-7.5a.75.75 0 0 1 1.06-1.06L12 14.69l6.97-6.97a.75.75 0 1 1 1.06 1.06l-7.5 7.5Z" clip-rule="evenodd" /></svg></span>
+            </span>
+        </th>
+        <th class="border border-slate-500 text-left px-2 py-0.5" data-sortable="int">
+            <span class="label-box flex justify-between items-center gap-1">
+              <span class="label-name">Used by</span>
+              <span class="sort-icon transition-all opacity-0"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M12.53 16.28a.75.75 0 0 1-1.06 0l-7.5-7.5a.75.75 0 0 1 1.06-1.06L12 14.69l6.97-6.97a.75.75 0 1 1 1.06 1.06l-7.5 7.5Z" clip-rule="evenodd" /></svg></span>
+            </span>
+        </th>
+        <th class="border border-slate-500 text-left px-2 py-0.5" data-sortable="float">
+            <span class="label-box flex justify-between items-center gap-1">
+              <span class="label-name">Instability</span>
+              <span class="sort-icon transition-all opacity-0"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M12.53 16.28a.75.75 0 0 1-1.06 0l-7.5-7.5a.75.75 0 0 1 1.06-1.06L12 14.69l6.97-6.97a.75.75 0 1 1 1.06 1.06l-7.5 7.5Z" clip-rule="evenodd" /></svg></span>
+            </span>
+        </th>
+        <th class="border border-slate-500 text-left px-2 py-0.5" data-sortable="float">
+            <span class="label-box flex justify-between items-center gap-1">
+              <span class="label-name">Abstractness</span>
+              <span class="sort-icon transition-all opacity-0"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M12.53 16.28a.75.75 0 0 1-1.06 0l-7.5-7.5a.75.75 0 0 1 1.06-1.06L12 14.69l6.97-6.97a.75.75 0 1 1 1.06 1.06l-7.5 7.5Z" clip-rule="evenodd" /></svg></span>
+            </span>
+        </th>
+        <th class="border border-slate-500 text-left px-2 py-0.5" data-sortable="float">
+            <span class="label-box flex justify-between items-center gap-1">
+              <span class="label-name">Distance from mainline</span>
               <span class="sort-icon transition-all opacity-0"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M12.53 16.28a.75.75 0 0 1-1.06 0l-7.5-7.5a.75.75 0 0 1 1.06-1.06L12 14.69l6.97-6.97a.75.75 0 1 1 1.06 1.06l-7.5 7.5Z" clip-rule="evenodd" /></svg></span>
             </span>
         </th>
@@ -21,11 +61,69 @@
           <td class="border border-slate-500 text-left px-2 py-0.5" data-sort="{{ package.name }}">
             <span class="font-semibold inline-block">{{ package.name }}</span>
           </td>
+          <td class="border border-slate-500 text-left px-2 py-0.5" data-sort="{{ package.classes|length }}">
+            <span class="font-semibold inline-block">{{ package.classes|length }}</span>
+          </td>
+          <td class="border border-slate-500 text-left px-2 py-0.5" data-sort="{{ package.usesCount }}">
+            <span class="font-semibold inline-block">{{ package.usesCount }}</span>
+          </td>
+          <td class="border border-slate-500 text-left px-2 py-0.5" data-sort="{{ package.usedByCount }}">
+            <span class="font-semibold inline-block">{{ package.usedByCount }}</span>
+          </td>
+          <td class="border border-slate-500 text-left px-2 py-0.5" data-sort="{{ package.instability }}">
+            <span class="font-semibold inline-block">{{ package.instability|number_format(2) }}</span>
+          </td>
+          <td class="border border-slate-500 text-left px-2 py-0.5" data-sort="{{ package.abstractness }}">
+            <span class="font-semibold inline-block">{{ package.abstractness|number_format(2) }}</span>
+          </td>
+          <td class="border border-slate-500 text-left px-2 py-0.5" data-sort="{{ package.distanceFromMainline }}">
+            <span class="font-semibold inline-block">{{ package.distanceFromMainline|number_format(2) }}</span>
+          </td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
 </div>
+
+<script>
+  aiChart = document.getElementById('ai-chart');
+
+  const trace1 = {
+    x: {{ aiChart.x|raw }},
+    y: {{ aiChart.y|raw }},
+    text: {{ aiChart.count|raw }},
+    mode: 'markers',
+    type: 'scatter',
+    name: 'Package',
+    marker: {
+      opacity: 0.5,
+      size: 15,
+    },
+  };
+
+  const trace2 = {
+    x: [0, 1],
+    y: [1, 0],
+    mode: 'lines',
+    name: 'Baseline',
+    type: 'scatter'
+  };
+
+  const layout = {
+    xaxis: {
+      title: 'Instability',
+    },
+    yaxis: {
+      title: 'Abstractness',
+    },
+    title: 'Instability-Abstractness Chart',
+  };
+
+  const data = [trace1, trace2];
+
+
+  Plotly.newPlot(aiChart, data, layout);
+</script>
 
 {% include('parts/footer.html.twig') %}

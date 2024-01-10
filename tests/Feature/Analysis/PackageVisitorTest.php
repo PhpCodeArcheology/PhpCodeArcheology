@@ -27,7 +27,7 @@ it('detects file namespaces and packages correctly', function($testFiles, $expec
     $packages = $metrics->get('packages');
     expect($packages)->toBeArray()
         ->and(in_array('_global', $packages))->toBeTrue()
-        ->and($packages)->toBe(array_unique(array_values($expects['fileNamespaces'])));
+        ->and($packages)->toBe($expects['foundPackages']);
 
     foreach ($metrics->getAll() as $metric) {
         if (! $metric instanceof FileMetrics) {

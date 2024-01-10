@@ -17,20 +17,43 @@ class CouplingCalculator implements CalculatorInterface
 
     private array $interfaces = [];
 
+    private array $extends = [];
+
+    private array $traits = [];
+
+    private array $packages = [];
+
+    private array $packagesMap = [
+        'uses' => [],
+        'usedBy' => [],
+    ];
+
     private int $usedByCount = 0;
 
     private int $usesCount = 0;
 
     private float $instability = 0;
 
-    private int $abstractClasses = 0;
+    private array $abstractClasses = [];
 
-    private int $concreteClasses = 0;
+    private array $concreteClasses = [];
 
     public function beforeTraverse(): void
     {
-        $this->classes = $this->metrics->get('classes');
-        $this->interfaces = $this->metrics->get('interfaces');
+        $this->classes = $this->metrics->get('classes') ?? [];
+        $this->interfaces = $this->metrics->get('interfaces') ?? [];
+        $this->traits = $this->metrics->get('traits') ?? [];
+
+        $packages = $this->metrics->get('packages') ?? [];
+
+        $packages = array_flip($packages);
+
+        $this->packages = array_map(function() {
+            return [
+                'usesCount' => 0,
+                'usedByCount' => 0,
+            ];
+        }, $packages);
     }
 
     public function calculate(MetricsInterface $metrics): void
@@ -64,18 +87,50 @@ class CouplingCalculator implements CalculatorInterface
 
     public function afterTraverse(): void
     {
+        foreach ($this->packages as $packageName => $packageData) {
+            $packageMetric = $this->metrics->get($packageName);
+
+            if (! $packageMetric) {
+                continue;
+            }
+
+            foreach ($packageData as $key => $value) {
+                $packageMetric->set($key, $value);
+            }
+
+            if (! isset($this->abstractClasses[$packageName]) || ! isset($this->concreteClasses[$packageName])) {
+                $packageMetric->set('instability', 0);
+                $packageMetric->set('abstractness', 0);
+                $packageMetric->set('distanceFromMainline', 0);
+
+                $this->metrics->set($packageName, $packageMetric);
+                continue;
+            }
+
+
+            $instability = ($packageMetric->get('usesCount') + $packageMetric->get('usedByCount')) > 0 ? $packageMetric->get('usesCount') / ($packageMetric->get('usesCount') + $packageMetric->get('usedByCount')) : 0;
+            $abstractness = ($this->abstractClasses[$packageName] + $this->concreteClasses[$packageName]) > 0 ? $this->abstractClasses[$packageName] / ($this->abstractClasses[$packageName] + $this->concreteClasses[$packageName]) : 0;
+            $distanceFromMainline = $abstractness + $instability - 1;
+
+            $packageMetric->set('instability', $instability);
+            $packageMetric->set('abstractness', $abstractness);
+            $packageMetric->set('distanceFromMainline', $distanceFromMainline);
+
+            $this->metrics->set($packageName, $packageMetric);
+        }
+
         foreach ($this->classes as $classId => $className) {
             $metric = $this->metrics->get($classId);
 
             $usesCount = $metric->get('usesCount');
             $usedByCount = $metric->get('usedByCount');
 
-            $usesInProjectCount = $metric->get('usesInProjectCount') ?? 0;
+            $usesForInstabilityCount = $metric->get('usesForInstabilityCount') ?? 0;
 
             /**
              * @see https://kariera.future-processing.pl/blog/object-oriented-metrics-by-robert-martin/
              */
-            $instability = ($usesInProjectCount + $usedByCount) > 0 ? $usesInProjectCount / ($usesInProjectCount + $usedByCount) : 0;
+            $instability = ($usesForInstabilityCount + $usedByCount) > 0 ? $usesForInstabilityCount / ($usesForInstabilityCount + $usedByCount) : 0;
 
             /**
              * @see https://kariera.future-processing.pl/blog/object-oriented-metrics-by-robert-martin/
@@ -102,7 +157,7 @@ class CouplingCalculator implements CalculatorInterface
         $avgUsedByCount = $this->usedByCount / count($this->classes);
         $avgInstability = $this->instability / count($this->classes);
 
-        $overallAbstractness = $this->abstractClasses / ($this->abstractClasses + $this->concreteClasses);
+        $overallAbstractness = array_sum($this->abstractClasses) / (array_sum($this->abstractClasses) + array_sum($this->concreteClasses));
         $overallDistanceFromMainline = $overallAbstractness + $avgInstability - 1;
 
         $projectMetrics = $this->metrics->get('project');
@@ -150,13 +205,32 @@ class CouplingCalculator implements CalculatorInterface
         $usesInProject = $metric->get('usesInProject') ?? [];
         $usesInProjectCount = $metric->get('usesInProjectCount') ?? 0;
 
+        $usesForInstability = $metric->get('usesForInstability') ?? 0;
+
         $usedBy = $metric->get('usedBy') ?? [];
         $usedByCount = $metric->get('usedByCount') ?? 0;
 
+        $package = $metric->get('package');
+
+        if (! isset($this->packagesMap['uses'][$package])) {
+            $this->packagesMap['uses'][$package] = [];
+        }
+        if (! isset($this->packagesMap['usedBy'][$package])) {
+            $this->packagesMap['usedBy'][$package] = [];
+        }
+
+        if (! isset($this->abstractClasses[$package])) {
+            $this->abstractClasses[$package] = 0;
+        }
+
+        if (! isset($this->concreteClasses[$package])) {
+            $this->concreteClasses[$package] = 0;
+        }
+
         if ($metric->get('realClass') && $metric->get('abstract') || $metric->get('interface')) {
-            ++ $this->abstractClasses;
+            ++ $this->abstractClasses[$package];
         } elseif ($metric->get('realClass')) {
-            ++ $this->concreteClasses;
+            ++ $this->concreteClasses[$package];
         }
 
         foreach ($metric->get('dependencies') as $dependency) {
@@ -167,18 +241,39 @@ class CouplingCalculator implements CalculatorInterface
             ++ $usesCount;
             $uses[] = $dependency;
 
-            if (in_array($dependency, $this->classes) || in_array($dependency, $this->interfaces) ) {
+            $checkArray = array_merge($this->classes, $this->interfaces, $this->traits);
+
+            $isTrait = true;
+
+            if (in_array($dependency, $checkArray)) {
                 // Counts only dependencies inside current project
                 ++ $usesInProjectCount;
                 $usesInProject[] = $dependency;
+
+                if (! in_array($dependency, $this->traits)) {
+                    $isTrait = false;
+                    ++ $usesForInstability;
+                }
             }
 
-            $classKey = array_search($dependency, $this->classes);
+            $classKey = array_search($dependency, $checkArray);
+
             if (! $classKey) {
                 continue;
             }
 
             $usedByMetric = $this->metrics->get($classKey);
+
+            if ($package !== $usedByMetric->get('package') && ! $isTrait) {
+                if (! in_array($dependency, $this->packagesMap['uses'][$package])) {
+                    ++ $this->packages[$package]['usesCount'];
+                    $this->packagesMap['uses'][$package][] = $dependency;
+                }
+                if (! in_array($dependency, $this->packagesMap['usedBy'][$package])) {
+                    ++ $this->packages[$usedByMetric->get('package')]['usedByCount'];
+                    $this->packagesMap['usedBy'][$package][] = $usedByMetric->getName();
+                }
+            }
 
             $classUsedBy = $usedByMetric->get('usedBy') ?? [];
             $classUsedByCount = $usedByMetric->get('usedByCount') ?? 0;
@@ -196,6 +291,7 @@ class CouplingCalculator implements CalculatorInterface
         $metric->set('usedByCount', $usedByCount);
         $metric->set('usesInProject', $usesInProject);
         $metric->set('usesInProjectCount', $usesInProjectCount);
+        $metric->set('usesForInstabilityCount', $usesForInstability);
 
         return $metric;
     }

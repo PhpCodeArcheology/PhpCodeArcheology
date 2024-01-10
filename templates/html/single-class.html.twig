@@ -4,6 +4,49 @@
   <h1 class="mb-3 text-lg font-semibold font-display">Class metrics for:</h1>
   <h2 class="mb-6 text-3xl"><span class="text-white/40">{{ class.namespace }}\</span><span class="font-semibold inline-block" title="{{ class.namespace }}\{{ class.singleName }}">{{ class.singleName }}</span></h2>
 
+  <div class="mt-8 rounded-xl border border-cyan-800 bg-cyan-950/45 p-4">
+    <h3 class="mb-3 text-xl font-semibold font-display">Dependencies</h3>
+
+    {% if class.extends|length or class.interfaces|length or class.usedClasses|length or class.usedBy|length or class.traits|length %}
+    <table class="w-full border-collapse">
+      <tbody>
+        {% if class.interfaces|length %}
+          <tr class="odd:bg-cyan-950/85 even:bg-cyan-950/55 border-t border-white/15">
+            <th class="text-left p-2 align-top">Implements</th>
+            <td class="p-2">{{ class.interfaces|join(', ') }}</td>
+          </tr>
+        {% endif %}
+        {% if class.extends|length %}
+        <tr class="odd:bg-cyan-950/85 even:bg-cyan-950/55 border-t border-white/15">
+          <th class="text-left p-2 align-top">Extends</th>
+          <td class="p-2">{{ class.extends|join(', ') }}</td>
+        </tr>
+        {% endif %}
+        {% if class.traits|length %}
+          <tr class="odd:bg-cyan-950/85 even:bg-cyan-950/55 border-t border-white/15">
+            <th class="text-left p-2 align-top">Traits</th>
+            <td class="p-2">{{ class.traits|join(', ') }}</td>
+          </tr>
+        {% endif %}
+        {% if class.usedClasses|length %}
+        <tr class="odd:bg-cyan-950/85 even:bg-cyan-950/55 border-t border-white/15">
+          <th class="text-left p-2 align-top">Uses</th>
+          <td class="p-2">{{ class.usedClasses|join('<br>')|raw }}</td>
+        </tr>
+        {% endif %}
+        {% if class.usedBy|length %}
+          <tr class="odd:bg-cyan-950/85 even:bg-cyan-950/55 border-t border-white/15">
+            <th class="text-left p-2 align-top">Used by</th>
+            <td class="p-2">{{ class.usedBy|join('<br>')|raw }}</td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+    {% else %}
+      <p class="font-semibold">No dependencies found.</p>
+    {% endif %}
+  </div>
+
   {% if class.methods|length > 0 %}
     <h3 class="mt-8 mb-3 text-xl font-semibold font-display">Methods</h3>
     <div class="relative overflow-x-auto">

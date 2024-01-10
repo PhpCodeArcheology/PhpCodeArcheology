@@ -15,7 +15,7 @@ class ClassDataProvider implements ReportDataProviderInterface
         $classes = $this->metrics->get('project')->get('classes');
 
         array_walk($classes, function(&$class) {
-           $class['methods'] = array_map(fn($methodMetric) => $methodMetric->getAll(), $class['methods']);
+            $class['methods'] = array_map(fn($methodMetric) => $methodMetric->getAll(), $class['methods']);
         });
 
         $this->templateData['classes'] = $classes;

@@ -67,6 +67,41 @@ beforeEach(function() {
                 'usedByCount' => 1,
             ],
         ],
+        [
+            'id' => '',
+            'name' => 'ClassD',
+            'data' => [
+                'realClass' => true,
+                'abstract' => false,
+                'dependencies' => [
+                    'TraitA',
+                ],
+                'interfaces' => [],
+                'extends' => [],
+            ],
+            'expected' => [
+                'instability' => 1,
+                'usesInProjectCount' => 1,
+                'usedByCount' => 0,
+            ],
+        ],
+        [
+            'id' => '',
+            'name' => 'TraitA',
+            'data' => [
+                'realClass' => false,
+                'abstract' => false,
+                'dependencies' => [
+                ],
+                'interfaces' => [],
+                'extends' => [],
+            ],
+            'expected' => [
+                'instability' => 0,
+                'usesInProjectCount' => 0,
+                'usedByCount' => 1,
+            ],
+        ],
     ];
 
     $classes = [];

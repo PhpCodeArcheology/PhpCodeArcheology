@@ -31,7 +31,15 @@ class PackageVisitor implements NodeVisitor
     public function enterNode(Node $node): void
     {
         if ($node instanceof Node\Stmt\Namespace_) {
-            $this->fileNamespace = (string) $node->name;
+            $namespace = (string) $node->name;
+
+            $namespaceParts = explode('\\', $namespace);
+            if (count($namespaceParts) > 2) {
+                $namespace = implode('\\', [$namespaceParts[0], $namespaceParts[1]]);
+            }
+
+            $this->fileNamespace = $namespace;
+
             $this->currentPackageMetric = $this->getCurrentPackageMetric();
 
             $this->setFileCount();
@@ -79,6 +87,7 @@ class PackageVisitor implements NodeVisitor
     {
         $this->currentPackageMetric = $this->getCurrentPackageMetric();
         $this->setFileCount();
+
 
         if ($this->currentPackageMetric->get('functions') === null) {
             $this->currentPackageMetric->set('functions', []);

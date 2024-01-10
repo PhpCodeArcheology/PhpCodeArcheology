@@ -16,8 +16,14 @@ return [
                 __DIR__ . '/../testfiles/package-test-2.php' => 'TestFile',
                 __DIR__ . '/../testfiles/package-test-3.php' => 'TestFile\SubPackage1',
                 __DIR__ . '/../testfiles/package-test-4.php' => 'TestFile\SubPackage2',
-                __DIR__ . '/../testfiles/package-test-5.php' => 'TestFile\SubPackage1\SubSubPackage',
-                __DIR__ . '/../testfiles/package-test-6.php' => 'TestFile\SubPackage1\SubSubPackage',
+                __DIR__ . '/../testfiles/package-test-5.php' => 'TestFile\SubPackage1',
+                __DIR__ . '/../testfiles/package-test-6.php' => 'TestFile\SubPackage1',
+            ],
+            'foundPackages' => [
+                '_global',
+                'TestFile',
+                'TestFile\SubPackage1',
+                'TestFile\SubPackage2',
             ],
             'packageMetrics' => [
                 '_global' => [
@@ -31,14 +37,9 @@ return [
                     'classCount' => 0,
                 ],
                 'TestFile\SubPackage1' => [
-                    'fileCount' => 1,
+                    'fileCount' => 3,
                     'functionCount' => 0,
-                    'classCount' => 1,
-                ],
-                'TestFile\SubPackage1\SubSubPackage' => [
-                    'fileCount' => 2,
-                    'functionCount' => 0,
-                    'classCount' => 3,
+                    'classCount' => 4,
                 ],
                 'TestFile\SubPackage2' => [
                     'fileCount' => 1,

@@ -69,7 +69,6 @@ class HtmlReport implements ReportInterface
             'filesPages',
             'classPage',
             'classesPages',
-            'classesChartPage',
             'packagesPage',
         ];
 
@@ -121,16 +120,6 @@ class HtmlReport implements ReportInterface
         $data['pageTitle'] = 'Project metrics';
         $data['currentPage'] = 'files.html';
         $this->renderTemplate('files.html.twig', $data, 'files.html');
-    }
-
-    private function generateClassesChartPage(): void
-    {
-        $templateData = $this->dataProviderFactory->getClassAIChartData();
-        $data = $templateData->getTemplateData();
-        $data['pageTitle'] = 'Class chart';
-        $data['currentPage'] = 'classes-chart.html';
-        $data['usesCharts'] = true;
-        $this->renderTemplate('classes-chart.html.twig', $data, 'classes-chart.html');
     }
 
     private function generateFilesPages(): void
@@ -189,6 +178,7 @@ class HtmlReport implements ReportInterface
         $data = $templateData->getTemplateData();
         $data['pageTitle'] = 'Project metrics';
         $data['currentPage'] = 'packages-list.html';
+        $data['usesCharts'] = true;
         $this->renderTemplate('packages-list.html.twig', $data, 'packages-list.html');
     }
 }
