@@ -122,7 +122,7 @@ class MaintainabilityIndexVisitor implements NodeVisitor
         $lloc = $metric->get('lloc');
 
         if ($volume == 0 || $lloc == 0) {
-            $metric->set('maintainabilityIndex', 50);
+            $metric->set('maintainabilityIndex', 171);
             $metric->set('maintainabilityIndexWithoutComments', 50);
             $metric->set('commentWeight', 0);
 

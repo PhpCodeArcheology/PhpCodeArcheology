@@ -107,7 +107,12 @@
     y: [1, 0],
     mode: 'lines',
     name: 'Baseline',
-    type: 'scatter'
+    type: 'scatter',
+    line: {
+      color: 'rgb(180, 0, 0)',
+      dash: 'dot',
+      width: 1.
+    }
   };
 
   const layout = {
@@ -118,6 +123,48 @@
       title: 'Abstractness',
     },
     title: 'Instability-Abstractness Chart',
+    shapes: [
+      {
+        type: 'path',
+        path: 'M 0 0 L 0 0.4 L 0.4 0 Z',
+        fillcolor: 'rgba(120, 0, 0, 0.2)',
+        line: {
+          color: 'transparent',
+        }
+      },
+      {
+        type: 'path',
+        path: 'M 0.6 1 L 1 1 L 1 0.6 Z',
+        fillcolor: 'rgba(120, 0, 0, 0.2)',
+        line: {
+          color: 'transparent',
+        }
+      },
+      {
+        type: 'path',
+        path: 'M 0 0.4 L 0 0.75 L 0.75 0 L 0.4 0 Z',
+        fillcolor: 'rgba(164, 124, 3, 0.2)',
+        line: {
+          color: 'transparent',
+        }
+      },
+      {
+        type: 'path',
+        path: 'M 0.25 1 L 0.6 1 L 1 0.6 L 1 0.25 Z',
+        fillcolor: 'rgba(164, 124, 3, 0.2)',
+        line: {
+          color: 'transparent',
+        }
+      },
+      {
+        type: 'path',
+        path: 'M 0 0.75 L 0 1 L 0.25 1 L 1 0.25 L 1 0 L 0.75 0 Z',
+        fillcolor: 'rgba(0, 120, 0, 0.2)',
+        line: {
+          color: 'transparent',
+        }
+      },
+    ],
   };
 
   const data = [trace1, trace2];

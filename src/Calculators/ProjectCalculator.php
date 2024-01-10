@@ -76,7 +76,6 @@ class ProjectCalculator implements CalculatorInterface
 
         $this->maxCC = $this->maxCC < $metrics->get('cc') ? $metrics->get('cc') : $this->maxCC;
         $this->sumCC += $metrics->get('cc');
-        $this->miSum += $metrics->get('maintainabilityIndex');
         $this->commentWeightSum += $metrics->get('commentWeight');
 
         switch (true) {
@@ -84,6 +83,7 @@ class ProjectCalculator implements CalculatorInterface
                 $this->data['OverallMostComplexFile'][$metrics->getName()] = $metrics->get('cc');
                 $this->maxCCFile = $this->maxCCFile < $metrics->get('cc') ? $metrics->get('cc') : $this->maxCCFile;
                 $this->sumCCFile += $metrics->get('cc');
+                $this->miSum += $metrics->get('maintainabilityIndex');
                 break;
 
             case $metrics instanceof FunctionMetrics:
@@ -145,7 +145,7 @@ class ProjectCalculator implements CalculatorInterface
         $this->data['OverallAvgCCMethod'] = $this->getAvgOrZero($this->sumCCMethod, $methodCount);
         $this->data['OverallAvgCCFunction'] = $this->getAvgOrZero($this->sumCCFunction, $functionCount);
         $this->data['OverallAvgLcom'] = $this->getAvgOrZero($this->lcomSum, $classCount);
-        $this->data['OverallAvgMI'] = $this->getAvgOrZero($this->miSum, $this->metricCount);
+        $this->data['OverallAvgMI'] = $this->getAvgOrZero($this->miSum, $fileCount);
         $this->data['OverallCommentWeight'] = $this->getAvgOrZero($this->commentWeightSum, $this->metricCount);
 
         foreach ($this->data as $key => $value) {

@@ -38,7 +38,5 @@ class ClassName
      * @param string $name
      */
     private function __construct(private string $name)
-    {
-
-    }
+    {}
 }

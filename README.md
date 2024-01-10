@@ -1,5 +1,9 @@
 # PhpLegacyAnalyzer
 
+## Bugs
+
+- Some classes get counted three times in pb
+
 ## Todo
 
 - [ ] Maybe rename to PhpLegacyArcheology or PhpLegacyExplorer

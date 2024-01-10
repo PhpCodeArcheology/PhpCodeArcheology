@@ -10,6 +10,7 @@ use PhpCodeArch\Application\ConfigFile\Exceptions\MultipleConfigFilesException;
 use PhpCodeArch\Calculators\CalculatorService;
 use PhpCodeArch\Calculators\CouplingCalculator;
 use PhpCodeArch\Calculators\FileCalculator;
+use PhpCodeArch\Calculators\Helpers\PackageInstabilityAbstractnessCalculator;
 use PhpCodeArch\Calculators\ProjectCalculator;
 use PhpCodeArch\Calculators\VariablesCalculator;
 use PhpCodeArch\Metrics\Metrics;
@@ -70,10 +71,12 @@ final readonly class Application
         $analyzer = new Analyzer($config, $parser, $traverser, $metrics, $output);
         $analyzer->analyze($fileList);
 
+        $packageIACalculator = new PackageInstabilityAbstractnessCalculator($metrics);
+
         $calculators = new CalculatorService([
             new FileCalculator($metrics),
             new VariablesCalculator($metrics),
-            new CouplingCalculator($metrics),
+            new CouplingCalculator($metrics, $packageIACalculator),
             new ProjectCalculator($metrics),
         ], $metrics, $output);
         $calculators->run();

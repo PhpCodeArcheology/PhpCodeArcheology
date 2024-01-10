@@ -36,24 +36,34 @@ class CyclomaticComplexityVisitor implements NodeVisitor
 {
     use VisitorTrait;
 
-    private int $fileCc = 1;
-
     /**
      * @var ClassMetrics[]
      */
     private array $currentClass = [];
-
-    private array $classCc = [];
 
     /**
      * @var FunctionMetrics[]
      */
     private array $currentFunction = [];
 
+    /**
+     * @var int
+     */
+    private int $fileCc = 1;
+
+    /**
+     * @var array
+     */
+    private array $classCc = [];
+
+    /**
+     * @var array
+     */
     private array $functionCc = [];
 
     /**
-     * @inheritDoc
+     * @param Node[] $nodes
+     * @return void
      */
     public function beforeTraverse(array $nodes): void
     {
@@ -62,105 +72,118 @@ class CyclomaticComplexityVisitor implements NodeVisitor
     }
 
     /**
-     * @inheritDoc
+     * @param Node $node
+     * @return void
      */
     public function enterNode(Node $node): void
     {
-        if ($node instanceof Node\Stmt\Class_
-            || $node instanceof Node\Stmt\Interface_
-            || $node instanceof Node\Stmt\Trait_
-            || $node instanceof Node\Stmt\Enum_) {
+        switch (true) {
+            case $node instanceof Node\Stmt\Class_:
+            case $node instanceof Node\Stmt\Interface_:
+            case $node instanceof Node\Stmt\Trait_:
+            case $node instanceof Node\Stmt\Enum_:
+                $classMetrics = ClassMetricsFactory::createFromMetricsByNodeAndPath(
+                    $this->metrics,
+                    $node,
+                    $this->path
+                );
 
-            $classMetrics = ClassMetricsFactory::createFromMetricsByNodeAndPath(
-                $this->metrics,
-                $node,
-                $this->path
-            );
+                $this->currentClass[] = $classMetrics;
+                $this->classCc[$classMetrics->getName()] = 1;
+                break;
 
-            $this->currentClass[] = $classMetrics;
-            $this->classCc[$classMetrics->getName()] = 1;
-        }
-        elseif ($node instanceof Node\Stmt\ClassMethod) {
-            $currentClass = end($this->currentClass);
-            $methods = $currentClass->get('methods');
+            case $node instanceof Node\Stmt\ClassMethod:
+                $currentClass = end($this->currentClass);
+                $methods = $currentClass->get('methods');
 
-            $methodMetric = FunctionMetricsFactory::createFromMethodsByNameAndClassMetrics(
-                $methods,
-                $node->name,
-                $currentClass
-            );
-            $methodName = $methodMetric->getName();
+                $methodMetric = FunctionMetricsFactory::createFromMethodsByNameAndClassMetrics(
+                    $methods,
+                    $node->name,
+                    $currentClass
+                );
+                $methodName = $methodMetric->getName();
 
-            $this->currentFunction[] = $methodMetric;
-            $this->functionCc[$currentClass->getName()][$methodName] = 1;
-        }
-        elseif ($node instanceof Node\Stmt\Function_) {
-            $functionMetrics = FunctionMetricsFactory::createFromMetricsByNameAndPath(
-                $this->metrics,
-                $node->namespacedName,
-                $this->path
-            );
+                $this->currentFunction[] = $methodMetric;
+                $this->functionCc[$currentClass->getName()][$methodName] = 1;
+                break;
 
-            $this->currentFunction[] = $functionMetrics;
-            $this->functionCc[$functionMetrics->getName()] = 1;
+            case $node instanceof Node\Stmt\Function_:
+                $functionMetrics = FunctionMetricsFactory::createFromMetricsByNameAndPath(
+                    $this->metrics,
+                    $node->namespacedName,
+                    $this->path
+                );
+
+                $this->currentFunction[] = $functionMetrics;
+                $this->functionCc[$functionMetrics->getName()] = 1;
+                break;
         }
     }
 
     /**
-     * @inheritDoc
+     * @param Node $node
+     * @return void
      */
     public function leaveNode(Node $node): void
     {
-        if ($node instanceof Node\Stmt\Class_
-            || $node instanceof Node\Stmt\Interface_
-            || $node instanceof Node\Stmt\Trait_
-            || $node instanceof Node\Stmt\Enum_) {
+        switch (true) {
+            case $node instanceof Node\Stmt\Class_:
+            case $node instanceof Node\Stmt\Interface_:
+            case $node instanceof Node\Stmt\Trait_:
+            case $node instanceof Node\Stmt\Enum_:
+                $currentClass = array_pop($this->currentClass);
 
-            $currentClass = array_pop($this->currentClass);
+                $currentClass->set('cc', $this->classCc[$currentClass->getName()]);
+                $this->metrics->set((string) $currentClass->getIdentifier(), $currentClass);
+                break;
 
-            $currentClass->set('cc', $this->classCc[$currentClass->getName()]);
-            $this->metrics->set((string) $currentClass->getIdentifier(), $currentClass);
-        }
-        elseif ($node instanceof Node\Stmt\ClassMethod) {
-            $currentClass = end($this->currentClass);
-            $currentMethod = array_pop($this->currentFunction);
-            $methods = $currentClass->get('methods');
-
-            $currentMethod->set('cc', $this->functionCc[$currentClass->getName()][$currentMethod->getName()]);
-            $methods[(string) $currentMethod->getIdentifier()] = $currentMethod;
-            $this->metrics->set((string) $currentClass->getIdentifier(), $currentClass);
-        }
-        elseif ($node instanceof Node\Stmt\Function_) {
-            $currentFunction = array_pop($this->currentFunction);
-            $currentFunction->set('cc', $this->functionCc[$currentFunction->getName()]);
-            $this->metrics->set((string) $currentFunction->getIdentifier(), $currentFunction);
-        }
-        else {
-            $increase = $this->getIncreaseForNode($node);
-
-            $this->fileCc += $increase;
-
-            if (count($this->currentClass) > 0) {
+            case $node instanceof Node\Stmt\ClassMethod:
                 $currentClass = end($this->currentClass);
-                $this->classCc[$currentClass->getName()] += $increase;
+                $currentMethod = array_pop($this->currentFunction);
+                $methods = $currentClass->get('methods');
+
+                $currentMethod->set('cc', $this->functionCc[$currentClass->getName()][$currentMethod->getName()]);
+                $methods[(string) $currentMethod->getIdentifier()] = $currentMethod;
+                $this->metrics->set((string) $currentClass->getIdentifier(), $currentClass);
+                break;
+
+            case $node instanceof Node\Stmt\Function_:
+                $currentFunction = array_pop($this->currentFunction);
+                $currentFunction->set('cc', $this->functionCc[$currentFunction->getName()]);
+                $this->metrics->set((string) $currentFunction->getIdentifier(), $currentFunction);
+                break;
+
+            default:
+                $increase = $this->getIncreaseForNode($node);
+
+                $this->fileCc += $increase;
+
+                if (count($this->currentClass) > 0) {
+                    $currentClass = end($this->currentClass);
+                    $this->classCc[$currentClass->getName()] += $increase;
+
+                    if (count($this->currentFunction) > 0) {
+                        $currentFunction = end($this->currentFunction);
+                        if (!isset($this->functionCc[$currentClass->getName()][$currentFunction->getName()])) {
+                            $this->functionCc[$currentClass->getName()][$currentFunction->getName()] = 1;
+                        }
+                        $this->functionCc[$currentClass->getName()][$currentFunction->getName()] += $increase;
+                    }
+
+                    break;
+                }
 
                 if (count($this->currentFunction) > 0) {
                     $currentFunction = end($this->currentFunction);
-                    if (!isset($this->functionCc[$currentClass->getName()][$currentFunction->getName()])) {
-                        $this->functionCc[$currentClass->getName()][$currentFunction->getName()] = 1;
-                    }
-                    $this->functionCc[$currentClass->getName()][$currentFunction->getName()] += $increase;
+                    $this->functionCc[$currentFunction->getName()] += $increase;
                 }
-            }
-            elseif (count($this->currentFunction) > 0) {
-                $currentFunction = end($this->currentFunction);
-                $this->functionCc[$currentFunction->getName()] += $increase;
-            }
+                break;
         }
     }
 
     /**
-     * @inheritDoc
+     * @param Node[] $nodes
+     * @return void
      */
     public function afterTraverse(array $nodes): void
     {
@@ -168,6 +191,12 @@ class CyclomaticComplexityVisitor implements NodeVisitor
         $this->metrics->set((string) $this->fileMetrics->getIdentifier(), $this->fileMetrics);
     }
 
+    /**
+     * Actual calculation of complexity
+     *
+     * @param Node $node
+     * @return int
+     */
     private function getIncreaseForNode(Node $node): int
     {
         $inc = 0;
