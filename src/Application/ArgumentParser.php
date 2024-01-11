@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Application;
 
+use PhpCodeArch\Application\ConfigFile\Exceptions\ReportDirNotFoundException;
+
 final class ArgumentParser
 {
     public function parse(array $argv): Config
@@ -14,7 +16,7 @@ final class ArgumentParser
             return $config;
         }
 
-        if (str_ends_with($argv[0], 'php-legacy-analyzer')) {
+        if (str_ends_with($argv[0], 'phpcodearcheology')) {
             array_shift($argv);
         }
 
@@ -30,6 +32,10 @@ final class ArgumentParser
 
                     case 'report-type':
                         $config->set('reportType', $value);
+                        break;
+
+                    case 'report-dir':
+                        $config->set('reportDir', realpath($value));
                         break;
                 }
 

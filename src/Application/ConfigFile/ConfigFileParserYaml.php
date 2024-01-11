@@ -26,7 +26,7 @@ class ConfigFileParserYaml extends ConfigFileParserJson implements ConfigFilePar
         if (!is_file($this->file)) {
             throw new ConfigFileNotFoundException();
         }
-
+        
         $parsedData = json_encode($this->yaml::parse(file_get_contents($this->file)));
         $this->parseJson($parsedData, $config);
     }

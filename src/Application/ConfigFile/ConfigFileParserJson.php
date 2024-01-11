@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PhpCodeArch\Application\ConfigFile;
 
 use PhpCodeArch\Application\Config;
+use PhpCodeArch\Application\ConfigFile\Exceptions\ReportDirNotFoundException;
 
 class ConfigFileParserJson implements ConfigFileParserInterface
 {
@@ -37,6 +38,18 @@ class ConfigFileParserJson implements ConfigFileParserInterface
 
         if (isset($data['reportType'])) {
             $config->set('reportType', $data['reportType']);
+        }
+
+        if (isset($data['reportDir'])) {
+            $reportDir = realpath($data['reportDir']);
+
+            if (! $reportDir) {
+                $trimmedPath = trim(trim($data['reportDir']), DIRECTORY_SEPARATOR);
+                $reportDir = realpath($config->get('runningDir')) . DIRECTORY_SEPARATOR . $trimmedPath;
+                mkdir($reportDir, recursive: true);
+            }
+
+            $config->set('reportDir', realpath($reportDir));
         }
     }
 }

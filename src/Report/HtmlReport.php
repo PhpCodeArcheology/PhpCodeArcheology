@@ -27,7 +27,8 @@ class HtmlReport implements ReportInterface
         private readonly Environment         $twig,
         private readonly CliOutput           $output)
     {
-        $this->outputDir = rtrim($config->get('runningDir'), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'report' . DIRECTORY_SEPARATOR;
+        $this->outputDir = $config->get('reportDir') . DIRECTORY_SEPARATOR;
+
         $this->templateDir = realpath(__DIR__ . '/../../templates/html') . DIRECTORY_SEPARATOR;
         $this->assetDir = $this->templateDir . 'assets';
 
@@ -39,11 +40,6 @@ class HtmlReport implements ReportInterface
         $this->twig->setCache(false);
     }
 
-    /**
-     * @throws SyntaxError
-     * @throws RuntimeError
-     * @throws LoaderError
-     */
     public function generate(): void
     {
         $this->clearReportDir();

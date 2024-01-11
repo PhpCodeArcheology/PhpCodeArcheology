@@ -49,6 +49,14 @@ final readonly class Application
         $configFileFinder = new ConfigFileFinder($config);
         $configFileFinder->checkRunningDir();
 
+        if (! $config->get('reportType')) {
+            $config->set('reportType', 'html');
+        }
+
+        if (! $config->get('reportDir')) {
+            $config->set('reportDir', realpath($config->get('runningDir') . '/tmp/report'));
+        }
+
         try {
             $config->validate();
         } catch (ConfigException $e) {

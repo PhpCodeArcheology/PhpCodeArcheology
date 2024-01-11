@@ -22,7 +22,8 @@ class MarkdownReport implements ReportInterface
         private CliOutput           $output
     )
     {
-        $this->outputDir = rtrim($config->get('runningDir'), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'report' . DIRECTORY_SEPARATOR;
+        $this->outputDir = $config->get('reportDir') . DIRECTORY_SEPARATOR;
+
         $this->templateDir = realpath(__DIR__ . '/../../templates/markdown') . DIRECTORY_SEPARATOR;
 
         if (! is_dir($this->outputDir)) {
