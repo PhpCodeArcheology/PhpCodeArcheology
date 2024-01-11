@@ -4,5 +4,5 @@ include:
 exclude:
 extensions:
   - "php"
-reportDir: "report"
+reportDir: "tmp"
 reportType: "html"

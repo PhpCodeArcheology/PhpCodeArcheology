@@ -8,9 +8,9 @@ use PhpCodeArch\Application\Config;
 use PhpCodeArch\Application\ConfigFile\Exceptions\ConfigFileExtensionNotSupportedException;
 use PhpCodeArch\Application\ConfigFile\Exceptions\MultipleConfigFilesException;
 
-class ConfigFileFinder
+readonly class ConfigFileFinder
 {
-    public function __construct(private readonly Config $config)
+    public function __construct(private Config $config)
     {
     }
 
@@ -31,7 +31,7 @@ class ConfigFileFinder
             '%s%s%s.*',
             rtrim($path, DIRECTORY_SEPARATOR),
             DIRECTORY_SEPARATOR,
-            'php-legarch-config'
+            'php-codearch-config'
         );
 
         $foundFiles = glob($configFile);
