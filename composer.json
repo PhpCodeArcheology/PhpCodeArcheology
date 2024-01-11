@@ -1,5 +1,5 @@
 {
-  "name": "marcuskober/php-code-archeology",
+  "name": "php-code-archeology/php-code-archeology",
   "description": "Static analyzer for PHP project archeology. Calculates various metrics for your codebase.",
   "keywords": [
     "analysis",
@@ -8,7 +8,7 @@
     "qa",
     "quality"
   ],
-  "type": "project",
+  "type": "library",
   "license": "MIT",
   "autoload": {
     "psr-4": {
