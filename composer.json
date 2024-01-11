@@ -1,33 +1,50 @@
 {
-    "name": "marcus/php-code-archeology",
-    "type": "project",
-    "license": "MIT",
-    "autoload": {
-        "psr-4": {
-            "PhpCodeArch\\": "src/"
-        },
-        "files": [
-          "src/functions.php"
-        ]
+  "name": "marcuskober/php-code-archeology",
+  "description": "Static analyzer for PHP project archeology. Calculates various metrics for your codebase.",
+  "keywords": [
+    "analysis",
+    "php",
+    "testing",
+    "qa",
+    "quality"
+  ],
+  "type": "project",
+  "license": "MIT",
+  "autoload": {
+    "psr-4": {
+      "PhpCodeArch\\": "src/"
     },
-    "authors": [
-        {
-            "name": "Marcus Kober",
-            "email": "hello@marcuskober.de"
-        }
-    ],
-    "require-dev": {
-        "pestphp/pest": "^2.28",
-        "twig/twig": "^3.8",
-        "mockery/mockery": "^1.6"
-    },
-    "config": {
-        "allow-plugins": {
-            "pestphp/pest-plugin": true
-        }
-    },
-    "require": {
-        "nikic/php-parser": "^4.18",
-        "symfony/yaml": "^7.0"
+    "files": [
+      "src/functions.php"
+    ]
+  },
+  "authors": [
+    {
+      "name": "Marcus Kober",
+      "email": "hello@marcuskober.de",
+      "homepage": "https://marcuskober.com",
+      "role": "Copyright Holder"
     }
+  ],
+  "homepage": "https://PhpCodeArcheology.org",
+  "support": {
+    "issues": "https://github.com/PhpMetrics/PhpMetrics/issues"
+  },
+  "require-dev": {
+    "pestphp/pest": "^2.28",
+    "twig/twig": "^3.8",
+    "mockery/mockery": "^1.6"
+  },
+  "config": {
+    "allow-plugins": {
+      "pestphp/pest-plugin": true
+    }
+  },
+  "require": {
+    "nikic/php-parser": "^4.18",
+    "symfony/yaml": "^7.0"
+  },
+  "bin": [
+    "bin/phpcodearcheology"
+  ]
 }

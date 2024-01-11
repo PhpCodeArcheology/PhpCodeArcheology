@@ -11,4 +11,15 @@
       </tool>
     </test_tools>
   </component>
+  <component name="PhpTestFrameworkVersionCache">
+    <tools_cache>
+      <tool tool_name="PHPUnit">
+        <cache>
+          <versions>
+            <info id="Local/Users/marcus/Projects/php-legacy-analyzer/vendor/autoload.php" version="10.5.3" />
+          </versions>
+        </cache>
+      </tool>
+    </tools_cache>
+  </component>
 </project>
