@@ -13,10 +13,13 @@ use PhpCodeArch\Analysis\LcomVisitor;
 use PhpCodeArch\Analysis\LocVisitor;
 use PhpCodeArch\Analysis\MaintainabilityIndexVisitor;
 use PhpCodeArch\Analysis\PackageVisitor;
+use PhpCodeArch\Analysis\VisitorInterface;
 use PhpCodeArch\Metrics\FileMetrics\FileMetrics;
+use PhpCodeArch\Metrics\Manager\MetricsManager;
 use PhpCodeArch\Metrics\Metrics;
 use PhpParser\Error;
 use PhpParser\NodeTraverser;
+use PhpParser\NodeVisitor;
 use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\Parser;
 
@@ -27,6 +30,7 @@ readonly class Analyzer
         private Parser $parser,
         private NodeTraverser $traverser,
         private Metrics $metrics,
+        private MetricsManager $metricsManager,
         private CliOutput $output,
     )
     {
@@ -34,26 +38,26 @@ readonly class Analyzer
 
     public function analyze(FileList $fileList): void
     {
-        $idVisitor = new IdentifyVisitor($this->metrics);
-        $locVisitor = new LocVisitor($this->metrics);
-        $globalsVisitor = new GlobalsVisitor($this->metrics);
-        $cyCoVisitor = new CyclomaticComplexityVisitor($this->metrics);
-        $depVisitor = new DependencyVisitor($this->metrics);
-        $halsteadVisitor = new HalsteadMetricsVisitor($this->metrics);
-        $maintainabilityVisitor = new MaintainabilityIndexVisitor($this->metrics);
-        $lcomVisitor = new LcomVisitor($this->metrics);
-        $packageVisitor = new PackageVisitor($this->metrics);
+        $visitorList = $this->getVisitorClassList();
 
         $this->traverser->addVisitor(new NameResolver());
-        $this->traverser->addVisitor($idVisitor);
-        $this->traverser->addVisitor($locVisitor);
-        $this->traverser->addVisitor($globalsVisitor);
-        $this->traverser->addVisitor($cyCoVisitor);
-        $this->traverser->addVisitor($depVisitor);
-        $this->traverser->addVisitor($halsteadVisitor);
-        $this->traverser->addVisitor($maintainabilityVisitor);
-        $this->traverser->addVisitor($lcomVisitor);
-        $this->traverser->addVisitor($packageVisitor);
+
+        $visitorObjects = [];
+        foreach ($visitorList as $visitor) {
+            /**
+             * @var VisitorInterface|NodeVisitor $visitorClass
+             */
+            $visitorClass = $visitor['class'];
+            $usedMetricTypes = $this->metricsManager->getMetricTypesByKeys($visitor['metricTypeKeys']);
+
+            $visitorObject = new $visitorClass(
+                metrics: $this->metrics,
+                usedMetricTypes: $usedMetricTypes,
+            );
+
+            $this->traverser->addVisitor($visitorObject);
+            $visitorObjects[] = $visitorObject;
+        }
 
         $fileCount = count($fileList->getFiles());
 
@@ -75,15 +79,9 @@ readonly class Analyzer
                 memory_get_usage() . " bytes of memory"
             );
 
-            $idVisitor->setPath($file);
-            $locVisitor->setPath($file);
-            $globalsVisitor->setPath($file);
-            $cyCoVisitor->setPath($file);
-            $depVisitor->setPath($file);
-            $halsteadVisitor->setPath($file);
-            $maintainabilityVisitor->setPath($file);
-            $lcomVisitor->setPath($file);
-            $packageVisitor->setPath($file);
+            foreach ($visitorObjects as $visitor) {
+                $visitor->setPath($file);
+            }
 
             $phpCode = file_get_contents($file);
             $encoding = mb_detect_encoding($phpCode);
@@ -119,5 +117,80 @@ readonly class Analyzer
 
         $projectMetrics->set('OverallFileErrors', $projectFileErrors);
         $this->metrics->set('project', $projectMetrics);
+    }
+
+    /**
+     * @return array
+     */
+    private function getVisitorClassList(): array
+    {
+        return [
+            [
+                'class' => IdentifyVisitor::class,
+                'metricTypeKeys' => [],
+            ],
+            [
+                'class' => LocVisitor::class,
+                'metricTypeKeys' => [
+                    'loc',
+                    'lloc',
+                    'cloc',
+                    'htmlLoc',
+                    'llocOutside',
+                ],
+            ],
+            [
+                'class' => GlobalsVisitor::class,
+                'metricTypeKeys' => [
+                    'superglobals',
+                    'variables',
+                    'constants',
+                ],
+            ],
+            [
+                'class' => CyclomaticComplexityVisitor::class,
+                'metricTypeKeys' => [
+                    'cc',
+                ],
+            ],
+            [
+                'class' => DependencyVisitor::class,
+                'metricTypeKeys' => [],
+            ],
+            [
+                'class' => HalsteadMetricsVisitor::class,
+                'metricTypeKeys' => [
+                    'vocabulary',
+                    'length',
+                    'calcLength',
+                    'volume',
+                    'difficulty',
+                    'effort',
+                    'operators',
+                    'operands',
+                    'uniqueOperators',
+                    'uniqueOperands',
+                    'complexityDensity',
+                ],
+            ],
+            [
+                'class' => MaintainabilityIndexVisitor::class,
+                'metricTypeKeys' => [
+                    'maintainabilityIndex',
+                    'maintainabilityIndexWithoutComments',
+                    'commentWeight',
+                ],
+            ],
+            [
+                'class' => LcomVisitor::class,
+                'metricTypeKeys' => [
+                    'lcom',
+                ],
+            ],
+            [
+                'class' => PackageVisitor::class,
+                'metricTypeKeys' => [],
+            ],
+        ];
     }
 }

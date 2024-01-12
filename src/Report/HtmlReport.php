@@ -62,10 +62,10 @@ class HtmlReport implements ReportInterface
         $createMethods = [
             'indexPage',
             'filePage',
-            'filesPages',
-            'classPage',
-            'classesPages',
-            'packagesPage',
+//            'filesPages',
+//            'classPage',
+//            'classesPages',
+//            'packagesPage',
         ];
 
         $count = 0;

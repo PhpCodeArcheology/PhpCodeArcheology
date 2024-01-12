@@ -34,7 +34,11 @@ class CouplingCalculator implements CalculatorInterface
     private array $concreteClasses = [];
 
     public function __construct(
-        private readonly Metrics                                  $metrics,
+        private readonly Metrics $metrics,
+        /**
+         * @var array $usedMetricTypeKeys
+         */
+        private readonly array $usedMetricTypeKeys,
         private readonly PackageInstabilityAbstractnessCalculator $packageCalculator)
     {
     }
@@ -83,10 +87,10 @@ class CouplingCalculator implements CalculatorInterface
         foreach ($this->classes as $classId => $className) {
             $metric = $this->metrics->get($classId);
 
-            $usesCount = $metric->get('usesCount');
-            $usedByCount = $metric->get('usedByCount');
+            $usesCount = $metric->get('usesCount')->getValue();
+            $usedByCount = $metric->get('usedByCount')->getValue();
 
-            $usesForInstabilityCount = $metric->get('usesForInstabilityCount') ?? 0;
+            $usesForInstabilityCount = $metric->get('usesForInstabilityCount')?->getValue() ?? 0;
 
             /**
              * @see https://kariera.future-processing.pl/blog/object-oriented-metrics-by-robert-martin/
@@ -129,16 +133,16 @@ class CouplingCalculator implements CalculatorInterface
 
     private function handeClass(ClassMetrics $metric): ClassMetrics
     {
-        $uses = $metric->get('uses') ?? [];
-        $usesCount = $metric->get('usesCount') ?? 0;
+        $uses = $metric->get('uses')?->getValue() ?? [];
+        $usesCount = $metric->get('usesCount')?->getValue()  ?? 0;
 
-        $usesInProject = $metric->get('usesInProject') ?? [];
-        $usesInProjectCount = $metric->get('usesInProjectCount') ?? 0;
+        $usesInProject = $metric->get('usesInProject')?->getValue()  ?? [];
+        $usesInProjectCount = $metric->get('usesInProjectCount')?->getValue()  ?? 0;
 
-        $usesForInstability = $metric->get('usesForInstability') ?? 0;
+        $usesForInstability = $metric->get('usesForInstability')?->getValue()  ?? 0;
 
-        $usedBy = $metric->get('usedBy') ?? [];
-        $usedByCount = $metric->get('usedByCount') ?? 0;
+        $usedBy = $metric->get('usedBy')?->getValue()  ?? [];
+        $usedByCount = $metric->get('usedByCount')?->getValue()  ?? 0;
 
         [$this->abstractClasses, $this->concreteClasses] = $this->packageCalculator->handlePackage($metric);
 
@@ -175,23 +179,27 @@ class CouplingCalculator implements CalculatorInterface
 
             $this->packageCalculator->handleDependency($dependency, $usedByMetric, $isTrait);
 
-            $classUsedBy = $usedByMetric->get('usedBy') ?? [];
-            $classUsedByCount = $usedByMetric->get('usedByCount') ?? 0;
+            $classUsedBy = $usedByMetric->get('usedBy')?->getValue() ?? [];
+            $classUsedByCount = $usedByMetric->get('usedByCount')?->getValue() ?? 0;
 
             $classUsedBy[] = $metric->getName();
             ++ $classUsedByCount;
 
-            $usedByMetric->set('usedBy', $classUsedBy);
-            $usedByMetric->set('usedByCount', $classUsedByCount);
+            $this->setMetricValues($usedByMetric, [
+                'usedBy' => $classUsedBy,
+                'usedByCount' => $classUsedByCount,
+            ]);
         }
 
-        $metric->set('uses', $uses);
-        $metric->set('usesCount', $usesCount);
-        $metric->set('usedBy', $usedBy);
-        $metric->set('usedByCount', $usedByCount);
-        $metric->set('usesInProject', $usesInProject);
-        $metric->set('usesInProjectCount', $usesInProjectCount);
-        $metric->set('usesForInstabilityCount', $usesForInstability);
+        $this->setMetricValues($metric, [
+            'uses' => $uses,
+            'usesCount' => $usesCount,
+            'usedBy' => $usedBy,
+            'usedByCount' => $usedByCount,
+            'usesInProject' => $usesInProject,
+            'usesInProjectCount' => $usesInProjectCount,
+            'usesForInstabilityCount' => $usesForInstability,
+        ]);
 
         return $metric;
     }

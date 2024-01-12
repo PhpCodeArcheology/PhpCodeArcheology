@@ -11,7 +11,7 @@ use PhpCodeArch\Metrics\MetricsInterface;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
 
-class MaintainabilityIndexVisitor implements NodeVisitor
+class MaintainabilityIndexVisitor implements NodeVisitor, VisitorInterface
 {
     use VisitorTrait;
 
@@ -115,16 +115,19 @@ class MaintainabilityIndexVisitor implements NodeVisitor
 
     private function calculateIndex(MetricsInterface $metric): MetricsInterface
     {
-        $volume = $metric->get('volume');
-        $cc = $metric->get('cc');
-        $loc = $metric->get('loc');
-        $cloc = $metric->get('cloc');
-        $lloc = $metric->get('lloc');
+        $volume = $metric->get('volume')->getValue();
+        $cc = $metric->get('cc')->getValue();
+
+        $loc = $metric->get('loc')?->getValue() ?? 0;
+        $cloc = $metric->get('cloc')?->getValue() ?? 0;
+        $lloc = $metric->get('lloc')?->getValue() ?? 0;
 
         if ($volume == 0 || $lloc == 0) {
-            $metric->set('maintainabilityIndex', 171);
-            $metric->set('maintainabilityIndexWithoutComments', 50);
-            $metric->set('commentWeight', 0);
+            $this->setMetricValues($metric, [
+                'maintainabilityIndex' => 171,
+                'maintainabilityIndexWithoutComments' => 50,
+                'commentWeight' => 0,
+            ]);
 
             return $metric;
         }
@@ -148,9 +151,11 @@ class MaintainabilityIndexVisitor implements NodeVisitor
 
         $maintainabilityIndex = $maintainabilityIndexWithoutComments + $commentWeight;
 
-        $metric->set('maintainabilityIndex', $maintainabilityIndex);
-        $metric->set('maintainabilityIndexWithoutComments', $maintainabilityIndexWithoutComments);
-        $metric->set('commentWeight', $commentWeight);
+        $this->setMetricValues($metric, [
+            'maintainabilityIndex' => $maintainabilityIndex,
+            'maintainabilityIndexWithoutComments' => $maintainabilityIndexWithoutComments,
+            'commentWeight' => $commentWeight,
+        ]);
 
         return $metric;
     }

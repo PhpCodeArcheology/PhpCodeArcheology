@@ -23,9 +23,11 @@ class TooComplexPrediction implements PredictionInterface
 
                     $methodCc = 0;
                     foreach ($methods as $methodKey => $method) {
-                        $methodCc += $method->get('cc');
+                        $ccValue = $method->get('cc')->getValue();
 
-                        if ($method->get('cc') <= 10) {
+                        $methodCc += $ccValue;
+
+                        if ($ccValue <= 10) {
                             $method->set('predictionTooComplex', false);
                             continue;
                         }
@@ -50,8 +52,8 @@ class TooComplexPrediction implements PredictionInterface
 
                 case $metric instanceof FileMetrics:
                 case $metric instanceof FunctionMetrics:
-                    $maxComplexity = $metric->get('lloc') > 20 ? 20 : 10;
-                    $tooComplex = $metric->get('cc') > $maxComplexity;
+                    $maxComplexity = $metric->get('lloc')->getValue() > 20 ? 20 : 10;
+                    $tooComplex = $metric->get('cc')->getValue() > $maxComplexity;
                     $metric->set('predictionTooComplex', $tooComplex);
                     if ($tooComplex) {
                         ++ $problemCount;

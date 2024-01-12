@@ -71,38 +71,45 @@ class ProjectCalculator implements CalculatorInterface
 
     public function calculate(MetricsInterface $metrics): void
     {
+        if ($metrics->get('cc') === null) {
+            return;
+        }
 
         ++ $this->metricCount;
 
-        $this->maxCC = $this->maxCC < $metrics->get('cc') ? $metrics->get('cc') : $this->maxCC;
-        $this->sumCC += $metrics->get('cc');
-        $this->commentWeightSum += $metrics->get('commentWeight');
+        $cc = $metrics->get('cc')->getValue();
+
+        $this->maxCC = max($this->maxCC, $cc);
+        $this->sumCC += $cc;
+        $this->commentWeightSum += $metrics->get('commentWeight')->getValue();
 
         switch (true) {
             case $metrics instanceof FileMetrics:
-                $this->data['OverallMostComplexFile'][$metrics->getName()] = $metrics->get('cc');
-                $this->maxCCFile = $this->maxCCFile < $metrics->get('cc') ? $metrics->get('cc') : $this->maxCCFile;
-                $this->sumCCFile += $metrics->get('cc');
-                $this->miSum += $metrics->get('maintainabilityIndex');
+                $this->data['OverallMostComplexFile'][$metrics->getName()] = $cc;
+                $this->maxCCFile = max($this->maxCCFile, $cc);
+                $this->sumCCFile += $cc;
+                $this->miSum += $metrics->get('maintainabilityIndex')->getValue();
                 break;
 
             case $metrics instanceof FunctionMetrics:
-                $this->data['OverallMostComplexFunction'][$metrics->getName()] = $metrics->get('cc');
-                $this->maxCCFunction = $this->maxCCFunction < $metrics->get('cc') ? $metrics->get('cc') : $this->maxCCFunction;
-                $this->sumCCFunction += $metrics->get('cc');
+                $this->data['OverallMostComplexFunction'][$metrics->getName()] = $cc;
+                $this->maxCCFunction = max($this->maxCCFunction, $cc);
+                $this->sumCCFunction += $cc;
                 break;
 
             case $metrics instanceof ClassMetrics:
-                $this->data['OverallMostComplexClass'][$metrics->getName()] = $metrics->get('cc');
-                $this->maxCCClass = $this->maxCCClass < $metrics->get('cc') ? $metrics->get('cc') : $this->maxCCClass;
-                $this->sumCCClass += $metrics->get('cc');
+                $this->data['OverallMostComplexClass'][$metrics->getName()] = $cc;
+                $this->maxCCClass = max($this->maxCCClass, $cc);
+                $this->sumCCClass += $cc;
 
-                $this->lcomSum += $metrics->get('lcom');
+                $this->lcomSum += $metrics->get('lcom')?->getValue() ?? 0;
 
                 foreach ($metrics->get('methods') as $methodMetric) {
-                    $this->data['OverallMostComplexMethod'][$metrics->getName() . '::' . $methodMetric->getName()] = $methodMetric->get('cc');
-                    $this->maxCCMethod = $this->maxCCMethod < $methodMetric->get('cc') ? $methodMetric->get('cc') : $this->maxCCMethod;
-                    $this->sumCCMethod += $metrics->get('cc');
+                    $methodCC = $methodMetric->get('cc')->getValue();
+
+                    $this->data['OverallMostComplexMethod'][$metrics->getName() . '::' . $methodMetric->getName()] = $methodCC;
+                    $this->maxCCMethod = max($methodCC, $this->maxCCMethod);
+                    $this->sumCCMethod += $methodCC;
                 }
                 break;
         }

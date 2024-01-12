@@ -4,7 +4,10 @@ namespace PhpCodeArch\Analysis;
 
 use PhpCodeArch\Metrics\FileMetrics\FileMetrics;
 use PhpCodeArch\Metrics\Identity\FileIdentifier;
+use PhpCodeArch\Metrics\Manager\MetricType;
+use PhpCodeArch\Metrics\Manager\MetricValue;
 use PhpCodeArch\Metrics\Metrics;
+use PhpCodeArch\Metrics\MetricsInterface;
 use PhpCodeArch\Metrics\ProjectMetrics\ProjectMetrics;
 
 trait VisitorTrait
@@ -15,7 +18,17 @@ trait VisitorTrait
 
     private ProjectMetrics $projectMetrics;
 
-    public function __construct(private readonly Metrics $metrics)
+    public function __construct(
+        /**
+         * @var Metrics $metrics
+         */
+        private readonly Metrics $metrics,
+
+        /**
+         * @var MetricType[] $usedMetricTypes
+         */
+        private readonly array $usedMetricTypes
+    )
     {
     }
 
@@ -32,5 +45,17 @@ trait VisitorTrait
     {
         $fileId = (string) FileIdentifier::ofPath($this->path);
         $this->fileMetrics = $this->metrics->get($fileId);
+    }
+
+    private function setMetricValue(MetricsInterface &$metrics, string $key, mixed $value): void
+    {
+        $metrics->set($key, MetricValue::ofValueAndType($value, $this->usedMetricTypes[$key]));
+    }
+
+    private function setMetricValues(MetricsInterface &$metrics, array $keyValuePairs): void
+    {
+        foreach ($keyValuePairs as $key => $value) {
+            $this->setMetricValue($metrics, $key, $value);
+        }
     }
 }

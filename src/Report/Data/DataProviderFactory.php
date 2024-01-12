@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Report\Data;
 
+use PhpCodeArch\Metrics\Manager\MetricsManager;
 use PhpCodeArch\Metrics\Metrics;
 use PhpCodeArch\Report\DataProvider\ChartDataProvider;
 use PhpCodeArch\Report\DataProvider\ClassDataProvider;
@@ -15,33 +16,35 @@ class DataProviderFactory
 {
     private array $data = [];
 
-    public function __construct(private readonly Metrics $metrics)
+    public function __construct(
+        private readonly Metrics $metrics,
+        private readonly MetricsManager $metricsManager)
     {
     }
 
     public function getProjectData(): ProjectDataProvider
     {
-        return new ProjectDataProvider($this->metrics);
+        return new ProjectDataProvider($this->metrics, $this->metricsManager);
     }
 
     public function getFiles(): FilesDataProvider
     {
-        return new FilesDataProvider($this->metrics);
+        return new FilesDataProvider($this->metrics, $this->metricsManager);
     }
 
     public function getClassAIChartData(): ChartDataProvider
     {
-        return new ChartDataProvider($this->metrics);
+        return new ChartDataProvider($this->metrics, $this->metricsManager);
     }
 
     public function getClasses(): ClassDataProvider
     {
-        return new ClassDataProvider($this->metrics);
+        return new ClassDataProvider($this->metrics, $this->metricsManager);
     }
 
     public function getPackages(): PackagesDataProvider
     {
-        return new PackagesDataProvider($this->metrics);
+        return new PackagesDataProvider($this->metrics, $this->metricsManager);
     }
 
     private function predictProgrammingParadigm(): void

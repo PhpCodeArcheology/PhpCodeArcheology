@@ -11,7 +11,7 @@ use PhpCodeArch\Metrics\MetricsInterface;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
 
-class GlobalsVisitor implements NodeVisitor
+class GlobalsVisitor implements NodeVisitor, VisitorInterface
 {
     use VisitorTrait;
 
@@ -221,9 +221,13 @@ class GlobalsVisitor implements NodeVisitor
             if ($node instanceof Node\Stmt\Function_) {
                 $functionMetrics = array_pop($this->functionMetrics);
                 $functionName = $functionMetrics->getName();
-                $functionMetrics->set('superglobals', $this->superglobalsFunction[$functionName]);
-                $functionMetrics->set('variables', $this->functionVariableMap[$functionName]);
-                $functionMetrics->set('constants', $this->functionConstantMap[$functionName]);
+
+                $this->setMetricValues($functionMetrics, [
+                    'superglobals' => $this->superglobalsFunction[$functionName],
+                    'variables' => $this->functionVariableMap[$functionName],
+                    'constants' => $this->functionConstantMap[$functionName],
+                ]);
+
                 $this->metrics->set((string) $functionMetrics->getIdentifier(), $functionMetrics);
             }
             else {
@@ -240,9 +244,13 @@ class GlobalsVisitor implements NodeVisitor
                 );
 
                 $methodName = $methodMetrics->getName();
-                $methodMetrics->set('superglobals', $this->superglobalsFunction[$methodName]);
-                $methodMetrics->set('variables', $this->functionVariableMap[$methodName]);
-                $methodMetrics->set('constants', $this->functionVariableMap[$methodName]);
+
+                $this->setMetricValues($methodMetrics, [
+                    'superglobals' => $this->superglobalsFunction[$methodName],
+                    'variables' => $this->functionVariableMap[$methodName],
+                    'constants' => $this->functionConstantMap[$methodName],
+                ]);
+
                 $methods[(string) $methodMetrics->getIdentifier()] = $methodMetrics;
 
                 $classMetrics->set('methods', $methods);
@@ -256,9 +264,12 @@ class GlobalsVisitor implements NodeVisitor
             $classMetrics = array_pop($this->classMetrics);
             $className = $classMetrics->getName();
 
-            $classMetrics->set('superglobals', $this->superglobalsClass[$className]);
-            $classMetrics->set('variables', $this->classVariableMap[$className]);
-            $classMetrics->set('constants', $this->classConstantMap[$className]);
+            $this->setMetricValues($classMetrics, [
+                'superglobals' => $this->superglobalsClass[$className],
+                'variables' => $this->classVariableMap[$className],
+                'constants' => $this->classConstantMap[$className],
+            ]);
+
             $this->metrics->set((string) $classMetrics->getIdentifier(), $classMetrics);
         }
     }
@@ -271,9 +282,11 @@ class GlobalsVisitor implements NodeVisitor
         $fileId = (string) FileIdentifier::ofPath($this->path);
         $fileMetrics = $this->metrics->get($fileId);
 
-        $fileMetrics->set('superglobals', $this->superglobals);
-        $fileMetrics->set('variables', $this->variableMap);
-        $fileMetrics->set('constants', $this->constantMap);
+        $this->setMetricValues($fileMetrics, [
+            'superglobals' => $this->superglobals,
+            'variables' => $this->variableMap,
+            'constants' => $this->constantMap,
+        ]);
 
         $this->metrics->set($fileId, $fileMetrics);
     }

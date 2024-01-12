@@ -9,11 +9,12 @@ use PhpCodeArch\Metrics\ClassMetrics\ClassMetricsFactory;
 use PhpCodeArch\Metrics\FunctionMetrics\FunctionMetrics;
 use PhpCodeArch\Metrics\FunctionMetrics\FunctionMetricsFactory;
 use PhpCodeArch\Metrics\Identity\FunctionAndClassIdentifier;
+use PhpCodeArch\Metrics\Manager\MetricValue;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
 use PhpParser\PrettyPrinter;
 
-class LocVisitor implements NodeVisitor
+class LocVisitor implements NodeVisitor, VisitorInterface
 {
     use VisitorTrait;
 
@@ -80,9 +81,11 @@ class LocVisitor implements NodeVisitor
             [$cloc, $lloc] = $this->getClocAndLloc($code);
         }
 
-        $this->fileMetrics->set('loc', $loc);
-        $this->fileMetrics->set('cloc', $cloc);
-        $this->fileMetrics->set('lloc', $lloc);
+        $this->setMetricValues($this->fileMetrics, [
+            'loc' => $loc,
+            'cloc' => $cloc,
+            'lloc' => $lloc,
+        ]);
 
         $projectLoc = $this->projectMetrics->get('OverallLoc') + $loc;
         $projectCloc = $this->projectMetrics->get('OverallCloc') + $cloc;
@@ -146,7 +149,13 @@ class LocVisitor implements NodeVisitor
             $this->functionNodes[$functionMetrics->getName()] = [];
 
             $functionId = (string) $functionMetrics->getIdentifier();
-            $functionMetrics->set('htmlLoc', $this->functionHtmlLoc[$functionMetrics->getName()]);
+
+            $this->setMetricValue(
+                $functionMetrics,
+                'htmlLoc',
+                $this->functionHtmlLoc[$functionMetrics->getName()]
+            );
+
             $this->metrics->set($functionId, $functionMetrics);
 
         }
@@ -166,10 +175,12 @@ class LocVisitor implements NodeVisitor
             $classCode = $prettyPrinter->prettyPrint([$node]);
             [$cloc, $lloc] = $this->getClocAndLloc($classCode);
 
-            $classMetrics->set('loc', $loc);
-            $classMetrics->set('cloc', $cloc);
-            $classMetrics->set('lloc', $lloc);
-            $classMetrics->set('htmlLoc', $this->classHtmlLoc[$className]);
+            $this->setMetricValues($classMetrics, [
+                'loc' => $loc,
+                'cloc' => $cloc,
+                'lloc' => $lloc,
+                'htmlLoc' => $this->classHtmlLoc[$className],
+            ]);
 
             $this->metrics->set($classId, $classMetrics);
 
@@ -196,10 +207,12 @@ class LocVisitor implements NodeVisitor
                 $methodCloc = 0;
             }
 
-            $methodMetric->set('loc', $methodLoc);
-            $methodMetric->set('cloc', $methodCloc);
-            $methodMetric->set('lloc', $methodLloc);
-            $methodMetric->set('htmlLoc', $this->methodHtmlLoc[$classMetrics->getName()][$methodMetric->getName()]);
+            $this->setMetricValues($classMetrics, [
+                'loc' => $methodLoc,
+                'cloc' => $methodCloc,
+                'lloc' => $methodLloc,
+                'htmlLoc' => $this->methodHtmlLoc[$classMetrics->getName()][$methodMetric->getName()],
+            ]);
 
             $methods[$methodId] = $methodMetric;
 
@@ -236,10 +249,13 @@ class LocVisitor implements NodeVisitor
     {
         $fileId = (string) $this->fileMetrics->getIdentifier();
 
-        $llocFile = $this->fileMetrics->get('lloc');
+        $llocFile = $this->fileMetrics->get('lloc')->getValue();
         $llocFileOutside = $llocFile - $this->insideLloc;
-        $this->fileMetrics->set('llocOutside', $llocFileOutside);
-        $this->fileMetrics->set('htmlLoc', $this->fileHtmlLoc);
+
+        $this->setMetricValues($this->fileMetrics, [
+            'llocOutside' => $llocFileOutside,
+            'htmlLoc' => $this->fileHtmlLoc,
+        ]);
 
         $this->metrics->set($fileId, $this->fileMetrics);
         $this->metrics->set('project', $this->projectMetrics);
@@ -277,9 +293,11 @@ class LocVisitor implements NodeVisitor
             $this->path
         );
 
-        $functionMetrics->set('loc', $loc);
-        $functionMetrics->set('cloc', $cloc);
-        $functionMetrics->set('lloc', $lloc);
+        $this->setMetricValues($functionMetrics, [
+            'loc' => $loc,
+            'cloc' => $cloc,
+            'lloc' => $lloc,
+        ]);
 
         $this->metrics->push($functionMetrics);
 

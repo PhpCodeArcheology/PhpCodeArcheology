@@ -10,9 +10,9 @@ use PhpCodeArch\Metrics\Identity\FileIdentifier;
 use PhpCodeArch\Metrics\Identity\FunctionAndClassIdentifier;
 use PhpCodeArch\Metrics\MetricsInterface;
 use PhpParser\Node;
-use PhpParser\NodeVisitorAbstract;
+use PhpParser\NodeVisitor;
 
-class HalsteadMetricsVisitor extends NodeVisitorAbstract
+class HalsteadMetricsVisitor implements NodeVisitor, VisitorInterface
 {
     use VisitorTrait;
 
@@ -273,9 +273,7 @@ class HalsteadMetricsVisitor extends NodeVisitorAbstract
 
     private function saveToMetric(MetricsInterface $metrics, array $data): MetricsInterface
     {
-        foreach ($data as $key => $value) {
-            $metrics->set($key, $value);
-        }
+        $this->setMetricValues($metrics, $data);
 
         return $metrics;
     }

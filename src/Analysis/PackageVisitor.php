@@ -12,7 +12,7 @@ use PhpCodeArch\Metrics\PackageMetrics\PackageMetrics;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
 
-class PackageVisitor implements NodeVisitor
+class PackageVisitor implements NodeVisitor, VisitorInterface
 {
     use VisitorTrait;
 

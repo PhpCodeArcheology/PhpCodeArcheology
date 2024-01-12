@@ -14,7 +14,7 @@ use PhpParser\Node;
 use PhpParser\NodeVisitor;
 use function PhpCodeArch\getNodeName;
 
-class IdentifyVisitor implements NodeVisitor
+class IdentifyVisitor implements NodeVisitor, VisitorInterface
 {
     use VisitorTrait;
 
@@ -162,6 +162,7 @@ class IdentifyVisitor implements NodeVisitor
                     $node,
                     $this->path
                 );
+
                 $classMetrics->set('outputCount', $this->outputCount['classes']);
                 $this->metrics->set((string) $classMetrics->getIdentifier(), $classMetrics);
                 break;

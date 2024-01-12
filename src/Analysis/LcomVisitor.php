@@ -11,7 +11,7 @@ use PhpParser\Node;
 use PhpParser\NodeVisitor;
 use function PhpCodeArch\getNodeName;
 
-class LcomVisitor implements NodeVisitor
+class LcomVisitor implements NodeVisitor, VisitorInterface
 {
     use VisitorTrait;
 
@@ -105,7 +105,7 @@ class LcomVisitor implements NodeVisitor
                 $this->path
             );
 
-            $classMetrics->set('lcom', $lcom);
+            $this->setMetricValue($classMetrics, 'lcom', $lcom);
             $this->metrics->set((string) $classMetrics->getIdentifier(), $classMetrics);
 
             $this->graph = new Graph();

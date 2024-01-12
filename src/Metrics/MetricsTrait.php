@@ -3,6 +3,7 @@
 namespace PhpCodeArch\Metrics;
 
 use PhpCodeArch\Metrics\FileMetrics\FileMetrics;
+use PhpCodeArch\Metrics\Manager\MetricValue;
 
 trait MetricsTrait
 {

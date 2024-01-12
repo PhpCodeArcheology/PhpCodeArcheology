@@ -12,7 +12,7 @@ use PhpParser\Node;
 use PhpParser\NodeVisitor;
 use function PhpCodeArch\getNodeName;
 
-class DependencyVisitor implements NodeVisitor
+class DependencyVisitor implements NodeVisitor, VisitorInterface
 {
     use VisitorTrait;
 

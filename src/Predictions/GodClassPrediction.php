@@ -24,11 +24,11 @@ class GodClassPrediction implements PredictionInterface
                 ++ $suspectIndex;
             }
 
-            if ($metric->get('usesCount') + $metric->get('usedByCount') > 10) {
+            if ($metric->get('usesCount')->getValue() + $metric->get('usedByCount')->getValue() > 10) {
                 ++ $suspectIndex;
             }
 
-            if ($metric->get('lcom') > 1) {
+            if ($metric->get('lcom')?->getValue() ?? 0 > 1) {
                 ++ $suspectIndex;
             }
 

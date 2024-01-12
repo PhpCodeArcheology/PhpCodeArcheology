@@ -13,6 +13,9 @@ use PhpCodeArch\Calculators\FileCalculator;
 use PhpCodeArch\Calculators\Helpers\PackageInstabilityAbstractnessCalculator;
 use PhpCodeArch\Calculators\ProjectCalculator;
 use PhpCodeArch\Calculators\VariablesCalculator;
+use PhpCodeArch\Metrics\Manager\MetricCategory;
+use PhpCodeArch\Metrics\Manager\MetricsManager;
+use PhpCodeArch\Metrics\Manager\MetricType;
 use PhpCodeArch\Metrics\Metrics;
 use PhpCodeArch\Metrics\ProjectMetrics\ProjectMetrics;
 use PhpCodeArch\Predictions\GodClassPrediction;
@@ -36,6 +39,8 @@ final readonly class Application
 {
     const VERSION = '0.0.1';
 
+    private MetricsManager $metricsManager;
+
     /**
      * @throws ConfigFileExtensionNotSupportedException
      * @throws MultipleConfigFilesException
@@ -43,6 +48,8 @@ final readonly class Application
      */
     public function run(array $argv): void
     {
+        $this->metricsManager = new MetricsManager();
+
         $config = (new ArgumentParser())->parse($argv);
         $config->set('runningDir', getcwd());
 
@@ -64,11 +71,11 @@ final readonly class Application
             exit;
         }
 
+        $this->loadMetricTypes();
+
         $fileList = new FileList($config);
         $fileList->fetch();
 
-        $parser = (new ParserFactory())->createForNewestSupportedVersion();
-        $traverser = new NodeTraverser();
         $metrics = new Metrics();
 
         $projectMetrics = new ProjectMetrics(implode(',', $config->get('files')));
@@ -76,18 +83,42 @@ final readonly class Application
 
         $output = new CliOutput();
 
-        $analyzer = new Analyzer($config, $parser, $traverser, $metrics, $output);
+        $analyzer = new Analyzer(
+            $config,
+            (new ParserFactory())->createForNewestSupportedVersion(),
+            new NodeTraverser(),
+            $metrics,
+            $this->metricsManager,
+            $output);
+
         $analyzer->analyze($fileList);
 
         $packageIACalculator = new PackageInstabilityAbstractnessCalculator($metrics);
 
-        $calculators = new CalculatorService([
-            new FileCalculator($metrics),
-            new VariablesCalculator($metrics),
-            new CouplingCalculator($metrics, $packageIACalculator),
-            new ProjectCalculator($metrics),
-        ], $metrics, $output);
-        $calculators->run();
+        $calculatorService = new CalculatorService([
+            new FileCalculator($metrics, []),
+            new VariablesCalculator($metrics, [
+                'superglobalsUsed',
+                'distinctSuperglobalsUsed',
+                'variablesUsed',
+                'distinctVariablesUsed',
+                'constantsUsed',
+                'distinctConstantsUsed',
+                'superglobalMetric',
+            ]),
+            new CouplingCalculator($metrics, [
+                'uses',
+                'usesCount',
+                'usedBy',
+                'usedByCount',
+                'usesInProject',
+                'usesInProjectCount',
+                'usesForInstabilityCount',
+            ], $packageIACalculator),
+            new ProjectCalculator($metrics, []),
+        ], $metrics, $this->metricsManager, $output);
+
+        $calculatorService->run();
 
         $predictions = new PredictionService([
             new TooLongPrediction(),
@@ -107,7 +138,7 @@ final readonly class Application
         $splitter = new MetricsSplitter($metrics, $output);
         $splitter->split();
 
-        $reportData = new DataProviderFactory($metrics);
+        $reportData = new DataProviderFactory($metrics, $this->metricsManager);
 
         $twigLoader = new FilesystemLoader();
         $twig = new Environment($twigLoader, [
@@ -124,5 +155,27 @@ final readonly class Application
             $output
         );
         $report->generate();
+    }
+
+    private function loadMetricTypes(): void
+    {
+        $metricTypes = require __DIR__ . '/../../data/metric-types.php';
+
+        $categoryMap = [];
+
+        foreach ($metricTypes as $metricTypeArray) {
+            $categories = array_pop($metricTypeArray);
+
+            $metricType = MetricType::fromArray($metricTypeArray);
+
+            foreach ($categories as $categoryName) {
+                if (! isset($categoryMap[$categoryName])) {
+                    $categoryMap[$categoryName] = MetricCategory::ofName($categoryName);
+                }
+
+                $metricCategory = $categoryMap[$categoryName];
+                $this->metricsManager->addMetricType($metricType, $metricCategory);
+            }
+        }
     }
 }

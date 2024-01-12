@@ -21,7 +21,7 @@ class TooDependentPrediction implements PredictionInterface
                 case $metric instanceof FunctionMetrics:
                     $maxDependency = $metric instanceof FunctionMetrics ? 10 : 20;
 
-                    $tooDependent = $metric->get('usesCount') > $maxDependency;
+                    $tooDependent = ($metric->get('usesCount')?->getValue() == 0) > $maxDependency;
                     $metric->set('predictionTooDependent', $tooDependent);
 
                     if ($tooDependent) {
