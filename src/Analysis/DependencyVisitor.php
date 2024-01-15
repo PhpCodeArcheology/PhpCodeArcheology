@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Analysis;
 
-use PhpCodeArch\Metrics\ClassMetrics\ClassMetrics;
-use PhpCodeArch\Metrics\ClassMetrics\ClassMetricsFactory;
-use PhpCodeArch\Metrics\FunctionMetrics\FunctionMetricsFactory;
 use PhpCodeArch\Metrics\Identity\FileIdentifier;
+use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
+use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsFactory;
+use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsFactory;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
 use function PhpCodeArch\getNodeName;
@@ -37,7 +37,7 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface
     private bool $insideMethod = false;
 
     /**
-     * @var ClassMetrics[]
+     * @var ClassMetricsCollection[]
      */
     private array $currentClassMetrics = [];
 

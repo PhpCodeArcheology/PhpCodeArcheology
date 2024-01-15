@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Analysis;
 
-use PhpCodeArch\Metrics\ClassMetrics\ClassMetrics;
-use PhpCodeArch\Metrics\ClassMetrics\ClassMetricsFactory;
-use PhpCodeArch\Metrics\FunctionMetrics\FunctionMetrics;
-use PhpCodeArch\Metrics\FunctionMetrics\FunctionMetricsFactory;
+use PhpCodeArch\Metrics\Identity\FileIdentifier;
 use PhpCodeArch\Metrics\Identity\FunctionAndClassIdentifier;
-use PhpCodeArch\Metrics\Manager\MetricValue;
+use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
+use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsFactory;
+use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
+use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsFactory;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
 use PhpParser\PrettyPrinter;
@@ -21,12 +21,12 @@ class LocVisitor implements NodeVisitor, VisitorInterface
     private array $functionNodes = [];
 
     /**
-     * @var FunctionMetrics[]
+     * @var FunctionMetricsCollection[]
      */
     private array $currentFunction = [];
 
     /**
-     * @var ClassMetrics[]
+     * @var ClassMetricsCollection[]
      */
     private array $currentClass = [];
 
@@ -54,7 +54,7 @@ class LocVisitor implements NodeVisitor, VisitorInterface
      */
     public function beforeTraverse(array $nodes): void
     {
-        $this->projectMetrics = $this->metrics->get('project');
+        $this->projectMetrics = $this->metricsCollection->get('project');
 
         $this->getFileMetrics();
 
@@ -81,7 +81,9 @@ class LocVisitor implements NodeVisitor, VisitorInterface
             [$cloc, $lloc] = $this->getClocAndLloc($code);
         }
 
-        $this->setMetricValues($this->fileMetrics, [
+        $fileId = (string) FileIdentifier::ofPath($this->path);
+
+        $this->metricsManager->setMetricValues($fileId, [
             'loc' => $loc,
             'cloc' => $cloc,
             'lloc' => $lloc,

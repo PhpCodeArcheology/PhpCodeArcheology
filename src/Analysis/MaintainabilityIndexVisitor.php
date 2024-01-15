@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Analysis;
 
-use PhpCodeArch\Metrics\ClassMetrics\ClassMetricsFactory;
-use PhpCodeArch\Metrics\FunctionMetrics\FunctionMetricsFactory;
 use PhpCodeArch\Metrics\Identity\FileIdentifier;
-use PhpCodeArch\Metrics\MetricsInterface;
+use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsFactory;
+use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsFactory;
+use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
 
@@ -16,12 +16,12 @@ class MaintainabilityIndexVisitor implements NodeVisitor, VisitorInterface
     use VisitorTrait;
 
     /**
-     * @var MetricsInterface[]
+     * @var MetricsCollectionInterface[]
      */
     private array $currentClass = [];
 
     /**
-     * @var MetricsInterface[]
+     * @var MetricsCollectionInterface[]
      */
     private array $currentFunction = [];
 
@@ -113,7 +113,7 @@ class MaintainabilityIndexVisitor implements NodeVisitor, VisitorInterface
         $this->metrics->set($fileId, $this->calculateIndex($fileMetrics));
     }
 
-    private function calculateIndex(MetricsInterface $metric): MetricsInterface
+    private function calculateIndex(MetricsCollectionInterface $metric): MetricsCollectionInterface
     {
         $volume = $metric->get('volume')->getValue();
         $cc = $metric->get('cc')->getValue();

@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Analysis;
 
-use PhpCodeArch\Metrics\ClassMetrics\ClassMetricsFactory;
-use PhpCodeArch\Metrics\FunctionMetrics\FunctionMetricsFactory;
 use PhpCodeArch\Metrics\Identity\FileIdentifier;
 use PhpCodeArch\Metrics\Identity\PackageIdentifier;
-use PhpCodeArch\Metrics\PackageMetrics\PackageMetrics;
+use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsFactory;
+use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsFactory;
+use PhpCodeArch\Metrics\Model\PackageMetrics\PackageMetricsCollection;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
 
@@ -20,7 +20,7 @@ class PackageVisitor implements NodeVisitor, VisitorInterface
 
     private string $fileNamespace = '';
 
-    private ?PackageMetrics $currentPackageMetric;
+    private ?PackageMetricsCollection $currentPackageMetric;
 
     public function beforeTraverse(array $nodes): void
     {
@@ -107,7 +107,7 @@ class PackageVisitor implements NodeVisitor, VisitorInterface
         $this->metrics->set((string) $this->currentPackageMetric->getIdentifier(), $this->currentPackageMetric);
     }
 
-    private function getCurrentPackageMetric(?string $packageName = null): PackageMetrics
+    private function getCurrentPackageMetric(?string $packageName = null): PackageMetricsCollection
     {
         if (! $packageName) {
             $packageName = $this->fileNamespace;
@@ -123,7 +123,7 @@ class PackageVisitor implements NodeVisitor, VisitorInterface
                 $this->packages[] = $packageName;
             }
 
-            return new PackageMetrics($packageId);
+            return new PackageMetricsCollection($packageId);
         }
 
         return $this->metrics->get($packageId);

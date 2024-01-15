@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Calculators;
 
-use PhpCodeArch\Metrics\MetricsInterface;
+use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
 
 class VariablesCalculator implements CalculatorInterface
 {
     use CalculatorTrait;
 
-    public function calculate(MetricsInterface $metrics): void
+    public function calculate(MetricsCollectionInterface $metrics): void
     {
     }
 

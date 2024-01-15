@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Predictions;
 
-use PhpCodeArch\Metrics\ClassMetrics\ClassMetrics;
-use PhpCodeArch\Metrics\Metrics;
+use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
+use PhpCodeArch\Metrics\Model\MetricsContainer;
 
 class GodClassPrediction implements PredictionInterface
 {
-    public function predict(Metrics $metrics): int
+    public function predict(MetricsContainer $metrics): int
     {
         $problemCount = 0;
 
         foreach ($metrics->getAll() as $metric) {
-            if (! $metric instanceof ClassMetrics) {
+            if (! $metric instanceof ClassMetricsCollection) {
                 continue;
             }
 

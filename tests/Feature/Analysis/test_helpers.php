@@ -12,10 +12,9 @@ declare(strict_types=1);
 
 namespace Test\Feature\Analysis;
 
-use PhpCodeArch\Application\FileList;
-use PhpCodeArch\Metrics\FileMetrics\FileMetrics;
-use PhpCodeArch\Metrics\Metrics;
-use PhpCodeArch\Metrics\ProjectMetrics\ProjectMetrics;
+use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
+use PhpCodeArch\Metrics\Model\MetricsContainer;
+use PhpCodeArch\Metrics\Model\ProjectMetrics\ProjectMetricsCollection;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\Parser;
@@ -31,9 +30,9 @@ use PhpParser\ParserFactory;
 
 function setupCore(): array
 {
-    $projectMetrics = new ProjectMetrics(dirname(''));
+    $projectMetrics = new ProjectMetricsCollection(dirname(''));
 
-    $metrics = new Metrics();
+    $metrics = new MetricsContainer();
     $metrics->set('project', $projectMetrics);
 
     $parser = (new ParserFactory())->createForNewestSupportedVersion();
@@ -51,7 +50,7 @@ function setupAnalyzer(string $file): array
 
     [$metrics, $parser, $traverser] = setupCore();
 
-    $fileMetrics = new FileMetrics($file);
+    $fileMetrics = new FileMetricsCollection($file);
     $metrics->push($fileMetrics);
 
     return [
@@ -65,11 +64,11 @@ function setupAnalyzer(string $file): array
 /**
  * @param array $visitors Array of Visitor class names
  * @param NodeTraverser $traverser
- * @param Metrics $metrics
+ * @param MetricsContainer $metrics
  * @param string $file
  * @return void
  */
-function setVisitors(array $visitors, NodeTraverser $traverser, Metrics $metrics, string $file): void
+function setVisitors(array $visitors, NodeTraverser $traverser, MetricsContainer $metrics, string $file): void
 {
     $traverser->addVisitor(new NameResolver());
 
@@ -95,9 +94,9 @@ function parseCode(string $code, Parser $parser, NodeTraverser $traverser): void
 /**
  * @param string $file
  * @param array $visitors Array of Visitor class names
- * @return Metrics
+ * @return MetricsContainer
  */
-function getMetrics(string $file, array $visitors): Metrics
+function getMetrics(string $file, array $visitors): MetricsContainer
 {
     [$code, $metrics, $parser, $traverser] = setupAnalyzer($file);
 
@@ -111,14 +110,14 @@ function getMetrics(string $file, array $visitors): Metrics
 /**
  * @param string $file
  * @param array $visitors
- * @return Metrics
+ * @return MetricsContainer
  */
-function getMetricsForVisitors(string $file, array $visitors): Metrics
+function getMetricsForVisitors(string $file, array $visitors): MetricsContainer
 {
     return getMetrics($file, $visitors);
 }
 
-function getMetricsForMultipleFilesAndVisitors(array $files, array $visitors): Metrics
+function getMetricsForMultipleFilesAndVisitors(array $files, array $visitors): MetricsContainer
 {
     [
         $metrics,
@@ -142,7 +141,7 @@ function getMetricsForMultipleFilesAndVisitors(array $files, array $visitors): M
 
         $phpCode = file_get_contents($file);
 
-        $fileMetrics = new FileMetrics($file);
+        $fileMetrics = new FileMetricsCollection($file);
         $metrics->push($fileMetrics);
 
         parseCode($phpCode, $parser, $traverser);

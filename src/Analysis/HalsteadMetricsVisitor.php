@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Analysis;
 
-use PhpCodeArch\Metrics\ClassMetrics\ClassMetricsFactory;
-use PhpCodeArch\Metrics\FunctionMetrics\FunctionMetricsFactory;
 use PhpCodeArch\Metrics\Identity\FileIdentifier;
 use PhpCodeArch\Metrics\Identity\FunctionAndClassIdentifier;
-use PhpCodeArch\Metrics\MetricsInterface;
+use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsFactory;
+use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsFactory;
+use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
 
@@ -33,7 +33,7 @@ class HalsteadMetricsVisitor implements NodeVisitor, VisitorInterface
     private bool $insideFunction = false;
 
     /**
-     * @var MetricsInterface[]
+     * @var MetricsCollectionInterface[]
      */
     private array $currentMetric = [];
 
@@ -271,7 +271,7 @@ class HalsteadMetricsVisitor implements NodeVisitor, VisitorInterface
         ];
     }
 
-    private function saveToMetric(MetricsInterface $metrics, array $data): MetricsInterface
+    private function saveToMetric(MetricsCollectionInterface $metrics, array $data): MetricsCollectionInterface
     {
         $this->setMetricValues($metrics, $data);
 

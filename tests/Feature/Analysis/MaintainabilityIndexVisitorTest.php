@@ -9,10 +9,10 @@ use PhpCodeArch\Analysis\HalsteadMetricsVisitor;
 use PhpCodeArch\Analysis\IdentifyVisitor;
 use PhpCodeArch\Analysis\LocVisitor;
 use PhpCodeArch\Analysis\MaintainabilityIndexVisitor;
-use PhpCodeArch\Metrics\ClassMetrics\ClassMetrics;
-use PhpCodeArch\Metrics\FileMetrics\FileMetrics;
-use PhpCodeArch\Metrics\FunctionMetrics\FunctionMetrics;
-use PhpCodeArch\Metrics\MetricsInterface;
+use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
+use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
+use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
+use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
 
 require_once __DIR__ . '/test_helpers.php';
 
@@ -29,7 +29,7 @@ function getMaintainabilityVisitors(): array
     ];
 }
 
-function getHalstead(MetricsInterface $metric): array
+function getHalstead(MetricsCollectionInterface $metric): array
 {
     return [
         'mi' => $metric->get('maintainabilityIndex'),
@@ -43,12 +43,12 @@ it('calculates maintainability index correctly', function($testFile, $expects) {
 
     foreach ($metrics->getAll() as $metric) {
         switch (true) {
-            case $metric instanceof FileMetrics:
+            case $metric instanceof FileMetricsCollection:
                 $halstead = getHalstead($metric);
                 expect($halstead)->toBe($expects['file']['halstead']);
                 break;
 
-            case $metric instanceof FunctionMetrics:
+            case $metric instanceof FunctionMetricsCollection:
                 $halstead = getHalstead($metric);
 
                 $fnName = $metric->getName();
@@ -60,7 +60,7 @@ it('calculates maintainability index correctly', function($testFile, $expects) {
                 expect($halstead)->toBe($expects['functions'][$fnName]['halstead']);
                 break;
 
-            case $metric instanceof ClassMetrics:
+            case $metric instanceof ClassMetricsCollection:
                 $halstead = getHalstead($metric);
 
                 $className = $metric->getName();

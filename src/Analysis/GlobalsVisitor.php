@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Analysis;
 
-use PhpCodeArch\Metrics\ClassMetrics\ClassMetricsFactory;
-use PhpCodeArch\Metrics\FunctionMetrics\FunctionMetricsFactory;
 use PhpCodeArch\Metrics\Identity\FileIdentifier;
-use PhpCodeArch\Metrics\MetricsInterface;
+use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsFactory;
+use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsFactory;
+use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
 
@@ -46,12 +46,12 @@ class GlobalsVisitor implements NodeVisitor, VisitorInterface
     private array $classConstantMap = [];
 
     /**
-     * @var MetricsInterface[]
+     * @var MetricsCollectionInterface[]
      */
     private array $classMetrics = [];
 
     /**
-     * @var MetricsInterface[]
+     * @var MetricsCollectionInterface[]
      */
     private array $functionMetrics = [];
 

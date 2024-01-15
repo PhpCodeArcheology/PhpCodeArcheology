@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace PhpCodeArch\Calculators;
 
 use PhpCodeArch\Application\CliOutput;
-use PhpCodeArch\Metrics\Manager\MetricsManager;
-use PhpCodeArch\Metrics\Metrics;
+use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\Model\MetricsContainer;
 
 readonly class CalculatorService
 {
@@ -14,13 +14,13 @@ readonly class CalculatorService
         /**
          * @var CalculatorInterface[]
          */
-        private array   $calculators,
+        private array             $calculators,
         /**
-         * @var Metrics
+         * @var MetricsContainer
          */
-        private Metrics $metrics,
-        private MetricsManager $metricsManager,
-        private CliOutput $output)
+        private MetricsContainer  $metrics,
+        private MetricsController $metricsManager,
+        private CliOutput         $output)
     {
         foreach ($this->calculators as $calculator) {
             $usedMetricTypes = $this->metricsManager->getMetricTypesByKeys($calculator->getUsedMetricTypeKeys());

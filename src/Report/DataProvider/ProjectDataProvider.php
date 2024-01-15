@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Report\DataProvider;
 
-use PhpCodeArch\Metrics\ProjectMetrics\OverallMetricsEnum;
+use PhpCodeArch\Metrics\Model\ProjectMetrics\OverallMetricsEnum;
 
 class ProjectDataProvider implements ReportDataProviderInterface
 {

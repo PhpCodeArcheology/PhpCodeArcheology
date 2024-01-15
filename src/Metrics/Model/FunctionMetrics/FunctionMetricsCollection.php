@@ -2,23 +2,22 @@
 
 declare(strict_types=1);
 
-namespace PhpCodeArch\Metrics\ClassMetrics;
+namespace PhpCodeArch\Metrics\Model\FunctionMetrics;
 
 
 use PhpCodeArch\Metrics\Identity\FunctionAndClassIdentifier;
 use PhpCodeArch\Metrics\Identity\IdentifierInterface;
-use PhpCodeArch\Metrics\MetricsInterface;
-use PhpCodeArch\Metrics\MetricsTrait;
+use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
+use PhpCodeArch\Metrics\Model\MetricsCollectionTrait;
 
-class ClassMetrics implements MetricsInterface
+class FunctionMetricsCollection implements MetricsCollectionInterface
 {
-    use MetricsTrait;
-
+    use MetricsCollectionTrait;
     private IdentifierInterface $identifier;
 
     public function __construct(
-        private string $path,
-        private string $name
+        private readonly string $path,
+        private readonly string $name
     )
     {
         $this->identifier = FunctionAndClassIdentifier::ofNameAndPath($this->name, $this->path);

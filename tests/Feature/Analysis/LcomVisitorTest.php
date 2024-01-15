@@ -6,7 +6,7 @@ namespace Test\Feature\Analysis;
 
 use PhpCodeArch\Analysis\IdentifyVisitor;
 use PhpCodeArch\Analysis\LcomVisitor;
-use PhpCodeArch\Metrics\ClassMetrics\ClassMetrics;
+use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 
 require_once __DIR__ . '/test_helpers.php';
 
@@ -25,7 +25,7 @@ it('calculates lcom correctly', function($testFile, $expects) {
     $metrics = getMetricsForVisitors($testFile, getLcomVisitors());
 
     foreach ($metrics->getAll() as $metric) {
-        if (! $metric instanceof ClassMetrics) {
+        if (! $metric instanceof ClassMetricsCollection) {
             continue;
         }
 

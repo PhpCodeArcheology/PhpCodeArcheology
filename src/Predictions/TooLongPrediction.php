@@ -4,31 +4,31 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Predictions;
 
-use PhpCodeArch\Metrics\ClassMetrics\ClassMetrics;
-use PhpCodeArch\Metrics\FileMetrics\FileMetrics;
-use PhpCodeArch\Metrics\FunctionMetrics\FunctionMetrics;
-use PhpCodeArch\Metrics\Metrics;
-use PhpCodeArch\Metrics\PackageMetrics\PackageMetrics;
-use PhpCodeArch\Metrics\ProjectMetrics\ProjectMetrics;
+use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
+use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
+use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
+use PhpCodeArch\Metrics\Model\MetricsContainer;
+use PhpCodeArch\Metrics\Model\PackageMetrics\PackageMetricsCollection;
+use PhpCodeArch\Metrics\Model\ProjectMetrics\ProjectMetricsCollection;
 
 class TooLongPrediction implements PredictionInterface
 {
 
-    public function predict(Metrics $metrics): int
+    public function predict(MetricsContainer $metrics): int
     {
         $problemCount = 0;
 
         foreach ($metrics->getAll() as $key => $metric) {
             if (is_array($metric)
-                || $metric instanceof ProjectMetrics
-                || $metric instanceof PackageMetrics) {
+                || $metric instanceof ProjectMetricsCollection
+                || $metric instanceof PackageMetricsCollection) {
                 continue;
             }
 
             $maxLloc = match(true) {
-                $metric instanceof FileMetrics => 400,
-                $metric instanceof ClassMetrics => 300,
-                $metric instanceof FunctionMetrics => 40,
+                $metric instanceof FileMetricsCollection => 400,
+                $metric instanceof ClassMetricsCollection => 300,
+                $metric instanceof FunctionMetricsCollection => 40,
             };
 
             $isTooLong = $metric->get('lloc')->getValue() > $maxLloc;
@@ -39,7 +39,7 @@ class TooLongPrediction implements PredictionInterface
                 ++ $problemCount;
             }
 
-            if (! $metric instanceof ClassMetrics) {
+            if (! $metric instanceof ClassMetricsCollection) {
                 continue;
             }
 

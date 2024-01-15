@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Report\Data;
 
-use PhpCodeArch\Metrics\Manager\MetricsManager;
-use PhpCodeArch\Metrics\Metrics;
+use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\Model\MetricsContainer;
 use PhpCodeArch\Report\DataProvider\ChartDataProvider;
 use PhpCodeArch\Report\DataProvider\ClassDataProvider;
 use PhpCodeArch\Report\DataProvider\FilesDataProvider;
@@ -17,8 +17,8 @@ class DataProviderFactory
     private array $data = [];
 
     public function __construct(
-        private readonly Metrics $metrics,
-        private readonly MetricsManager $metricsManager)
+        private readonly MetricsContainer  $metrics,
+        private readonly MetricsController $metricsManager)
     {
     }
 

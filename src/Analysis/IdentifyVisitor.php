@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Analysis;
 
-use PhpCodeArch\Metrics\ClassMetrics\ClassMetrics;
-use PhpCodeArch\Metrics\ClassMetrics\ClassMetricsFactory;
-use PhpCodeArch\Metrics\FunctionMetrics\FunctionMetrics;
-use PhpCodeArch\Metrics\FunctionMetrics\FunctionMetricsFactory;
-use PhpCodeArch\Metrics\Identity\FileIdentifier;
-use PhpCodeArch\Metrics\MetricsInterface;
+use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
+use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
+use PhpCodeArch\Metrics\Model\Collections\ClassNameCollection;
+use PhpCodeArch\Metrics\Model\Collections\EnumNameCollection;
+use PhpCodeArch\Metrics\Model\Collections\FunctionNameCollection;
+use PhpCodeArch\Metrics\Model\Collections\InterfaceNameCollection;
+use PhpCodeArch\Metrics\Model\Collections\MethodNameCollection;
+use PhpCodeArch\Metrics\Model\Collections\ParameterCollection;
+use PhpCodeArch\Metrics\Model\Collections\TraitNameCollection;
+use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
 use function PhpCodeArch\getNodeName;
@@ -69,13 +73,33 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
         'methods' => 0,
     ];
 
+    public function init()
+    {
+        $fileCollections = [
+            'classes' => new ClassNameCollection(),
+            'interfaces' => new InterfaceNameCollection(),
+            'traits' => new TraitNameCollection(),
+            'enums' => new EnumNameCollection(),
+            'functions' => new FunctionNameCollection(),
+            'methods' => new MethodNameCollection(),
+        ];
+
+        foreach ($fileCollections as $key => $collection) {
+            $this->metricsController->setCollection(
+                MetricCollectionTypeEnum::ProjectCollection,
+                null,
+                $collection,
+                $key
+            );
+        }
+    }
+
     /**
      * @param Node[] $nodes
      * @return void
      */
     public function beforeTraverse(array $nodes): void
     {
-        $this->projectMetrics = $this->metrics->get('project');
         $this->outputCount['file'] = 0;
     }
 
@@ -85,11 +109,9 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
      */
     public function enterNode(Node $node): void
     {
-        $metrics = null;
-
         switch (true) {
             case $node instanceof Node\Stmt\Function_:
-                $metrics = $this->setFunctionMetrics($node);
+                $this->setFunctionMetrics($node);
                 break;
 
             case $node instanceof Node\Stmt\ClassMethod:
@@ -101,12 +123,8 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
             case $node instanceof Node\Stmt\Interface_:
             case $node instanceof Node\Stmt\Trait_:
             case $node instanceof Node\Stmt\Enum_:
-                $metrics = $this->setClassMetrics($node);
+                $this->setClassMetrics($node);
                 break;
-        }
-
-        if ($metrics instanceof MetricsInterface) {
-            $this->metrics->push($metrics);
         }
     }
 
@@ -137,14 +155,16 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
             case $node instanceof Node\Stmt\Function_:
                 $this->inFunction = false;
 
-                $functionMetrics = FunctionMetricsFactory::createFromMetricsByNameAndPath(
-                    $this->metrics,
-                    $node->namespacedName,
-                    $this->path
+                $this->metricsController->setMetricValue(
+                    MetricCollectionTypeEnum::FunctionCollection,
+                    [
+                        'name' =>(string) $node->namespacedName,
+                        'path' => $this->path,
+                    ],
+                    $this->outputCount['functions'],
+                    'outputCount'
                 );
 
-                $functionMetrics->set('outputCount', $this->outputCount['functions']);
-                $this->metrics->set((string) $functionMetrics->getIdentifier(), $functionMetrics);
                 break;
 
             case $node instanceof Node\Stmt\ClassMethod:
@@ -157,14 +177,16 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
             case $node instanceof Node\Stmt\Enum_:
                 $this->inClass = false;
 
-                $classMetrics = ClassMetricsFactory::createFromMetricsByNodeAndPath(
-                    $this->metrics,
-                    $node,
-                    $this->path
+                $this->metricsController->setMetricValue(
+                    MetricCollectionTypeEnum::ClassCollection,
+                    [
+                        'name' =>(string) $node->namespacedName,
+                        'path' => $this->path,
+                    ],
+                    $this->outputCount['classes'],
+                    'outputCount'
                 );
 
-                $classMetrics->set('outputCount', $this->outputCount['classes']);
-                $this->metrics->set((string) $classMetrics->getIdentifier(), $classMetrics);
                 break;
         }
     }
@@ -177,21 +199,19 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
      */
     public function afterTraverse(array $nodes): void
     {
-        $this->metrics->set('classes', $this->classes);
-        $this->metrics->set('interfaces', $this->interfaces);
-        $this->metrics->set('traits', $this->traits);
-        $this->metrics->set('enums', $this->enums);
-        $this->metrics->set('functions', $this->functions);
-        $this->metrics->set('methods', $this->methods);
+        $this->metricsController->setMetricValue(
+            MetricCollectionTypeEnum::ProjectCollection,
+            null,
+            $this->outputCount['overall'],
+            'overallOutputStatements'
+        );
 
-        $this->projectMetrics->set('OverallOutputStatements', $this->outputCount['overall']);
-
-        $this->metrics->set('project', $this->projectMetrics);
-
-        $fileId = (string) FileIdentifier::ofPath($this->path);
-        $fileMetrics = $this->metrics->get($fileId);
-        $fileMetrics->set('outputCount', $this->outputCount['file']);
-        $this->metrics->set($fileId, $fileMetrics);
+        $this->metricsController->setMetricValue(
+            MetricCollectionTypeEnum::FileCollection,
+            ['path' => $this->path],
+            $this->outputCount['file'],
+            'outputCount'
+        );
     }
 
     /**
@@ -220,14 +240,14 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
      * Set parameters on functions and class methods
      *
      * @param Node\Stmt\Function_|Node\Stmt\ClassMethod $node
-     * @param FunctionMetrics $metrics
+     * @param array $identifierData
      * @return void
      */
     private function handleParameters(
         Node\Stmt\Function_|Node\Stmt\ClassMethod $node,
-        FunctionMetrics $metrics): void
+        array $identifierData): void
     {
-        $parameters = [];
+        $parameterCollection = new ParameterCollection();
 
         foreach ($node->getParams() as $parameter) {
             $type = null;
@@ -246,115 +266,216 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
                 }
             }
 
-            $parameters[] = [
+            $parameterCollection->set([
                 'name' => '$' . (string) $parameter->var->name,
                 'type' => $type,
-            ];
+            ]);
         }
 
-        $metrics->set('parameters', $parameters);
+        $metricsType = $node instanceof Node\Stmt\ClassMethod ? MetricCollectionTypeEnum::ClassCollection : MetricCollectionTypeEnum::FunctionCollection;
+
+        $this->metricsController->setCollection(
+            $metricsType,
+            $identifierData,
+            $parameterCollection,
+            'parameters'
+        );
     }
 
     /**
      * @param Node\Stmt\Function_ $node
-     * @return FunctionMetrics
      */
-    private function setFunctionMetrics(Node\Stmt\Function_ $node): FunctionMetrics
+    private function setFunctionMetrics(Node\Stmt\Function_ $node): void
     {
-        $metrics = new FunctionMetrics($this->path, (string) $node->namespacedName);
-        $metrics->set('singleName', (string) $node->name);
         $namespace = str_replace((string) $node->name, '', (string) $node->namespacedName);
         $namespace = rtrim($namespace, '\\');
-        $metrics->set('namespace', $namespace);
 
-        $this->handleParameters($node, $metrics);
+        $identifierData = [
+            'path' => $this->path,
+            'name' => (string) $node->namespacedName,
+        ];
 
-        $fnCount = $this->projectMetrics->get('OverallFunctions') + 1;
-        $this->projectMetrics->set('OverallFunctions', $fnCount);
+        $this->metricsController->createMetricCollection(
+            MetricCollectionTypeEnum::FunctionCollection,
+            $identifierData
+        );
 
-        $this->functions[(string) $metrics->getIdentifier()] = $metrics->getName();
+        $metricData = [
+            'singleName' => (string) $node->name,
+            'namespace' => $namespace,
+        ];
+
+        $this->metricsController->setMetricValues(
+            MetricCollectionTypeEnum::FunctionCollection,
+            $identifierData,
+            $metricData
+        );
+
+
+        $this->handleParameters($node, $identifierData);
+
+        $this->metricsController->changeMetricValue(
+            MetricCollectionTypeEnum::ProjectCollection,
+            null,
+            'overallFunctionCount',
+            'PhpCodeArch\incrementOr1IfNull'
+        );
+
         $this->inFunction = true;
         $this->outputCount['functions'] = 0;
-
-        return $metrics;
     }
 
     /**
      * @param Node\Stmt\Trait_|Node\Stmt\Enum_|Node\Stmt\Interface_|Node\Stmt\Class_ $node
-     * @return ClassMetrics
+     * @return void
      */
     private function setClassMetrics(
-        Node\Stmt\Trait_|Node\Stmt\Enum_|Node\Stmt\Interface_|Node\Stmt\Class_ $node): ClassMetrics
+        Node\Stmt\Trait_|Node\Stmt\Enum_|Node\Stmt\Interface_|Node\Stmt\Class_ $node): void
     {
         $this->inClass = true;
         $this->outputCount['classes'] = 0;
 
         $className = (string) ClassName::ofNode($node);
-        $metrics = new ClassMetrics($this->path, $className);
-        $metrics->set('interface', false);
-        $metrics->set('trait', false);
-        $metrics->set('abstract', false);
-        $metrics->set('enum', false);
-        $metrics->set('final', false);
-        $metrics->set('realClass', false);
-        $metrics->set('anonymous', str_starts_with($className, 'anonymous@'));
-
-        $metrics->set('singleName', (string) $node->name);
         $namespace = str_replace((string) $node->name, '', (string) $node->namespacedName);
         $namespace = rtrim($namespace, '\\');
-        $metrics->set('namespace', $namespace);
+
+        $identifierData = [
+            'path' => $this->path,
+            'name' => $className,
+        ];
+
+        $classMetricCollection = $this->metricsController->createMetricCollection(
+            MetricCollectionTypeEnum::ClassCollection,
+            $identifierData
+        );
+
+        $className = $classMetricCollection->getName();
+        $classId = (string) $classMetricCollection->getIdentifier();
+
+        $classMetricsData = [
+            'interface' => false,
+            'trait' => false,
+            'abstract' => false,
+            'enum' => false,
+            'final' => false,
+            'realClass' => false,
+            'anonymous' => str_starts_with($className, 'anonymous@'),
+            'singleName' => (string) $node->name,
+            'namespace' => $namespace,
+        ];
 
         if (method_exists($node, 'isFinal') && $node->isFinal()) {
-            $metrics->set('final', true);
+            $classMetricsData['final'] = true;
         }
 
         if (method_exists($node, 'isAbstract') && $node->isAbstract()) {
-            $abstractClassCount = $this->projectMetrics->get('OverallAbstractClasses') + 1;
-            $this->projectMetrics->set('OverallAbstractClasses', $abstractClassCount);
+            $this->metricsController->changeMetricValue(
+                MetricCollectionTypeEnum::ProjectCollection,
+                null,
+                'overallAbstractClasses',
+                'PhpCodeArch\incrementOr1IfNull'
+            );
 
-            $metrics->set('abstract', true);
+            $classMetricsData['abstract'] = true;
         }
 
         switch (true) {
             case $node instanceof Node\Stmt\Class_:
-                $classCount = $this->projectMetrics->get('OverallClasses') + 1;
-                $this->projectMetrics->set('OverallClasses', $classCount);
+                $this->metricsController->changeMetricValue(
+                    MetricCollectionTypeEnum::ProjectCollection,
+                    null,
+                    'overallClasses',
+                    function($value) {
+                        if (! $value) {
+                            return 1;
+                        }
 
-                $this->classes[(string) $metrics->getIdentifier()] = $metrics->getName();
-                $metrics->set('realClass', true);
+                        return $value + 1;
+                    }
+                );
+
+                $this->metricsController->setCollectionData(
+                    MetricCollectionTypeEnum::ProjectCollection,
+                    null,
+                    'classes',
+                    $classId,
+                    $className
+                );
+
+                $classMetricsData['realClass'] = true;
                 break;
 
             case $node instanceof Node\Stmt\Enum_:
-                $metrics->set('enum', true);
-                $this->enums[(string) $metrics->getIdentifier()] = $metrics->getName();
+                $this->metricsController->setCollectionData(
+                    MetricCollectionTypeEnum::ProjectCollection,
+                    null,
+                    'enums',
+                    $classId,
+                    $className
+                );
+
+                $classMetricsData['enum'] = true;
                 break;
 
             case $node instanceof Node\Stmt\Interface_:
-                $interfaceCount = $this->projectMetrics->get('OverallInterfaces') + 1;
-                $this->projectMetrics->set('OverallInterfaces', $interfaceCount);
+                $this->metricsController->changeMetricValue(
+                    MetricCollectionTypeEnum::ProjectCollection,
+                    null,
+                    'overallInterfaces',
+                    'PhpCodeArch\incrementOr1IfNull'
+                );
 
-                $metrics->set('interface', true);
-                $metrics->set('abstract', true);
+                $this->metricsController->setCollectionData(
+                    MetricCollectionTypeEnum::ProjectCollection,
+                    null,
+                    'interfaces',
+                    $classId,
+                    $className
+                );
 
-                $this->interfaces[(string) $metrics->getIdentifier()] = $metrics->getName();
+                $classMetricsData['interface'] = true;
+                $classMetricsData['abstract'] = true;
                 break;
 
             case $node instanceof Node\Stmt\Trait_:
-                $metrics->set('trait', true);
+                $this->metricsController->setCollectionData(
+                    MetricCollectionTypeEnum::ProjectCollection,
+                    null,
+                    'traits',
+                    $classId,
+                    $className
+                );
 
-                $this->traits[(string) $metrics->getIdentifier()] = $metrics->getName();
+                $classMetricsData['trait'] = true;
                 break;
         }
 
-        $methodData = [
-            'classMethods' => [],
+        $this->metricsController->setMetricValues(
+            MetricCollectionTypeEnum::ClassCollection,
+            $identifierData,
+            $classMetricsData
+        );
+
+        $this->handleClassMethods($node, $identifierData);
+    }
+
+    private function handleClassMethods(
+        Node\Stmt\Class_|Node\Stmt\Trait_|Node\Stmt\Enum_|Node\Stmt\Interface_ $node,
+        array $classIdentifierData): void
+    {
+
+        $this->metricsController->setCollection(
+            MetricCollectionTypeEnum::ClassCollection,
+            $classIdentifierData,
+            new MethodNameCollection(),
+            'methods'
+        );
+
+        $classMetricData = [
+            'methodCount' => 0,
             'privateCount' => 0,
             'publicCount' => 0,
             'staticCount' => 0,
-            'overAllMethodsCount' => $this->projectMetrics->get('OverallMethods'),
-            'overAllPublicMethodsCount' => $this->projectMetrics->get('OverallPublicMethods'),
-            'overAllPrivateMethodsCount' => $this->projectMetrics->get('OverallPrivateMethods'),
-            'overAllStaticMethodsCount' => $this->projectMetrics->get('OverallStaticMethods'),
         ];
 
         foreach ($node->stmts as $stmt) {
@@ -362,37 +483,101 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
                 continue;
             }
 
-            $methodData = $this->handleClassMethod($stmt, $methodData, $metrics);
+            ++ $classMetricData['methodCount'];
+
+            $data = $this->handleClassMethod($stmt, $classIdentifierData);
+
+            $classMetricData['privateCount'] += intval($data['private']);
+            $classMetricData['publicCount'] += intval($data['public']);
+            $classMetricData['staticCount'] += intval($data['static']);
         }
 
-        $methodData['overAllMethodsCount'] += count($methodData['classMethods']);
+        $projectMetrics = [
+            'overAllMethodsCount' => 'methodCount',
+            'overAllPublicMethodsCount' => 'publicCount',
+            'overAllPrivateMethodsCount' => 'privateCount',
+            'overAllStaticMethodsCount' => 'staticCount',
+        ];
 
-        $this->projectMetrics->set('OverallMethods', $methodData['overAllMethodsCount']);
-        $this->projectMetrics->set('OverallPublicMethods', $methodData['overAllPublicMethodsCount']);
-        $this->projectMetrics->set('OverallPrivateMethods', $methodData['overAllPrivateMethodsCount']);
-        $this->projectMetrics->set('OverallStaticMethods', $methodData['overAllStaticMethodsCount']);
+        foreach ($projectMetrics as $projectMetric => $classMetricKey) {
+            $incrementBy = $classMetricData[$classMetricKey];
 
-        $metrics->set('methods', $methodData['classMethods']);
-        $metrics->set('methodCount', count($methodData['classMethods']));
-        $metrics->set('privateMethods', $methodData['privateCount']);
-        $metrics->set('publicMethods', $methodData['publicCount']);
-        $metrics->set('staticMethods', $methodData['staticCount']);
+            $this->metricsController->changeMetricValue(
+                MetricCollectionTypeEnum::ProjectCollection,
+                null,
+                $projectMetric,
+                function($value) use ($incrementBy) {
+                    $value = $value ?? 0;
+                    return $value + $incrementBy;
+                }
+            );
+        }
 
-        return $metrics;
+        $this->metricsController->setMetricValues(
+            MetricCollectionTypeEnum::ClassCollection,
+            $classIdentifierData,
+            $classMetricData
+        );
+    }
+
+    private function handleClassMethod(Node\Stmt\ClassMethod $node, array $classIdentifierData): array
+    {
+        $methodIdentifierData = [
+            'path' => $classIdentifierData['name'],
+            'name' => (string)$node->name,
+        ];
+
+        $methodMetricCollection = $this->metricsController->createMetricCollection(
+            MetricCollectionTypeEnum::MethodCollection,
+            $methodIdentifierData
+        );
+
+        $this->metricsController->setCollectionData(
+            MetricCollectionTypeEnum::ProjectCollection,
+            null,
+            'methods',
+            (string) $methodMetricCollection->getIdentifier(),
+            $methodMetricCollection->getName()
+        );
+
+        $this->metricsController->setCollectionData(
+            MetricCollectionTypeEnum::ClassCollection,
+            $classIdentifierData,
+            'methods',
+            (string) $methodMetricCollection->getIdentifier(),
+            $methodMetricCollection->getName()
+        );
+
+        $this->handleParameters($node, $methodIdentifierData);
+
+        $methodData = [
+            'protected' => $node->isProtected(),
+            'public' => $node->isPublic(),
+            'private' => $node->isPrivate() || $node->isProtected(),
+            'static' => $node->isStatic(),
+        ];
+
+        $this->metricsController->setMetricValues(
+            MetricCollectionTypeEnum::MethodCollection,
+            $methodIdentifierData,
+            $methodData
+        );
+
+        return $methodData;
     }
 
     /**
      * @param Node\Stmt\ClassMethod $stmt
      * @param array $methodData
-     * @param ClassMetrics $metrics
+     * @param ClassMetricsCollection $metrics
      * @return array
      */
-    private function handleClassMethod(
-        Node\Stmt\ClassMethod $stmt,
-        array $methodData,
-        ClassMetrics $metrics): array
+    private function handleClassMethod2(
+        Node\Stmt\ClassMethod  $stmt,
+        array                  $methodData,
+        ClassMetricsCollection $metrics): array
     {
-        $method = new FunctionMetrics(path: (string) $metrics->getIdentifier(), name: (string) $stmt->name);
+        $method = new FunctionMetricsCollection(path: (string) $metrics->getIdentifier(), name: (string) $stmt->name);
         $method->set('name', $method->getName());
 
         $this->handleParameters($stmt, $method);

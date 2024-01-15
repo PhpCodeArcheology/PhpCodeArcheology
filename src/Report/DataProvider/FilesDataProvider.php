@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Report\DataProvider;
 
-use PhpCodeArch\Metrics\Manager\MetricType;
-
 class FilesDataProvider implements ReportDataProviderInterface
 {
     use ReportDataProviderTrait;
@@ -16,8 +14,8 @@ class FilesDataProvider implements ReportDataProviderInterface
     {
         $files = $this->metrics->get('project')->get('files');
 
-        $listMetrics = $this->metricsManager->getListMetricsByCategoryName('fileMetrics');
-        $detailMetrics = $this->metricsManager->getDetailMetricsByCategoryName('fileMetrics');
+        $listMetrics = $this->metricsManager->getListMetricsByCollectionType('fileMetrics');
+        $detailMetrics = $this->metricsManager->getDetailMetricsByCollectionType('fileMetrics');
 
         $files = $this->setDataFromMetricTypesAndArrayToArrayKey($files, $detailMetrics, 'detailData');
         $files = $this->setDataFromMetricTypesAndArrayToArrayKey($files, $listMetrics, 'listData');

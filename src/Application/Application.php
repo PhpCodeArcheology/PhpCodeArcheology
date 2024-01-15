@@ -7,39 +7,17 @@ namespace PhpCodeArch\Application;
 use PhpCodeArch\Application\ConfigFile\ConfigFileFinder;
 use PhpCodeArch\Application\ConfigFile\Exceptions\ConfigFileExtensionNotSupportedException;
 use PhpCodeArch\Application\ConfigFile\Exceptions\MultipleConfigFilesException;
-use PhpCodeArch\Calculators\CalculatorService;
-use PhpCodeArch\Calculators\CouplingCalculator;
-use PhpCodeArch\Calculators\FileCalculator;
-use PhpCodeArch\Calculators\Helpers\PackageInstabilityAbstractnessCalculator;
-use PhpCodeArch\Calculators\ProjectCalculator;
-use PhpCodeArch\Calculators\VariablesCalculator;
-use PhpCodeArch\Metrics\Manager\MetricCategory;
-use PhpCodeArch\Metrics\Manager\MetricsManager;
-use PhpCodeArch\Metrics\Manager\MetricType;
-use PhpCodeArch\Metrics\Metrics;
-use PhpCodeArch\Metrics\ProjectMetrics\ProjectMetrics;
-use PhpCodeArch\Predictions\GodClassPrediction;
-use PhpCodeArch\Predictions\PredictionInterface;
-use PhpCodeArch\Predictions\PredictionService;
-use PhpCodeArch\Predictions\TooComplexPrediction;
-use PhpCodeArch\Predictions\TooDependentPrediction;
-use PhpCodeArch\Predictions\TooLongPrediction;
-use PhpCodeArch\Predictions\TooMuchHtmlPrediction;
-use PhpCodeArch\Report\Data\DataProviderFactory;
-use PhpCodeArch\Report\Helper\MetricsSplitter;
-use PhpCodeArch\Report\ReportFactory;
+use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\Model\MetricsContainer;
 use PhpCodeArch\Report\ReportTypeNotSupported;
 use PhpParser\NodeTraverser;
 use PhpParser\ParserFactory;
-use Twig\Environment;
-use Twig\Extension\DebugExtension;
-use Twig\Loader\FilesystemLoader;
 
 final readonly class Application
 {
     const VERSION = '0.0.1';
 
-    private MetricsManager $metricsManager;
+    private MetricsController $metricsController;
 
     /**
      * @throws ConfigFileExtensionNotSupportedException
@@ -48,8 +26,93 @@ final readonly class Application
      */
     public function run(array $argv): void
     {
-        $this->metricsManager = new MetricsManager();
+        $config = $this->createConfig($argv);
+        $fileList = $this->createFileList($config);
 
+        $metricsCollection = new MetricsContainer();
+        $this->metricsController = new MetricsController($metricsCollection);
+        $this->metricsController->registerMetricTypes();
+        $this->metricsController->createProjectMetricsCollection($config->get('files'));
+
+        $output = new CliOutput();
+
+        $this->createAndRunAnalyzer($config, $fileList, $output);
+        /*
+
+
+
+
+        $packageIACalculator = new PackageInstabilityAbstractnessCalculator($metricsCollection);
+
+        $calculatorService = new CalculatorService([
+            new FileCalculator($metricsCollection, []),
+            new VariablesCalculator($metricsCollection, [
+                'superglobalsUsed',
+                'distinctSuperglobalsUsed',
+                'variablesUsed',
+                'distinctVariablesUsed',
+                'constantsUsed',
+                'distinctConstantsUsed',
+                'superglobalMetric',
+            ]),
+            new CouplingCalculator($metricsCollection, [
+                'uses',
+                'usesCount',
+                'usedBy',
+                'usedByCount',
+                'usesInProject',
+                'usesInProjectCount',
+                'usesForInstabilityCount',
+            ], $packageIACalculator),
+            new ProjectCalculator($metricsCollection, []),
+        ], $metricsCollection, $this->metricsManager, $output);
+
+        $calculatorService->run();
+
+        $predictions = new PredictionService([
+            new TooLongPrediction(),
+            new GodClassPrediction(),
+            new TooComplexPrediction(),
+            new TooDependentPrediction(),
+            new TooMuchHtmlPrediction(),
+        ], $metricsCollection, $output);
+        $predictions->predict();
+
+        $problems = $predictions->getProblemCount();
+        $projectMetrics->set('OverallInformationCount', $problems[PredictionInterface::INFO]);
+        $projectMetrics->set('OverallWarningCount', $problems[PredictionInterface::WARNING]);
+        $projectMetrics->set('OverallErrorCount', $problems[PredictionInterface::ERROR]);
+        $metricsCollection->set('project', $projectMetrics);
+
+        $splitter = new MetricsSplitter($metricsCollection, $output);
+        $splitter->split();
+
+        $reportData = new DataProviderFactory($metricsCollection, $this->metricsManager);
+
+        $twigLoader = new FilesystemLoader();
+        $twig = new Environment($twigLoader, [
+            'debug' => true,
+        ]);
+        $twig->addExtension(new DebugExtension());
+
+        $report = ReportFactory::create(
+            $config->get('reportType'),
+            $config,
+            $reportData,
+            $twigLoader,
+            $twig,
+            $output
+        );
+        $report->generate();
+        */
+    }
+
+    /**
+     * @throws MultipleConfigFilesException
+     * @throws ConfigFileExtensionNotSupportedException
+     */
+    private function createConfig(array $argv): Config
+    {
         $config = (new ArgumentParser())->parse($argv);
         $config->set('runningDir', getcwd());
 
@@ -71,111 +134,26 @@ final readonly class Application
             exit;
         }
 
-        $this->loadMetricTypes();
+        return $config;
+    }
 
+    private function createFileList(Config $config): FileList
+    {
         $fileList = new FileList($config);
         $fileList->fetch();
 
-        $metrics = new Metrics();
+        return $fileList;
+    }
 
-        $projectMetrics = new ProjectMetrics(implode(',', $config->get('files')));
-        $metrics->set('project', $projectMetrics);
-
-        $output = new CliOutput();
-
+    private function createAndRunAnalyzer(Config $config, FileList $fileList, CliOutput $output): void
+    {
         $analyzer = new Analyzer(
             $config,
             (new ParserFactory())->createForNewestSupportedVersion(),
             new NodeTraverser(),
-            $metrics,
-            $this->metricsManager,
+            $this->metricsController,
             $output);
 
         $analyzer->analyze($fileList);
-
-        $packageIACalculator = new PackageInstabilityAbstractnessCalculator($metrics);
-
-        $calculatorService = new CalculatorService([
-            new FileCalculator($metrics, []),
-            new VariablesCalculator($metrics, [
-                'superglobalsUsed',
-                'distinctSuperglobalsUsed',
-                'variablesUsed',
-                'distinctVariablesUsed',
-                'constantsUsed',
-                'distinctConstantsUsed',
-                'superglobalMetric',
-            ]),
-            new CouplingCalculator($metrics, [
-                'uses',
-                'usesCount',
-                'usedBy',
-                'usedByCount',
-                'usesInProject',
-                'usesInProjectCount',
-                'usesForInstabilityCount',
-            ], $packageIACalculator),
-            new ProjectCalculator($metrics, []),
-        ], $metrics, $this->metricsManager, $output);
-
-        $calculatorService->run();
-
-        $predictions = new PredictionService([
-            new TooLongPrediction(),
-            new GodClassPrediction(),
-            new TooComplexPrediction(),
-            new TooDependentPrediction(),
-            new TooMuchHtmlPrediction(),
-        ], $metrics, $output);
-        $predictions->predict();
-
-        $problems = $predictions->getProblemCount();
-        $projectMetrics->set('OverallInformationCount', $problems[PredictionInterface::INFO]);
-        $projectMetrics->set('OverallWarningCount', $problems[PredictionInterface::WARNING]);
-        $projectMetrics->set('OverallErrorCount', $problems[PredictionInterface::ERROR]);
-        $metrics->set('project', $projectMetrics);
-
-        $splitter = new MetricsSplitter($metrics, $output);
-        $splitter->split();
-
-        $reportData = new DataProviderFactory($metrics, $this->metricsManager);
-
-        $twigLoader = new FilesystemLoader();
-        $twig = new Environment($twigLoader, [
-            'debug' => true,
-        ]);
-        $twig->addExtension(new DebugExtension());
-
-        $report = ReportFactory::create(
-            $config->get('reportType'),
-            $config,
-            $reportData,
-            $twigLoader,
-            $twig,
-            $output
-        );
-        $report->generate();
-    }
-
-    private function loadMetricTypes(): void
-    {
-        $metricTypes = require __DIR__ . '/../../data/metric-types.php';
-
-        $categoryMap = [];
-
-        foreach ($metricTypes as $metricTypeArray) {
-            $categories = array_pop($metricTypeArray);
-
-            $metricType = MetricType::fromArray($metricTypeArray);
-
-            foreach ($categories as $categoryName) {
-                if (! isset($categoryMap[$categoryName])) {
-                    $categoryMap[$categoryName] = MetricCategory::ofName($categoryName);
-                }
-
-                $metricCategory = $categoryMap[$categoryName];
-                $this->metricsManager->addMetricType($metricType, $metricCategory);
-            }
-        }
     }
 }

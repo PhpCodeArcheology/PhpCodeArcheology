@@ -4,25 +4,25 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Predictions;
 
-use PhpCodeArch\Metrics\ClassMetrics\ClassMetrics;
-use PhpCodeArch\Metrics\FileMetrics\FileMetrics;
-use PhpCodeArch\Metrics\FunctionMetrics\FunctionMetrics;
-use PhpCodeArch\Metrics\Metrics;
+use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
+use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
+use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
+use PhpCodeArch\Metrics\Model\MetricsContainer;
 
 class TooMuchHtmlPrediction implements PredictionInterface
 {
 
-    public function predict(Metrics $metrics): int
+    public function predict(MetricsContainer $metrics): int
     {
         $problemCount = 0;
 
         foreach ($metrics->getAll() as $key => $metric) {
             switch (true) {
-                case $metric instanceof FileMetrics:
-                case $metric instanceof ClassMetrics:
-                case $metric instanceof FunctionMetrics:
-                    $maxPercentage = $metric instanceof FileMetrics ? 25 : 10;
-                    $maxOutput = $metric instanceof FileMetrics ? 10 : 4;
+                case $metric instanceof FileMetricsCollection:
+                case $metric instanceof ClassMetricsCollection:
+                case $metric instanceof FunctionMetricsCollection:
+                    $maxPercentage = $metric instanceof FileMetricsCollection ? 25 : 10;
+                    $maxOutput = $metric instanceof FileMetricsCollection ? 10 : 4;
 
                     $htmlPercentage = $metric->get('loc')->getValue() > 0 ? (100 / $metric->get('loc')->getValue()) * $metric->get('htmlLoc')->getValue() : 0;
                     $tooMuchHtml = $htmlPercentage > $maxPercentage;

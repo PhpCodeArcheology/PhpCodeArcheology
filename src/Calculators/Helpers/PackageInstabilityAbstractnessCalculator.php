@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Calculators\Helpers;
 
-use PhpCodeArch\Metrics\ClassMetrics\ClassMetrics;
-use PhpCodeArch\Metrics\Metrics;
+use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
+use PhpCodeArch\Metrics\Model\MetricsContainer;
 
 class PackageInstabilityAbstractnessCalculator
 {
@@ -20,7 +20,7 @@ class PackageInstabilityAbstractnessCalculator
     private array $concreteClasses = [];
     private string $currentPackage;
 
-    public function __construct(private Metrics $metrics)
+    public function __construct(private MetricsContainer $metrics)
     {}
 
     public function beforeTraverse(): void
@@ -72,7 +72,7 @@ class PackageInstabilityAbstractnessCalculator
         }
     }
 
-    public function handlePackage(ClassMetrics $metric): array
+    public function handlePackage(ClassMetricsCollection $metric): array
     {
         $package = $metric->get('package');
         $this->currentPackage = $package;
@@ -104,7 +104,7 @@ class PackageInstabilityAbstractnessCalculator
         ];
     }
 
-    public function handleDependency(string $dependency, ClassMetrics $usedByMetric, bool $isTrait): void
+    public function handleDependency(string $dependency, ClassMetricsCollection $usedByMetric, bool $isTrait): void
     {
         if ($this->currentPackage !== $usedByMetric->get('package') && ! $isTrait) {
             if (! in_array($dependency, $this->packagesMap['uses'][$this->currentPackage])) {

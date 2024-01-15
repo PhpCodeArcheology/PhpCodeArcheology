@@ -2,18 +2,18 @@
 
 declare(strict_types=1);
 
-namespace PhpCodeArch\Metrics\FunctionMetrics;
+namespace PhpCodeArch\Metrics\Model\FunctionMetrics;
 
 use PhpCodeArch\Metrics\Identity\FunctionAndClassIdentifier;
-use PhpCodeArch\Metrics\Metrics;
-use PhpCodeArch\Metrics\MetricsInterface;
+use PhpCodeArch\Metrics\Model\MetricsContainer;
+use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
 
 class FunctionMetricsFactory
 {
     public static function createFromMetricsByNameAndPath(
-        Metrics $metrics,
-        mixed $name,
-        mixed $path): FunctionMetrics
+        MetricsContainer $metrics,
+        mixed            $name,
+        mixed            $path): FunctionMetricsCollection
     {
         $functionId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $name, (string) $path);
 
@@ -21,9 +21,9 @@ class FunctionMetricsFactory
     }
 
     public static function createFromMethodsByNameAndClassMetrics(
-        array $methods,
-        mixed $name,
-        MetricsInterface $classMetrics): FunctionMetrics
+        array                      $methods,
+        mixed                      $name,
+        MetricsCollectionInterface $classMetrics): FunctionMetricsCollection
     {
         $methodId = (string) FunctionAndClassIdentifier::ofNameAndPath(
             (string) $name,

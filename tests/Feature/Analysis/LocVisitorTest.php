@@ -6,9 +6,9 @@ namespace Test\Feature\Analysis;
 
 use PhpCodeArch\Analysis\IdentifyVisitor;
 use PhpCodeArch\Analysis\LocVisitor;
-use PhpCodeArch\Metrics\ClassMetrics\ClassMetrics;
-use PhpCodeArch\Metrics\FileMetrics\FileMetrics;
-use PhpCodeArch\Metrics\FunctionMetrics\FunctionMetrics;
+use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
+use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
+use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
 
 require_once __DIR__ . '/test_helpers.php';
 
@@ -38,7 +38,7 @@ it('counts loc, lloc and cloc correctly', function($testFile, $expected) {
 
     foreach ($metrics->getAll() as $metric) {
         switch (true) {
-            case $metric instanceof FileMetrics:
+            case $metric instanceof FileMetricsCollection:
                 $fileData = [
                     'loc' => $metric->get('loc'),
                     'lloc' => $metric->get('lloc'),
@@ -50,7 +50,7 @@ it('counts loc, lloc and cloc correctly', function($testFile, $expected) {
                 expect($fileData)->toBe($expected['file']);
                 break;
 
-            case $metric instanceof FunctionMetrics:
+            case $metric instanceof FunctionMetricsCollection:
                 $fnName = $metric->getName();
 
                 if (! isset($expected['functions'][$fnName])) {
@@ -66,7 +66,7 @@ it('counts loc, lloc and cloc correctly', function($testFile, $expected) {
                 expect($functionData)->toBe($expected['functions'][$fnName]);
                 break;
 
-            case $metric instanceof ClassMetrics:
+            case $metric instanceof ClassMetricsCollection:
                 $className = $metric->getName();
                 $className = str_starts_with($className, 'anonymous') ? 'anonymous' : $className;
 

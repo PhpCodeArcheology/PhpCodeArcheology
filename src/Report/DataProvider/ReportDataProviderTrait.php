@@ -5,16 +5,16 @@ declare(strict_types=1);
 namespace PhpCodeArch\Report\DataProvider;
 
 use PhpCodeArch\Application\Application;
-use PhpCodeArch\Metrics\Manager\MetricsManager;
-use PhpCodeArch\Metrics\Manager\MetricValue;
-use PhpCodeArch\Metrics\Metrics;
+use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\Model\MetricsContainer;
+use PhpCodeArch\Metrics\Model\MetricValue;
 
 trait ReportDataProviderTrait
 {
     private array $templateData = [];
     public function __construct(
-        private readonly Metrics $metrics,
-        private readonly MetricsManager $metricsManager)
+        private readonly MetricsContainer  $metrics,
+        private readonly MetricsController $metricsManager)
     {
         $this->templateData['createDate'] = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
         $this->templateData['version'] = Application::VERSION;

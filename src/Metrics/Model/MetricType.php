@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace PhpCodeArch\Metrics\Manager;
+namespace PhpCodeArch\Metrics\Model;
 
 class MetricType
 {
@@ -12,6 +12,7 @@ class MetricType
     const VALUE_ARRAY = 3;
     const VALUE_PERCENTAGE = 4;
     const VALUE_COUNT = 5;
+    const VALUE_BOOL = 6;
 
     const SHOW_IN_DETAILS = 0;
     const SHOW_IN_LIST = 1;

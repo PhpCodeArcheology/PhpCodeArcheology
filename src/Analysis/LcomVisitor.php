@@ -6,7 +6,7 @@ namespace PhpCodeArch\Analysis;
 
 use PhpCodeArch\Graph\Graph;
 use PhpCodeArch\Graph\Node as GraphNode;
-use PhpCodeArch\Metrics\ClassMetrics\ClassMetricsFactory;
+use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsFactory;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
 use function PhpCodeArch\getNodeName;

@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Analysis;
 
-use PhpCodeArch\Metrics\ClassMetrics\ClassMetrics;
-use PhpCodeArch\Metrics\ClassMetrics\ClassMetricsFactory;
-use PhpCodeArch\Metrics\FunctionMetrics\FunctionMetrics;
-use PhpCodeArch\Metrics\FunctionMetrics\FunctionMetricsFactory;
-use PhpCodeArch\Metrics\Manager\MetricValue;
+use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
+use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsFactory;
+use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
+use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsFactory;
+use PhpCodeArch\Metrics\Model\MetricValue;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
 
@@ -38,12 +38,12 @@ class CyclomaticComplexityVisitor implements NodeVisitor, VisitorInterface
     use VisitorTrait;
 
     /**
-     * @var ClassMetrics[]
+     * @var ClassMetricsCollection[]
      */
     private array $currentClass = [];
 
     /**
-     * @var FunctionMetrics[]
+     * @var FunctionMetricsCollection[]
      */
     private array $currentFunction = [];
 

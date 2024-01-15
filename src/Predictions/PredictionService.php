@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace PhpCodeArch\Predictions;
 
 use PhpCodeArch\Application\CliOutput;
-use PhpCodeArch\Metrics\Metrics;
+use PhpCodeArch\Metrics\Model\MetricsContainer;
 
 class PredictionService
 {
@@ -18,13 +18,13 @@ class PredictionService
         /**
          * @var PredictionInterface[]
          */
-        private readonly array   $predictions,
+        private readonly array            $predictions,
 
         /**
-         * @var Metrics
+         * @var MetricsContainer
          */
-        private readonly Metrics $metrics,
-        private CliOutput $output
+        private readonly MetricsContainer $metrics,
+        private CliOutput                 $output
     )
     {
         $this->problemCount = [

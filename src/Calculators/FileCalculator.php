@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Calculators;
 
-use PhpCodeArch\Metrics\FileMetrics\FileMetrics;
-use PhpCodeArch\Metrics\FileMetrics\FileMetricsEnum;
-use PhpCodeArch\Metrics\MetricsInterface;
+use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
+use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsEnum;
+use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
 
 class FileCalculator implements CalculatorInterface
 {
@@ -14,9 +14,9 @@ class FileCalculator implements CalculatorInterface
 
     private array $files = [];
 
-    public function calculate(MetricsInterface $metrics): void
+    public function calculate(MetricsCollectionInterface $metrics): void
     {
-        if (! $metrics instanceof FileMetrics) {
+        if (! $metrics instanceof FileMetricsCollection) {
             return;
         }
 
@@ -62,7 +62,7 @@ class FileCalculator implements CalculatorInterface
         }
 
         foreach ($this->metrics->getAll() as &$metrics) {
-            if (is_array($metrics) || $metrics instanceof FileMetrics) {
+            if (is_array($metrics) || $metrics instanceof FileMetricsCollection) {
                 continue;
             }
 

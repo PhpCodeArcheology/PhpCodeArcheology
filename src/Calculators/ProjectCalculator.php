@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Calculators;
 
-use PhpCodeArch\Metrics\ClassMetrics\ClassMetrics;
-use PhpCodeArch\Metrics\FileMetrics\FileMetrics;
-use PhpCodeArch\Metrics\FunctionMetrics\FunctionMetrics;
-use PhpCodeArch\Metrics\MetricsInterface;
-use PhpCodeArch\Metrics\ProjectMetrics\ProjectMetrics;
+use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
+use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
+use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
+use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
+use PhpCodeArch\Metrics\Model\ProjectMetrics\ProjectMetricsCollection;
 
 class ProjectCalculator implements CalculatorInterface
 {
     use CalculatorTrait;
 
-    private ProjectMetrics $projectMetrics;
+    private ProjectMetricsCollection $projectMetrics;
 
     private array $data;
     private int $maxCC;
@@ -69,7 +69,7 @@ class ProjectCalculator implements CalculatorInterface
         $this->commentWeightSum = 0;
     }
 
-    public function calculate(MetricsInterface $metrics): void
+    public function calculate(MetricsCollectionInterface $metrics): void
     {
         if ($metrics->get('cc') === null) {
             return;
@@ -84,20 +84,20 @@ class ProjectCalculator implements CalculatorInterface
         $this->commentWeightSum += $metrics->get('commentWeight')->getValue();
 
         switch (true) {
-            case $metrics instanceof FileMetrics:
+            case $metrics instanceof FileMetricsCollection:
                 $this->data['OverallMostComplexFile'][$metrics->getName()] = $cc;
                 $this->maxCCFile = max($this->maxCCFile, $cc);
                 $this->sumCCFile += $cc;
                 $this->miSum += $metrics->get('maintainabilityIndex')->getValue();
                 break;
 
-            case $metrics instanceof FunctionMetrics:
+            case $metrics instanceof FunctionMetricsCollection:
                 $this->data['OverallMostComplexFunction'][$metrics->getName()] = $cc;
                 $this->maxCCFunction = max($this->maxCCFunction, $cc);
                 $this->sumCCFunction += $cc;
                 break;
 
-            case $metrics instanceof ClassMetrics:
+            case $metrics instanceof ClassMetricsCollection:
                 $this->data['OverallMostComplexClass'][$metrics->getName()] = $cc;
                 $this->maxCCClass = max($this->maxCCClass, $cc);
                 $this->sumCCClass += $cc;

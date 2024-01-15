@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace PhpCodeArch\Report\Helper;
 
 use PhpCodeArch\Application\CliOutput;
-use PhpCodeArch\Metrics\ClassMetrics\ClassMetrics;
-use PhpCodeArch\Metrics\FileMetrics\FileMetrics;
-use PhpCodeArch\Metrics\FunctionMetrics\FunctionMetrics;
-use PhpCodeArch\Metrics\Metrics;
+use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
+use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
+use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
+use PhpCodeArch\Metrics\Model\MetricsContainer;
 
 /**
  * MetricsSplitter
@@ -17,7 +17,7 @@ use PhpCodeArch\Metrics\Metrics;
  */
 readonly class MetricsSplitter
 {
-    public function __construct(private Metrics $metrics, private CliOutput $output)
+    public function __construct(private MetricsContainer $metrics, private CliOutput $output)
     {
     }
 
@@ -41,14 +41,14 @@ readonly class MetricsSplitter
             ++ $count;
 
             switch (true) {
-                case $metric instanceof FileMetrics:
+                case $metric instanceof FileMetricsCollection:
                     $data = $metric->getAll();
                     $data['id'] = (string) $metric->getIdentifier();
                     $data['name'] = $metric->getName();
                     $files[$data['id']] = $data;
                     break;
 
-                case $metric instanceof FunctionMetrics:
+                case $metric instanceof FunctionMetricsCollection:
                     $data = $metric->getAll();
                     $data['id'] = (string) $metric->getIdentifier();
                     $data['path'] = $metric->getPath();
@@ -56,7 +56,7 @@ readonly class MetricsSplitter
                     $functions[$data['id']] = $data;
                     break;
 
-                case $metric instanceof ClassMetrics:
+                case $metric instanceof ClassMetricsCollection:
                     $data = $metric->getAll();
                     $data['id'] = (string) $metric->getIdentifier();
                     $data['path'] = $metric->getPath();

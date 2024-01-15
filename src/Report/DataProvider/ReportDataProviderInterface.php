@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Report\DataProvider;
 
-use PhpCodeArch\Metrics\Manager\MetricsManager;
-use PhpCodeArch\Metrics\Metrics;
+use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\Model\MetricsContainer;
 
 interface ReportDataProviderInterface
 {
-    public function __construct(Metrics $metric, MetricsManager $metricsManager);
+    public function __construct(MetricsContainer $metric, MetricsController $metricsManager);
 
     public function getTemplateData(): array;
 

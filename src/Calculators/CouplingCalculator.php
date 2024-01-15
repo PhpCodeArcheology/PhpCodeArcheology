@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace PhpCodeArch\Calculators;
 
 use PhpCodeArch\Calculators\Helpers\PackageInstabilityAbstractnessCalculator;
-use PhpCodeArch\Metrics\ClassMetrics\ClassMetrics;
-use PhpCodeArch\Metrics\FileMetrics\FileMetrics;
-use PhpCodeArch\Metrics\FunctionMetrics\FunctionMetrics;
-use PhpCodeArch\Metrics\Metrics;
-use PhpCodeArch\Metrics\MetricsInterface;
+use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
+use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
+use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
+use PhpCodeArch\Metrics\Model\MetricsContainer;
+use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
 
 class CouplingCalculator implements CalculatorInterface
 {
@@ -34,11 +34,11 @@ class CouplingCalculator implements CalculatorInterface
     private array $concreteClasses = [];
 
     public function __construct(
-        private readonly Metrics $metrics,
+        private readonly MetricsContainer                         $metrics,
         /**
          * @var array $usedMetricTypeKeys
          */
-        private readonly array $usedMetricTypeKeys,
+        private readonly array                                    $usedMetricTypeKeys,
         private readonly PackageInstabilityAbstractnessCalculator $packageCalculator)
     {
     }
@@ -51,12 +51,12 @@ class CouplingCalculator implements CalculatorInterface
         $this->packageCalculator->beforeTraverse();
     }
 
-    public function calculate(MetricsInterface $metrics): void
+    public function calculate(MetricsCollectionInterface $metrics): void
     {
         $key = (string) $metrics->getIdentifier();
 
         switch (true) {
-            case $metrics instanceof FileMetrics:
+            case $metrics instanceof FileMetricsCollection:
                 if (!is_array($metrics->get('dependencies'))) {
                     break;
                 }
@@ -64,11 +64,11 @@ class CouplingCalculator implements CalculatorInterface
                 $metrics = $this->handleFile($metrics);
                 break;
 
-            case $metrics instanceof ClassMetrics:
+            case $metrics instanceof ClassMetricsCollection:
                 $metrics = $this->handeClass($metrics);
                 break;
 
-            case $metrics instanceof FunctionMetrics:
+            case $metrics instanceof FunctionMetricsCollection:
                 if (!is_array($metrics->get('dependencies'))) {
                     break;
                 }
@@ -131,7 +131,7 @@ class CouplingCalculator implements CalculatorInterface
         $this->metrics->set('project', $projectMetrics);
     }
 
-    private function handeClass(ClassMetrics $metric): ClassMetrics
+    private function handeClass(ClassMetricsCollection $metric): ClassMetricsCollection
     {
         $uses = $metric->get('uses')?->getValue() ?? [];
         $usesCount = $metric->get('usesCount')?->getValue()  ?? 0;
@@ -204,17 +204,17 @@ class CouplingCalculator implements CalculatorInterface
         return $metric;
     }
 
-    private function handleFile(FileMetrics $metric): FileMetrics
+    private function handleFile(FileMetricsCollection $metric): FileMetricsCollection
     {
         return $this->handleMetric($metric, 'usedFromOutside', 'usedFromOutsideCount');
     }
 
-    private function handleFunction(FunctionMetrics $metric): FunctionMetrics
+    private function handleFunction(FunctionMetricsCollection $metric): FunctionMetricsCollection
     {
         return $this->handleMetric($metric, 'usedByFunction', 'usedByFunctionCount');
     }
 
-    private function handleMetric(FileMetrics|FunctionMetrics $metric, string $usedByKey, string $usedByCountKey): FileMetrics|FunctionMetrics
+    private function handleMetric(FileMetricsCollection|FunctionMetricsCollection $metric, string $usedByKey, string $usedByCountKey): FileMetricsCollection|FunctionMetricsCollection
     {
         $usedBy = $metric->get($usedByKey) ?? [];
         $usedByCount = $metric->get($usedByCountKey) ?? 0;

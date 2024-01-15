@@ -4,34 +4,24 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Application;
 
-use PhpCodeArch\Analysis\CyclomaticComplexityVisitor;
-use PhpCodeArch\Analysis\DependencyVisitor;
-use PhpCodeArch\Analysis\GlobalsVisitor;
-use PhpCodeArch\Analysis\HalsteadMetricsVisitor;
 use PhpCodeArch\Analysis\IdentifyVisitor;
-use PhpCodeArch\Analysis\LcomVisitor;
 use PhpCodeArch\Analysis\LocVisitor;
-use PhpCodeArch\Analysis\MaintainabilityIndexVisitor;
-use PhpCodeArch\Analysis\PackageVisitor;
-use PhpCodeArch\Analysis\VisitorInterface;
-use PhpCodeArch\Metrics\FileMetrics\FileMetrics;
-use PhpCodeArch\Metrics\Manager\MetricsManager;
-use PhpCodeArch\Metrics\Metrics;
+use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
+use PhpCodeArch\Metrics\Model\Collections\ErrorCollection;
 use PhpParser\Error;
 use PhpParser\NodeTraverser;
-use PhpParser\NodeVisitor;
 use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\Parser;
 
 readonly class Analyzer
 {
     public function __construct(
-        private Config $config,
-        private Parser $parser,
-        private NodeTraverser $traverser,
-        private Metrics $metrics,
-        private MetricsManager $metricsManager,
-        private CliOutput $output,
+        private Config            $config,
+        private Parser            $parser,
+        private NodeTraverser     $traverser,
+        private MetricsController $metricsController,
+        private CliOutput         $output,
     )
     {
     }
@@ -44,15 +34,10 @@ readonly class Analyzer
 
         $visitorObjects = [];
         foreach ($visitorList as $visitor) {
-            /**
-             * @var VisitorInterface|NodeVisitor $visitorClass
-             */
-            $visitorClass = $visitor['class'];
-            $usedMetricTypes = $this->metricsManager->getMetricTypesByKeys($visitor['metricTypeKeys']);
+            $visitorClass = $visitor;
 
             $visitorObject = new $visitorClass(
-                metrics: $this->metrics,
-                usedMetricTypes: $usedMetricTypes,
+                metricsController: $this->metricsController
             );
 
             $this->traverser->addVisitor($visitorObject);
@@ -61,11 +46,18 @@ readonly class Analyzer
 
         $fileCount = count($fileList->getFiles());
 
-        $projectMetrics = $this->metrics->get('project');
-        $projectMetrics->set('OverallFiles', $fileCount);
-        $projectFileErrors = $projectMetrics->get('OverallFileErrors') ?? 0;
+        $this->metricsController->setMetricValue(
+          MetricCollectionTypeEnum::ProjectCollection,
+          null,
+          $fileCount,
+          'overallFiles'
+        );
 
-        $fileCount = number_format($fileCount);
+        $projectFileErrors = $this->metricsController->getMetricsValue(
+            MetricCollectionTypeEnum::ProjectCollection,
+            null,
+            'overallFileErrors'
+        )?->getValue() ?? 0;
 
         foreach ($fileList->getFiles() as $count => $file) {
             $this->output->cls();
@@ -85,24 +77,30 @@ readonly class Analyzer
 
             $phpCode = file_get_contents($file);
             $encoding = mb_detect_encoding($phpCode);
-
             if ($encoding !== 'UFT-8') {
                 $phpCode = mb_convert_encoding($phpCode, 'UTF-8');
             }
 
-            $fileMetrics = new FileMetrics($file);
-            $fileMetrics->set('originalEncoding', $encoding);
-            $fileMetrics->set('errors', []);
-            $this->metrics->push($fileMetrics);
+            $fileErrorCollection = new ErrorCollection();
+
+            $this->metricsController->createMetricCollection(
+                MetricCollectionTypeEnum::FileCollection,
+                ['path' => $file]
+            );
+
+            $this->metricsController->setCollection(
+                MetricCollectionTypeEnum::FileCollection,
+                ['path' => $file],
+                $fileErrorCollection,
+                'errors'
+            );
 
             $ast = null;
 
             try {
                 $ast = $this->parser->parse($phpCode);
             } catch (Error $e) {
-                $fileErrors = $fileMetrics->get('errors') ?? [];
-                $fileErrors[] = $e->getMessage();
-                $fileMetrics->set('errors', $fileErrors);
+                $fileErrorCollection->set($e->getMessage());
                 ++ $projectFileErrors;
             }
 
@@ -113,10 +111,16 @@ readonly class Analyzer
             $this->traverser->traverse($ast);
         }
 
+        //var_dump($this->metricsController);
+
         $this->output->outNl();
 
-        $projectMetrics->set('OverallFileErrors', $projectFileErrors);
-        $this->metrics->set('project', $projectMetrics);
+        $this->metricsController->setMetricValue(
+            MetricCollectionTypeEnum::ProjectCollection,
+            null,
+            $projectFileErrors,
+            'overallFileErrors'
+        );
     }
 
     /**
@@ -125,6 +129,9 @@ readonly class Analyzer
     private function getVisitorClassList(): array
     {
         return [
+            IdentifyVisitor::class,
+            LocVisitor::class,
+            /*
             [
                 'class' => IdentifyVisitor::class,
                 'metricTypeKeys' => [],
@@ -191,6 +198,7 @@ readonly class Analyzer
                 'class' => PackageVisitor::class,
                 'metricTypeKeys' => [],
             ],
+            */
         ];
     }
 }

@@ -2,17 +2,16 @@
 
 declare(strict_types=1);
 
-namespace PhpCodeArch\Metrics\FileMetrics;
-
+namespace PhpCodeArch\Metrics\Model\FileMetrics;
 
 use PhpCodeArch\Metrics\Identity\FileIdentifier;
 use PhpCodeArch\Metrics\Identity\IdentifierInterface;
-use PhpCodeArch\Metrics\MetricsInterface;
-use PhpCodeArch\Metrics\MetricsTrait;
+use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
+use PhpCodeArch\Metrics\Model\MetricsCollectionTrait;
 
-class FileMetrics implements MetricsInterface
+class FileMetricsCollection implements MetricsCollectionInterface
 {
-    use MetricsTrait;
+    use MetricsCollectionTrait;
 
     private IdentifierInterface $identifier;
 

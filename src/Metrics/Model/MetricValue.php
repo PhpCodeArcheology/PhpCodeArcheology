@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace PhpCodeArch\Metrics\Manager;
+namespace PhpCodeArch\Metrics\Model;
 
 readonly class MetricValue
 {

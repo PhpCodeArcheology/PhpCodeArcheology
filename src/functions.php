@@ -5,13 +5,11 @@ declare(strict_types=1);
 namespace PhpCodeArch;
 
 use PhpParser\Node\Expr\BinaryOp\Concat;
-use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\New_;
 use PhpParser\Node\Expr\StaticCall;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Name;
 use PhpParser\Node\Name\FullyQualified;
-use PhpParser\Node\Stmt\Class_;
 use PhpParser\PrettyPrinter\Standard;
 
 function getNodeName(mixed $node): ?string
@@ -59,4 +57,13 @@ function getNodeName(mixed $node): ?string
     }
 
     return null;
+}
+
+function incrementOr1IfNull(mixed $value): mixed
+{
+    if (! $value) {
+        return 1;
+    }
+
+    return $value + 1;
 }

@@ -6,9 +6,9 @@ namespace Test\Feature\Analysis;
 
 use PhpCodeArch\Analysis\GlobalsVisitor;
 use PhpCodeArch\Analysis\IdentifyVisitor;
-use PhpCodeArch\Metrics\ClassMetrics\ClassMetrics;
-use PhpCodeArch\Metrics\FileMetrics\FileMetrics;
-use PhpCodeArch\Metrics\FunctionMetrics\FunctionMetrics;
+use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
+use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
+use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
 
 require_once __DIR__ . '/test_helpers.php';
 
@@ -27,7 +27,7 @@ it('counts globals correctly', function($testFile, $expected) {
 
     foreach ($metrics->getAll() as $metrics) {
         switch (true) {
-            case $metrics instanceof FileMetrics:
+            case $metrics instanceof FileMetricsCollection:
                 $superglobals = $metrics->get('superglobals');
                 $superglobalsSum = array_sum($superglobals);
 
@@ -35,7 +35,7 @@ it('counts globals correctly', function($testFile, $expected) {
                     ->and($superglobalsSum)->toBe($expected['file']['superglobalsSum']);
                 break;
 
-            case $metrics instanceof FunctionMetrics:
+            case $metrics instanceof FunctionMetricsCollection:
                 $superglobals = $metrics->get('superglobals');
                 $superglobalsSum = array_sum($superglobals);
 
@@ -49,7 +49,7 @@ it('counts globals correctly', function($testFile, $expected) {
 
                 break;
 
-            case $metrics instanceof ClassMetrics:
+            case $metrics instanceof ClassMetricsCollection:
                 $superglobals = $metrics->get('superglobals');
                 $superglobalsSum = array_sum($superglobals);
 

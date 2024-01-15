@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace PhpCodeArch\Metrics\PackageMetrics;
+namespace PhpCodeArch\Metrics\Model\PackageMetrics;
 
 use PhpCodeArch\Metrics\Identity\IdentifierInterface;
 use PhpCodeArch\Metrics\Identity\PackageIdentifier;
-use PhpCodeArch\Metrics\MetricsInterface;
-use PhpCodeArch\Metrics\MetricsTrait;
+use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
+use PhpCodeArch\Metrics\Model\MetricsCollectionTrait;
 
-class PackageMetrics implements MetricsInterface
+class PackageMetricsCollection implements MetricsCollectionInterface
 {
-    use MetricsTrait;
+    use MetricsCollectionTrait;
 
     private PackageIdentifier $identifier;
 

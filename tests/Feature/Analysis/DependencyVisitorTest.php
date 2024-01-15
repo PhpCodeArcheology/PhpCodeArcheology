@@ -6,9 +6,9 @@ namespace Test\Feature\Analysis;
 
 use PhpCodeArch\Analysis\DependencyVisitor;
 use PhpCodeArch\Analysis\IdentifyVisitor;
-use PhpCodeArch\Metrics\ClassMetrics\ClassMetrics;
-use PhpCodeArch\Metrics\FileMetrics\FileMetrics;
-use PhpCodeArch\Metrics\FunctionMetrics\FunctionMetrics;
+use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
+use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
+use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
 
 require_once __DIR__ . '/test_helpers.php';
 
@@ -27,14 +27,14 @@ it('detects the dependencies correctly', function($testFile, $expects) {
 
     foreach ($metrics->getAll() as $metrics) {
         switch (true) {
-            case $metrics instanceof FileMetrics:
+            case $metrics instanceof FileMetricsCollection:
                 $dependencies = $metrics->get('dependencies');
 
                 expect(count($dependencies))->toBe($expects['file']['dependencyCount'])
                     ->and($dependencies)->toBe($expects['file']['dependencies']);
                 break;
 
-            case $metrics instanceof FunctionMetrics:
+            case $metrics instanceof FunctionMetricsCollection:
                 $dependencies = $metrics->get('dependencies');
                 $fnName = $metrics->getName();
 
@@ -47,7 +47,7 @@ it('detects the dependencies correctly', function($testFile, $expects) {
                 expect(count($dependencies))->toBe($fnExpects['dependencyCount']);
                 break;
 
-            case $metrics instanceof ClassMetrics:
+            case $metrics instanceof ClassMetricsCollection:
                 $dependencies = $metrics->get('dependencies');
                 $className = $metrics->getName();
 

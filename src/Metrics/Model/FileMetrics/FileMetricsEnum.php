@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace PhpCodeArch\Metrics\FileMetrics;
+namespace PhpCodeArch\Metrics\Model\FileMetrics;
 
 enum FileMetricsEnum: string
 {

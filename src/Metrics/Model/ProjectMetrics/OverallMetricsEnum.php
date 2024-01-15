@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace PhpCodeArch\Metrics\ProjectMetrics;
+namespace PhpCodeArch\Metrics\Model\ProjectMetrics;
 
 enum OverallMetricsEnum: string{
     case OverallFiles = 'Files';

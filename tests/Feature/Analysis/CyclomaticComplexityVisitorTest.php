@@ -6,9 +6,9 @@ namespace Test\Feature\Analysis;
 
 use PhpCodeArch\Analysis\CyclomaticComplexityVisitor;
 use PhpCodeArch\Analysis\IdentifyVisitor;
-use PhpCodeArch\Metrics\ClassMetrics\ClassMetrics;
-use PhpCodeArch\Metrics\FileMetrics\FileMetrics;
-use PhpCodeArch\Metrics\FunctionMetrics\FunctionMetrics;
+use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
+use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
+use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
 
 require_once __DIR__ . '/test_helpers.php';
 
@@ -27,12 +27,12 @@ it('calculates cyclomatic complexity correctly', function($testFile, $expected) 
 
     foreach ($metrics->getAll() as $metrics) {
         switch (true) {
-            case $metrics instanceof FileMetrics:
+            case $metrics instanceof FileMetricsCollection:
                 $cc = $metrics->get('cc');
                 expect($cc)->toBe($expected['file']['cc']);
                 break;
 
-            case $metrics instanceof FunctionMetrics:
+            case $metrics instanceof FunctionMetricsCollection:
                 $cc = $metrics->get('cc');
                 $functionName = $metrics->getName();
 
@@ -45,7 +45,7 @@ it('calculates cyclomatic complexity correctly', function($testFile, $expected) 
                 expect($cc)->toBe($expectedForFunction['cc']);
                 break;
 
-            case $metrics instanceof ClassMetrics:
+            case $metrics instanceof ClassMetricsCollection:
                 $cc = $metrics->get('cc');
                 $className = $metrics->getName();
                 $className = str_starts_with($className, 'anonymous') ? 'anonymous' : $className;

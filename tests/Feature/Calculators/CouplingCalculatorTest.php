@@ -6,12 +6,12 @@ namespace Test\Feature\Calculators;
 
 use PhpCodeArch\Calculators\CouplingCalculator;
 use PhpCodeArch\Calculators\Helpers\PackageInstabilityAbstractnessCalculator;
-use PhpCodeArch\Metrics\ClassMetrics\ClassMetrics;
-use PhpCodeArch\Metrics\Metrics;
-use PhpCodeArch\Metrics\ProjectMetrics\ProjectMetrics;
+use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
+use PhpCodeArch\Metrics\Model\MetricsContainer;
+use PhpCodeArch\Metrics\Model\ProjectMetrics\ProjectMetricsCollection;
 
 beforeEach(function() {
-    $this->metrics = new Metrics();
+    $this->metrics = new MetricsContainer();
 
     $this->classes = [
         [
@@ -112,7 +112,7 @@ beforeEach(function() {
 
     $classes = [];
     array_walk($this->classes, function(&$class) use (&$classes) {
-       $classMetrics = new ClassMetrics('', $class['name']);
+       $classMetrics = new ClassMetricsCollection('', $class['name']);
        $id = (string) $classMetrics->getIdentifier();
        $classes[$id] = $classMetrics->getName();
 
@@ -128,7 +128,7 @@ beforeEach(function() {
     $this->metrics->set('classes', $classes);
     $this->metrics->set('interfaces', []);
 
-    $projectMetrics = new ProjectMetrics('');
+    $projectMetrics = new ProjectMetricsCollection('');
     $this->metrics->set('project', $projectMetrics);
 
     $packageIACalc = new PackageInstabilityAbstractnessCalculator($this->metrics);

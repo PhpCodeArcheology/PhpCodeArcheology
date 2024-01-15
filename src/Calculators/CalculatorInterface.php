@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Calculators;
 
-use PhpCodeArch\Metrics\MetricsInterface;
+use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
 
 interface CalculatorInterface
 {
-    public function calculate(MetricsInterface $metrics);
+    public function calculate(MetricsCollectionInterface $metrics);
 }

@@ -1,10 +1,10 @@
 <?php
 
-namespace PhpCodeArch\Metrics;
+namespace PhpCodeArch\Metrics\Model;
 
 use PhpCodeArch\Metrics\Identity\IdentifierInterface;
 
-interface MetricsInterface
+interface MetricsCollectionInterface
 {
     public function getIdentifier(): IdentifierInterface;
 }

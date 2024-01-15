@@ -6,8 +6,8 @@ namespace Test\Feature\Analysis;
 
 use PhpCodeArch\Analysis\IdentifyVisitor;
 use PhpCodeArch\Analysis\PackageVisitor;
-use PhpCodeArch\Metrics\FileMetrics\FileMetrics;
-use PhpCodeArch\Metrics\PackageMetrics\PackageMetrics;
+use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
+use PhpCodeArch\Metrics\Model\PackageMetrics\PackageMetricsCollection;
 
 require_once __DIR__ . '/test_helpers.php';
 
@@ -30,7 +30,7 @@ it('detects file namespaces and packages correctly', function($testFiles, $expec
         ->and($packages)->toBe($expects['foundPackages']);
 
     foreach ($metrics->getAll() as $metric) {
-        if (! $metric instanceof FileMetrics) {
+        if (! $metric instanceof FileMetricsCollection) {
             continue;
         }
 
@@ -47,7 +47,7 @@ it('assigns elements to the correct package', function($testFiles, $expects) {
 
     $packageMetricCount = 0;
     foreach ($metrics->getAll() as $metric) {
-        if (!$metric instanceof PackageMetrics) {
+        if (!$metric instanceof PackageMetricsCollection) {
             continue;
         }
 

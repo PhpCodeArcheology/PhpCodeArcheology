@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace PhpCodeArch\Metrics\ProjectMetrics;
+namespace PhpCodeArch\Metrics\Model\ProjectMetrics;
 
 use PhpCodeArch\Metrics\Identity\IdentifierInterface;
 use PhpCodeArch\Metrics\Identity\ProjectIdentifier;
-use PhpCodeArch\Metrics\MetricsInterface;
-use PhpCodeArch\Metrics\MetricsTrait;
+use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
+use PhpCodeArch\Metrics\Model\MetricsCollectionTrait;
 
-class ProjectMetrics implements MetricsInterface
+class ProjectMetricsCollection implements MetricsCollectionInterface
 {
-    use MetricsTrait;
+    use MetricsCollectionTrait;
 
     private IdentifierInterface $identifier;
 
