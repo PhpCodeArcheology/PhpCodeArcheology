@@ -52,8 +52,8 @@ readonly class Analyzer
         return [
             IdentifyVisitor::class,
             LocVisitor::class,
-            /*
             GlobalsVisitor::class,
+            /*
             CyclomaticComplexityVisitor::class,
             DependencyVisitor::class,
             HalsteadMetricsVisitor::class,
