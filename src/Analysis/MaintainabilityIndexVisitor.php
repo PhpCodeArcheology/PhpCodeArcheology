@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Analysis;
 
-use PhpCodeArch\Metrics\Identity\FileIdentifier;
-use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsFactory;
-use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsFactory;
+use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
@@ -16,14 +14,14 @@ class MaintainabilityIndexVisitor implements NodeVisitor, VisitorInterface
     use VisitorTrait;
 
     /**
-     * @var MetricsCollectionInterface[]
+     * @var string[]
      */
-    private array $currentClass = [];
+    private array $currentClassName = [];
 
     /**
-     * @var MetricsCollectionInterface[]
+     * @var string[]
      */
-    private array $currentFunction = [];
+    private array $currentFunctionName = [];
 
 
     /**
@@ -31,7 +29,6 @@ class MaintainabilityIndexVisitor implements NodeVisitor, VisitorInterface
      */
     public function beforeTraverse(array $nodes)
     {
-        // TODO: Implement beforeTraverse() method.
     }
 
     /**
@@ -39,27 +36,21 @@ class MaintainabilityIndexVisitor implements NodeVisitor, VisitorInterface
      */
     public function enterNode(Node $node): void
     {
-        if ($node instanceof Node\Stmt\Class_
-            || $node instanceof Node\Stmt\Interface_
-            || $node instanceof Node\Stmt\Trait_
-            || $node instanceof Node\Stmt\Enum_) {
+        switch (true) {
+            case $node instanceof Node\Stmt\Function_:
+                $this->currentFunctionName[] = (string) $node->namespacedName;
+                break;
 
-            $this->currentClass[] = ClassMetricsFactory::createFromMetricsByNodeAndPath(
-                $this->metrics,
-                $node,
-                $this->path
-            );
-        }
-        elseif ($node instanceof Node\Stmt\Function_
-            || $node instanceof Node\Stmt\ClassMethod) {
+            case $node instanceof Node\Stmt\ClassMethod:
+                $this->currentFunctionName[] = (string) $node->name;
+                break;
 
-            if ($node instanceof Node\Stmt\Function_) {
-                $this->currentFunction[] = FunctionMetricsFactory::createFromMetricsByNameAndPath(
-                    $this->metrics,
-                    $node->namespacedName,
-                    $this->path
-                );
-            }
+            case $node instanceof Node\Stmt\Class_:
+            case $node instanceof Node\Stmt\Interface_:
+            case $node instanceof Node\Stmt\Trait_:
+            case $node instanceof Node\Stmt\Enum_:
+                $this->currentClassName[] = (string) $node->namespacedName;
+                break;
         }
     }
 
@@ -68,37 +59,75 @@ class MaintainabilityIndexVisitor implements NodeVisitor, VisitorInterface
      */
     public function leaveNode(Node $node): void
     {
-        if ($node instanceof Node\Stmt\Class_
-            || $node instanceof Node\Stmt\Trait_
-            || $node instanceof Node\Stmt\Interface_
-            || $node instanceof Node\Stmt\Enum_) {
+        switch (true) {
+            case $node instanceof Node\Stmt\Function_:
+                $functionName = array_pop($this->currentFunctionName);
 
-            $currentMetric = array_pop($this->currentClass);
-            $currentMetric = $this->calculateIndex($currentMetric);
+                $functionMetricCollection = $this->metricsController->getMetricCollection(
+                    MetricCollectionTypeEnum::FunctionCollection,
+                    [
+                        'path' => $this->path,
+                        'name' => $functionName,
+                    ]
+                );
 
-            $this->metrics->set((string) $currentMetric->getIdentifier(), $currentMetric);
-        }
-        elseif ($node instanceof Node\Stmt\Function_) {
-            $currentMetric = array_pop($this->currentFunction);
+                $this->metricsController->setMetricValues(
+                    MetricCollectionTypeEnum::FunctionCollection,
+                    [
+                        'path' => $this->path,
+                        'name' => $functionName,
+                    ],
+                    $this->calculateIndex($functionMetricCollection)
+                );
+                break;
 
-            $currentMetric = $this->calculateIndex($currentMetric);
-            $this->metrics->set((string) $currentMetric->getIdentifier(), $currentMetric);
-        }
-        elseif ($node instanceof Node\Stmt\ClassMethod) {
-            $currentMetric = end($this->currentClass);
+            case $node instanceof Node\Stmt\ClassMethod:
+                $className = end($this->currentClassName);
+                $methodName = array_pop($this->currentFunctionName);
 
-            $methods = $currentMetric->get('methods');
+                $methodMetricCollection = $this->metricsController->getMetricCollection(
+                    MetricCollectionTypeEnum::MethodCollection,
+                    [
+                        'path' => $className,
+                        'name' => $methodName,
+                    ]
+                );
 
-            $methodMetrics = FunctionMetricsFactory::createFromMethodsByNameAndClassMetrics(
-                $methods,
-                $node->name,
-                $currentMetric
-            );
+                $this->metricsController->setMetricValues(
+                    MetricCollectionTypeEnum::MethodCollection,
+                    [
+                        'path' => $className,
+                        'name' => $methodName,
+                    ],
+                    $this->calculateIndex($methodMetricCollection)
+                );
 
-            $methods[(string) $methodMetrics->getIdentifier()] = $this->calculateIndex($methodMetrics);
+                break;
 
-            $currentMetric->set('methods', $methods);
-            $this->metrics->set((string) $currentMetric->getIdentifier(), $currentMetric);
+            case $node instanceof Node\Stmt\Class_:
+            case $node instanceof Node\Stmt\Interface_:
+            case $node instanceof Node\Stmt\Trait_:
+            case $node instanceof Node\Stmt\Enum_:
+                $className = array_pop($this->currentClassName);
+
+                $classMetricCollection = $this->metricsController->getMetricCollection(
+                    MetricCollectionTypeEnum::ClassCollection,
+                    [
+                        'path' => $this->path,
+                        'name' => $className,
+                    ]
+                );
+
+                $this->metricsController->setMetricValues(
+                    MetricCollectionTypeEnum::ClassCollection,
+                    [
+                        'path' => $this->path,
+                        'name' => $className,
+                    ],
+                    $this->calculateIndex($classMetricCollection)
+                );
+
+                break;
         }
     }
 
@@ -107,13 +136,23 @@ class MaintainabilityIndexVisitor implements NodeVisitor, VisitorInterface
      */
     public function afterTraverse(array $nodes): void
     {
-        $fileId = (string) FileIdentifier::ofPath($this->path);
-        $fileMetrics = $this->metrics->get($fileId);
+        $fileMetricCollection = $this->metricsController->getMetricCollection(
+            MetricCollectionTypeEnum::FileCollection,
+            [
+                'path' => $this->path,
+            ]
+        );
 
-        $this->metrics->set($fileId, $this->calculateIndex($fileMetrics));
+        $this->metricsController->setMetricValues(
+            MetricCollectionTypeEnum::FileCollection,
+            [
+                'path' => $this->path,
+            ],
+            $this->calculateIndex($fileMetricCollection)
+        );
     }
 
-    private function calculateIndex(MetricsCollectionInterface $metric): MetricsCollectionInterface
+    private function calculateIndex(MetricsCollectionInterface $metric): array
     {
         $volume = $metric->get('volume')->getValue();
         $cc = $metric->get('cc')->getValue();
@@ -123,13 +162,11 @@ class MaintainabilityIndexVisitor implements NodeVisitor, VisitorInterface
         $lloc = $metric->get('lloc')?->getValue() ?? 0;
 
         if ($volume == 0 || $lloc == 0) {
-            $this->setMetricValues($metric, [
+            return [
                 'maintainabilityIndex' => 171,
                 'maintainabilityIndexWithoutComments' => 50,
                 'commentWeight' => 0,
-            ]);
-
-            return $metric;
+            ];
         }
 
         $maintainabilityIndexWithoutComments = max((171
@@ -151,12 +188,10 @@ class MaintainabilityIndexVisitor implements NodeVisitor, VisitorInterface
 
         $maintainabilityIndex = $maintainabilityIndexWithoutComments + $commentWeight;
 
-        $this->setMetricValues($metric, [
+        return [
             'maintainabilityIndex' => $maintainabilityIndex,
             'maintainabilityIndexWithoutComments' => $maintainabilityIndexWithoutComments,
             'commentWeight' => $commentWeight,
-        ]);
-
-        return $metric;
+        ];
     }
 }
