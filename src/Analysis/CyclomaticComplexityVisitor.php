@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace PhpCodeArch\Analysis;
 
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
-use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
-use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
 
@@ -44,16 +42,6 @@ class CyclomaticComplexityVisitor implements NodeVisitor, VisitorInterface
      * @var string[]
      */
     public array $currentFunctionName = [];
-
-    /**
-     * @var ClassMetricsCollection[]
-     */
-    private array $currentClass = [];
-
-    /**
-     * @var FunctionMetricsCollection[]
-     */
-    private array $currentFunction = [];
 
     /**
      * @var int

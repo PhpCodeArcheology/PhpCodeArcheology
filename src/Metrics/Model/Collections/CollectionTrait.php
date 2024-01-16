@@ -6,7 +6,8 @@ namespace PhpCodeArch\Metrics\Model\Collections;
 
 trait CollectionTrait
 {
-    private array $items = [];
+    public function __construct(private array $items = [])
+    {}
 
     public function set(mixed $value, ?string $key = null): void
     {

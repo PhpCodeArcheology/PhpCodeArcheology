@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PhpCodeArch\Application;
 
 use PhpCodeArch\Analysis\CyclomaticComplexityVisitor;
+use PhpCodeArch\Analysis\DependencyVisitor;
 use PhpCodeArch\Analysis\GlobalsVisitor;
 use PhpCodeArch\Analysis\IdentifyVisitor;
 use PhpCodeArch\Analysis\LocVisitor;
@@ -55,8 +56,8 @@ readonly class Analyzer
             LocVisitor::class,
             GlobalsVisitor::class,
             CyclomaticComplexityVisitor::class,
-            /*
             DependencyVisitor::class,
+            /*
             HalsteadMetricsVisitor::class,
             MaintainabilityIndexVisitor::class,
             LcomVisitor::class,

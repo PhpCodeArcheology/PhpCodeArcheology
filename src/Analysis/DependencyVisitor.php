@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Analysis;
 
-use PhpCodeArch\Metrics\Identity\FileIdentifier;
+use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
-use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsFactory;
-use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsFactory;
+use PhpCodeArch\Metrics\Model\Collections\ClassNameCollection;
+use PhpCodeArch\Metrics\Model\Collections\InterfaceNameCollection;
+use PhpCodeArch\Metrics\Model\Collections\TraitNameCollection;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
 use function PhpCodeArch\getNodeName;
@@ -17,14 +18,9 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface
     use VisitorTrait;
 
     /**
-     * @var string
+     * @var string[]
      */
-    private string $uses = '';
-
-    /**
-     * @var bool
-     */
-    private bool $insideClass = false;
+    private array $currentClassName = [];
 
     /**
      * @var bool
@@ -78,18 +74,21 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface
      */
     public function enterNode(Node $node): void
     {
-        if ($node instanceof Node\Stmt\Class_
-            || $node instanceof Node\Stmt\Interface_
-            || $node instanceof Node\Stmt\Trait_
-            || $node instanceof Node\Stmt\Enum_) {
+        switch (true) {
+            case $node instanceof Node\Stmt\Function_:
+                $this->setupFunctionMetrics();
+                break;
 
-            $this->setupClassMetrics($node);
-        }
-        elseif ($node instanceof Node\Stmt\Function_) {
-            $this->setupFunctionMetrics();
-        }
-        elseif ($node instanceof Node\Stmt\ClassMethod) {
-            $this->setupMethodMetrics();
+            case $node instanceof Node\Stmt\ClassMethod:
+                $this->setupMethodMetrics();
+                break;
+
+            case $node instanceof Node\Stmt\Class_:
+            case $node instanceof Node\Stmt\Interface_:
+            case $node instanceof Node\Stmt\Trait_:
+            case $node instanceof Node\Stmt\Enum_:
+                $this->setupClassMetrics($node);
+                break;
         }
     }
 
@@ -138,11 +137,14 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface
      */
     public function afterTraverse(array $nodes): void
     {
-        $fileId = (string) FileIdentifier::ofPath($this->path);
-        $fileMetrics = $this->metrics->get($fileId);
+        $dependencyCollection = new ClassNameCollection($this->outsideDependencies);
 
-        $fileMetrics->set('dependencies', $this->outsideDependencies);
-        $this->metrics->set($fileId, $fileMetrics);
+        $this->metricsController->setCollection(
+            MetricCollectionTypeEnum::FileCollection,
+            ['path' => $this->path],
+            $dependencyCollection,
+            'dependencies'
+        );
     }
 
     /**
@@ -159,8 +161,7 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface
 
         switch (true) {
             case count($this->currentClassMetrics) > 0:
-                $currentClassMetrics = end($this->currentClassMetrics);
-                $className = $currentClassMetrics->getName();
+                $className = end($this->currentClassName);
 
                 if (in_array($dependency, $this->classDependencies[$className])) {
                     return null;
@@ -206,12 +207,11 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface
             return;
         }
 
-        if (count($this->currentClassMetrics) === 0) {
+        if (count($this->currentClassName) === 0) {
             return;
         }
 
-        $currentClassMetrics = end($this->currentClassMetrics);
-        $className = $currentClassMetrics->getName();
+        $className = end($this->currentClassName);
 
         if (in_array($dependency, $this->classUses[$className])) {
             return;
@@ -232,12 +232,11 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface
             return;
         }
 
-        if (count($this->currentClassMetrics) === 0) {
+        if (count($this->currentClassName) === 0) {
             return;
         }
 
-        $currentClassMetrics = end($this->currentClassMetrics);
-        $className = $currentClassMetrics->getName();
+        $className = end($this->currentClassName);
 
         if (in_array($dependency, $this->classTraits[$className])) {
             return;
@@ -299,21 +298,17 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface
     }
 
     /**
-     * @param Node $node
+     * @param Node\Stmt\Class_|Node\Stmt\Trait_|Node\Stmt\Enum_|Node\Stmt\Interface_ $node
      * @return void
      */
-    private function setupClassMetrics(Node $node): void
+    private function setupClassMetrics(Node\Stmt\Class_|Node\Stmt\Trait_|Node\Stmt\Enum_|Node\Stmt\Interface_ $node): void
     {
-        $classMetrics = ClassMetricsFactory::createFromMetricsByNodeAndPath(
-            $this->metrics,
-            $node,
-            $this->path
-        );
+        $className = (string) $node->namespacedName;
 
-        $this->classDependencies[$classMetrics->getName()] = [];
-        $this->classUses[$classMetrics->getName()] = [];
-        $this->classTraits[$classMetrics->getName()] = [];
-        $this->currentClassMetrics[] = $classMetrics;
+        $this->classDependencies[$className] = [];
+        $this->classUses[$className] = [];
+        $this->classTraits[$className] = [];
+        $this->currentClassName[] = $className;
     }
 
     /**
@@ -330,18 +325,16 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface
      */
     private function setupMethodMetrics(): void
     {
-        $currentClassMetrics = end($this->currentClassMetrics);
-        $className = $currentClassMetrics->getName();
-
+        $className = end($this->currentClassName);
         $this->insideMethod = true;
         $this->methodDependencies[$className] = [];
     }
 
     /**
-     * @param Node $node
+     * @param Node\Stmt\Class_|Node\Stmt\Trait_|Node\Stmt\Enum_|Node\Stmt\Interface_ $node
      * @return void
      */
-    private function createClassDependencies(Node $node): void
+    private function createClassDependencies(Node\Stmt\Class_|Node\Stmt\Trait_|Node\Stmt\Enum_|Node\Stmt\Interface_ $node): void
     {
         $extends = [];
         $interfaces = [];
@@ -368,15 +361,27 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface
             }
         }
 
-        $currentClassMetrics = array_pop($this->currentClassMetrics);
+        $className = array_pop($this->currentClassName);
 
-        $currentClassMetrics->set('dependencies', $this->classDependencies[$currentClassMetrics->getName()]);
-        $currentClassMetrics->set('usedClasses', $this->classUses[$currentClassMetrics->getName()]);
-        $currentClassMetrics->set('traits', $this->classTraits[$currentClassMetrics->getName()]);
-        $currentClassMetrics->set('interfaces', $interfaces);
-        $currentClassMetrics->set('extends', $extends);
+        $collections = [
+            'dependencies' => new ClassNameCollection($this->classDependencies[$className]),
+            'usedClasses' => new ClassNameCollection($this->classUses[$className]),
+            'traits' => new TraitNameCollection($this->classTraits[$className]),
+            'interfaces' => new InterfaceNameCollection($interfaces),
+            'extends' => new ClassNameCollection($extends),
+        ];
 
-        $this->metrics->set((string) $currentClassMetrics->getIdentifier(), $currentClassMetrics);
+        foreach ($collections as $collectionKey => $collection) {
+            $this->metricsController->setCollection(
+                MetricCollectionTypeEnum::ClassCollection,
+                [
+                    'path' => $this->path,
+                    'name' => $className
+                ],
+                $collection,
+                $collectionKey
+            );
+        }
     }
 
     /**
@@ -385,14 +390,17 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface
      */
     private function saveFunctionDependencies(Node\Stmt\Function_ $node): void
     {
-        $functionMetrics = FunctionMetricsFactory::createFromMetricsByNameAndPath(
-            $this->metrics,
-            $node->namespacedName,
-            $this->path
-        );
-        $functionMetrics->set('dependencies', $this->functionDependencies);
+        $functionName = (string) $node->namespacedName;
 
-        $this->metrics->set((string) $functionMetrics->getIdentifier(), $functionMetrics);
+        $this->metricsController->setCollection(
+            MetricCollectionTypeEnum::FunctionCollection,
+            [
+                'path' => $this->path,
+                'name' => $functionName,
+            ],
+            new ClassNameCollection($this->functionDependencies),
+            'dependencies'
+        );
 
         $this->insideFunction = false;
     }
@@ -403,17 +411,18 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface
      */
     private function saveMethodDependencies(Node\Stmt\ClassMethod $node): void
     {
-        $currentClassMetrics = end($this->currentClassMetrics);
-        $methods = $currentClassMetrics->get('methods');
+        $className = end($this->currentClassName);
+        $methodName = (string) $node->name;
 
-        $methodMetric = FunctionMetricsFactory::createFromMethodsByNameAndClassMetrics(
-            $methods,
-            $node->name,
-            $currentClassMetrics
+        $this->metricsController->setCollection(
+            MetricCollectionTypeEnum::MethodCollection,
+            [
+                'path' => $className,
+                'name' => $methodName,
+            ],
+            new ClassNameCollection($this->methodDependencies[$className]),
+            'dependencies'
         );
-        $methodMetric->set('dependencies', $this->methodDependencies[$currentClassMetrics->getName()]);
-        $methods[(string) $methodMetric->getIdentifier()] = $methodMetric;
-        $currentClassMetrics->set('methods', $methods);
 
         $this->insideMethod = false;
     }
