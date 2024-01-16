@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace PhpCodeArch\Analysis;
 
 use PhpCodeArch\Metrics\Identity\FileIdentifier;
-use PhpCodeArch\Metrics\Identity\FunctionAndClassIdentifier;
-use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsFactory;
-use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsFactory;
+use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
@@ -15,6 +13,16 @@ use PhpParser\NodeVisitor;
 class HalsteadMetricsVisitor implements NodeVisitor, VisitorInterface
 {
     use VisitorTrait;
+
+    /**
+     * @var string[]
+     */
+    private array $currentClassName = [];
+
+    /**
+     * @var string[]
+     */
+    private array $currentFunctionName = [];
 
     private array $operators = [];
 
@@ -27,15 +35,6 @@ class HalsteadMetricsVisitor implements NodeVisitor, VisitorInterface
     private array $functionOperators = [];
 
     private array $functionOperands = [];
-
-    private bool $insideClass = false;
-
-    private bool $insideFunction = false;
-
-    /**
-     * @var MetricsCollectionInterface[]
-     */
-    private array $currentMetric = [];
 
     /**
      * @inheritDoc
@@ -50,34 +49,39 @@ class HalsteadMetricsVisitor implements NodeVisitor, VisitorInterface
      */
     public function enterNode(Node $node): void
     {
-        if ($node instanceof Node\Stmt\Class_
-            || $node instanceof Node\Stmt\Interface_
-            || $node instanceof Node\Stmt\Trait_
-            || $node instanceof Node\Stmt\Enum_) {
+        switch (true) {
+            case $node instanceof Node\Stmt\Class_:
+            case $node instanceof Node\Stmt\Interface_:
+            case $node instanceof Node\Stmt\Trait_:
+            case $node instanceof Node\Stmt\Enum_:
+                $className = (string) $node->namespacedName;
 
-            $this->insideClass = true;
-            $this->classOperators = [];
-            $this->classOperands = [];
+                $this->classOperators[$className] = [];
+                $this->classOperands[$className] = [];
 
-            $this->currentMetric[] = ClassMetricsFactory::createFromMetricsByNodeAndPath(
-                $this->metrics,
-                $node,
-                $this->path
-            );
-        }
-        elseif ($node instanceof Node\Stmt\Function_
-            || $node instanceof  Node\Stmt\ClassMethod) {
-            $this->insideFunction = true;
-            $this->functionOperators = [];
-            $this->functionOperands = [];
+                $this->currentClassName[] = $className;
+                break;
 
-            if ($node instanceof Node\Stmt\Function_) {
-                $this->currentMetric[] = FunctionMetricsFactory::createFromMetricsByNameAndPath(
-                    $this->metrics,
-                    $node->namespacedName,
-                    $this->path
-                );
-            }
+            case $node instanceof Node\Stmt\Function_:#
+                $functionName = (string) $node->namespacedName;
+
+                $this->functionOperators[$functionName] = [];
+                $this->functionOperands[$functionName] = [];
+
+                $this->currentFunctionName[] = $functionName;
+                break;
+
+            case $node instanceof Node\Stmt\ClassMethod:
+                $className = end($this->currentClassName);
+                $methodName = (string) $node->name;
+
+                $key = sprintf('%s::%s', $className, $methodName);
+
+                $this->functionOperators[$key] = [];
+                $this->functionOperands[$key] = [];
+
+                $this->currentFunctionName[] = $methodName;
+                break;
         }
     }
 
@@ -86,111 +90,54 @@ class HalsteadMetricsVisitor implements NodeVisitor, VisitorInterface
      */
     public function leaveNode(Node $node): void
     {
-        if ($node instanceof Node\Expr\BinaryOp
-            || $node instanceof Node\Expr\AssignOp
-            || $node instanceof Node\Stmt\If_
-            || $node instanceof Node\Stmt\ElseIf_
-            || $node instanceof Node\Stmt\Else_
-            || $node instanceof Node\Stmt\For_
-            || $node instanceof Node\Stmt\Foreach_
-            || $node instanceof Node\Stmt\Switch_
-            || $node instanceof Node\Expr\Match_
-            || $node instanceof Node\Stmt\Catch_
-            || $node instanceof Node\Stmt\Return_
-            || $node instanceof Node\Stmt\While_
-            || $node instanceof Node\Stmt\Do_
-            || $node instanceof Node\Expr\Assign
-            || $node instanceof Node\Expr\Ternary
-            || $node instanceof Node\Expr\BooleanNot
-            || $node instanceof Node\Expr\BitwiseNot
-            || $node instanceof Node\Expr\FuncCall
-            || $node instanceof Node\Expr\MethodCall
-            || $node instanceof Node\Expr\StaticCall
-            || $node instanceof Node\Expr\New_
-            || $node instanceof Node\Expr\Instanceof_
-            || $node instanceof Node\Expr\UnaryMinus
-            || $node instanceof Node\Expr\UnaryPlus
-            || $node instanceof Node\Expr\PreDec
-            || $node instanceof Node\Expr\PreInc
-            || $node instanceof Node\Expr\PostDec
-            || $node instanceof Node\Expr\PostInc
-            || $node instanceof Node\Stmt\TryCatch
-            || $node instanceof Node\Stmt\Throw_
-        ) {
-            $this->operators[] = get_class($node);
+        $this->countOperators($node);
+        $this->countOperands($node);
 
-            if ($this->insideClass) {
-                $this->classOperators[] = get_class($node);
+        switch (true) {
+            case $node instanceof Node\Stmt\Class_:
+            case $node instanceof Node\Stmt\Interface_:
+            case $node instanceof Node\Stmt\Trait_:
+            case $node instanceof Node\Stmt\Enum_:
+                $className = array_pop($this->currentClassName);
 
-                if ($this->insideFunction) {
-                    $this->functionOperators[] = get_class($node);
-                }
-            }
-            elseif ($this->insideFunction) {
-                $this->functionOperators[] = get_class($node);
-            }
-        }
+                $this->metricsController->setMetricValues(
+                    MetricCollectionTypeEnum::ClassCollection,
+                    [
+                        'path' => $this->path,
+                        'name' => $className,
+                    ],
+                    $this->calculateMetrics($this->classOperators[$className], $this->classOperands[$className])
+                );
+                break;
 
-        if ($node instanceof Node\Expr\Cast
-            || $node instanceof Node\Expr\Variable
-            || $node instanceof Node\Param
-            || $node instanceof Node\Scalar) {
+            case $node instanceof Node\Stmt\Function_:
+                $functionName = array_pop($this->currentFunctionName);
 
-            if (isset($node->value)) {
-                $name = $node->value;
-            }
-            elseif (isset($node->name)) {
-                $name = $node->name;
-            }
-            else {
-                $name = get_class($node);
-            }
+                $this->metricsController->setMetricValues(
+                    MetricCollectionTypeEnum::FunctionCollection,
+                    [
+                        'path' => $this->path,
+                        'name' => $functionName,
+                    ],
+                    $this->calculateMetrics($this->functionOperators[$functionName], $this->functionOperands[$functionName])
+                );
+                break;
 
-            $this->operands[] = $name;
+            case $node instanceof Node\Stmt\ClassMethod:
+                $className = end($this->currentClassName);
+                $methodName = array_pop($this->currentFunctionName);
 
-            if ($this->insideClass) {
-                $this->classOperands[] = $name;
+                $key = sprintf('%s::%s', $className, $methodName);
 
-                if ($this->insideFunction) {
-                    $this->functionOperands[] = $name;
-                }
-            }
-            elseif ($this->insideFunction) {
-                $this->functionOperands[] = $name;
-            }
-        }
-
-        if ($node instanceof Node\Stmt\Class_
-            || $node instanceof Node\Stmt\Interface_
-            || $node instanceof Node\Stmt\Trait_
-            || $node instanceof Node\Stmt\Enum_) {
-
-            $currentMetric = array_pop($this->currentMetric);
-
-            $halstead = $this->calculateMetrics($this->classOperators, $this->classOperands);
-            $currentMetric = $this->saveToMetric($currentMetric, $halstead);
-            $this->metrics->set((string) $currentMetric->getIdentifier(), $currentMetric);
-
-        }
-        elseif ($node instanceof Node\Stmt\Function_) {
-            $currentMetric = array_pop($this->currentMetric);
-
-            $halstead = $this->calculateMetrics($this->functionOperators, $this->functionOperands);
-            $currentMetric = $this->saveToMetric($currentMetric, $halstead);
-            $this->metrics->set((string) $currentMetric->getIdentifier(), $currentMetric);
-        }
-        elseif ($node instanceof Node\Stmt\ClassMethod) {
-            $currentMetric = end($this->currentMetric);
-
-            $halstead = $this->calculateMetrics($this->functionOperators, $this->functionOperands);
-            $methods = $currentMetric->get('methods');
-
-            $methodId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $node->name, (string) $currentMetric->getIdentifier());
-            $methodMetrics = $methods[$methodId];
-
-            $methods[$methodId] = $this->saveToMetric($methodMetrics, $halstead);
-            $currentMetric->set('methods', $methods);
-            $this->metrics->set((string) $currentMetric->getIdentifier(), $currentMetric);
+                $this->metricsController->setMetricValues(
+                    MetricCollectionTypeEnum::MethodCollection,
+                    [
+                        'path' => $className,
+                        'name' => $methodName,
+                    ],
+                    $this->calculateMetrics($this->functionOperators[$key], $this->functionOperands[$key])
+                );
+                break;
         }
     }
 
@@ -202,12 +149,11 @@ class HalsteadMetricsVisitor implements NodeVisitor, VisitorInterface
         // Calculate file metrics
         $halstead = $this->calculateMetrics($this->operators, $this->operands);
 
-        $fileId = (string) FileIdentifier::ofPath($this->path);
-        $fileMetrics = $this->metrics->get($fileId);
-
-        $fileMetrics = $this->saveToMetric($fileMetrics, $halstead);
-
-        $this->metrics->set($fileId, $fileMetrics);
+        $this->metricsController->setMetricValues(
+            MetricCollectionTypeEnum::FileCollection,
+            ['path' => $this->path],
+            $halstead,
+        );
     }
 
     private function calculateMetrics(array $operators, array $operands): array
@@ -271,16 +217,107 @@ class HalsteadMetricsVisitor implements NodeVisitor, VisitorInterface
         ];
     }
 
-    private function saveToMetric(MetricsCollectionInterface $metrics, array $data): MetricsCollectionInterface
-    {
-        $this->setMetricValues($metrics, $data);
-
-        return $metrics;
-    }
-
     private function afterSetPath(): void
     {
         $this->operators = [];
         $this->operands = [];
+    }
+
+    private function countOperators(Node $node): void
+    {
+        switch (true) {
+            case $node instanceof Node\Expr\BinaryOp:
+            case $node instanceof Node\Expr\AssignOp:
+            case $node instanceof Node\Stmt\If_:
+            case $node instanceof Node\Stmt\ElseIf_:
+            case $node instanceof Node\Stmt\Else_:
+            case $node instanceof Node\Stmt\For_:
+            case $node instanceof Node\Stmt\Foreach_:
+            case $node instanceof Node\Stmt\Switch_:
+            case $node instanceof Node\Expr\Match_:
+            case $node instanceof Node\Stmt\Catch_:
+            case $node instanceof Node\Stmt\Return_:
+            case $node instanceof Node\Stmt\While_:
+            case $node instanceof Node\Stmt\Do_:
+            case $node instanceof Node\Expr\Assign:
+            case $node instanceof Node\Expr\Ternary:
+            case $node instanceof Node\Expr\BooleanNot:
+            case $node instanceof Node\Expr\BitwiseNot:
+            case $node instanceof Node\Expr\FuncCall:
+            case $node instanceof Node\Expr\MethodCall:
+            case $node instanceof Node\Expr\StaticCall:
+            case $node instanceof Node\Expr\New_:
+            case $node instanceof Node\Expr\Instanceof_:
+            case $node instanceof Node\Expr\UnaryMinus:
+            case $node instanceof Node\Expr\UnaryPlus:
+            case $node instanceof Node\Expr\PreDec:
+            case $node instanceof Node\Expr\PreInc:
+            case $node instanceof Node\Expr\PostDec:
+            case $node instanceof Node\Expr\PostInc:
+            case $node instanceof Node\Stmt\TryCatch:
+            case $node instanceof Node\Stmt\Throw_:
+                $this->operators[] = get_class($node);
+
+                if (count($this->currentClassName) > 0) {
+                    $className = end($this->currentClassName);
+
+                    $this->classOperators[$className][] = get_class($node);
+
+                    if (count($this->currentFunctionName) > 0) {
+                        $methodName = end($this->currentFunctionName);
+                        $key = sprintf('%s::%s', $className, $methodName);
+
+                        if (isset ($this->functionOperators[$key])) {
+                            $this->functionOperators[$key][] = get_class($node);
+                        }
+                    }
+                }
+                elseif (count($this->currentFunctionName) > 0) {
+                    $functionName = end($this->currentFunctionName);
+                    $this->functionOperators[$functionName][] = get_class($node);
+                }
+                break;
+        }
+    }
+
+    private function countOperands(Node $node): void
+    {
+        switch (true) {
+            case $node instanceof Node\Expr\Cast:
+            case $node instanceof Node\Expr\Variable:
+            case $node instanceof Node\Param:
+            case $node instanceof Node\Scalar:
+                if (isset($node->value)) {
+                    $name = $node->value;
+                }
+                elseif (isset($node->name)) {
+                    $name = $node->name;
+                }
+                else {
+                    $name = get_class($node);
+                }
+
+                $this->operands[] = $name;
+
+                if (count($this->currentClassName) > 0) {
+                    $className = end($this->currentClassName);
+
+                    $this->classOperands[$className][] = $name;
+
+                    if (count($this->currentFunctionName) > 0) {
+                        $methodName = end($this->currentFunctionName);
+                        $key = sprintf('%s::%s', $className, $methodName);
+
+                        if (isset ($this->functionOperands[$key])) {
+                            $this->functionOperands[$key][] = get_class($node);
+                        }
+                    }
+                }
+                elseif (count($this->currentFunctionName) > 0) {
+                    $functionName = end($this->currentFunctionName);
+                    $this->functionOperands[$functionName][] = $name;
+                }
+                break;
+        }
     }
 }

@@ -7,6 +7,7 @@ namespace PhpCodeArch\Application;
 use PhpCodeArch\Analysis\CyclomaticComplexityVisitor;
 use PhpCodeArch\Analysis\DependencyVisitor;
 use PhpCodeArch\Analysis\GlobalsVisitor;
+use PhpCodeArch\Analysis\HalsteadMetricsVisitor;
 use PhpCodeArch\Analysis\IdentifyVisitor;
 use PhpCodeArch\Analysis\LocVisitor;
 use PhpCodeArch\Metrics\Controller\MetricsController;
@@ -57,8 +58,8 @@ readonly class Analyzer
             GlobalsVisitor::class,
             CyclomaticComplexityVisitor::class,
             DependencyVisitor::class,
-            /*
             HalsteadMetricsVisitor::class,
+            /*
             MaintainabilityIndexVisitor::class,
             LcomVisitor::class,
             PackageVisitor::class,
