@@ -324,12 +324,11 @@ class MetricsController
         ?array $identifierData,
         string $collectionKey,
         string $key,
-        string $value): void
+        mixed $value): void
     {
         $this->getMetricCollection($metricsType, $identifierData)->getCollection($collectionKey)->set(
             $value,
             $key,
         );
     }
-
 }

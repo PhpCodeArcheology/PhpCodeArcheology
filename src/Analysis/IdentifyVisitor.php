@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace PhpCodeArch\Analysis;
 
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
-use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\Collections\ClassNameCollection;
 use PhpCodeArch\Metrics\Model\Collections\EnumNameCollection;
 use PhpCodeArch\Metrics\Model\Collections\FunctionNameCollection;
@@ -13,7 +12,6 @@ use PhpCodeArch\Metrics\Model\Collections\InterfaceNameCollection;
 use PhpCodeArch\Metrics\Model\Collections\MethodNameCollection;
 use PhpCodeArch\Metrics\Model\Collections\ParameterCollection;
 use PhpCodeArch\Metrics\Model\Collections\TraitNameCollection;
-use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
 use function PhpCodeArch\getNodeName;
@@ -75,7 +73,7 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
 
     public function init()
     {
-        $fileCollections = [
+        $projectCollections = [
             'classes' => new ClassNameCollection(),
             'interfaces' => new InterfaceNameCollection(),
             'traits' => new TraitNameCollection(),
@@ -84,7 +82,7 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
             'methods' => new MethodNameCollection(),
         ];
 
-        foreach ($fileCollections as $key => $collection) {
+        foreach ($projectCollections as $key => $collection) {
             $this->metricsController->setCollection(
                 MetricCollectionTypeEnum::ProjectCollection,
                 null,
@@ -562,58 +560,6 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
             $methodIdentifierData,
             $methodData
         );
-
-        return $methodData;
-    }
-
-    /**
-     * @param Node\Stmt\ClassMethod $stmt
-     * @param array $methodData
-     * @param ClassMetricsCollection $metrics
-     * @return array
-     */
-    private function handleClassMethod2(
-        Node\Stmt\ClassMethod  $stmt,
-        array                  $methodData,
-        ClassMetricsCollection $metrics): array
-    {
-        $method = new FunctionMetricsCollection(path: (string) $metrics->getIdentifier(), name: (string) $stmt->name);
-        $method->set('name', $method->getName());
-
-        $this->handleParameters($stmt, $method);
-
-        if (! isset($this->methods[(string) $metrics->getIdentifier()])) {
-            $this->methods[(string) $metrics->getIdentifier()] = [];
-        }
-        $this->methods[(string) $metrics->getIdentifier()][(string) $method->getIdentifier()] = $method->getName();
-
-        $method->set('protected', $stmt->isProtected());
-
-        if ($stmt->isPrivate() || $stmt->isProtected()) {
-            $method->set('public', false);
-            $method->set('private', true);
-
-            ++ $methodData['privateCount'];
-            ++ $methodData['overAllPrivateMethodsCount'];
-        }
-
-        if ($stmt->isPublic()) {
-            $method->set('public', true);
-            $method->set('private', false);
-
-            ++ $methodData['publicCount'];
-            ++ $methodData['overAllPublicMethodsCount'];
-        }
-
-        $method->set('static', false);
-        if ($stmt->isStatic()) {
-            $method->set('static', true);
-
-            ++ $methodData['staticCount'];
-            ++ $methodData['overAllStaticMethodsCount'];
-        }
-
-        $methodData['classMethods'][(string) $method->getIdentifier()] = $method;
 
         return $methodData;
     }

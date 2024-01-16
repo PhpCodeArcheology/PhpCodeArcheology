@@ -37,6 +37,84 @@ return [
         ],
     ],
     [
+        'key' => 'overallLoc',
+        'name' => 'Loc',
+        'shortName' => '',
+        'description' => '',
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
+        ],
+    ],
+    [
+        'key' => 'overallLloc',
+        'name' => 'Logical lines of code',
+        'shortName' => '',
+        'description' => '',
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
+        ],
+    ],
+    [
+        'key' => 'overallLlocOutside',
+        'name' => 'Logical lines of code',
+        'shortName' => '',
+        'description' => '',
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
+        ],
+    ],
+    [
+        'key' => 'overallInsideMethodLloc',
+        'name' => 'Logical lines of code in methods',
+        'shortName' => '',
+        'description' => '',
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
+        ],
+    ],
+    [
+        'key' => 'overallInsideFuntionLloc',
+        'name' => 'Logical lines of code in functions',
+        'shortName' => '',
+        'description' => '',
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
+        ],
+    ],
+    [
+        'key' => 'overallHtmlLoc',
+        'name' => 'Logical lines of HTML Code',
+        'shortName' => '',
+        'description' => '',
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
+        ],
+    ],
+    [
+        'key' => 'overallCloc',
+        'name' => 'Comment lines of code',
+        'shortName' => '',
+        'description' => '',
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
+        ],
+    ],
+
+    [
         'key' => 'overallFunctionCount',
         'name' => 'Function count',
         'shortName' => '',

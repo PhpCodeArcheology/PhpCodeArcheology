@@ -20,7 +20,7 @@ trait CollectionTrait
 
     public function has(string $key): bool
     {
-        return isset($items[$key]);
+        return isset($this->items[$key]);
     }
 
     public function get(string $key): mixed
