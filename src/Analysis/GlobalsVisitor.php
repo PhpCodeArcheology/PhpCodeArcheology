@@ -62,27 +62,13 @@ class GlobalsVisitor implements NodeVisitor, VisitorInterface
     private array $classConstantMap = [];
 
     /**
-     * @var MetricsCollectionInterface[]
-     */
-    private array $classMetrics = [];
-
-    /**
-     * @var MetricsCollectionInterface[]
-     */
-    private array $functionMetrics = [];
-
-    private array $constantsDefined = [];
-
-    private array $constantsUsed = [];
-
-    /**
      * @inheritDoc
      */
     public function beforeTraverse(array $nodes): void
     {
         $this->superglobals = self::GLOBALS;
         $this->variableMap = [];
-        $this->classMetrics = [];
+        $this->currentClassName = [];
     }
 
     /**

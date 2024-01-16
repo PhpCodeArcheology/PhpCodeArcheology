@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Analysis;
 
+use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
-use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsFactory;
 use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
-use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsFactory;
-use PhpCodeArch\Metrics\Model\MetricValue;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
 
@@ -36,6 +34,16 @@ use PhpParser\NodeVisitor;
 class CyclomaticComplexityVisitor implements NodeVisitor, VisitorInterface
 {
     use VisitorTrait;
+
+    /**
+     * @var string[]
+     */
+    public array $currentClassName = [];
+
+    /**
+     * @var string[]
+     */
+    public array $currentFunctionName = [];
 
     /**
      * @var ClassMetricsCollection[]
@@ -68,7 +76,6 @@ class CyclomaticComplexityVisitor implements NodeVisitor, VisitorInterface
      */
     public function beforeTraverse(array $nodes): void
     {
-        $this->getFileMetrics();
         $this->fileCc = 1;
     }
 
@@ -83,40 +90,24 @@ class CyclomaticComplexityVisitor implements NodeVisitor, VisitorInterface
             case $node instanceof Node\Stmt\Interface_:
             case $node instanceof Node\Stmt\Trait_:
             case $node instanceof Node\Stmt\Enum_:
-                $classMetrics = ClassMetricsFactory::createFromMetricsByNodeAndPath(
-                    $this->metrics,
-                    $node,
-                    $this->path
-                );
-
-                $this->currentClass[] = $classMetrics;
-                $this->classCc[$classMetrics->getName()] = 1;
+                $className = (string) $node->namespacedName;
+                $this->currentClassName[] = $className;
+                $this->classCc[$className] = 1;
                 break;
 
             case $node instanceof Node\Stmt\ClassMethod:
-                $currentClass = end($this->currentClass);
-                $methods = $currentClass->get('methods');
+                $className = end($this->currentClassName);
+                $methodName = (string) $node->name;
 
-                $methodMetric = FunctionMetricsFactory::createFromMethodsByNameAndClassMetrics(
-                    $methods,
-                    $node->name,
-                    $currentClass
-                );
-                $methodName = $methodMetric->getName();
-
-                $this->currentFunction[] = $methodMetric;
-                $this->functionCc[$currentClass->getName()][$methodName] = 1;
+                $this->currentFunctionName[] = $methodName;
+                $this->functionCc[$className][$methodName] = 1;
                 break;
 
             case $node instanceof Node\Stmt\Function_:
-                $functionMetrics = FunctionMetricsFactory::createFromMetricsByNameAndPath(
-                    $this->metrics,
-                    $node->namespacedName,
-                    $this->path
-                );
+                $functionName = (string) $node->namespacedName;
 
-                $this->currentFunction[] = $functionMetrics;
-                $this->functionCc[$functionMetrics->getName()] = 1;
+                $this->currentFunctionName[] = $functionName;
+                $this->functionCc[$functionName] = 1;
                 break;
         }
     }
@@ -132,42 +123,46 @@ class CyclomaticComplexityVisitor implements NodeVisitor, VisitorInterface
             case $node instanceof Node\Stmt\Interface_:
             case $node instanceof Node\Stmt\Trait_:
             case $node instanceof Node\Stmt\Enum_:
-                $currentClass = array_pop($this->currentClass);
+                $className = array_pop($this->currentClassName);
 
-                $metricValue = MetricValue::ofValueAndType(
-                    value: $this->classCc[$currentClass->getName()],
-                    type: $this->usedMetricTypes['cc'],
+                $this->metricsController->setMetricValue(
+                    MetricCollectionTypeEnum::ClassCollection,
+                    [
+                        'path' => $this->path,
+                        'name' => $className,
+                    ],
+                    $this->classCc[$className],
+                    'cc'
                 );
-                $currentClass->set('cc', $metricValue);
-
-                $this->metrics->set((string) $currentClass->getIdentifier(), $currentClass);
                 break;
 
             case $node instanceof Node\Stmt\ClassMethod:
-                $currentClass = end($this->currentClass);
-                $currentMethod = array_pop($this->currentFunction);
-                $methods = $currentClass->get('methods');
+                $className = end($this->currentClassName);
+                $methodName = array_pop($this->currentFunctionName);
 
-                $metricValue = MetricValue::ofValueAndType(
-                    value: $this->functionCc[$currentClass->getName()][$currentMethod->getName()],
-                    type: $this->usedMetricTypes['cc'],
+                $this->metricsController->setMetricValue(
+                    MetricCollectionTypeEnum::MethodCollection,
+                    [
+                        'path' => $className,
+                        'name' => $methodName,
+                    ],
+                    $this->functionCc[$className][$methodName],
+                    'cc'
                 );
-                $currentMethod->set('cc', $metricValue);
-
-                $methods[(string) $currentMethod->getIdentifier()] = $currentMethod;
-                $this->metrics->set((string) $currentClass->getIdentifier(), $currentClass);
                 break;
 
             case $node instanceof Node\Stmt\Function_:
-                $currentFunction = array_pop($this->currentFunction);
+                $functionName = array_pop($this->currentFunctionName);
 
-                $metricValue = MetricValue::ofValueAndType(
-                    value: $this->functionCc[$currentFunction->getName()],
-                    type: $this->usedMetricTypes['cc'],
+                $this->metricsController->setMetricValue(
+                    MetricCollectionTypeEnum::FunctionCollection,
+                    [
+                        'path' => $this->path,
+                        'name' => $functionName,
+                    ],
+                    $this->functionCc[$functionName],
+                    'cc'
                 );
-                $currentFunction->set('cc', $metricValue);
-
-                $this->metrics->set((string) $currentFunction->getIdentifier(), $currentFunction);
                 break;
 
             default:
@@ -175,24 +170,24 @@ class CyclomaticComplexityVisitor implements NodeVisitor, VisitorInterface
 
                 $this->fileCc += $increase;
 
-                if (count($this->currentClass) > 0) {
-                    $currentClass = end($this->currentClass);
-                    $this->classCc[$currentClass->getName()] += $increase;
+                if (count($this->currentClassName) > 0) {
+                    $className = end($this->currentClassName);
+                    $this->classCc[$className] += $increase;
 
-                    if (count($this->currentFunction) > 0) {
-                        $currentFunction = end($this->currentFunction);
-                        if (!isset($this->functionCc[$currentClass->getName()][$currentFunction->getName()])) {
-                            $this->functionCc[$currentClass->getName()][$currentFunction->getName()] = 1;
+                    if (count($this->currentFunctionName) > 0) {
+                        $methodName = end($this->currentFunctionName);
+                        if (!isset($this->functionCc[$className][$methodName])) {
+                            $this->functionCc[$className][$methodName] = 1;
                         }
-                        $this->functionCc[$currentClass->getName()][$currentFunction->getName()] += $increase;
+                        $this->functionCc[$className][$methodName] += $increase;
                     }
 
                     break;
                 }
 
-                if (count($this->currentFunction) > 0) {
-                    $currentFunction = end($this->currentFunction);
-                    $this->functionCc[$currentFunction->getName()] += $increase;
+                if (count($this->currentFunctionName) > 0) {
+                    $functionName = end($this->currentFunctionName);
+                    $this->functionCc[$functionName] += $increase;
                 }
                 break;
         }
@@ -204,13 +199,12 @@ class CyclomaticComplexityVisitor implements NodeVisitor, VisitorInterface
      */
     public function afterTraverse(array $nodes): void
     {
-        $metricValue = MetricValue::ofValueAndType(
-            value: $this->fileCc,
-            type: $this->usedMetricTypes['cc'],
+        $this->metricsController->setMetricValue(
+            MetricCollectionTypeEnum::FileCollection,
+            ['path' => $this->path],
+            $this->fileCc,
+            'cc'
         );
-        $this->fileMetrics->set('cc', $metricValue);
-
-        $this->metrics->set((string) $this->fileMetrics->getIdentifier(), $this->fileMetrics);
     }
 
     /**
