@@ -9,6 +9,7 @@ use PhpCodeArch\Analysis\DependencyVisitor;
 use PhpCodeArch\Analysis\GlobalsVisitor;
 use PhpCodeArch\Analysis\HalsteadMetricsVisitor;
 use PhpCodeArch\Analysis\IdentifyVisitor;
+use PhpCodeArch\Analysis\LcomVisitor;
 use PhpCodeArch\Analysis\LocVisitor;
 use PhpCodeArch\Analysis\MaintainabilityIndexVisitor;
 use PhpCodeArch\Metrics\Controller\MetricsController;
@@ -61,8 +62,8 @@ readonly class Analyzer
             DependencyVisitor::class,
             HalsteadMetricsVisitor::class,
             MaintainabilityIndexVisitor::class,
-            /*
             LcomVisitor::class,
+            /*
             PackageVisitor::class,
             */
         ];
