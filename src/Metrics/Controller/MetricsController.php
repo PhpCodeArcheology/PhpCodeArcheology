@@ -171,20 +171,12 @@ class MetricsController
         MetricCollectionTypeEnum $metricsType,
         array $identifierData): MetricsCollectionInterface
     {
-        switch ($metricsType) {
-            case MetricCollectionTypeEnum::ProjectCollection:
-                return $this->createProjectMetricsCollection($identifierData['files']);
-
-            case MetricCollectionTypeEnum::FileCollection:
-                return $this->createFileMetricsCollection($identifierData['path']);
-
-            case MetricCollectionTypeEnum::ClassCollection:
-                return $this->createClassMetricsCollection($identifierData['path'], $identifierData['name']);
-
-            case MetricCollectionTypeEnum::MethodCollection:
-            case MetricCollectionTypeEnum::FunctionCollection:
-                return $this->createFunctionMetricsCollection($identifierData['path'], $identifierData['name']);
-        }
+        return match ($metricsType) {
+            MetricCollectionTypeEnum::ProjectCollection => $this->createProjectMetricsCollection($identifierData['files']),
+            MetricCollectionTypeEnum::FileCollection => $this->createFileMetricsCollection($identifierData['path']),
+            MetricCollectionTypeEnum::ClassCollection => $this->createClassMetricsCollection($identifierData['path'], $identifierData['name']),
+            MetricCollectionTypeEnum::MethodCollection, MetricCollectionTypeEnum::FunctionCollection => $this->createFunctionMetricsCollection($identifierData['path'], $identifierData['name']),
+        };
     }
 
     public function getMetricsValue(
