@@ -152,7 +152,7 @@ class ProjectCalculator implements CalculatorInterface
             ]
         );
 
-        foreach ($metricValues as $key => &$metricValue) {
+        foreach ($metricValues as &$metricValue) {
             $metricValue = $metricValue?->getValue() ?? 0;
         }
 
