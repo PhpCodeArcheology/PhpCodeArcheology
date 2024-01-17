@@ -383,7 +383,7 @@ class MetricsController
         return $this->getMetricCollection($metricsType, $identifierData)->getCollection($collectionKey);
     }
 
-    public function getMetricValues(MetricCollectionTypeEnum $metricsType, array $identifierData, array $keys): object
+    public function getMetricValues(MetricCollectionTypeEnum $metricsType, ?array $identifierData, array $keys): array
     {
         $metricValues = [];
 
@@ -391,7 +391,7 @@ class MetricsController
             $metricValues[$key] = $this->getMetricValue($metricsType, $identifierData, $key);
         }
 
-        return (object) $metricValues;
+        return $metricValues;
     }
 
     public function setMetricValuesByIdentifierString(string $identifierString, array $keyValuePairs): void

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Calculators;
 
+use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
 use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
@@ -13,8 +14,6 @@ use PhpCodeArch\Metrics\Model\ProjectMetrics\ProjectMetricsCollection;
 class ProjectCalculator implements CalculatorInterface
 {
     use CalculatorTrait;
-
-    private ProjectMetricsCollection $projectMetrics;
 
     private array $data;
     private int $maxCC;
@@ -36,19 +35,17 @@ class ProjectCalculator implements CalculatorInterface
 
     public function beforeTraverse(): void
     {
-        $this->projectMetrics = $this->metrics->get('project');
-
         $this->data = [
-            'OverallMostComplexFile' => [],
-            'OverallMostComplexClass' => [],
-            'OverallMostComplexMethod' => [],
-            'OverallMostComplexFunction' => [],
-            'OverallMaxCC' => 0,
-            'OverallAvgCC' => 0,
-            'OverallAvgCCFile' => 0,
-            'OverallAvgCCClass' => 0,
-            'OverallAvgCCMethod' => 0,
-            'OverallAvgCCFunction' => 0,
+            'overallMostComplexFile' => [],
+            'overallMostComplexClass' => [],
+            'overallMostComplexMethod' => [],
+            'overallMostComplexFunction' => [],
+            'overallMaxCC' => 0,
+            'overallAvgCC' => 0,
+            'overallAvgCCFile' => 0,
+            'overallAvgCCClass' => 0,
+            'overallAvgCCMethod' => 0,
+            'overallAvgCCFunction' => 0,
         ];
 
         $this->maxCC = 0;
@@ -85,29 +82,37 @@ class ProjectCalculator implements CalculatorInterface
 
         switch (true) {
             case $metrics instanceof FileMetricsCollection:
-                $this->data['OverallMostComplexFile'][$metrics->getName()] = $cc;
+                $this->data['overallMostComplexFile'][$metrics->getName()] = $cc;
                 $this->maxCCFile = max($this->maxCCFile, $cc);
                 $this->sumCCFile += $cc;
                 $this->miSum += $metrics->get('maintainabilityIndex')->getValue();
                 break;
 
             case $metrics instanceof FunctionMetricsCollection:
-                $this->data['OverallMostComplexFunction'][$metrics->getName()] = $cc;
+                $this->data['overallMostComplexFunction'][$metrics->getName()] = $cc;
                 $this->maxCCFunction = max($this->maxCCFunction, $cc);
                 $this->sumCCFunction += $cc;
                 break;
 
             case $metrics instanceof ClassMetricsCollection:
-                $this->data['OverallMostComplexClass'][$metrics->getName()] = $cc;
+                $this->data['overallMostComplexClass'][$metrics->getName()] = $cc;
                 $this->maxCCClass = max($this->maxCCClass, $cc);
                 $this->sumCCClass += $cc;
 
                 $this->lcomSum += $metrics->get('lcom')?->getValue() ?? 0;
 
-                foreach ($metrics->get('methods') as $methodMetric) {
-                    $methodCC = $methodMetric->get('cc')->getValue();
+                $methodCollection = $this->metricsController->getCollectionByIdentifierString(
+                    (string) $metrics->getIdentifier(),
+                    'methods'
+                );
 
-                    $this->data['OverallMostComplexMethod'][$metrics->getName() . '::' . $methodMetric->getName()] = $methodCC;
+                foreach ($methodCollection as $methodIdentifierString => $methodName) {
+                    $methodCC = $this->metricsController->getMetricValueByIdentifierString(
+                        $methodIdentifierString,
+                        'cc'
+                    )->getValue();
+
+                    $this->data['overallMostComplexMethod'][$metrics->getName() . '::' . $methodName] = $methodCC;
                     $this->maxCCMethod = max($methodCC, $this->maxCCMethod);
                     $this->sumCCMethod += $methodCC;
                 }
@@ -136,31 +141,40 @@ class ProjectCalculator implements CalculatorInterface
             $this->data[$key] = $output;
         }
 
-        $fileCount = $this->projectMetrics->get('OverallFiles') ?? 0;
-        $classCount = $this->projectMetrics->get('OverallClasses') ?? 0;
-        $functionCount = $this->projectMetrics->get('OverallFunctions') ?? 0;
-        $methodCount = $this->projectMetrics->get('OverallMethods') ?? 0;
+        $metricValues = $this->metricsController->getMetricValues(
+            MetricCollectionTypeEnum::ProjectCollection,
+            null,
+            [
+                'overallFiles',
+                'overallClasses',
+                'overallFunctions',
+                'overallMethods',
+            ]
+        );
 
-        $this->data['OverallMaxCC'] = $this->maxCC;
-        $this->data['OverallMaxCCFile'] = $this->maxCCFile;
-        $this->data['OverallMaxCCClass'] = $this->maxCCClass;
-        $this->data['OverallMaxCCMethod'] = $this->maxCCMethod;
-        $this->data['OverallMaxCCFunction'] = $this->maxCCFunction;
-        $this->data['OverallAvgCC'] = $this->getAvgOrZero($this->sumCC, $this->metricCount);
-        $this->data['OverallAvgCCFile'] = $this->getAvgOrZero($this->sumCCFile, $fileCount);
-        $this->data['OverallAvgCCClass'] = $this->getAvgOrZero($this->sumCCClass, $classCount);
-        $this->data['OverallAvgCCMethod'] = $this->getAvgOrZero($this->sumCCMethod, $methodCount);
-        $this->data['OverallAvgCCFunction'] = $this->getAvgOrZero($this->sumCCFunction, $functionCount);
-        $this->data['OverallAvgLcom'] = $this->getAvgOrZero($this->lcomSum, $classCount);
-        $this->data['OverallAvgMI'] = $this->getAvgOrZero($this->miSum, $fileCount);
-        $this->data['OverallCommentWeight'] = $this->getAvgOrZero($this->commentWeightSum, $this->metricCount);
-
-        foreach ($this->data as $key => $value) {
-            $this->projectMetrics->set($key, $value);
+        foreach ($metricValues as $key => &$metricValue) {
+            $metricValue = $metricValue?->getValue() ?? 0;
         }
 
-        $this->metrics->set('project', $this->projectMetrics);
+        $this->data['overallMaxCC'] = $this->maxCC;
+        $this->data['overallMaxCCFile'] = $this->maxCCFile;
+        $this->data['overallMaxCCClass'] = $this->maxCCClass;
+        $this->data['overallMaxCCMethod'] = $this->maxCCMethod;
+        $this->data['overallMaxCCFunction'] = $this->maxCCFunction;
+        $this->data['overallAvgCC'] = $this->getAvgOrZero($this->sumCC, $this->metricCount);
+        $this->data['overallAvgCCFile'] = $this->getAvgOrZero($this->sumCCFile, $metricValues['overallFiles']);
+        $this->data['overallAvgCCClass'] = $this->getAvgOrZero($this->sumCCClass, $metricValues['overallClasses']);
+        $this->data['overallAvgCCMethod'] = $this->getAvgOrZero($this->sumCCMethod, $metricValues['overallMethods']);
+        $this->data['overallAvgCCFunction'] = $this->getAvgOrZero($this->sumCCFunction, $metricValues['overallFunctions']);
+        $this->data['overallAvgLcom'] = $this->getAvgOrZero($this->lcomSum, $metricValues['overallClasses']);
+        $this->data['overallAvgMI'] = $this->getAvgOrZero($this->miSum, $metricValues['overallFiles']);
+        $this->data['overallCommentWeight'] = $this->getAvgOrZero($this->commentWeightSum, $this->metricCount);
 
+        $this->metricsController->setMetricValues(
+            MetricCollectionTypeEnum::ProjectCollection,
+            null,
+            $this->data
+        );
     }
 
     private function getAvgOrZero(int|float $value, int $count): int|float

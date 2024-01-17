@@ -11,9 +11,11 @@ use PhpCodeArch\Calculators\CalculatorService;
 use PhpCodeArch\Calculators\CouplingCalculator;
 use PhpCodeArch\Calculators\FileCalculator;
 use PhpCodeArch\Calculators\Helpers\PackageInstabilityAbstractnessCalculator;
+use PhpCodeArch\Calculators\ProjectCalculator;
 use PhpCodeArch\Calculators\VariablesCalculator;
 use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\Model\MetricsContainer;
+use PhpCodeArch\Metrics\Model\ProjectMetrics\ProjectMetricsCollection;
 use PhpCodeArch\Report\ReportTypeNotSupported;
 use PhpParser\NodeTraverser;
 use PhpParser\ParserFactory;
@@ -154,9 +156,7 @@ final readonly class Application
             new FileCalculator($this->metricsController),
             new VariablesCalculator($this->metricsController),
             new CouplingCalculator($this->metricsController, $packageIACalculator),
-            /*
-            new ProjectCalculator($metricsCollection, []),
-            */
+            new ProjectCalculator($this->metricsController),
         ], $this->metricsController, $output);
 
         $calculatorService->run();
