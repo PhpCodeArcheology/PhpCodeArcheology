@@ -271,7 +271,6 @@ return [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::PackageCollection,
         ],
     ],
-
     [
         'key' => 'singleName',
         'name' => 'Name of the file',
@@ -879,6 +878,17 @@ return [
         ],
     ],
     [
+        'key' => 'usesForInstability',
+        'name' => 'Uses count',
+        'shortName' => 'UC',
+        'description' => 'Uses count für instability calculation.',
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
+        ],
+    ],
+    [
         'key' => 'usesForInstabilityCount',
         'name' => 'Uses count',
         'shortName' => 'UC',
@@ -889,7 +899,50 @@ return [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
         ],
     ],
-
+    [
+        'key' => 'usedFromOutside',
+        'name' => 'Uses from outside count',
+        'shortName' => 'UfoC',
+        'description' => '',
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
+        ],
+    ],
+    [
+        'key' => 'usedFromOutsideCount',
+        'name' => 'Uses from outside count',
+        'shortName' => 'UfoC',
+        'description' => '',
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
+        ],
+    ],
+    [
+        'key' => 'usedByFunction',
+        'name' => 'Uses from outside count',
+        'shortName' => 'UfoC',
+        'description' => '',
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
+        ],
+    ],
+    [
+        'key' => 'usedByFunctionCount',
+        'name' => 'Uses from outside count',
+        'shortName' => 'UfoC',
+        'description' => '',
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
+        ],
+    ],
 
 
     [

@@ -349,6 +349,24 @@ class MetricsController
         $this->getCollection($metricsType, $identifierData, $collectionKey)->setUnique($value, $key);
     }
 
+    public function setCollectionDataOrCreateEmptyCollection(
+        MetricCollectionTypeEnum $metricsType,
+        ?string $identifierData,
+        string $collectionKey,
+        ?string $key,
+        mixed $value,
+        CollectionInterface $collection): void
+    {
+        $foundCollection = $this->getCollection($metricsType, $identifierData, $collectionKey);
+
+        if ($foundCollection === null) {
+            $this->setCollection($metricsType, $identifierData, $collection, $collectionKey);
+        }
+
+        $this->setCollectionData($metricsType, $identifierData, $collectionKey, $key, $value);
+    }
+
+
     private function createPackageMetricsCollection(string $name): PackageMetricsCollection
     {
         $packageMetrics = new PackageMetricsCollection($name);
@@ -360,7 +378,7 @@ class MetricsController
         return $packageMetrics;
     }
 
-    public function getCollection(MetricCollectionTypeEnum $metricsType, ?array $identifierData, string $collectionKey): CollectionInterface
+    public function getCollection(MetricCollectionTypeEnum $metricsType, ?array $identifierData, string $collectionKey): ?CollectionInterface
     {
         return $this->getMetricCollection($metricsType, $identifierData)->getCollection($collectionKey);
     }
@@ -381,5 +399,31 @@ class MetricsController
         foreach ($keyValuePairs as $key => $value) {
             $this->setMetricDataWithIdentifierString($identifierString, $key, $value);
         }
+    }
+
+    public function getMetricValueByIdentifierString(string $identifierString, string $key): ?MetricValue
+    {
+        return $this->metricsContainer->get($identifierString)->get($key);
+    }
+
+    public function getCollectionByIdentifierString(string $identifierString, string $collectionKey): ?CollectionInterface
+    {
+        return $this->metricsContainer->get($identifierString)->getCollection($collectionKey);
+    }
+
+    /**
+     * @param string $identifierString
+     * @param array $metricKeys
+     * @return MetricValue[]|null[]
+     */
+    public function getMetricValuesByIdentifierString(string $identifierString, array $metricKeys): array
+    {
+        $metricValues = [];
+
+        foreach ($metricKeys as $key) {
+            $metricValues[$key] = $this->getMetricValueByIdentifierString($identifierString, $key);
+        }
+
+        return $metricValues;
     }
 }

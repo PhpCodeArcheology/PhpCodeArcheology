@@ -8,6 +8,7 @@ use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 use PhpCodeArch\Metrics\Model\Collections\ClassNameCollection;
 use PhpCodeArch\Metrics\Model\Collections\FileNameCollection;
 use PhpCodeArch\Metrics\Model\Collections\FunctionNameCollection;
+use PhpCodeArch\Metrics\Model\Collections\PackageNameCollection;
 use PhpCodeArch\Metrics\Model\PackageMetrics\PackageMetricsCollection;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
@@ -146,6 +147,15 @@ class PackageVisitor implements NodeVisitor, VisitorInterface
 
         if (! in_array($packageName, $this->packages)) {
             $this->packages[] = $packageName;
+
+            $this->metricsController->setCollectionDataOrCreateEmptyCollection(
+                MetricCollectionTypeEnum::ProjectCollection,
+                null,
+                'packages',
+                null,
+                $packageName,
+                new PackageNameCollection()
+            );
 
             $this->metricsController->createMetricCollection(
                 MetricCollectionTypeEnum::PackageCollection,

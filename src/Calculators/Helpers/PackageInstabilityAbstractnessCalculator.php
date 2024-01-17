@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Calculators\Helpers;
 
-use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
-use PhpCodeArch\Metrics\Model\MetricsContainer;
+use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 
 class PackageInstabilityAbstractnessCalculator
 {
@@ -20,12 +20,18 @@ class PackageInstabilityAbstractnessCalculator
     private array $concreteClasses = [];
     private string $currentPackage;
 
-    public function __construct(private MetricsContainer $metrics)
+    public function __construct(private MetricsController $metricsController)
     {}
 
     public function beforeTraverse(): void
     {
-        $packages = array_flip($this->metrics->get('packages') ?? []);
+        $packagesCollection = $this->metricsController->getCollection(
+            MetricCollectionTypeEnum::ProjectCollection,
+            null,
+            'packages'
+        );
+
+        $packages = array_flip($packagesCollection->getAsArray());
 
         $this->packages = array_map(function() {
             return [
@@ -38,43 +44,57 @@ class PackageInstabilityAbstractnessCalculator
     public function afterTraverse(): void
     {
         foreach ($this->packages as $packageName => $packageData) {
-            $packageMetric = $this->metrics->get($packageName);
-
-            if (! $packageMetric) {
-                continue;
-            }
-
-            foreach ($packageData as $key => $value) {
-                $packageMetric->set($key, $value);
-            }
-
             if (! isset($this->abstractClasses[$packageName]) || ! isset($this->concreteClasses[$packageName])) {
-                $packageMetric->set('instability', 0);
-                $packageMetric->set('abstractness', 0);
-                $packageMetric->set('distanceFromMainline', 0);
-
-                $this->metrics->set($packageName, $packageMetric);
+                $this->metricsController->setMetricValues(
+                    MetricCollectionTypeEnum::PackageCollection,
+                    ['name' => $packageName],
+                    [
+                        'instability' => 0,
+                        'abstractness' => 0,
+                        'distanceFromMainline' => 0,
+                    ],
+                );
                 continue;
             }
 
+            $packageMetrics = $this->metricsController->getMetricValues(
+                MetricCollectionTypeEnum::PackageCollection,
+                ['name' => $packageName],
+                [
+                    'usesCount',
+                    'usedByCount',
+                ],
+            );
 
-            $instability = ($packageMetric->get('usesCount') + $packageMetric->get('usedByCount')) > 0 ? $packageMetric->get('usesCount') / ($packageMetric->get('usesCount') + $packageMetric->get('usedByCount')) : 0;
+            $instability = ($packageMetrics['usesCount'] + $packageMetrics['usedByCount']) > 0 ? $packageMetrics['usesCount'] / ($packageMetrics['usesCount'] + $packageMetrics['usedByCount']) : 0;
             $abstractness = (count($this->abstractClasses[$packageName]) + count($this->concreteClasses[$packageName])) > 0 ?
                 count($this->abstractClasses[$packageName]) / (count($this->abstractClasses[$packageName]) + count($this->concreteClasses[$packageName]))
                 : 0;
             $distanceFromMainline = $abstractness + $instability - 1;
 
-            $packageMetric->set('instability', $instability);
-            $packageMetric->set('abstractness', $abstractness);
-            $packageMetric->set('distanceFromMainline', $distanceFromMainline);
+            $newPackageMetrics = [
+                'instability' => $instability,
+                'abstractness' => $abstractness,
+                'distanceFromMainline' => $distanceFromMainline,
+            ];
 
-            $this->metrics->set($packageName, $packageMetric);
+            $this->metricsController->setMetricValues(
+                MetricCollectionTypeEnum::PackageCollection,
+                ['name' => $packageName],
+                $newPackageMetrics
+            );
         }
     }
 
-    public function handlePackage(ClassMetricsCollection $metric): array
+    public function handlePackage(string $identifierString, $className): array
     {
-        $package = $metric->get('package');
+        $classMetrics = $this->metricsController->getMetricValuesByIdentifierString(
+            $identifierString,
+            ['package', 'realClass', 'abstract', 'interface']
+        );
+
+        $package = $classMetrics['package']->getValue();
+
         $this->currentPackage = $package;
 
         if (! isset($this->packagesMap['uses'][$package])) {
@@ -92,10 +112,10 @@ class PackageInstabilityAbstractnessCalculator
             $this->concreteClasses[$package] = [];
         }
 
-        if (($metric->get('realClass') && $metric->get('abstract') || $metric->get('interface')) && ! in_array($metric->getName(), $this->abstractClasses[$package])) {
-            $this->abstractClasses[$package][] = $metric->getName();
-        } elseif ($metric->get('realClass') && ! in_array($metric->getName(), $this->abstractClasses[$package])) {
-            $this->concreteClasses[$package][] = $metric->getName();
+        if (($classMetrics['realClass'] && $classMetrics['abstract'] || $classMetrics['interface']) && ! in_array($className, $this->abstractClasses[$package])) {
+            $this->abstractClasses[$package][] = $className;
+        } elseif ($classMetrics['realClass'] && ! in_array($className, $this->abstractClasses[$package])) {
+            $this->concreteClasses[$package][] = $className;
         }
 
         return [
@@ -104,15 +124,17 @@ class PackageInstabilityAbstractnessCalculator
         ];
     }
 
-    public function handleDependency(string $dependency, ClassMetricsCollection $usedByMetric, bool $isTrait): void
+    public function handleDependency(string $dependency, string $identifierString, bool $isTrait): void
     {
-        if ($this->currentPackage !== $usedByMetric->get('package') && ! $isTrait) {
+        $usedByMetric = $this->metricsController->getMetricCollectionByIdentifierString($identifierString);
+
+        if ($this->currentPackage !== $usedByMetric->get('package')->getValue() && ! $isTrait) {
             if (! in_array($dependency, $this->packagesMap['uses'][$this->currentPackage])) {
                 ++ $this->packages[$this->currentPackage]['usesCount'];
                 $this->packagesMap['uses'][$this->currentPackage][] = $dependency;
             }
             if (! in_array($dependency, $this->packagesMap['usedBy'][$this->currentPackage])) {
-                ++ $this->packages[$usedByMetric->get('package')]['usedByCount'];
+                ++ $this->packages[$usedByMetric->get('package')->getValue()]['usedByCount'];
                 $this->packagesMap['usedBy'][$this->currentPackage][] = $usedByMetric->getName();
             }
         }

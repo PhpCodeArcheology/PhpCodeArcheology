@@ -56,4 +56,9 @@ trait CollectionTrait
     {
         return new \ArrayIterator($this->items);
     }
+
+    public function getAsArray(): array
+    {
+        return $this->items;
+    }
 }

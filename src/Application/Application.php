@@ -8,7 +8,9 @@ use PhpCodeArch\Application\ConfigFile\ConfigFileFinder;
 use PhpCodeArch\Application\ConfigFile\Exceptions\ConfigFileExtensionNotSupportedException;
 use PhpCodeArch\Application\ConfigFile\Exceptions\MultipleConfigFilesException;
 use PhpCodeArch\Calculators\CalculatorService;
+use PhpCodeArch\Calculators\CouplingCalculator;
 use PhpCodeArch\Calculators\FileCalculator;
+use PhpCodeArch\Calculators\Helpers\PackageInstabilityAbstractnessCalculator;
 use PhpCodeArch\Calculators\VariablesCalculator;
 use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\Model\MetricsContainer;
@@ -146,30 +148,13 @@ final readonly class Application
      */
     public function runCalculators(CliOutput $output): void
     {
-        //$packageIACalculator = new PackageInstabilityAbstractnessCalculator($metricsCollection);
+        $packageIACalculator = new PackageInstabilityAbstractnessCalculator($this->metricsController);
 
         $calculatorService = new CalculatorService([
             new FileCalculator($this->metricsController),
             new VariablesCalculator($this->metricsController),
+            new CouplingCalculator($this->metricsController, $packageIACalculator),
             /*
-            new VariablesCalculator($metricsCollection, [
-                'superglobalsUsed',
-                'distinctSuperglobalsUsed',
-                'variablesUsed',
-                'distinctVariablesUsed',
-                'constantsUsed',
-                'distinctConstantsUsed',
-                'superglobalMetric',
-            ]),
-            new CouplingCalculator($metricsCollection, [
-                'uses',
-                'usesCount',
-                'usedBy',
-                'usedByCount',
-                'usesInProject',
-                'usesInProjectCount',
-                'usesForInstabilityCount',
-            ], $packageIACalculator),
             new ProjectCalculator($metricsCollection, []),
             */
         ], $this->metricsController, $output);

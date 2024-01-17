@@ -160,7 +160,7 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface
         }
 
         switch (true) {
-            case count($this->currentClassMetrics) > 0:
+            case count($this->currentClassName) > 0:
                 $className = end($this->currentClassName);
 
                 if (in_array($dependency, $this->classDependencies[$className])) {
