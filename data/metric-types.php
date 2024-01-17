@@ -191,7 +191,6 @@ return [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
         ],
     ],
-
     [
         'key' => 'originalEncoding',
         'name' => 'File encoding',
@@ -203,7 +202,75 @@ return [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
         ],
     ],
-
+    [
+        'key' => 'commonPath',
+        'name' => 'Common path',
+        'shortName' => '',
+        'description' => '',
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_STRING,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
+        ],
+    ],
+    [
+        'key' => 'fullName',
+        'name' => 'Full path',
+        'shortName' => '',
+        'description' => '',
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_STRING,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
+        ],
+    ],
+    [
+        'key' => 'projectPath',
+        'name' => 'Project path',
+        'shortName' => '',
+        'description' => '',
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_STRING,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
+        ],
+    ],
+    [
+        'key' => 'dirName',
+        'name' => 'Dir name',
+        'shortName' => '',
+        'description' => '',
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_STRING,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
+        ],
+    ],
+    [
+        'key' => 'fileName',
+        'name' => 'File name',
+        'shortName' => '',
+        'description' => '',
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_STRING,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
+        ],
+    ],
+    [
+        'key' => 'filePath',
+        'name' => 'File path',
+        'shortName' => '',
+        'description' => '',
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_STRING,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FunctionCollection,
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::MethodCollection,
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::PackageCollection,
+        ],
+    ],
 
     [
         'key' => 'singleName',

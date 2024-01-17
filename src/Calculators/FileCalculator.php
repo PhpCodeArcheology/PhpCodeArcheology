@@ -4,9 +4,13 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Calculators;
 
+use PhpCodeArch\Analysis\HalsteadMetricsVisitor;
+use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsEnum;
 use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
+use PhpCodeArch\Metrics\Model\MetricValue;
+use PhpCodeArch\Metrics\Model\PackageMetrics\PackageMetricsCollection;
 
 class FileCalculator implements CalculatorInterface
 {
@@ -32,9 +36,12 @@ class FileCalculator implements CalculatorInterface
             $commonPath .= '/';
         }
 
-        $projectMetrics = $this->metrics->get('project');
-        $projectMetrics->set('commonPath', $commonPath);
-        $this->metrics->set('project', $projectMetrics);
+        $this->metricsController->setMetricValue(
+            MetricCollectionTypeEnum::ProjectCollection,
+            null,
+            $commonPath,
+            'commonPath'
+        );
 
         foreach ($this->files as $key => $fileName) {
             $projectPath = $fileName;
@@ -43,14 +50,22 @@ class FileCalculator implements CalculatorInterface
             }
             $pathInfo = pathinfo($projectPath);
 
-            $fileMetric = $this->metrics->get($key);
+            $fileMetrics = [
+                'fullName' => $fileName,
+                'projectPath' => $projectPath,
+                'dirName' => $pathInfo['dirname'],
+                'fileName' => $pathInfo['basename'],
+            ];
 
-            $fileMetric->set('fullName', $fileName);
-            $fileMetric->set('projectPath', $projectPath);
-            $fileMetric->set('dirName', $pathInfo['dirname']);
-            $fileMetric->set('fileName', $pathInfo['basename']);
-            $fileMetric->set('projectPath', $projectPath);
+            $this->metricsController->setMetricValues(
+                MetricCollectionTypeEnum::FileCollection,
+                ['path' => $fileName],
+                $fileMetrics
+            );
 
+
+            /*
+             * TODO: Maybe reintegrate this?
             if (count($fileMetric->get('errors')) > 0 || ! $fileMetric->get('loc')) {
                 $metrics = FileMetricsEnum::values();
                 foreach ($metrics as $metricKey) {
@@ -59,14 +74,21 @@ class FileCalculator implements CalculatorInterface
             }
 
             $this->metrics->set($key, $fileMetric);
+            */
         }
 
-        foreach ($this->metrics->getAll() as &$metrics) {
-            if (is_array($metrics) || $metrics instanceof FileMetricsCollection) {
+        foreach ($this->metricsController->getAllCollections() as &$metrics) {
+            if ($metrics instanceof FileMetricsCollection) {
                 continue;
             }
 
-            $metrics->set('filePath', str_replace($commonPath, '', $metrics->getPath()));
+            $metricType = $this->metricsController->getMetricTypeByKey('filePath');
+            $value = MetricValue::ofValueAndType(
+                str_replace($commonPath, '', $metrics->getPath()),
+                $metricType
+            );
+
+            $metrics->set('filePath', $value);
         }
     }
 

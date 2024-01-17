@@ -7,6 +7,8 @@ namespace PhpCodeArch\Application;
 use PhpCodeArch\Application\ConfigFile\ConfigFileFinder;
 use PhpCodeArch\Application\ConfigFile\Exceptions\ConfigFileExtensionNotSupportedException;
 use PhpCodeArch\Application\ConfigFile\Exceptions\MultipleConfigFilesException;
+use PhpCodeArch\Calculators\CalculatorService;
+use PhpCodeArch\Calculators\FileCalculator;
 use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\Model\MetricsContainer;
 use PhpCodeArch\Report\ReportTypeNotSupported;
@@ -29,45 +31,12 @@ final readonly class Application
         $config = $this->createConfig($argv);
         $fileList = $this->createFileList($config);
 
-        $metricsCollection = new MetricsContainer();
-        $this->metricsController = new MetricsController($metricsCollection);
-        $this->metricsController->registerMetricTypes();
-        $this->metricsController->createProjectMetricsCollection($config->get('files'));
-
         $output = new CliOutput();
 
+        $this->createMetricController($config);
         $this->createAndRunAnalyzer($config, $fileList, $output);
+        $this->runCalculators($output);
         /*
-
-
-
-
-        $packageIACalculator = new PackageInstabilityAbstractnessCalculator($metricsCollection);
-
-        $calculatorService = new CalculatorService([
-            new FileCalculator($metricsCollection, []),
-            new VariablesCalculator($metricsCollection, [
-                'superglobalsUsed',
-                'distinctSuperglobalsUsed',
-                'variablesUsed',
-                'distinctVariablesUsed',
-                'constantsUsed',
-                'distinctConstantsUsed',
-                'superglobalMetric',
-            ]),
-            new CouplingCalculator($metricsCollection, [
-                'uses',
-                'usesCount',
-                'usedBy',
-                'usedByCount',
-                'usesInProject',
-                'usesInProjectCount',
-                'usesForInstabilityCount',
-            ], $packageIACalculator),
-            new ProjectCalculator($metricsCollection, []),
-        ], $metricsCollection, $this->metricsManager, $output);
-
-        $calculatorService->run();
 
         $predictions = new PredictionService([
             new TooLongPrediction(),
@@ -155,5 +124,54 @@ final readonly class Application
             $output);
 
         $analyzer->analyze($fileList);
+    }
+
+    /**
+     * @param Config $config
+     * @return void
+     */
+    public function createMetricController(Config $config): void
+    {
+        $metricsCollection = new MetricsContainer();
+        $this->metricsController = new MetricsController($metricsCollection);
+        $this->metricsController->registerMetricTypes();
+        $this->metricsController->createProjectMetricsCollection($config->get('files'));
+    }
+
+    /**
+     * @param $metricsCollection
+     * @param CliOutput $output
+     * @return void
+     */
+    public function runCalculators(CliOutput $output): void
+    {
+        //$packageIACalculator = new PackageInstabilityAbstractnessCalculator($metricsCollection);
+
+        $calculatorService = new CalculatorService([
+            new FileCalculator($this->metricsController),
+            /*
+            new VariablesCalculator($metricsCollection, [
+                'superglobalsUsed',
+                'distinctSuperglobalsUsed',
+                'variablesUsed',
+                'distinctVariablesUsed',
+                'constantsUsed',
+                'distinctConstantsUsed',
+                'superglobalMetric',
+            ]),
+            new CouplingCalculator($metricsCollection, [
+                'uses',
+                'usesCount',
+                'usedBy',
+                'usedByCount',
+                'usesInProject',
+                'usesInProjectCount',
+                'usesForInstabilityCount',
+            ], $packageIACalculator),
+            new ProjectCalculator($metricsCollection, []),
+            */
+        ], $this->metricsController, $output);
+
+        $calculatorService->run();
     }
 }

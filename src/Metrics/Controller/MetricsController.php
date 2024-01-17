@@ -38,6 +38,16 @@ class MetricsController
     {
     }
 
+    public function getContainerCount(): int
+    {
+        return $this->metricsContainer->getCount();
+    }
+
+    public function getAllCollections(): array
+    {
+        return $this->metricsContainer->getAll();
+    }
+
     /**
      * @return void
      */
@@ -181,7 +191,7 @@ class MetricsController
         };
     }
 
-    public function getMetricsValue(
+    public function getMetricValue(
         MetricCollectionTypeEnum $metricsType,
         ?array $identifierData,
         string $key): ?MetricValue
@@ -219,7 +229,7 @@ class MetricsController
         string|\Closure $callback
     ): void
     {
-        $value = $this->getMetricsValue($metricsType, $identifierData, $key)?->getValue() ?? null;
+        $value = $this->getMetricValue($metricsType, $identifierData, $key)?->getValue() ?? null;
         $this->setMetricValue($metricsType, $identifierData, call_user_func($callback, $value), $key);
     }
 
@@ -348,5 +358,16 @@ class MetricsController
     public function getCollection(MetricCollectionTypeEnum $metricsType, ?array $identifierData, string $collectionKey): CollectionInterface
     {
         return $this->getMetricCollection($metricsType, $identifierData)->getCollection($collectionKey);
+    }
+
+    public function getMetricValues(MetricCollectionTypeEnum $metricsType, array $identifierData, array $keys): object
+    {
+        $metricValues = [];
+
+        foreach ($keys as $key) {
+            $metricValues[$key] = $this->getMetricValue($metricsType, $identifierData, $key);
+        }
+
+        return (object) $metricValues;
     }
 }

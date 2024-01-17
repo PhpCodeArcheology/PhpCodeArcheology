@@ -18,14 +18,9 @@ readonly class CalculatorService
         /**
          * @var MetricsContainer
          */
-        private MetricsContainer  $metrics,
-        private MetricsController $metricsManager,
+        private MetricsController $metricsController,
         private CliOutput         $output)
     {
-        foreach ($this->calculators as $calculator) {
-            $usedMetricTypes = $this->metricsManager->getMetricTypesByKeys($calculator->getUsedMetricTypeKeys());
-            $calculator->setUsedMetricTypes($usedMetricTypes);
-        }
     }
 
     public function run(): void
@@ -33,19 +28,15 @@ readonly class CalculatorService
         $this->maybeCallMethod('beforeTraverse');
 
         $count = 0;
-        $metricCount = number_format(count(array_filter($this->metrics->getAll(), function ($metric) {
-            return ! is_array($metric);
-        })));
-        foreach ($this->metrics->getAll() as $metric) {
-            if (is_array($metric)) {
-                continue;
-            }
 
+        $metricsCollectionCount = $this->metricsController->getContainerCount();
+
+        foreach ($this->metricsController->getAllCollections() as $metric) {
             $this->output->cls();
             $this->output->out(
                 "Running calculator on metric \033[34m" .
                 number_format($count + 1) .
-                "\033[0m of \033[32m$metricCount\033[0m... " .
+                "\033[0m of \033[32m$metricsCollectionCount\033[0m... " .
                 memory_get_usage() . " bytes of memory"
             );
 

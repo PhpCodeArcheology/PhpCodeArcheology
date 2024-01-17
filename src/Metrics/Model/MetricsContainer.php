@@ -91,4 +91,9 @@ class MetricsContainer
     {
         $this->metrics[(string) $metrics->getIdentifier()] = $metrics;
     }
+
+    public function getCount(): int
+    {
+        return count($this->metrics);
+    }
 }

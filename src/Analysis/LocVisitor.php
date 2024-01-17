@@ -206,7 +206,7 @@ class LocVisitor implements NodeVisitor, VisitorInterface
      */
     public function afterTraverse(array $nodes): void
     {
-        $llocFile = $this->metricsController->getMetricsValue(
+        $llocFile = $this->metricsController->getMetricValue(
             MetricCollectionTypeEnum::FileCollection,
             ['path' => $this->path],
             'lloc'
