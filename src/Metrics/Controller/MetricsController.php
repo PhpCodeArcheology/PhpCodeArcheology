@@ -16,6 +16,7 @@ use PhpCodeArch\Metrics\Model\MetricsContainer;
 use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
 use PhpCodeArch\Metrics\Model\MetricType;
 use PhpCodeArch\Metrics\Model\MetricValue;
+use PhpCodeArch\Metrics\Model\PackageMetrics\PackageMetricsCollection;
 use PhpCodeArch\Metrics\Model\ProjectMetrics\ProjectMetricsCollection;
 
 class MetricsController
@@ -175,6 +176,7 @@ class MetricsController
             MetricCollectionTypeEnum::ProjectCollection => $this->createProjectMetricsCollection($identifierData['files']),
             MetricCollectionTypeEnum::FileCollection => $this->createFileMetricsCollection($identifierData['path']),
             MetricCollectionTypeEnum::ClassCollection => $this->createClassMetricsCollection($identifierData['path'], $identifierData['name']),
+            MetricCollectionTypeEnum::PackageCollection => $this->createPackageMetricsCollection($identifierData['name']),
             MetricCollectionTypeEnum::MethodCollection, MetricCollectionTypeEnum::FunctionCollection => $this->createFunctionMetricsCollection($identifierData['path'], $identifierData['name']),
         };
     }
@@ -267,6 +269,7 @@ class MetricsController
                 $identifierData['name'],
                 $identifierData['path']
             ),
+            MetricCollectionTypeEnum::PackageCollection => $identifierData['name'],
             default => 'unidentified',
         };
     }
@@ -300,7 +303,7 @@ class MetricsController
         return $this->metricsContainer->get($identifierString);
     }
 
-    private function createClassMetricsCollection(mixed $path, mixed $name): ClassMetricsCollection
+    private function createClassMetricsCollection(mixed $path, string $name): ClassMetricsCollection
     {
         $classMetrics = new ClassMetricsCollection($path, $name);
         $this->metricsContainer->set(
@@ -315,12 +318,35 @@ class MetricsController
         MetricCollectionTypeEnum $metricsType,
         ?array $identifierData,
         string $collectionKey,
-        string $key,
+        ?string $key,
         mixed $value): void
     {
-        $this->getMetricCollection($metricsType, $identifierData)->getCollection($collectionKey)->set(
-            $value,
-            $key,
+        $this->getCollection($metricsType, $identifierData, $collectionKey)->set($value, $key);
+    }
+
+    public function setCollectionDataUnique(
+        MetricCollectionTypeEnum $metricsType,
+        ?array $identifierData,
+        string $collectionKey,
+        ?string $key,
+        mixed $value): void
+    {
+        $this->getCollection($metricsType, $identifierData, $collectionKey)->setUnique($value, $key);
+    }
+
+    private function createPackageMetricsCollection(string $name): PackageMetricsCollection
+    {
+        $packageMetrics = new PackageMetricsCollection($name);
+        $this->metricsContainer->set(
+            (string) $packageMetrics->getIdentifier(),
+            $packageMetrics
         );
+
+        return $packageMetrics;
+    }
+
+    public function getCollection(MetricCollectionTypeEnum $metricsType, ?array $identifierData, string $collectionKey): CollectionInterface
+    {
+        return $this->getMetricCollection($metricsType, $identifierData)->getCollection($collectionKey);
     }
 }

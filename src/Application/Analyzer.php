@@ -12,6 +12,7 @@ use PhpCodeArch\Analysis\IdentifyVisitor;
 use PhpCodeArch\Analysis\LcomVisitor;
 use PhpCodeArch\Analysis\LocVisitor;
 use PhpCodeArch\Analysis\MaintainabilityIndexVisitor;
+use PhpCodeArch\Analysis\PackageVisitor;
 use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 use PhpCodeArch\Metrics\Model\Collections\ErrorCollection;
@@ -63,9 +64,7 @@ readonly class Analyzer
             HalsteadMetricsVisitor::class,
             MaintainabilityIndexVisitor::class,
             LcomVisitor::class,
-            /*
             PackageVisitor::class,
-            */
         ];
     }
 

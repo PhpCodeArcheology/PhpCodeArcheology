@@ -226,6 +226,20 @@ return [
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FunctionCollection,
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
+        ],
+    ],
+    [
+        'key' => 'package',
+        'name' => 'Package',
+        'shortName' => '',
+        'description' => '',
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_STRING,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_IN_DETAILS,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FunctionCollection,
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
         ],
     ],

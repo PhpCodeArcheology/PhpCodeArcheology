@@ -9,7 +9,7 @@ use PhpCodeArch\Metrics\Model\Collections\ClassNameCollection;
 use PhpCodeArch\Metrics\Model\Collections\EnumNameCollection;
 use PhpCodeArch\Metrics\Model\Collections\FunctionNameCollection;
 use PhpCodeArch\Metrics\Model\Collections\InterfaceNameCollection;
-use PhpCodeArch\Metrics\Model\Collections\MethodNameCollection;
+use PhpCodeArch\Metrics\Model\Collections\FileNameCollection;
 use PhpCodeArch\Metrics\Model\Collections\ParameterCollection;
 use PhpCodeArch\Metrics\Model\Collections\TraitNameCollection;
 use PhpParser\Node;
@@ -79,7 +79,7 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
             'traits' => new TraitNameCollection(),
             'enums' => new EnumNameCollection(),
             'functions' => new FunctionNameCollection(),
-            'methods' => new MethodNameCollection(),
+            'methods' => new FileNameCollection(),
         ];
 
         foreach ($projectCollections as $key => $collection) {
@@ -465,7 +465,7 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
         $this->metricsController->setCollection(
             MetricCollectionTypeEnum::ClassCollection,
             $classIdentifierData,
-            new MethodNameCollection(),
+            new FileNameCollection(),
             'methods'
         );
 

@@ -11,4 +11,5 @@ enum MetricCollectionTypeEnum
     case ClassCollection;
     case FunctionCollection;
     case MethodCollection;
+    case PackageCollection;
 }

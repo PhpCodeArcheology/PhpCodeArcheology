@@ -19,6 +19,20 @@ trait CollectionTrait
         $this->items[$key] = $value;
     }
 
+    public function setUnique(mixed $value, ?string $key = null): void
+    {
+        if (in_array($value, $this->items)) {
+            return;
+        }
+
+        if ($key === null) {
+            $this->items[] = $value;
+            return;
+        }
+
+        $this->items[$key] = $value;
+    }
+
     public function has(string $key): bool
     {
         return isset($this->items[$key]);

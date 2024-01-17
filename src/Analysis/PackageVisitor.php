@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Analysis;
 
-use PhpCodeArch\Metrics\Identity\FileIdentifier;
-use PhpCodeArch\Metrics\Identity\PackageIdentifier;
-use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsFactory;
-use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsFactory;
+use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
+use PhpCodeArch\Metrics\Model\Collections\ClassNameCollection;
+use PhpCodeArch\Metrics\Model\Collections\FileNameCollection;
+use PhpCodeArch\Metrics\Model\Collections\FunctionNameCollection;
 use PhpCodeArch\Metrics\Model\PackageMetrics\PackageMetricsCollection;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
@@ -22,123 +22,172 @@ class PackageVisitor implements NodeVisitor, VisitorInterface
 
     private ?PackageMetricsCollection $currentPackageMetric;
 
+    private array $packageData = [];
+
     public function beforeTraverse(array $nodes): void
     {
         $this->fileNamespace = '_global';
-        $this->currentPackageMetric = null;
+        $this->packageData = [];
+        $this->getCurrentPackageMetric('_global');
     }
 
     public function enterNode(Node $node): void
     {
-        if ($node instanceof Node\Stmt\Namespace_) {
-            $namespace = (string) $node->name;
-
-            $namespaceParts = explode('\\', $namespace);
-            if (count($namespaceParts) > 2) {
-                $namespace = implode('\\', [$namespaceParts[0], $namespaceParts[1]]);
-            }
-
-            $this->fileNamespace = $namespace;
-
-            $this->currentPackageMetric = $this->getCurrentPackageMetric();
-
-            $this->setFileCount();
+        if (! $node instanceof Node\Stmt\Namespace_) {
+            return;
         }
+
+        $namespace = (string) $node->name;
+
+        $namespaceParts = explode('\\', $namespace);
+        if (count($namespaceParts) > 2) {
+            $namespace = implode('\\', [$namespaceParts[0], $namespaceParts[1]]);
+        }
+
+        $this->fileNamespace = $namespace;
+        $this->getCurrentPackageMetric($namespace);
+        $this->setFileCount($namespace);
     }
 
     public function leaveNode(Node $node): void
     {
-        if ($node instanceof Node\Stmt\Class_
-            || $node instanceof Node\Stmt\Interface_
-            || $node instanceof Node\Stmt\Trait_
-            || $node instanceof Node\Stmt\Enum_) {
+        switch (true) {
+            case $node instanceof Node\Stmt\Class_:
+            case $node instanceof Node\Stmt\Interface_:
+            case $node instanceof Node\Stmt\Trait_:
+            case $node instanceof Node\Stmt\Enum_:
+                $className = (string) $node->namespacedName;
 
-            $package = $this->detectPackage($node);
-            $this->currentPackageMetric = $this->getCurrentPackageMetric($package);
+                $package = $this->detectPackage($node);
+                $this->getCurrentPackageMetric($package);
 
-            $classMetric = ClassMetricsFactory::createFromMetricsByNodeAndPath($this->metrics, $node, $this->path);
-            $classId = (string) $classMetric->getIdentifier();
-            $classMetric->set('package', $package);
-            $this->metrics->set($classId, $classMetric);
+                $this->metricsController->setMetricValue(
+                    MetricCollectionTypeEnum::ClassCollection,
+                    [
+                        'path' => $this->path,
+                        'name' => $className,
+                    ],
+                    $package,
+                    'package'
+                );
 
-            $classes = $this->currentPackageMetric->get('classes') ?? [];
-            $classes[] = $classId;
-            $this->currentPackageMetric->set('classes', $classes);
-            $this->metrics->set((string) $this->currentPackageMetric->getIdentifier(), $this->currentPackageMetric);
+                $this->packageData[$package]['classes'][] = (string) $node->namespacedName;
+
+                $classes = $this->metricsController->getCollection(
+                    MetricCollectionTypeEnum::PackageCollection,
+                    ['name' => $package],
+                    'classes'
+                );
+
+                $this->metricsController->setCollectionDataUnique(
+                    MetricCollectionTypeEnum::PackageCollection,
+                    ['name' => $package],
+                    'classes',
+                    null,
+                    $className
+                );
+
+                break;
+
+            case $node instanceof Node\Stmt\Function_:
+                $functionName = (string) $node->namespacedName;
+
+                $package = $this->detectPackage($node);
+                $this->getCurrentPackageMetric($package);
+
+                $this->metricsController->setMetricValue(
+                    MetricCollectionTypeEnum::FunctionCollection,
+                    [
+                        'path' => $this->path,
+                        'name' => (string) $node->namespacedName,
+                    ],
+                    $package,
+                    'package'
+                );
+
+                $this->packageData[$package]['functions'][] = $functionName;
+
+                $this->metricsController->setCollectionDataUnique(
+                    MetricCollectionTypeEnum::PackageCollection,
+                    ['name' => $package],
+                    'classes',
+                    null,
+                    $functionName
+                );
+
+                break;
         }
-        elseif ($node instanceof Node\Stmt\Function_) {
-            $package = $this->detectPackage($node);
-            $this->currentPackageMetric = $this->getCurrentPackageMetric($package);
 
-            $fnMetric = FunctionMetricsFactory::createFromMetricsByNameAndPath($this->metrics, $node->namespacedName, $this->path);
-            $fnId = (string) $fnMetric->getIdentifier();
-            $fnMetric->set('package', $this->fileNamespace);
-            $this->metrics->set($fnId, $fnMetric);
-
-            $functions = $this->currentPackageMetric->get('functions') ?? [];
-            $functions[] = $fnId;
-
-            $this->currentPackageMetric->set('functions', $functions);
-            $this->metrics->set((string) $this->currentPackageMetric->getIdentifier(), $this->currentPackageMetric);
-        }
     }
 
     public function afterTraverse(array $nodes): void
     {
-        $this->currentPackageMetric = $this->getCurrentPackageMetric();
-        $this->setFileCount();
+        $this->metricsController->setMetricValue(
+            MetricCollectionTypeEnum::FileCollection,
+            ['path' => $this->path],
+            $this->fileNamespace,
+            'namespace'
+        );
 
-
-        if ($this->currentPackageMetric->get('functions') === null) {
-            $this->currentPackageMetric->set('functions', []);
-        }
-
-        if ($this->currentPackageMetric->get('classes') === null) {
-            $this->currentPackageMetric->set('classes', []);
-        }
-
-        $fileId = (string)FileIdentifier::ofPath($this->path);
-        $fileMetrics = $this->metrics->get($fileId);
-        $fileMetrics->set('namespace', $this->fileNamespace);
-
-        $this->metrics->set($fileId, $fileMetrics);
-        $this->metrics->set('packages', $this->packages);
-
-        $this->metrics->set((string) $this->currentPackageMetric->getIdentifier(), $this->currentPackageMetric);
+        $this->metricsController->setCollectionDataUnique(
+            MetricCollectionTypeEnum::PackageCollection,
+            ['name' => $this->fileNamespace],
+            'files',
+            null,
+            $this->path
+        );
     }
 
-    private function getCurrentPackageMetric(?string $packageName = null): PackageMetricsCollection
+    private function getCurrentPackageMetric(?string $packageName = null): void
     {
         if (! $packageName) {
             $packageName = $this->fileNamespace;
         }
 
-        if ($this->currentPackageMetric !== null && $this->currentPackageMetric->getName() === $packageName) {
-            return $this->currentPackageMetric;
-        }
+        if (! in_array($packageName, $this->packages)) {
+            $this->packages[] = $packageName;
 
-        $packageId = (string) PackageIdentifier::ofNamespace($packageName);
-        if ($this->metrics->get($packageId) === null) {
-            if (! in_array($packageName, $this->packages)) {
-                $this->packages[] = $packageName;
+            $this->metricsController->createMetricCollection(
+                MetricCollectionTypeEnum::PackageCollection,
+                ['name' => $packageName],
+            );
+
+            $collections = [
+                'classes' => new ClassNameCollection(),
+                'functions' => new FunctionNameCollection(),
+                'files' => new FileNameCollection(),
+            ];
+
+            foreach ($collections as $collectionName => $collectionObject) {
+                $this->metricsController->setCollection(
+                    MetricCollectionTypeEnum::PackageCollection,
+                    ['name' => $packageName],
+                    $collectionObject,
+                    $collectionName
+                );
             }
-
-            return new PackageMetricsCollection($packageId);
         }
 
-        return $this->metrics->get($packageId);
+        if (isset($this->packageData[$packageName])) {
+            return;
+        }
+
+        $this->packageData[$packageName] = [
+            'classes' => [],
+            'functions' => [],
+            'files' => [],
+        ];
     }
 
-    private function setFileCount(): void
+    private function setFileCount(string $package): void
     {
-        $files = $this->currentPackageMetric->get('files') ?? [];
+        $files = $this->packageData[$package]['files'];
 
         if (in_array($this->path, $files)) {
             return;
         }
 
-        $files[] = $this->path;
-        $this->currentPackageMetric->set('files', $files);
+        $this->packageData[$package]['files'][] = $this->path;
     }
 
     private function detectPackage(Node $node): string
