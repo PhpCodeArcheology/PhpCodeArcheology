@@ -9,6 +9,7 @@ use PhpCodeArch\Application\ConfigFile\Exceptions\ConfigFileExtensionNotSupporte
 use PhpCodeArch\Application\ConfigFile\Exceptions\MultipleConfigFilesException;
 use PhpCodeArch\Calculators\CalculatorService;
 use PhpCodeArch\Calculators\FileCalculator;
+use PhpCodeArch\Calculators\VariablesCalculator;
 use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\Model\MetricsContainer;
 use PhpCodeArch\Report\ReportTypeNotSupported;
@@ -149,6 +150,7 @@ final readonly class Application
 
         $calculatorService = new CalculatorService([
             new FileCalculator($this->metricsController),
+            new VariablesCalculator($this->metricsController),
             /*
             new VariablesCalculator($metricsCollection, [
                 'superglobalsUsed',

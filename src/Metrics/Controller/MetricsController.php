@@ -310,6 +310,11 @@ class MetricsController
     {
         $identifierString = $this->getIdentifier($metricsType, $identifierData);
 
+        return $this->getMetricCollectionByIdentifierString($identifierString);
+    }
+
+    public function getMetricCollectionByIdentifierString(string $identifierString): MetricsCollectionInterface
+    {
         return $this->metricsContainer->get($identifierString);
     }
 
@@ -369,5 +374,12 @@ class MetricsController
         }
 
         return (object) $metricValues;
+    }
+
+    public function setMetricValuesByIdentifierString(string $identifierString, array $keyValuePairs): void
+    {
+        foreach ($keyValuePairs as $key => $value) {
+            $this->setMetricDataWithIdentifierString($identifierString, $key, $value);
+        }
     }
 }

@@ -54,6 +54,6 @@ trait CollectionTrait
 
     public function getIterator(): \Traversable
     {
-        return new \ArrayIterator($this);
+        return new \ArrayIterator($this->items);
     }
 }
