@@ -311,6 +311,61 @@ return [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
         ],
     ],
+    [
+        'key' => 'overallAvgUsesCount',
+        'name' => 'Average uses count',
+        'shortName' => '',
+        'description' => '',
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_FLOAT,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
+        ],
+    ],
+    [
+        'key' => 'overallAvgUsedByCount',
+        'name' => 'Average used by count',
+        'shortName' => '',
+        'description' => '',
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_FLOAT,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
+        ],
+    ],
+    [
+        'key' => 'overallAvgInstability',
+        'name' => 'Average instability',
+        'shortName' => '',
+        'description' => '',
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_FLOAT,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
+        ],
+    ],
+    [
+        'key' => 'overallAbstractness',
+        'name' => 'Abstractness',
+        'shortName' => '',
+        'description' => '',
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_FLOAT,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
+        ],
+    ],
+    [
+        'key' => 'overallDistanceFromMainline',
+        'name' => 'Distance from main line',
+        'shortName' => '',
+        'description' => '',
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_FLOAT,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
+        ],
+    ],
 
 
     [
@@ -1006,6 +1061,29 @@ return [
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::PackageCollection,
+        ],
+    ],
+    [
+        'key' => 'abstractness',
+        'name' => 'Abstractness',
+        'shortName' => 'A',
+        'description' => 'Abstractness.',
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_FLOAT,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::PackageCollection,
+        ],
+    ],
+    [
+        'key' => 'distanceFromMainline',
+        'name' => 'Distance from main line',
+        'shortName' => 'Dist',
+        'description' => 'Distance.',
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_FLOAT,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::PackageCollection,
         ],
     ],
 

@@ -96,26 +96,32 @@ class CouplingCalculator implements CalculatorInterface
 
     public function afterTraverse(): void
     {
-        return;
-
         $this->packageCalculator->afterTraverse();
 
         foreach ($this->classes as $classId => $className) {
-            $metric = $this->metrics->get($classId);
+            $metricValues = $this->metricsController->getMetricValuesByIdentifierString(
+                $classId,
+                [
+                    'usesCount',
+                    'usedByCount',
+                    'usesForInstabilityCount',
+                ]
+            );
 
-            $usesCount = $metric->get('usesCount')->getValue();
-            $usedByCount = $metric->get('usedByCount')->getValue();
-
-            $usesForInstabilityCount = $metric->get('usesForInstabilityCount')?->getValue() ?? 0;
+            $usesCount = $metricValues['usesCount']?->getValue() ?? 0;
+            $usedByCount = $metricValues['usedByCount']?->getValue() ?? 0;
+            $usesForInstabilityCount = $metricValues['usesForInstabilityCount']?->getValue() ?? 0;
 
             /**
              * @see https://kariera.future-processing.pl/blog/object-oriented-metrics-by-robert-martin/
              */
             $instability = ($usesForInstabilityCount + $usedByCount) > 0 ? $usesForInstabilityCount / ($usesForInstabilityCount + $usedByCount) : 0;
 
-            $metric->set('instability', $instability);
-
-            $this->metrics->set($classId, $metric);
+            $this->metricsController->setMetricValueByIdentifierString(
+                $classId,
+                'instability',
+                $instability
+            );
 
             $this->usesCount += $usesCount;
             $this->usedByCount += $usedByCount;
@@ -137,14 +143,17 @@ class CouplingCalculator implements CalculatorInterface
         $overallAbstractness = $abstractClassesCount / ($abstractClassesCount + $concreteClassesCount);
         $overallDistanceFromMainline = $overallAbstractness + $avgInstability - 1;
 
-        $projectMetrics = $this->metrics->get('project');
-
-        $projectMetrics->set('OverallAvgUsesCount', $avgUsesCount);
-        $projectMetrics->set('OverallAvgUsedByCount', $avgUsedByCount);
-        $projectMetrics->set('OverallAvgInstability', $avgInstability);
-        $projectMetrics->set('OverallAbstractness', $overallAbstractness);
-        $projectMetrics->set('OverallDistanceFromMainline', $overallDistanceFromMainline);
-        $this->metrics->set('project', $projectMetrics);
+        $this->metricsController->setMetricValues(
+            MetricCollectionTypeEnum::ProjectCollection,
+            null,
+            [
+                'overallAvgUsesCount' => $avgUsesCount,
+                'overallAvgUsedByCount' => $avgUsedByCount,
+                'overallAvgInstability' => $avgInstability,
+                'overallAbstractness' => $overallAbstractness,
+                'overallDistanceFromMainline' => $overallDistanceFromMainline,
+            ]
+        );
     }
 
     private function handeClass(string $identifierString, string $className): array
