@@ -4,21 +4,20 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Predictions;
 
+use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
 use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
-use PhpCodeArch\Metrics\Model\MetricsContainer;
 use PhpCodeArch\Metrics\Model\PackageMetrics\PackageMetricsCollection;
 use PhpCodeArch\Metrics\Model\ProjectMetrics\ProjectMetricsCollection;
 
 class TooLongPrediction implements PredictionInterface
 {
-
-    public function predict(MetricsContainer $metrics): int
+    public function predict(MetricsController $metricsController): int
     {
         $problemCount = 0;
 
-        foreach ($metrics->getAll() as $key => $metric) {
+        foreach ($metricsController->getAllCollections() as $metric) {
             if (is_array($metric)
                 || $metric instanceof ProjectMetricsCollection
                 || $metric instanceof PackageMetricsCollection) {
@@ -32,8 +31,12 @@ class TooLongPrediction implements PredictionInterface
             };
 
             $isTooLong = $metric->get('lloc')->getValue() > $maxLloc;
-            $metric->set('predictionTooLong', $isTooLong);
-            $metrics->set($key, $metric);
+
+            $metricsController->setMetricValueByIdentifierString(
+                (string) $metric->getIdentifier(),
+                'predictionTooLong',
+                $isTooLong
+            );
 
             if ($isTooLong) {
                 ++ $problemCount;
@@ -43,18 +46,28 @@ class TooLongPrediction implements PredictionInterface
                 continue;
             }
 
-            $methods = $metric->get('methods');
-            foreach ($methods as $methodId => $methodMetric) {
-                $isTooLong = $methodMetric->get('lloc') > 30;
-                $methodMetric->set('predictionTooLong', $isTooLong);
-                $methods[$methodId] = $methodMetric;
+            $methodCollection = $metricsController->getCollectionByIdentifierString(
+                (string) $metric->getIdentifier(),
+                'methods'
+            );
+
+            foreach ($methodCollection as $methodIdString => $methodName) {
+                $lloc = $metricsController->getMetricValueByIdentifierString(
+                    $methodIdString,
+                    'lloc'
+                );
+                $isTooLong = $lloc->getValue() > 30;
+
+                $metricsController->setMetricValueByIdentifierString(
+                    $methodIdString,
+                    'predictionTooLong',
+                    $isTooLong
+                );
 
                 if ($isTooLong) {
                     ++ $problemCount;
                 }
             }
-            $metric->set('methods', $methods);
-            $metrics->set($key, $metric);
         }
 
         return $problemCount;

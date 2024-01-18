@@ -4,33 +4,36 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Predictions;
 
+use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
-use PhpCodeArch\Metrics\Model\MetricsContainer;
 
 class TooDependentPrediction implements PredictionInterface
 {
 
-    public function predict(MetricsContainer $metrics): int
+    public function predict(MetricsController $metricsController): int
     {
         $problemCount = 0;
 
-        foreach ($metrics->getAll() as $key => $metric) {
+        foreach ($metricsController->getAllCollections() as $metric) {
             switch (true) {
                 case $metric instanceof ClassMetricsCollection:
                 case $metric instanceof FunctionMetricsCollection:
                     $maxDependency = $metric instanceof FunctionMetricsCollection ? 10 : 20;
 
                     $tooDependent = ($metric->get('usesCount')?->getValue() == 0) > $maxDependency;
-                    $metric->set('predictionTooDependent', $tooDependent);
+
+                    $metricsController->setMetricValueByIdentifierString(
+                        (string) $metric->getIdentifier(),
+                        'predictionTooDependent',
+                        $tooDependent
+                    );
 
                     if ($tooDependent) {
                         ++ $problemCount;
                     }
                     break;
             }
-
-            $metrics->set($key, $metric);
         }
 
         return $problemCount;

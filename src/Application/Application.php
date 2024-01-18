@@ -16,6 +16,12 @@ use PhpCodeArch\Calculators\VariablesCalculator;
 use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\Model\MetricsContainer;
 use PhpCodeArch\Metrics\Model\ProjectMetrics\ProjectMetricsCollection;
+use PhpCodeArch\Predictions\GodClassPrediction;
+use PhpCodeArch\Predictions\PredictionService;
+use PhpCodeArch\Predictions\TooComplexPrediction;
+use PhpCodeArch\Predictions\TooDependentPrediction;
+use PhpCodeArch\Predictions\TooLongPrediction;
+use PhpCodeArch\Predictions\TooMuchHtmlPrediction;
 use PhpCodeArch\Report\ReportTypeNotSupported;
 use PhpParser\NodeTraverser;
 use PhpParser\ParserFactory;
@@ -41,18 +47,10 @@ final readonly class Application
         $this->createMetricController($config);
         $this->createAndRunAnalyzer($config, $fileList, $output);
         $this->runCalculators($output);
+
+        $problems = $this->runPredictors($this->metricsController, $output);
+
         /*
-
-        $predictions = new PredictionService([
-            new TooLongPrediction(),
-            new GodClassPrediction(),
-            new TooComplexPrediction(),
-            new TooDependentPrediction(),
-            new TooMuchHtmlPrediction(),
-        ], $metricsCollection, $output);
-        $predictions->predict();
-
-        $problems = $predictions->getProblemCount();
         $projectMetrics->set('OverallInformationCount', $problems[PredictionInterface::INFO]);
         $projectMetrics->set('OverallWarningCount', $problems[PredictionInterface::WARNING]);
         $projectMetrics->set('OverallErrorCount', $problems[PredictionInterface::ERROR]);
@@ -160,5 +158,24 @@ final readonly class Application
         ], $this->metricsController, $output);
 
         $calculatorService->run();
+    }
+
+    /**
+     * @param MetricsController $metricsController
+     * @param CliOutput $output
+     * @return array
+     */
+    public function runPredictors(MetricsController $metricsController, CliOutput $output): array
+    {
+        $predictions = new PredictionService([
+            new TooLongPrediction(),
+            new GodClassPrediction(),
+            new TooComplexPrediction(),
+            new TooDependentPrediction(),
+            new TooMuchHtmlPrediction(),
+        ], $metricsController, $output);
+        $predictions->predict();
+
+        return $predictions->getProblemCount();
     }
 }

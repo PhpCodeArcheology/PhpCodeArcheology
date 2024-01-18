@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Metrics\Model\Collections;
 
-class TraitNameCollection implements CollectionInterface, \IteratorAggregate
+class TraitNameCollection implements CollectionInterface, \IteratorAggregate, \Countable
 {
     use CollectionTrait;
 }

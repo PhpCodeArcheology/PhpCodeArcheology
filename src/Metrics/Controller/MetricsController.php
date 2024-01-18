@@ -208,7 +208,7 @@ class MetricsController
         string $key): void
     {
         $identifierString = $this->getIdentifier($metricsType, $identifierData);
-        $this->setMetricDataWithIdentifierString($identifierString, $key, $value);
+        $this->setMetricValueByIdentifierString($identifierString, $key, $value);
     }
 
     public function setCollection(
@@ -233,7 +233,7 @@ class MetricsController
         $this->setMetricValue($metricsType, $identifierData, call_user_func($callback, $value), $key);
     }
 
-    private function setMetricDataWithIdentifierString(string $identifierString, string $key, mixed $value): void
+    public function setMetricValueByIdentifierString(string $identifierString, string $key, mixed $value): void
     {
         $this->metricsContainer->get($identifierString)->set(
             $key,
@@ -252,7 +252,7 @@ class MetricsController
         $identifierString = $this->getIdentifier($metricsType, $identifierData);
 
         foreach ($keyValuePairs as $key => $value) {
-            $this->setMetricDataWithIdentifierString($identifierString, $key, $value);
+            $this->setMetricValueByIdentifierString($identifierString, $key, $value);
         }
     }
 
@@ -397,7 +397,7 @@ class MetricsController
     public function setMetricValuesByIdentifierString(string $identifierString, array $keyValuePairs): void
     {
         foreach ($keyValuePairs as $key => $value) {
-            $this->setMetricDataWithIdentifierString($identifierString, $key, $value);
+            $this->setMetricValueByIdentifierString($identifierString, $key, $value);
         }
     }
 
