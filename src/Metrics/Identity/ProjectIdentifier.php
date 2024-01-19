@@ -10,7 +10,7 @@ class ProjectIdentifier implements IdentifierInterface
 
     private function __construct(string $path)
     {
-        $this->identifier = hash('sha256', $path);
+        $this->identifier = 'x' . hash('crc32', $path);
     }
 
     public static function ofPath(string $path): ProjectIdentifier

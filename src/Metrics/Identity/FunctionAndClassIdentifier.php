@@ -10,7 +10,7 @@ readonly class FunctionAndClassIdentifier implements IdentifierInterface
 
     private function __construct(string $name, string $path)
     {
-        $this->identifier = hash('sha256', $path . $name);
+        $this->identifier = 'x' . hash('crc32', $path . $name);
     }
 
     public static function ofNameAndPath(string $name, string $path): FunctionAndClassIdentifier
