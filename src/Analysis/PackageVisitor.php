@@ -25,6 +25,25 @@ class PackageVisitor implements NodeVisitor, VisitorInterface
 
     private array $packageData = [];
 
+    public function init(): void
+    {
+        $this->metricsController->setCollectionDataOrCreateEmptyCollection(
+            MetricCollectionTypeEnum::ProjectCollection,
+            null,
+            'packages',
+            null,
+            '_global',
+            new PackageNameCollection()
+        );
+
+        $this->metricsController->createMetricCollection(
+            MetricCollectionTypeEnum::PackageCollection,
+            ['name' => '_global'],
+        );
+
+        $this->initCollections('_global');
+    }
+
     public function beforeTraverse(array $nodes): void
     {
         $this->fileNamespace = '_global';
@@ -156,20 +175,7 @@ class PackageVisitor implements NodeVisitor, VisitorInterface
                 ['name' => $packageName],
             );
 
-            $collections = [
-                'classes' => new ClassNameCollection(),
-                'functions' => new FunctionNameCollection(),
-                'files' => new FileNameCollection(),
-            ];
-
-            foreach ($collections as $collectionName => $collectionObject) {
-                $this->metricsController->setCollection(
-                    MetricCollectionTypeEnum::PackageCollection,
-                    ['name' => $packageName],
-                    $collectionObject,
-                    $collectionName
-                );
-            }
+            $this->initCollections($packageName);
         }
 
         if (isset($this->packageData[$packageName])) {
@@ -210,6 +216,28 @@ class PackageVisitor implements NodeVisitor, VisitorInterface
         }
 
         return $package;
+    }
+
+    /**
+     * @param string|null $packageName
+     * @return void
+     */
+    public function initCollections(?string $packageName): void
+    {
+        $collections = [
+            'classes' => new ClassNameCollection(),
+            'functions' => new FunctionNameCollection(),
+            'files' => new FileNameCollection(),
+        ];
+
+        foreach ($collections as $collectionName => $collectionObject) {
+            $this->metricsController->setCollection(
+                MetricCollectionTypeEnum::PackageCollection,
+                ['name' => $packageName],
+                $collectionObject,
+                $collectionName
+            );
+        }
     }
 
 }

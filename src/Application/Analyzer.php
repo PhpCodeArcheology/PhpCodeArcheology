@@ -80,6 +80,10 @@ readonly class Analyzer
                 metricsController: $this->metricsController
             );
 
+            if (method_exists($visitorObject, 'init')) {
+                $visitorObject->init();
+            }
+
             $this->traverser->addVisitor($visitorObject);
             $visitorObjects[] = $visitorObject;
         }

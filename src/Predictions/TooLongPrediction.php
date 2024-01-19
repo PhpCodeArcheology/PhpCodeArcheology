@@ -30,7 +30,8 @@ class TooLongPrediction implements PredictionInterface
                 $metric instanceof FunctionMetricsCollection => 40,
             };
 
-            $isTooLong = $metric->get('lloc')->getValue() > $maxLloc;
+            $lloc = $metric->get('lloc')?->getValue() ?? 0;
+            $isTooLong = $lloc > $maxLloc;
 
             $metricsController->setMetricValueByIdentifierString(
                 (string) $metric->getIdentifier(),

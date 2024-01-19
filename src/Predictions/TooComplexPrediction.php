@@ -76,8 +76,12 @@ class TooComplexPrediction implements PredictionInterface
                             'cc',
                         ]
                     );
-                    $maxComplexity = $metricValues['lloc']->getValue() > 20 ? 20 : 10;
-                    $tooComplex = $metricValues['cc']->getValue() > $maxComplexity;
+
+                    $lloc = $metricValues['lloc']?->getValue() ?? 0;
+                    $cc = $metricValues['cc']?->getValue() ?? 0;
+
+                    $maxComplexity = $lloc > 20 ? 20 : 10;
+                    $tooComplex = $cc > $maxComplexity;
 
                     $metricsController->setMetricValueByIdentifierString(
                         (string) $metric->getIdentifier(),

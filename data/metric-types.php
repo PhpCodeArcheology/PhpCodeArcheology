@@ -48,6 +48,17 @@ return [
         ],
     ],
     [
+        'key' => 'overallAbstractClasses',
+        'name' => 'Abstract classes',
+        'shortName' => '',
+        'description' => '',
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
+        ],
+    ],
+    [
         'key' => 'overallInterfaces',
         'name' => 'Interface count',
         'shortName' => '',

@@ -269,7 +269,7 @@ class CouplingCalculator implements CalculatorInterface
         $dependencyCollection = $this->metricsController->getCollectionByIdentifierString(
             $identifierString,
             'dependencies'
-        );
+        ) ?? [];
 
         $classList = $this->classes->getAsArray();
 

@@ -24,10 +24,14 @@ class TooMuchHtmlPrediction implements PredictionInterface
                     $maxPercentage = $metric instanceof FileMetricsCollection ? 25 : 10;
                     $maxOutput = $metric instanceof FileMetricsCollection ? 10 : 4;
 
-                    $htmlPercentage = $metric->get('lloc')->getValue() > 0 ? (100 / $metric->get('lloc')->getValue()) * $metric->get('htmlLoc')->getValue() : 0;
+                    $lloc = $metric->get('lloc')?->getValue() ?? 0;
+                    $htmlLoc = $metric->get('htmlLoc')?->getValue() ?? 0;
+                    $outputCount = $metric->get('outputCount')?->getValue() ?? 0;
+
+                    $htmlPercentage = $lloc > 0 ? (100 / $lloc) * $htmlLoc : 0;
                     $tooMuchHtml = $htmlPercentage > $maxPercentage;
 
-                    $outputCount = $metric->get('outputCount')?->getValue() ?? 0;
+                    $outputCount = $outputCount ?? 0;
                     $tooMuchOutput = $outputCount > $maxOutput;
 
                     if ($tooMuchHtml || $tooMuchOutput) {
