@@ -303,7 +303,7 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface
      */
     private function setupClassMetrics(Node\Stmt\Class_|Node\Stmt\Trait_|Node\Stmt\Enum_|Node\Stmt\Interface_ $node): void
     {
-        $className = (string) $node->namespacedName;
+        $className = ClassName::ofNode($node)->__toString();
 
         $this->classDependencies[$className] = [];
         $this->classUses[$className] = [];

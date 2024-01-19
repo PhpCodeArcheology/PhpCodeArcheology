@@ -152,7 +152,10 @@ class LocVisitor implements NodeVisitor, VisitorInterface
             case $node instanceof Node\Stmt\Trait_:
             case $node instanceof Node\Stmt\Interface_:
             case $node instanceof Node\Stmt\Enum_:
-                $className = (string) $node->namespacedName;
+                $className = ClassName::ofNode($node)->__toString();
+                if (! $className) {
+                    $className = 'anonymous@' . spl_object_hash($node);
+                }
 
                 $this->currentClassName[] = $className;
                 $this->classHtmlLoc[$className] = 0;

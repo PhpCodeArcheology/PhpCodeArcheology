@@ -75,7 +75,6 @@ class PackagesDataProvider implements ReportDataProviderInterface
         $chartData['count'] = json_encode($chartData['count']);
 
         $this->templateData['aiChart'] = $chartData;
-
         $this->templateData['packages'] = $packages;
         $this->templateData['tableHeaders'] = array_map(function($metricType) {
             return $metricType->__toArray();

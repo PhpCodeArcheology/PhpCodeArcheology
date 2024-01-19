@@ -178,7 +178,7 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
                 $this->metricsController->setMetricValue(
                     MetricCollectionTypeEnum::ClassCollection,
                     [
-                        'name' =>(string) $node->namespacedName,
+                        'name' => ClassName::ofNode($node)->__toString(),
                         'path' => $this->path,
                     ],
                     $this->outputCount['classes'],
@@ -334,7 +334,7 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
         $this->outputCount['classes'] = 0;
 
         $className = (string) ClassName::ofNode($node);
-        $namespace = str_replace((string) $node->name, '', (string) $node->namespacedName);
+        $namespace = str_replace((string) $node->name, '', ClassName::ofNode($node)->__toString());
         $namespace = rtrim($namespace, '\\');
 
         $identifierData = [

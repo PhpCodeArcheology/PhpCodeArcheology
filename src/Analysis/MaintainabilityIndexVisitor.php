@@ -49,7 +49,7 @@ class MaintainabilityIndexVisitor implements NodeVisitor, VisitorInterface
             case $node instanceof Node\Stmt\Interface_:
             case $node instanceof Node\Stmt\Trait_:
             case $node instanceof Node\Stmt\Enum_:
-                $this->currentClassName[] = (string) $node->namespacedName;
+                $this->currentClassName[] = ClassName::ofNode($node)->__toString();
                 break;
         }
     }

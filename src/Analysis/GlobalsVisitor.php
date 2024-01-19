@@ -97,7 +97,7 @@ class GlobalsVisitor implements NodeVisitor, VisitorInterface
             case $node instanceof Node\Stmt\Interface_:
             case $node instanceof Node\Stmt\Trait_:
             case $node instanceof Node\Stmt\Enum_:
-                $className = (string) $node->namespacedName;
+                $className = ClassName::ofNode($node)->__toString();
 
                 $this->superglobalsClass[$className] = self::GLOBALS;
                 $this->classVariableMap[$className] = [];

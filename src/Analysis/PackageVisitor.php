@@ -76,7 +76,7 @@ class PackageVisitor implements NodeVisitor, VisitorInterface
             case $node instanceof Node\Stmt\Interface_:
             case $node instanceof Node\Stmt\Trait_:
             case $node instanceof Node\Stmt\Enum_:
-                $className = (string) $node->namespacedName;
+                $className = ClassName::ofNode($node)->__toString();
 
                 $package = $this->detectPackage($node);
                 $this->getCurrentPackageMetric($package);
@@ -91,7 +91,7 @@ class PackageVisitor implements NodeVisitor, VisitorInterface
                     'package'
                 );
 
-                $this->packageData[$package]['classes'][] = (string) $node->namespacedName;
+                $this->packageData[$package]['classes'][] = ClassName::ofNode($node)->__toString();
 
                 $this->metricsController->setCollectionDataUnique(
                     MetricCollectionTypeEnum::PackageCollection,
@@ -239,5 +239,4 @@ class PackageVisitor implements NodeVisitor, VisitorInterface
             );
         }
     }
-
 }

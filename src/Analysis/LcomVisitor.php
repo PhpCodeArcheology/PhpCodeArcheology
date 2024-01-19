@@ -82,7 +82,7 @@ class LcomVisitor implements NodeVisitor, VisitorInterface
                     MetricCollectionTypeEnum::ClassCollection,
                     [
                         'path' => $this->path,
-                        'name' => (string) $node->namespacedName,
+                        'name' => ClassName::ofNode($node)->__toString(),
                     ],
                     $lcom,
                     'lcom'
