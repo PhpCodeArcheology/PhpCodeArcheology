@@ -6,15 +6,15 @@ namespace PhpCodeArch\Report\DataProvider;
 
 use PhpCodeArch\Application\Application;
 use PhpCodeArch\Metrics\Controller\MetricsController;
-use PhpCodeArch\Metrics\Model\MetricsContainer;
 use PhpCodeArch\Metrics\Model\MetricValue;
+use PhpCodeArch\Report\Data\ReportDataContainer;
 
 trait ReportDataProviderTrait
 {
     private array $templateData = [];
     public function __construct(
-        private readonly MetricsContainer  $metrics,
-        private readonly MetricsController $metricsManager)
+        private readonly MetricsController $metricsController,
+        private readonly ReportDataContainer $reportDataContainer)
     {
         $this->templateData['createDate'] = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
         $this->templateData['version'] = Application::VERSION;
@@ -26,36 +26,33 @@ trait ReportDataProviderTrait
         return $this->templateData;
     }
 
-    private function setDataFromMetricTypesAndArrayToArrayKey(array $data, array $detailMetrics, string $arrayKey): array
+    private function setDataFromMetricTypesAndArrayToArrayKey(array $data, array $metricTypes, string $arrayKey): array
     {
-        return array_map(function($values) use ($detailMetrics, $arrayKey) {
+        return array_map(function($values) use ($metricTypes, $arrayKey) {
             $detailData = [];
 
-            foreach ($detailMetrics as $metricType) {
+            foreach ($metricTypes as $metricType) {
                 if (! isset($values[$metricType->getKey()])) {
+                    $valueData['value'] = '-';
+                    $valueData['rawValue'] = '-';
+                    $valueData['sortValue'] = -1;
+                    $detailData[] = $valueData;
+
                     continue;
                 }
-
-//                $metricValue = MetricValue::ofValueAndType(
-//                    $values[$metricType->getKey()],
-//                    $metricType
-//                );
 
                 $metricValue = $values[$metricType->getKey()];
 
                 if (! $metricValue instanceof MetricValue) {
-
                     continue;
                 }
 
-                $detailData[] = $metricValue;
-//                $detailData[] = [
-//                    'label' => $metricType->getName(),
-//                    'shortName' => $metricType->getShortname(),
-//                    'description' => $metricType->getDescription(),
-//                    'value' => (string) $metricValue,
-//                    'type' => gettype($metricValue->getValue()),
-//                ];
+                $valueData = $metricType->__toArray();
+                $valueData['value'] = $metricValue->__toString();
+                $valueData['rawValue'] = $metricValue->getValue();
+                $valueData['sortValue'] = $metricValue->getSortValue();
+
+                $detailData[] = $valueData;
             }
 
             $values[$arrayKey] = $detailData;

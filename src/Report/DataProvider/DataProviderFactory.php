@@ -2,49 +2,40 @@
 
 declare(strict_types=1);
 
-namespace PhpCodeArch\Report\Data;
+namespace PhpCodeArch\Report\DataProvider;
 
 use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\Model\MetricsContainer;
-use PhpCodeArch\Report\DataProvider\ChartDataProvider;
-use PhpCodeArch\Report\DataProvider\ClassDataProvider;
-use PhpCodeArch\Report\DataProvider\FilesDataProvider;
-use PhpCodeArch\Report\DataProvider\PackagesDataProvider;
-use PhpCodeArch\Report\DataProvider\ProjectDataProvider;
+use PhpCodeArch\Report\Data\ReportDataContainer;
 
 class DataProviderFactory
 {
     private array $data = [];
 
     public function __construct(
-        private readonly MetricsContainer  $metrics,
-        private readonly MetricsController $metricsManager)
+        private readonly MetricsController $metricsController,
+        private ReportDataContainer $reportDataContainer)
     {
     }
 
-    public function getProjectData(): ProjectDataProvider
+    public function getProjectDataProvider(): ProjectDataProvider
     {
-        return new ProjectDataProvider($this->metrics, $this->metricsManager);
+        return new ProjectDataProvider($this->metricsController, $this->reportDataContainer);
     }
 
-    public function getFiles(): FilesDataProvider
+    public function getFilesDataProvider(): FilesDataProvider
     {
-        return new FilesDataProvider($this->metrics, $this->metricsManager);
+        return new FilesDataProvider($this->metricsController, $this->reportDataContainer);
     }
 
-    public function getClassAIChartData(): ChartDataProvider
+    public function getClassDataProvider(): ClassDataProvider
     {
-        return new ChartDataProvider($this->metrics, $this->metricsManager);
+        return new ClassDataProvider($this->metricsController, $this->reportDataContainer);
     }
 
-    public function getClasses(): ClassDataProvider
+    public function getPackagDataProvider(): PackagesDataProvider
     {
-        return new ClassDataProvider($this->metrics, $this->metricsManager);
-    }
-
-    public function getPackages(): PackagesDataProvider
-    {
-        return new PackagesDataProvider($this->metrics, $this->metricsManager);
+        return new PackagesDataProvider($this->metricsController, $this->reportDataContainer);
     }
 
     private function predictProgrammingParadigm(): void

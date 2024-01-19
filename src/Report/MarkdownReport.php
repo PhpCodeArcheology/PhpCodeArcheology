@@ -6,7 +6,7 @@ namespace PhpCodeArch\Report;
 
 use PhpCodeArch\Application\CliOutput;
 use PhpCodeArch\Application\Config;
-use PhpCodeArch\Report\Data\DataProviderFactory;
+use PhpCodeArch\Report\DataProvider\DataProviderFactory;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
 
@@ -40,10 +40,10 @@ class MarkdownReport implements ReportInterface
 
         mkdir($this->outputDir . '/files');
 
-        $templateData = $this->reportData->getProjectData();
+        $templateData = $this->reportData->getProjectDataProvider();
         $this->renderTemplate('index.md.twig', $templateData->getTemplateData(), 'index.md');
 
-        $templateData = $this->reportData->getFiles();
+        $templateData = $this->reportData->getFilesDataProvider();
         $this->renderTemplate('files.md.twig', $templateData->getTemplateData(), 'files.md');
 
         foreach ($templateData->getFiles() as $fileData) {

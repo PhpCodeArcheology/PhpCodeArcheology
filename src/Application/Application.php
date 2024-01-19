@@ -14,17 +14,26 @@ use PhpCodeArch\Calculators\Helpers\PackageInstabilityAbstractnessCalculator;
 use PhpCodeArch\Calculators\ProjectCalculator;
 use PhpCodeArch\Calculators\VariablesCalculator;
 use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 use PhpCodeArch\Metrics\Model\MetricsContainer;
-use PhpCodeArch\Metrics\Model\ProjectMetrics\ProjectMetricsCollection;
 use PhpCodeArch\Predictions\GodClassPrediction;
+use PhpCodeArch\Predictions\PredictionInterface;
 use PhpCodeArch\Predictions\PredictionService;
 use PhpCodeArch\Predictions\TooComplexPrediction;
 use PhpCodeArch\Predictions\TooDependentPrediction;
 use PhpCodeArch\Predictions\TooLongPrediction;
 use PhpCodeArch\Predictions\TooMuchHtmlPrediction;
+use PhpCodeArch\Report\Data\ReportDataCollection;
+use PhpCodeArch\Report\Data\ReportDataContainer;
+use PhpCodeArch\Report\DataProvider\DataProviderFactory;
+use PhpCodeArch\Report\Helper\MetricsSplitter;
+use PhpCodeArch\Report\ReportFactory;
 use PhpCodeArch\Report\ReportTypeNotSupported;
 use PhpParser\NodeTraverser;
 use PhpParser\ParserFactory;
+use Twig\Environment;
+use Twig\Extension\DebugExtension;
+use Twig\Loader\FilesystemLoader;
 
 final readonly class Application
 {
@@ -49,17 +58,9 @@ final readonly class Application
         $this->runCalculators($output);
 
         $problems = $this->runPredictors($this->metricsController, $output);
+        $this->setProblems($problems);
 
-        /*
-        $projectMetrics->set('OverallInformationCount', $problems[PredictionInterface::INFO]);
-        $projectMetrics->set('OverallWarningCount', $problems[PredictionInterface::WARNING]);
-        $projectMetrics->set('OverallErrorCount', $problems[PredictionInterface::ERROR]);
-        $metricsCollection->set('project', $projectMetrics);
-
-        $splitter = new MetricsSplitter($metricsCollection, $output);
-        $splitter->split();
-
-        $reportData = new DataProviderFactory($metricsCollection, $this->metricsManager);
+        $reportDataContainer = $this->getReportDataContainer($output);
 
         $twigLoader = new FilesystemLoader();
         $twig = new Environment($twigLoader, [
@@ -67,8 +68,9 @@ final readonly class Application
         ]);
         $twig->addExtension(new DebugExtension());
 
+        $reportData = new DataProviderFactory($this->metricsController, $reportDataContainer);
+
         $report = ReportFactory::create(
-            $config->get('reportType'),
             $config,
             $reportData,
             $twigLoader,
@@ -76,7 +78,6 @@ final readonly class Application
             $output
         );
         $report->generate();
-        */
     }
 
     /**
@@ -142,7 +143,6 @@ final readonly class Application
     }
 
     /**
-     * @param $metricsCollection
      * @param CliOutput $output
      * @return void
      */
@@ -177,5 +177,35 @@ final readonly class Application
         $predictions->predict();
 
         return $predictions->getProblemCount();
+    }
+
+    /**
+     * @param array $problems
+     * @return void
+     */
+    public function setProblems(array $problems): void
+    {
+        $this->metricsController->setMetricValues(
+            MetricCollectionTypeEnum::ProjectCollection,
+            null,
+            [
+                'overallInformationCount' => $problems[PredictionInterface::INFO],
+                'overallWarningCount' => $problems[PredictionInterface::WARNING],
+                'overallErrorCount' => $problems[PredictionInterface::ERROR],
+            ]
+        );
+    }
+
+    /**
+     * @param CliOutput $output
+     * @return ReportDataContainer
+     */
+    public function getReportDataContainer(CliOutput $output): ReportDataContainer
+    {
+        $reportDataContainer = new ReportDataContainer();
+        $splitter = new MetricsSplitter($this->metricsController, $reportDataContainer, $output);
+        $splitter->split();
+
+        return $reportDataContainer;
     }
 }

@@ -31,6 +31,15 @@ readonly class MetricValue
         return $this->value;
     }
 
+    public function getSortValue(): mixed
+    {
+        return match($this->type->getValueType()) {
+            MetricType::VALUE_INT, MetricType::VALUE_FLOAT, MetricType::VALUE_PERCENTAGE => $this->value,
+            MetricType::VALUE_STRING => strval($this->value),
+            MetricType::VALUE_ARRAY, MetricType::VALUE_COUNT => count($this->value),
+        };
+    }
+
     public function __toString(): string
     {
         return match($this->type->getValueType()) {
@@ -41,5 +50,10 @@ readonly class MetricValue
             MetricType::VALUE_PERCENTAGE => number_format($this->value, 2) . '%',
             MetricType::VALUE_COUNT => strval(count($this->value)),
         };
+    }
+
+    public function getMetricType(): MetricType
+    {
+        return $this->type;
     }
 }

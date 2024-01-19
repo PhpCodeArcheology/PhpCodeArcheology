@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Report\DataProvider;
 
+use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
+use PhpCodeArch\Metrics\Model\MetricType;
 use PhpCodeArch\Metrics\Model\ProjectMetrics\OverallMetricsEnum;
 
 class ProjectDataProvider implements ReportDataProviderInterface
@@ -12,17 +14,25 @@ class ProjectDataProvider implements ReportDataProviderInterface
 
     function gatherData(): void
     {
-        $projectMetrics = $this->metrics->get('project');
+        $projectMetrics = $this->metricsController->getMetricCollection(
+            MetricCollectionTypeEnum::ProjectCollection,
+            null
+        );
 
-        $metrics = OverallMetricsEnum::asArray();
+        $metricTypes = $this->metricsController->getMetricsByCollectionTypeAndVisibility(
+            MetricCollectionTypeEnum::ProjectCollection,
+            MetricType::SHOW_EVERYWHERE
+        );
 
         $data = [];
-        foreach ($metrics as $key => $label) {
-            $value = $projectMetrics->get($key);
-            $value = $value ?? '-';
-            $value = is_numeric($value) ? number_format($value, is_float($value) ? 2 : 0) : $value;
+        foreach ($metricTypes as $metricType) {
+            $value = $projectMetrics->get($metricType->getKey());
+            $value = $value?->__toString() ?? '-';
 
-            $data[] = ['label' => $label, 'value' => $value];
+            $metricData = $metricType->__toArray();
+            $metricData['value'] = $value;
+
+            $data[] = $metricData;
         }
 
         $this->templateData['elements'] = $data;

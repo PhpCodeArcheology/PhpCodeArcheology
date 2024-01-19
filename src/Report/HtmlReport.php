@@ -6,7 +6,7 @@ namespace PhpCodeArch\Report;
 
 use PhpCodeArch\Application\CliOutput;
 use PhpCodeArch\Application\Config;
-use PhpCodeArch\Report\Data\DataProviderFactory;
+use PhpCodeArch\Report\DataProvider\DataProviderFactory;
 use PhpCodeArch\Report\Helper\FileCopier;
 use Twig\Environment;
 use Twig\Error\LoaderError;
@@ -62,10 +62,10 @@ class HtmlReport implements ReportInterface
         $createMethods = [
             'indexPage',
             'filePage',
-//            'filesPages',
-//            'classPage',
+            'filesPages',
+            'classPage',
 //            'classesPages',
-//            'packagesPage',
+            'packagesPage',
         ];
 
         $count = 0;
@@ -96,7 +96,7 @@ class HtmlReport implements ReportInterface
      */
     private function generateIndexPage(): void
     {
-        $templateData = $this->dataProviderFactory->getProjectData();
+        $templateData = $this->dataProviderFactory->getProjectDataProvider();
         $data = $templateData->getTemplateData();
         $data['pageTitle'] = 'Project metrics';
         $data['currentPage'] = 'index.html';
@@ -111,7 +111,7 @@ class HtmlReport implements ReportInterface
      */
     private function generateFilePage(): void
     {
-        $templateData = $this->dataProviderFactory->getFiles();
+        $templateData = $this->dataProviderFactory->getFilesDataProvider();
         $data = $templateData->getTemplateData();
         $data['pageTitle'] = 'Project metrics';
         $data['currentPage'] = 'files.html';
@@ -120,14 +120,13 @@ class HtmlReport implements ReportInterface
 
     private function generateFilesPages(): void
     {
-        $templateData = $this->dataProviderFactory->getFiles();
+        $templateData = $this->dataProviderFactory->getFilesDataProvider();
         $data = $templateData->getTemplateData();
 
         foreach ($data['files'] as $fileKey => $fileData) {
             $outputFile = 'files/' . $fileData['id'] . '.html';
 
-            $templateData = $data;
-            unset($templateData['files']);
+            $templateData = [];
             $templateData['file'] = $fileData;
 
             $templateData['pageTitle'] = 'File metrics';
@@ -141,14 +140,12 @@ class HtmlReport implements ReportInterface
 
     private function generateClassesPages()
     {
-        $templateData = $this->dataProviderFactory->getClasses();
+        $templateData = $this->dataProviderFactory->getClassDataProvider();
         $data = $templateData->getTemplateData();
 
         foreach ($data['classes'] as $classKey => $classData) {
             $outputFile = 'classes/' . $classData['id'] . '.html';
 
-            $templateData = $data;
-            unset($templateData['classes']);
             $templateData['class'] = $classData;
 
             $templateData['pageTitle'] = 'Class metrics';
@@ -161,7 +158,7 @@ class HtmlReport implements ReportInterface
 
     private function generateClassPage()
     {
-        $templateData = $this->dataProviderFactory->getClasses();
+        $templateData = $this->dataProviderFactory->getClassDataProvider();
         $data = $templateData->getTemplateData();
         $data['pageTitle'] = 'Class metrics';
         $data['currentPage'] = 'classes-list.html';
@@ -170,7 +167,7 @@ class HtmlReport implements ReportInterface
 
     private function generatePackagesPage(): void
     {
-        $templateData = $this->dataProviderFactory->getPackages();
+        $templateData = $this->dataProviderFactory->getPackagDataProvider();
         $data = $templateData->getTemplateData();
         $data['pageTitle'] = 'Project metrics';
         $data['currentPage'] = 'packages-list.html';

@@ -17,6 +17,11 @@
               <span class="sort-icon transition-all opacity-0"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M12.53 16.28a.75.75 0 0 1-1.06 0l-7.5-7.5a.75.75 0 0 1 1.06-1.06L12 14.69l6.97-6.97a.75.75 0 1 1 1.06 1.06l-7.5 7.5Z" clip-rule="evenodd" /></svg></span>
             </span>
         </th>
+        {% for header in tableHeaders %}
+          {% include('parts/thead-th-sortable.html.twig') %}
+        {% endfor %}
+
+        <!--
         <th class="border border-slate-500 text-left px-2 py-0.5" data-sortable="int">
             <span class="label-box flex justify-between items-center gap-1">
               <span class="label-name">Classes</span>
@@ -53,6 +58,7 @@
               <span class="sort-icon transition-all opacity-0"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M12.53 16.28a.75.75 0 0 1-1.06 0l-7.5-7.5a.75.75 0 0 1 1.06-1.06L12 14.69l6.97-6.97a.75.75 0 1 1 1.06 1.06l-7.5 7.5Z" clip-rule="evenodd" /></svg></span>
             </span>
         </th>
+        -->
       </tr>
       </thead>
       <tbody>
@@ -61,6 +67,11 @@
           <td class="border border-slate-500 text-left px-2 py-0.5" data-sort="{{ package.name }}">
             <span class="font-semibold inline-block">{{ package.name }}</span>
           </td>
+          {% for data in package.listData %}
+            {% include('parts/tbody-td-sortable.html.twig') %}
+          {% endfor %}
+
+          <!--
           <td class="border border-slate-500 text-left px-2 py-0.5" data-sort="{{ package.classes|length }}">
             <span class="font-semibold inline-block">{{ package.classes|length }}</span>
           </td>
@@ -79,6 +90,7 @@
           <td class="border border-slate-500 text-left px-2 py-0.5" data-sort="{{ package.distanceFromMainline }}">
             <span class="font-semibold inline-block">{{ package.distanceFromMainline|number_format(2) }}</span>
           </td>
+          -->
         </tr>
         {% endfor %}
       </tbody>

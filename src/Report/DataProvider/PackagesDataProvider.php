@@ -4,29 +4,46 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Report\DataProvider;
 
+use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
+
 class PackagesDataProvider implements ReportDataProviderInterface
 {
     use ReportDataProviderTrait;
 
-
     public function gatherData(): void
     {
-        $packages = $this->metrics->get('packages');
+        $packages = $this->reportDataContainer->get('packages')->getAll();
+        $packages = array_filter($packages, function($package) {
+            $packageName = $package['name'];
+            $metric = $this->metricsController->getMetricCollection(
+                MetricCollectionTypeEnum::PackageCollection,
+                ['name' => $packageName]
+            );
+            $classes = $metric->getCollection('classes');
+            return count($classes->getAsArray()) !== 0;
+        });
+
+        $listMetrics = $this->metricsController->getListMetricsByCollectionType(
+            MetricCollectionTypeEnum::PackageCollection
+        );
+
+        $detailMetrics = $this->metricsController->getDetailMetricsByCollectionType(
+            MetricCollectionTypeEnum::PackageCollection
+        );
+
+        $packages = $this->setDataFromMetricTypesAndArrayToArrayKey($packages, $detailMetrics, 'detailData');
+        $packages = $this->setDataFromMetricTypesAndArrayToArrayKey($packages, $listMetrics, 'listData');
 
         $aiMap = [];
+        foreach ($packages as $package) {
+            $packageName = $package['name'];
+            $metric = $this->metricsController->getMetricCollection(
+                MetricCollectionTypeEnum::PackageCollection,
+                ['name' => $packageName]
+            );
 
-        $packages = array_map(function($packageName) use (&$aiMap) {
-            $metric = $this->metrics->get($packageName);
-
-            if (! $metric || count($metric->get('classes')) === 0) {
-                return null;
-            }
-
-            $data = $metric->getAll();
-            $data['name'] = $metric->getName();
-
-            $a = $metric->get('abstractness');
-            $i = $metric->get('instability');
+            $a = $metric->get('abstractness')->getValue();
+            $i = $metric->get('instability')->getValue();
 
             $aiKey = sprintf('%s-%s', $a, $i);
 
@@ -39,9 +56,7 @@ class PackagesDataProvider implements ReportDataProviderInterface
             }
 
             $aiMap[$aiKey]['packages'][] = $packageName;
-
-            return $data;
-        }, $packages);
+        }
 
         $chartData = [
             'x' => [],
@@ -60,6 +75,10 @@ class PackagesDataProvider implements ReportDataProviderInterface
         $chartData['count'] = json_encode($chartData['count']);
 
         $this->templateData['aiChart'] = $chartData;
-        $this->templateData['packages'] = array_filter($packages, fn($metric) => $metric !== null);
+
+        $this->templateData['packages'] = $packages;
+        $this->templateData['tableHeaders'] = array_map(function($metricType) {
+            return $metricType->__toArray();
+        }, $listMetrics);
     }
 }

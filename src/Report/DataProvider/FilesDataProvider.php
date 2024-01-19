@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Report\DataProvider;
 
+use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
+
 class FilesDataProvider implements ReportDataProviderInterface
 {
     use ReportDataProviderTrait;
@@ -12,10 +14,15 @@ class FilesDataProvider implements ReportDataProviderInterface
 
     public function gatherData(): void
     {
-        $files = $this->metrics->get('project')->get('files');
+        $files = $this->reportDataContainer->get('files')->getAll();
 
-        $listMetrics = $this->metricsManager->getListMetricsByCollectionType('fileMetrics');
-        $detailMetrics = $this->metricsManager->getDetailMetricsByCollectionType('fileMetrics');
+        $listMetrics = $this->metricsController->getListMetricsByCollectionType(
+            MetricCollectionTypeEnum::FileCollection
+        );
+
+        $detailMetrics = $this->metricsController->getDetailMetricsByCollectionType(
+            MetricCollectionTypeEnum::FileCollection
+        );
 
         $files = $this->setDataFromMetricTypesAndArrayToArrayKey($files, $detailMetrics, 'detailData');
         $files = $this->setDataFromMetricTypesAndArrayToArrayKey($files, $listMetrics, 'listData');

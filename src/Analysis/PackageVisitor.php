@@ -74,12 +74,6 @@ class PackageVisitor implements NodeVisitor, VisitorInterface
 
                 $this->packageData[$package]['classes'][] = (string) $node->namespacedName;
 
-                $classes = $this->metricsController->getCollection(
-                    MetricCollectionTypeEnum::PackageCollection,
-                    ['name' => $package],
-                    'classes'
-                );
-
                 $this->metricsController->setCollectionDataUnique(
                     MetricCollectionTypeEnum::PackageCollection,
                     ['name' => $package],
@@ -111,7 +105,7 @@ class PackageVisitor implements NodeVisitor, VisitorInterface
                 $this->metricsController->setCollectionDataUnique(
                     MetricCollectionTypeEnum::PackageCollection,
                     ['name' => $package],
-                    'classes',
+                    'functions',
                     null,
                     $functionName
                 );

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Graph;
 
-class Graph
+class Graph implements GraphInterface
 {
     private array $nodes = [];
 

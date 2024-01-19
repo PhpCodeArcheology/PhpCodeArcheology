@@ -26,6 +26,83 @@ return [
         ],
     ],
     [
+        'key' => 'overallFunctionCount',
+        'name' => 'Function count',
+        'shortName' => '',
+        'description' => '',
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
+        ],
+    ],
+    [
+        'key' => 'overallClasses',
+        'name' => 'Class count',
+        'shortName' => '',
+        'description' => '',
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
+        ],
+    ],
+    [
+        'key' => 'overallInterfaces',
+        'name' => 'Interface count',
+        'shortName' => '',
+        'description' => '',
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
+        ],
+    ],
+    [
+        'key' => 'overAllMethodsCount',
+        'name' => 'Method count',
+        'shortName' => 'Methods',
+        'description' => '',
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
+        ],
+    ],
+    [
+        'key' => 'overAllPublicMethodsCount',
+        'name' => 'Public methods',
+        'shortName' => '',
+        'description' => '',
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
+        ],
+    ],
+    [
+        'key' => 'overAllPrivateMethodsCount',
+        'name' => 'Private methods',
+        'shortName' => '',
+        'description' => '',
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
+        ],
+    ],
+    [
+        'key' => 'overAllStaticMethodsCount',
+        'name' => 'Static methods',
+        'shortName' => '',
+        'description' => '',
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
+        ],
+    ],
+    [
         'key' => 'overallOutputStatements',
         'name' => 'Output statements',
         'shortName' => '',
@@ -38,7 +115,7 @@ return [
     ],
     [
         'key' => 'overallLoc',
-        'name' => 'Loc',
+        'name' => 'Lines of code',
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
@@ -64,7 +141,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
-        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
         ],
@@ -75,7 +152,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
-        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
         ],
@@ -86,14 +163,14 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
-        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
         ],
     ],
     [
         'key' => 'overallHtmlLoc',
-        'name' => 'Logical lines of HTML Code',
+        'name' => 'Lines of HTML Code',
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
@@ -239,7 +316,7 @@ return [
         'name' => 'Max cyclomatic complexity of files',
         'shortName' => '',
         'description' => '',
-        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_FLOAT,
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -250,7 +327,7 @@ return [
         'name' => 'Max cyclomatic complexity of classes',
         'shortName' => '',
         'description' => '',
-        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_FLOAT,
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -261,8 +338,8 @@ return [
         'name' => 'Max cyclomatic complexity of methods',
         'shortName' => '',
         'description' => '',
-        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_FLOAT,
-        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
         ],
@@ -272,8 +349,8 @@ return [
         'name' => 'Max cyclomatic complexity of functions',
         'shortName' => '',
         'description' => '',
-        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_FLOAT,
-        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
         ],
@@ -366,85 +443,40 @@ return [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
         ],
     ],
+    [
+        'key' => 'overallInformationCount',
+        'name' => 'Informations',
+        'shortName' => '',
+        'description' => '',
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
+        ],
+    ],
+    [
+        'key' => 'overallWarningCount',
+        'name' => 'Warnings',
+        'shortName' => '',
+        'description' => '',
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
+        ],
+    ],
+    [
+        'key' => 'overallErrorCount',
+        'name' => 'Errors',
+        'shortName' => '',
+        'description' => '',
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
+        ],
+    ],
 
-
-    [
-        'key' => 'overallFunctionCount',
-        'name' => 'Function count',
-        'shortName' => '',
-        'description' => '',
-        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
-        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
-        'collections' => [
-            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
-        ],
-    ],
-    [
-        'key' => 'overallClasses',
-        'name' => 'Class count',
-        'shortName' => '',
-        'description' => '',
-        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
-        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
-        'collections' => [
-            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
-        ],
-    ],
-    [
-        'key' => 'overallInterfaces',
-        'name' => 'Interface count',
-        'shortName' => '',
-        'description' => '',
-        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
-        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
-        'collections' => [
-            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
-        ],
-    ],
-    [
-        'key' => 'overAllMethodsCount',
-        'name' => 'Method count',
-        'shortName' => '',
-        'description' => '',
-        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
-        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
-        'collections' => [
-            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
-        ],
-    ],
-    [
-        'key' => 'overAllPublicMethodsCount',
-        'name' => 'Public methods',
-        'shortName' => '',
-        'description' => '',
-        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
-        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
-        'collections' => [
-            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
-        ],
-    ],
-    [
-        'key' => 'overAllPrivateMethodsCount',
-        'name' => 'Private methods',
-        'shortName' => '',
-        'description' => '',
-        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
-        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
-        'collections' => [
-            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
-        ],
-    ],
-    [
-        'key' => 'overAllStaticMethodsCount',
-        'name' => 'Static methods',
-        'shortName' => '',
-        'description' => '',
-        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
-        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
-        'collections' => [
-            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
-        ],
-    ],
     [
         'key' => 'originalEncoding',
         'name' => 'File encoding',
@@ -643,7 +675,7 @@ return [
     [
         'key' => 'methodCount',
         'name' => 'Method count',
-        'shortName' => '',
+        'shortName' => 'Methods',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
@@ -832,7 +864,7 @@ return [
     [
         'key' => 'avgMethodCc',
         'name' => 'Avg. cyclomatic complexity of methods',
-        'shortName' => 'Avg. CC/method',
+        'shortName' => 'Avg.CC/method',
         'description' => 'Average McCabe cyclomatic complexity of methods.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_FLOAT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
@@ -904,7 +936,7 @@ return [
         'shortName' => 'Difficulty',
         'description' => 'Code difficulty',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_FLOAT,
-        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_IN_DETAILS,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
@@ -918,7 +950,7 @@ return [
         'shortName' => 'Effort',
         'description' => 'Effort to understand code.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_FLOAT,
-        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_IN_DETAILS,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
@@ -1107,12 +1139,9 @@ return [
         'shortName' => 'Uses count',
         'description' => 'Uses count.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
-        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
-            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
-            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
-            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FunctionCollection,
-            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::MethodCollection,
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::PackageCollection,
         ],
     ],
     [
@@ -1135,12 +1164,9 @@ return [
         'shortName' => 'Used by count',
         'description' => 'Used by count.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
-        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
-            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
-            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
-            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FunctionCollection,
-            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::MethodCollection,
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::PackageCollection,
         ],
     ],
     [
@@ -1238,7 +1264,7 @@ return [
         'name' => 'Superglobals used',
         'shortName' => 'Superglobals',
         'description' => 'Count of superglobals used.',
-        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_ARRAY,
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_COUNT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_IN_DETAILS,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
@@ -1252,7 +1278,7 @@ return [
         'name' => 'Variables used',
         'shortName' => 'Variables',
         'description' => 'Count of variables uses.',
-        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_ARRAY,
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_COUNT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_IN_DETAILS,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
@@ -1266,7 +1292,7 @@ return [
         'name' => 'Constants',
         'shortName' => 'Constants',
         'description' => 'Constants used in code.',
-        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_ARRAY,
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_COUNT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_IN_DETAILS,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
@@ -1364,7 +1390,7 @@ return [
         'name' => 'Superglobal score',
         'shortName' => 'Superglobal score',
         'description' => 'Superglobal score.',
-        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_ARRAY,
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_FLOAT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_IN_DETAILS,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,

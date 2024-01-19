@@ -85,7 +85,6 @@ class CouplingCalculator implements CalculatorInterface
 
         if ($metricValues === null) {
             return;
-
         }
 
         $this->metricsController->setMetricValuesByIdentifierString(

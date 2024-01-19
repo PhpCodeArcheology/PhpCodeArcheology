@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace PhpCodeArch\Report\Helper;
 
 use PhpCodeArch\Application\CliOutput;
+use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
 use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
-use PhpCodeArch\Metrics\Model\MetricsContainer;
+use PhpCodeArch\Metrics\Model\PackageMetrics\PackageMetricsCollection;
+use PhpCodeArch\Report\Data\ReportDataCollection;
+use PhpCodeArch\Report\Data\ReportDataContainer;
 
 /**
  * MetricsSplitter
@@ -17,19 +20,23 @@ use PhpCodeArch\Metrics\Model\MetricsContainer;
  */
 readonly class MetricsSplitter
 {
-    public function __construct(private MetricsContainer $metrics, private CliOutput $output)
+    public function __construct(
+        private MetricsController    $metricsController,
+        private ReportDataContainer $dataContainer,
+        private CliOutput            $output)
     {
     }
 
     public function split(): void
     {
-        $files = [];
-        $classes = [];
-        $functions = [];
+        $fileCollection = new ReportDataCollection();
+        $classCollection = new ReportDataCollection();
+        $functionCollection = new ReportDataCollection();
+        $packageCollection = new ReportDataCollection();
 
         $count = 0;
-        $countSum = number_format(count($this->metrics->getAll()));
-        foreach ($this->metrics->getAll() as $metric) {
+        $countSum = number_format(count($this->metricsController->getAllCollections()));
+        foreach ($this->metricsController->getAllCollections() as $metric) {
             $this->output->cls();
             $this->output->out(
                 "Splitting metric \033[34m" .
@@ -41,11 +48,20 @@ readonly class MetricsSplitter
             ++ $count;
 
             switch (true) {
+                case $metric instanceof PackageMetricsCollection:
+                    $data = $metric->getAll();
+                    $data['id'] = (string) $metric->getIdentifier();
+                    $data['name'] = $metric->getName();
+
+                    $packageCollection->set($data, $data['id']);
+                    break;
+
                 case $metric instanceof FileMetricsCollection:
                     $data = $metric->getAll();
                     $data['id'] = (string) $metric->getIdentifier();
                     $data['name'] = $metric->getName();
-                    $files[$data['id']] = $data;
+
+                    $fileCollection->set($data, $data['id']);
                     break;
 
                 case $metric instanceof FunctionMetricsCollection:
@@ -53,7 +69,8 @@ readonly class MetricsSplitter
                     $data['id'] = (string) $metric->getIdentifier();
                     $data['path'] = $metric->getPath();
                     $data['name'] = $metric->getName();
-                    $functions[$data['id']] = $data;
+
+                    $functionCollection->set($data, $data['id']);
                     break;
 
                 case $metric instanceof ClassMetricsCollection:
@@ -63,7 +80,7 @@ readonly class MetricsSplitter
                     $data['name'] = $metric->getName();
                     $data['internal'] = true;
 
-                    $classes[$data['id']] = $data;
+                    $classCollection->set($data, $data['id']);
                     break;
             }
         }
@@ -71,8 +88,8 @@ readonly class MetricsSplitter
         $this->output->outNl();
 
         $count = 0;
-        $countSum = number_format(count($files));
-        foreach ($files as &$data) {
+        $countSum = number_format(count($fileCollection));
+        foreach ($fileCollection as &$data) {
             $this->output->cls();
             $this->output->out(
                 "Setting up file \033[34m" .
@@ -85,11 +102,11 @@ readonly class MetricsSplitter
 
             $path = $data['name'];
 
-            $classesInFile = array_filter($classes, function($class) use ($path) {
+            $classesInFile = array_filter($classCollection->getAll(), function($class) use ($path) {
                 return $path === $class['path'];
             });
 
-            $functionsInFile = array_filter($functions, function($function) use ($path) {
+            $functionsInFile = array_filter($functionCollection->getAll(), function($function) use ($path) {
                 return $path === $function['path'];
             });
 
@@ -99,11 +116,9 @@ readonly class MetricsSplitter
 
         $this->output->outNl();
 
-        $projectMetrics = $this->metrics->get('project');
-        $projectMetrics->set('files', $files);
-        $projectMetrics->set('classes', $classes);
-        $projectMetrics->set('functions', $functions);
-
-        $this->metrics->set('project', $projectMetrics);
+        $this->dataContainer->set('files', $fileCollection);
+        $this->dataContainer->set('classes', $classCollection);
+        $this->dataContainer->set('functions', $functionCollection);
+        $this->dataContainer->set('packages', $packageCollection);
     }
 }

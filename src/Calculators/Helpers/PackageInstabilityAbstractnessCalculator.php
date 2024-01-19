@@ -44,16 +44,13 @@ class PackageInstabilityAbstractnessCalculator
     public function afterTraverse(): void
     {
         foreach ($this->packages as $packageName => $packageData) {
+            $this->metricsController->setMetricValues(
+                MetricCollectionTypeEnum::PackageCollection,
+                ['name' => $packageName],
+                $packageData
+            );
+
             if (! isset($this->abstractClasses[$packageName]) || ! isset($this->concreteClasses[$packageName])) {
-                $this->metricsController->setMetricValues(
-                    MetricCollectionTypeEnum::PackageCollection,
-                    ['name' => $packageName],
-                    [
-                        'instability' => 0,
-                        'abstractness' => 0,
-                        'distanceFromMainline' => 0,
-                    ],
-                );
                 continue;
             }
 
@@ -66,7 +63,7 @@ class PackageInstabilityAbstractnessCalculator
                 ],
             );
 
-            $instability = ($packageMetrics['usesCount'] + $packageMetrics['usedByCount']) > 0 ? $packageMetrics['usesCount'] / ($packageMetrics['usesCount'] + $packageMetrics['usedByCount']) : 0;
+            $instability = ($packageMetrics['usesCount']->getValue() + $packageMetrics['usedByCount']->getValue()) > 0 ? $packageMetrics['usesCount']->getValue() / ($packageMetrics['usesCount']->getValue() + $packageMetrics['usedByCount']->getValue()) : 0;
             $abstractness = (count($this->abstractClasses[$packageName]) + count($this->concreteClasses[$packageName])) > 0 ?
                 count($this->abstractClasses[$packageName]) / (count($this->abstractClasses[$packageName]) + count($this->concreteClasses[$packageName]))
                 : 0;
@@ -93,6 +90,9 @@ class PackageInstabilityAbstractnessCalculator
             ['package', 'realClass', 'abstract', 'interface']
         );
 
+        $realClass = $classMetrics['realClass']->getValue();
+        $abstract = $classMetrics['abstract']->getValue();
+        $interface = $classMetrics['interface']->getValue();
         $package = $classMetrics['package']->getValue();
 
         $this->currentPackage = $package;
@@ -112,9 +112,9 @@ class PackageInstabilityAbstractnessCalculator
             $this->concreteClasses[$package] = [];
         }
 
-        if (($classMetrics['realClass'] && $classMetrics['abstract'] || $classMetrics['interface']) && ! in_array($className, $this->abstractClasses[$package])) {
+        if (($realClass && $abstract || $interface) && ! in_array($className, $this->abstractClasses[$package])) {
             $this->abstractClasses[$package][] = $className;
-        } elseif ($classMetrics['realClass'] && ! in_array($className, $this->abstractClasses[$package])) {
+        } elseif ($realClass && ! in_array($className, $this->abstractClasses[$package])) {
             $this->concreteClasses[$package][] = $className;
         }
 
