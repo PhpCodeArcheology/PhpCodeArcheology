@@ -100,6 +100,10 @@ final readonly class Application
             $config->set('reportDir', realpath($config->get('runningDir') . '/tmp/report'));
         }
 
+        if (! $config->get('packageSize')) {
+            $config->set('packageSize', 2);
+        }
+
         try {
             $config->validate();
         } catch (ConfigException $e) {

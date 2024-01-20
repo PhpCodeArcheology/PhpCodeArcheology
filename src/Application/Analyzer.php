@@ -84,6 +84,10 @@ readonly class Analyzer
                 $visitorObject->init();
             }
 
+            if (method_exists($visitorObject, 'injectConfig')) {
+                $visitorObject->injectConfig($this->config);
+            }
+
             $this->traverser->addVisitor($visitorObject);
             $visitorObjects[] = $visitorObject;
         }

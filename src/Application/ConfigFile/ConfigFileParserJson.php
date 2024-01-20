@@ -36,6 +36,10 @@ class ConfigFileParserJson implements ConfigFileParserInterface
             $config->set('extensions', $data['extensions']);
         }
 
+        if (isset($data['packageSize'])) {
+            $config->set('packageSize', $data['packageSize']);
+        }
+
         if (isset($data['reportType'])) {
             $config->set('reportType', $data['reportType']);
         }

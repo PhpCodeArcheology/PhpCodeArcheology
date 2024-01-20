@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Analysis;
 
+use PhpCodeArch\Application\Config;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 use PhpCodeArch\Metrics\Model\Collections\ClassNameCollection;
 use PhpCodeArch\Metrics\Model\Collections\FileNameCollection;
@@ -24,6 +25,8 @@ class PackageVisitor implements NodeVisitor, VisitorInterface
     private ?PackageMetricsCollection $currentPackageMetric;
 
     private array $packageData = [];
+
+    private Config $config;
 
     public function init(): void
     {
@@ -59,9 +62,16 @@ class PackageVisitor implements NodeVisitor, VisitorInterface
 
         $namespace = (string) $node->name;
 
-        $namespaceParts = explode('\\', $namespace);
-        if (count($namespaceParts) > 2) {
-            $namespace = implode('\\', [$namespaceParts[0], $namespaceParts[1]]);
+        $packageSize = $this->config->get('packageSize');
+        if (is_int($packageSize)) {
+            $namespaceParts = explode('\\', $namespace);
+            if (count($namespaceParts) > $packageSize) {
+                $newArray = [];
+                for ($i = 0; $i < $packageSize; $i ++) {
+                    $newArray[] = $namespaceParts[$i];
+                }
+                $namespace = implode('\\', $newArray);
+            }
         }
 
         $this->fileNamespace = $namespace;
@@ -238,5 +248,10 @@ class PackageVisitor implements NodeVisitor, VisitorInterface
                 $collectionName
             );
         }
+    }
+
+    public function injectConfig(Config $config): void
+    {
+        $this->config = $config;
     }
 }
