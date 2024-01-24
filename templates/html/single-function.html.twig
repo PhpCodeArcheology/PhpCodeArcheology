@@ -1,15 +1,15 @@
 {% include('parts/header.html.twig') %}
 
 <div class="mt-6 lg:w-5/6">
-  <h1 class="mb-3 text-lg font-semibold font-display">Class metrics for:</h1>
-  <h2 class="mb-6 text-3xl"><span class="text-white/40">{{ class.namespace }}\</span><span class="font-semibold inline-block" title="{{ class.namespace }}\{{ class.singleName }}">{{ class.singleName }}</span></h2>
+  <h1 class="mb-3 text-lg font-semibold font-display">Function metrics for:</h1>
+  <h2 class="mb-6 text-3xl"><span class="text-white/40">{{ function.namespace }}\</span><span class="font-semibold inline-block" title="{{ function.namespace }}\{{ function.singleName }}">{{ function.singleName }}</span></h2>
 
   <div class="mt-8 rounded-xl border border-cyan-800 bg-cyan-950/45 p-4">
     <h3 class="mb-3 text-xl font-semibold font-display">Dependencies</h3>
 
-    {% if class.extends|length or class.interfaces|length or class.usedClasses|length or class.usedBy.getValue()|length or class.traits|length %}
-    <table class="w-full border-collapse">
-      <tbody>
+    {% if class.extends|length or class.interfaces|length or function.usedClasses|length or class.usedBy.getValue()|length or class.traits|length %}
+      <table class="w-full border-collapse">
+        <tbody>
         {% if class.interfaces|length %}
           <tr class="odd:bg-cyan-950/85 even:bg-cyan-950/55 border-t border-white/15">
             <th class="text-left p-2 align-top">Implements</th>
@@ -17,10 +17,10 @@
           </tr>
         {% endif %}
         {% if class.extends|length %}
-        <tr class="odd:bg-cyan-950/85 even:bg-cyan-950/55 border-t border-white/15">
-          <th class="text-left p-2 align-top">Extends</th>
-          <td class="p-2">{{ class.extends|sort|join('<br>')|raw }}</td>
-        </tr>
+          <tr class="odd:bg-cyan-950/85 even:bg-cyan-950/55 border-t border-white/15">
+            <th class="text-left p-2 align-top">Extends</th>
+            <td class="p-2">{{ class.extends|sort|join('<br>')|raw }}</td>
+          </tr>
         {% endif %}
         {% if class.traits|length %}
           <tr class="odd:bg-cyan-950/85 even:bg-cyan-950/55 border-t border-white/15">
@@ -28,11 +28,11 @@
             <td class="p-2">{{ class.traits|sort|join('<br>')|raw }}</td>
           </tr>
         {% endif %}
-        {% if class.usedClasses|length %}
-        <tr class="odd:bg-cyan-950/85 even:bg-cyan-950/55 border-t border-white/15">
-          <th class="text-left p-2 align-top">Uses</th>
-          <td class="p-2">{{ class.usedClasses|sort|join('<br>')|raw }}</td>
-        </tr>
+        {% if function.usedClasses|length %}
+          <tr class="odd:bg-cyan-950/85 even:bg-cyan-950/55 border-t border-white/15">
+            <th class="text-left p-2 align-top">Uses</th>
+            <td class="p-2">{{ function.usedClasses|sort|join('<br>')|raw }}</td>
+          </tr>
         {% endif %}
         {% if class.usedBy.getValue()|length %}
           <tr class="odd:bg-cyan-950/85 even:bg-cyan-950/55 border-t border-white/15">
@@ -40,26 +40,18 @@
             <td class="p-2">{{ class.usedBy.getValue()|sort|join('<br>')|raw }}</td>
           </tr>
         {% endif %}
-      </tbody>
-    </table>
+        </tbody>
+      </table>
     {% else %}
       <p class="font-semibold">No dependencies found.</p>
     {% endif %}
   </div>
 
   <div class="my-8 grid sm:grid-cols-3 gap-3">
-    {% for element in class.detailData %}
+    {% for element in function.detailData %}
       {% include('parts/metric-tile.html.twig') %}
     {% endfor %}
   </div>
-
-
-  {% if class.methods|length > 0 %}
-    {% set tableName = 'Methods' %}
-    {% set tableHeaders = class.methodTableHeaders %}
-    {% set functions = class.methods %}
-    {% include('parts/function-table.html.twig') %}
-  {% endif %}
 </div>
 
 {% include('parts/footer.html.twig') %}

@@ -22,6 +22,8 @@ class PackageVisitor implements NodeVisitor, VisitorInterface
 
     private string $fileNamespace = '';
 
+    private string $filePackage = '';
+
     private ?PackageMetricsCollection $currentPackageMetric;
 
     private array $packageData = [];
@@ -153,6 +155,13 @@ class PackageVisitor implements NodeVisitor, VisitorInterface
             'namespace'
         );
 
+        $this->metricsController->setMetricValue(
+            MetricCollectionTypeEnum::FileCollection,
+            ['path' => $this->path],
+            $this->filePackage,
+            'package'
+        );
+
         $this->metricsController->setCollectionDataUnique(
             MetricCollectionTypeEnum::PackageCollection,
             ['name' => $this->fileNamespace],
@@ -197,6 +206,8 @@ class PackageVisitor implements NodeVisitor, VisitorInterface
             'functions' => [],
             'files' => [],
         ];
+
+        $this->filePackage = $packageName;
     }
 
     private function setFileCount(string $package): void

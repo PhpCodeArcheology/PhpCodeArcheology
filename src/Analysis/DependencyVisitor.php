@@ -48,6 +48,7 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface
      */
     private array $classUses = [];
 
+
     /**
      * @var array
      */
@@ -213,7 +214,7 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface
 
         $className = end($this->currentClassName);
 
-        if (in_array($dependency, $this->classUses[$className])) {
+        if (in_array($dependency, $this->classUses[$className]) || $className === $dependency || in_array($dependency, ['static', 'self', 'stdClass', 'class'])) {
             return;
         }
 

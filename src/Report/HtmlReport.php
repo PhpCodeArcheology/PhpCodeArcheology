@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Report;
 
+use PhpCodeArch\Application\Application;
 use PhpCodeArch\Application\CliOutput;
 use PhpCodeArch\Application\Config;
 use PhpCodeArch\Report\DataProvider\DataProviderFactory;
@@ -47,6 +48,7 @@ class HtmlReport implements ReportInterface
         mkdir(directory: $this->outputDir . 'assets', recursive: true);
         mkdir($this->outputDir . 'files');
         mkdir($this->outputDir . 'classes');
+        mkdir($this->outputDir . 'functions');
 
         $fc = new FileCopier();
         $fc->setFiles([
@@ -64,8 +66,12 @@ class HtmlReport implements ReportInterface
             'filePage',
             'filesPages',
             'classPage',
-//            'classesPages',
+            'classesPages',
+            'classCouplingPage',
+            'classChartPage',
             'packagesPage',
+            'functionPage',
+            'functionsPages',
         ];
 
         $count = 0;
@@ -128,6 +134,7 @@ class HtmlReport implements ReportInterface
 
             $templateData = [];
             $templateData['file'] = $fileData;
+            $templateData['version'] = Application::VERSION;
 
             $templateData['pageTitle'] = 'File metrics';
             $templateData['currentPage'] = $outputFile;
@@ -146,7 +153,9 @@ class HtmlReport implements ReportInterface
         foreach ($data['classes'] as $classKey => $classData) {
             $outputFile = 'classes/' . $classData['id'] . '.html';
 
+            $templateData = [];
             $templateData['class'] = $classData;
+            $templateData['version'] = Application::VERSION;
 
             $templateData['pageTitle'] = 'Class metrics';
             $templateData['currentPage'] = $outputFile;
@@ -165,6 +174,37 @@ class HtmlReport implements ReportInterface
         $this->renderTemplate('classes.html.twig', $data, 'classes-list.html');
     }
 
+    private function generateFunctionPage()
+    {
+        $templateData = $this->dataProviderFactory->getFunctionDataProvider();
+        $data = $templateData->getTemplateData();
+        $data['pageTitle'] = 'Function metrics';
+        $data['currentPage'] = 'functions-list.html';
+        $this->renderTemplate('functions-list.html.twig', $data, 'functions-list.html');
+    }
+
+    private function generateFunctionsPages()
+    {
+        $templateData = $this->dataProviderFactory->getFunctionDataProvider();
+        $data = $templateData->getTemplateData();
+
+        $functions = array_merge($data['functions'], $data['methods']);
+
+        foreach ($functions as $functionData) {
+            $outputFile = 'functions/' . $functionData['id'] . '.html';
+
+            $templateData = [];
+            $templateData['function'] = $functionData;
+            $templateData['version'] = Application::VERSION;
+
+            $templateData['pageTitle'] = 'Function metrics';
+            $templateData['currentPage'] = $outputFile;
+            $templateData['isSubdir'] = true;
+
+            $this->renderTemplate('single-function.html.twig', $templateData, $outputFile);
+        }
+    }
+
     private function generatePackagesPage(): void
     {
         $templateData = $this->dataProviderFactory->getPackagDataProvider();
@@ -173,5 +213,23 @@ class HtmlReport implements ReportInterface
         $data['currentPage'] = 'packages-list.html';
         $data['usesCharts'] = true;
         $this->renderTemplate('packages-list.html.twig', $data, 'packages-list.html');
+    }
+
+    private function generateClassCouplingPage(): void
+    {
+        $templateData = $this->dataProviderFactory->getClassCouplingDataProvider();
+        $data = $templateData->getTemplateData();
+        $data['pageTitle'] = 'Class coupling';
+        $data['currentPage'] = 'class-coupling.html';
+        $this->renderTemplate('class-coupling.html.twig', $data, 'class-coupling.html');
+    }
+
+    private function generateClassChartPage(): void
+    {
+        $templateData = $this->dataProviderFactory->getClassesChartDataProvider();
+        $data = $templateData->getTemplateData();
+        $data['pageTitle'] = 'Classes chart';
+        $data['currentPage'] = 'classes-chart.html';
+        $this->renderTemplate('classes-chart.html.twig', $data, 'classes-chart.html');
     }
 }

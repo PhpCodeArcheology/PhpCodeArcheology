@@ -16,6 +16,7 @@ use PhpCodeArch\Analysis\PackageVisitor;
 use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 use PhpCodeArch\Metrics\Model\Collections\ErrorCollection;
+use PhpCodeArch\Metrics\Model\Collections\FileNameCollection;
 use PhpParser\Error;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
@@ -100,6 +101,8 @@ readonly class Analyzer
         $fileCount = count($fileList->getFiles());
         $projectFileErrors = 0;
 
+        $fileNameCollection = new FileNameCollection();
+
         foreach ($fileList->getFiles() as $count => $file) {
             $this->progressOutput($count, $fileCount, $projectFileErrors);
 
@@ -115,10 +118,12 @@ readonly class Analyzer
 
             $fileErrorCollection = new ErrorCollection();
 
-            $this->metricsController->createMetricCollection(
+            $fileMetricCollection = $this->metricsController->createMetricCollection(
                 MetricCollectionTypeEnum::FileCollection,
                 ['path' => $file]
             );
+
+            $fileNameCollection->set($file, (string) $fileMetricCollection->getIdentifier());
 
             $this->metricsController->setCollection(
                 MetricCollectionTypeEnum::FileCollection,
@@ -142,6 +147,13 @@ readonly class Analyzer
 
             $this->traverser->traverse($ast);
         }
+
+        $this->metricsController->setCollection(
+            MetricCollectionTypeEnum::ProjectCollection,
+            null,
+            $fileNameCollection,
+            'files'
+        );
 
         $this->output->outNl();
 

@@ -38,6 +38,21 @@ class DataProviderFactory
         return new PackagesDataProvider($this->metricsController, $this->reportDataContainer);
     }
 
+    public function getClassCouplingDataProvider(): ClassCouplingDataProvider
+    {
+        return new ClassCouplingDataProvider($this->metricsController, $this->reportDataContainer);
+    }
+
+    public function getClassesChartDataProvider(): ClassesChartDataProvider
+    {
+        return new ClassesChartDataProvider($this->metricsController, $this->reportDataContainer);
+    }
+
+    public function getFunctionDataProvider(): FunctionDataProvider
+    {
+        return new FunctionDataProvider($this->metricsController, $this->reportDataContainer);
+    }
+
     private function predictProgrammingParadigm(): void
     {
         $classCount = $this->data['OverallClasses'];

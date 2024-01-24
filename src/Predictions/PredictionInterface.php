@@ -9,9 +9,9 @@ use PhpCodeArch\Metrics\Model\MetricsContainer;
 
 interface PredictionInterface
 {
-    const INFO = 0;
-    const WARNING = 1;
-    const ERROR = 2;
+    const INFO = 1;
+    const WARNING = 2;
+    const ERROR = 3;
 
     public function predict(MetricsController $metricsController): int;
 

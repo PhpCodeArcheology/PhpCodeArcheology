@@ -18,6 +18,7 @@ class MetricType
     const SHOW_IN_LIST = 1;
     const SHOW_EVERYWHERE = 2;
     const SHOW_NOWHERE = 3;
+    const SHOW_COUPLING = 4;
 
     /**
      * @param string $key
@@ -32,7 +33,7 @@ class MetricType
         private readonly string $shortName,
         private readonly ?string $description,
         private readonly int $valueType,
-        private readonly int $visibility
+        private readonly int|array $visibility,
     )
     {
     }
@@ -89,8 +90,17 @@ class MetricType
             'shortName' => $shortName,
             'description' => $description,
             'valueType' => $valueType,
-            'visibility' => $visibility
+            'visibility' => $visibility,
         ] = $data;
+
+        return new MetricType($key, $name, $shortName, $description, $valueType, $visibility);
+    }
+
+    public static function fromKey($key): MetricType
+    {
+        $name = $shortName = $description = '';
+        $valueType = self::VALUE_FLOAT;
+        $visibility = self::SHOW_NOWHERE;
 
         return new MetricType($key, $name, $shortName, $description, $valueType, $visibility);
     }
@@ -98,7 +108,7 @@ class MetricType
     /**
      * @return int
      */
-    public function getVisibility(): int
+    public function getVisibility(): int|array
     {
         return $this->visibility;
     }
@@ -122,4 +132,5 @@ class MetricType
             'valueType' => $types[$this->valueType],
         ];
     }
+
 }

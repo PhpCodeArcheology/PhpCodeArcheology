@@ -21,10 +21,24 @@ class VariablesCalculator implements CalculatorInterface
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             'classes'
-        );
+        )->getAsArray();
 
-        foreach ($classes as $classId => $className) {
-            $classMetricCollection = $this->metricsController->getMetricCollectionByIdentifierString($classId);
+        $files = $this->metricsController->getCollection(
+            MetricCollectionTypeEnum::ProjectCollection,
+            null,
+            'files'
+        )->getAsArray();
+
+        $functions = $this->metricsController->getCollection(
+            MetricCollectionTypeEnum::ProjectCollection,
+            null,
+            'functions'
+        )->getAsArray();
+
+        $elements = array_merge($classes, $files, $functions);
+
+        foreach ($elements as $elementId => $elementName) {
+            $classMetricCollection = $this->metricsController->getMetricCollectionByIdentifierString($elementId);
 
             $superglobals = $classMetricCollection->get('superglobals')?->getValue() ?? [];
             $variables = $classMetricCollection->get('variables')?->getValue() ?? [];
@@ -56,7 +70,7 @@ class VariablesCalculator implements CalculatorInterface
                     )
                     : 0;
 
-            $this->metricsController->setMetricValuesByIdentifierString($classId, $metricValues);
+            $this->metricsController->setMetricValuesByIdentifierString($elementId, $metricValues);
         }
     }
 }

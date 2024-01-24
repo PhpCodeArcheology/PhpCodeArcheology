@@ -4,9 +4,18 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Metrics\Model;
 
-readonly class MetricValue
+use PhpCodeArch\Predictions\Problems\ProblemInterface;
+
+class MetricValue
 {
-    private function __construct(private mixed $value, private MetricType $type)
+    /**
+     * @var ProblemInterface[]
+     */
+    private array $problems = [];
+
+    private function __construct(
+        private readonly mixed $value,
+        private readonly MetricType $type)
     {
     }
 
@@ -55,5 +64,24 @@ readonly class MetricValue
     public function getMetricType(): MetricType
     {
         return $this->type;
+    }
+
+    public function addProblem(ProblemInterface $problem): void
+    {
+        $this->problems[] = $problem;
+    }
+
+    public function getMaxProblemLevel(): int
+    {
+        $maxProblemLevel = 0;
+        foreach ($this->problems as $problem) {
+            $maxProblemLevel = max($maxProblemLevel, $problem->getProblemLevel());
+        }
+        return $maxProblemLevel;
+    }
+
+    public function getProblemMessages(): array
+    {
+        return array_map(fn($problem) => $problem->getMessage(), $this->problems);
     }
 }

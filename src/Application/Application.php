@@ -11,6 +11,7 @@ use PhpCodeArch\Calculators\CalculatorService;
 use PhpCodeArch\Calculators\CouplingCalculator;
 use PhpCodeArch\Calculators\FileCalculator;
 use PhpCodeArch\Calculators\Helpers\PackageInstabilityAbstractnessCalculator;
+use PhpCodeArch\Calculators\LimitsAndAveragesCalculator;
 use PhpCodeArch\Calculators\ProjectCalculator;
 use PhpCodeArch\Calculators\VariablesCalculator;
 use PhpCodeArch\Metrics\Controller\MetricsController;
@@ -159,6 +160,7 @@ final readonly class Application
             new VariablesCalculator($this->metricsController),
             new CouplingCalculator($this->metricsController, $packageIACalculator),
             new ProjectCalculator($this->metricsController),
+            new LimitsAndAveragesCalculator($this->metricsController),
         ], $this->metricsController, $output);
 
         $calculatorService->run();

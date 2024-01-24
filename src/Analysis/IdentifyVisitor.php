@@ -99,6 +99,8 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
     public function beforeTraverse(array $nodes): void
     {
         $this->outputCount['file'] = 0;
+        $this->functions = [];
+        $this->classes = [];
     }
 
     /**
@@ -153,14 +155,16 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
             case $node instanceof Node\Stmt\Function_:
                 $this->inFunction = false;
 
-                $this->metricsController->setMetricValue(
+                $this->metricsController->setMetricValues(
                     MetricCollectionTypeEnum::FunctionCollection,
                     [
                         'name' =>(string) $node->namespacedName,
                         'path' => $this->path,
                     ],
-                    $this->outputCount['functions'],
-                    'outputCount'
+                    [
+                        'functionType' => 'function',
+                        'outputCount' => $this->outputCount['functions'],
+                    ]
                 );
 
                 break;
@@ -209,6 +213,20 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
             ['path' => $this->path],
             $this->outputCount['file'],
             'outputCount'
+        );
+
+        $this->metricsController->setCollection(
+            MetricCollectionTypeEnum::FileCollection,
+            ['path' => $this->path],
+            new FunctionNameCollection($this->functions),
+            'functions'
+        );
+
+        $this->metricsController->setCollection(
+            MetricCollectionTypeEnum::FileCollection,
+            ['path' => $this->path],
+            new ClassNameCollection($this->classes),
+            'classes'
         );
     }
 
@@ -293,7 +311,7 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
             'name' => (string) $node->namespacedName,
         ];
 
-        $this->metricsController->createMetricCollection(
+        $fnMetricCollection = $this->metricsController->createMetricCollection(
             MetricCollectionTypeEnum::FunctionCollection,
             $identifierData
         );
@@ -309,7 +327,6 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
             $metricData
         );
 
-
         $this->handleParameters($node, $identifierData);
 
         $this->metricsController->changeMetricValue(
@@ -319,8 +336,18 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
             'PhpCodeArch\incrementOr1IfNull'
         );
 
+        $this->metricsController->setCollectionData(
+            MetricCollectionTypeEnum::ProjectCollection,
+            null,
+            'functions',
+            (string) $fnMetricCollection->getIdentifier(),
+            (string) $node->namespacedName
+        );
+
+
         $this->inFunction = true;
         $this->outputCount['functions'] = 0;
+        $this->functions[(string) $fnMetricCollection->getIdentifier()] = (string) $node->namespacedName;
     }
 
     /**
@@ -455,6 +482,7 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
         );
 
         $this->handleClassMethods($node, $identifierData);
+        $this->classes[$classId] = $className;
     }
 
     private function handleClassMethods(
@@ -549,6 +577,7 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
         $this->handleParameters($node, $methodIdentifierData);
 
         $methodData = [
+            'functionType' => 'method',
             'protected' => $node->isProtected(),
             'public' => $node->isPublic(),
             'private' => $node->isPrivate() || $node->isProtected(),

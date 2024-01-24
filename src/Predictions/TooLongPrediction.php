@@ -10,6 +10,7 @@ use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
 use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
 use PhpCodeArch\Metrics\Model\PackageMetrics\PackageMetricsCollection;
 use PhpCodeArch\Metrics\Model\ProjectMetrics\ProjectMetricsCollection;
+use PhpCodeArch\Predictions\Problems\TooLongProblem;
 
 class TooLongPrediction implements PredictionInterface
 {
@@ -41,6 +42,17 @@ class TooLongPrediction implements PredictionInterface
 
             if ($isTooLong) {
                 ++ $problemCount;
+
+                $problem = TooLongProblem::ofProblemLevelAndMessage(
+                    problemLevel: $this->getLevel(),
+                    message: 'Too many logical lines of code.'
+                );
+
+                $metricsController->setProblemByIdentifierString(
+                    identifierString: (string) $metric->getIdentifier(),
+                    key: 'lloc',
+                    problem: $problem
+                );
             }
 
             if (! $metric instanceof ClassMetricsCollection) {
@@ -57,6 +69,7 @@ class TooLongPrediction implements PredictionInterface
                     $methodIdString,
                     'lloc'
                 );
+
                 $isTooLong = $lloc->getValue() > 30;
 
                 $metricsController->setMetricValueByIdentifierString(
@@ -65,9 +78,34 @@ class TooLongPrediction implements PredictionInterface
                     $isTooLong
                 );
 
-                if ($isTooLong) {
-                    ++ $problemCount;
+                if (! $isTooLong) {
+                    continue;
                 }
+
+                ++ $problemCount;
+
+                $problem = TooLongProblem::ofProblemLevelAndMessage(
+                    problemLevel: $this->getLevel(),
+                    message: 'Too many logical lines of code.'
+                );
+
+                $metricsController->setProblemByIdentifierString(
+                    identifierString: $methodIdString,
+                    key: 'lloc',
+                    problem: $problem
+                );
+
+                $problem = TooLongProblem::ofProblemLevelAndMessage(
+                    problemLevel: $this->getLevel(),
+                    message: 'Too many logical lines of code in at least one method.'
+                );
+
+                $metricsController->setProblemByIdentifierString(
+                    identifierString: (string) $metric->getIdentifier(),
+                    key: 'lloc',
+                    problem: $problem
+                );
+
             }
         }
 

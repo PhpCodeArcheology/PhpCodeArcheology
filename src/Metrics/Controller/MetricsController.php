@@ -18,6 +18,7 @@ use PhpCodeArch\Metrics\Model\MetricType;
 use PhpCodeArch\Metrics\Model\MetricValue;
 use PhpCodeArch\Metrics\Model\PackageMetrics\PackageMetricsCollection;
 use PhpCodeArch\Metrics\Model\ProjectMetrics\ProjectMetricsCollection;
+use PhpCodeArch\Predictions\Problems\ProblemInterface;
 
 class MetricsController
 {
@@ -56,6 +57,12 @@ class MetricsController
         $metricTypes = require __DIR__ . '/../../../data/metric-types.php';
 
         foreach ($metricTypes as $metricTypeArray) {
+            if (isset($metricTypeArray['type']) && $metricTypeArray['type'] === 'storage') {
+                $metricType = MetricType::fromKey($metricTypeArray['key']);
+                $this->addMetricType($metricType, MetricCollectionTypeEnum::ProjectCollection);
+                continue;
+            }
+
             $collections = array_pop($metricTypeArray);
             $metricType = MetricType::fromArray($metricTypeArray);
 
@@ -107,14 +114,18 @@ class MetricsController
      * @param int $visibility
      * @return array
      */
-    public function getMetricsByCollectionTypeAndVisibility(MetricCollectionTypeEnum $collectionType, int $visibility): array
+    public function getMetricsByCollectionTypeAndVisibility(MetricCollectionTypeEnum $collectionType, int $visibility, bool $showEverywhere = true): array
     {
         if (! isset($this->metricTypes[$collectionType->name])) {
             return [];
         }
 
-        return array_filter($this->metricTypes[$collectionType->name], function($metricType) use ($visibility) {
-           return $metricType->getVisibility() === $visibility || $metricType->getVisibility() === MetricType::SHOW_EVERYWHERE;
+        return array_filter($this->metricTypes[$collectionType->name], function($metricType) use ($visibility, $showEverywhere) {
+            if (is_array($metricType->getVisibility())) {
+                return in_array($visibility, $metricType->getVisibility()) || ($showEverywhere && in_array(MetricType::SHOW_EVERYWHERE, $metricType->getVisibility()));
+            }
+
+            return $metricType->getVisibility() === $visibility || ($metricType->getVisibility() === MetricType::SHOW_EVERYWHERE && $showEverywhere);
         });
     }
 
@@ -425,5 +436,10 @@ class MetricsController
         }
 
         return $metricValues;
+    }
+
+    public function setProblemByIdentifierString(string $identifierString, string $key, ProblemInterface $problem): void
+    {
+        $this->metricsContainer->get($identifierString)->get($key)?->addProblem($problem);
     }
 }

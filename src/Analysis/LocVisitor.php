@@ -372,7 +372,7 @@ class LocVisitor implements NodeVisitor, VisitorInterface
         $methodBodyNodes = $node->stmts ? $node->stmts : [];
         $methodBodyCode = $prettyPrinter->prettyPrint($methodBodyNodes);
 
-        [$methodLloc, $methodCloc] = $this->getClocAndLloc($methodBodyCode);
+        [$methodCloc, $methodLloc] = $this->getClocAndLloc($methodBodyCode);
 
         $methodMetrics = [
             'lloc' => $methodLloc,

@@ -853,9 +853,6 @@ return [
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_IN_DETAILS,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
-            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
-            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FunctionCollection,
-            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::MethodCollection,
         ],
     ],
     [
@@ -865,6 +862,12 @@ return [
         'description' => 'McCabe cyclomatic complexity.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
+        'problemData' => [
+            [
+                'key' => 'predictionTooComplex',
+                'value' => true,
+            ],
+        ],
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
@@ -879,6 +882,13 @@ return [
         'description' => 'Average McCabe cyclomatic complexity of methods.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_FLOAT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
+        'problemData' => [
+            [
+                'key' => 'avgMethodCc',
+                'value' => 10,
+                'compare' => '>'
+            ],
+        ],
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
         ],
@@ -1101,7 +1111,7 @@ return [
         'shortName' => 'I',
         'description' => 'Instability.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_FLOAT,
-        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
+        'visibility' => [\PhpCodeArch\Metrics\Model\MetricType::SHOW_COUPLING, \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE],
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::PackageCollection,
@@ -1132,11 +1142,11 @@ return [
 
     [
         'key' => 'uses',
-        'name' => 'Classes used',
-        'shortName' => 'Uses',
+        'name' => 'Efferent coupling',
+        'shortName' => 'Efferent coupling',
         'description' => 'Classes used.',
-        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_ARRAY,
-        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_COUNT,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_COUPLING,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
@@ -1146,8 +1156,8 @@ return [
     ],
     [
         'key' => 'usesCount',
-        'name' => 'Uses count',
-        'shortName' => 'Uses count',
+        'name' => 'Efferent coupling',
+        'shortName' => 'Efferent coupling',
         'description' => 'Uses count.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
@@ -1157,11 +1167,11 @@ return [
     ],
     [
         'key' => 'usedBy',
-        'name' => 'Used by',
-        'shortName' => 'Used by',
+        'name' => 'Afferent coupling',
+        'shortName' => 'Afferent coupling',
         'description' => 'Used by.',
-        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_ARRAY,
-        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_COUNT,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_COUPLING,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
@@ -1171,8 +1181,8 @@ return [
     ],
     [
         'key' => 'usedByCount',
-        'name' => 'Used by count',
-        'shortName' => 'Used by count',
+        'name' => 'Afferent coupling',
+        'shortName' => 'Afferent coupling',
         'description' => 'Used by count.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
@@ -1188,7 +1198,7 @@ return [
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_ARRAY,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
-            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::PackageCollection,
         ],
     ],
     [
@@ -1199,29 +1209,29 @@ return [
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
-            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::PackageCollection,
         ],
     ],
     [
         'key' => 'usesForInstability',
-        'name' => 'Uses count',
-        'shortName' => 'UC',
+        'name' => 'Efferent coupling',
+        'shortName' => 'Efferent coupling',
         'description' => 'Uses count für instability calculation.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
-            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::PackageCollection,
         ],
     ],
     [
         'key' => 'usesForInstabilityCount',
-        'name' => 'Uses count',
-        'shortName' => 'UC',
+        'name' => 'Efferent coupling',
+        'shortName' => 'Efferent coupling',
         'description' => 'Uses count für instability calculation.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
-            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::PackageCollection,
         ],
     ],
     [
@@ -1276,7 +1286,7 @@ return [
         'shortName' => 'Superglobals',
         'description' => 'Count of superglobals used.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_COUNT,
-        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_IN_DETAILS,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
@@ -1290,7 +1300,7 @@ return [
         'shortName' => 'Variables',
         'description' => 'Count of variables uses.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_COUNT,
-        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_IN_DETAILS,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
@@ -1300,11 +1310,11 @@ return [
     ],
     [
         'key' => 'constants',
-        'name' => 'Constants',
-        'shortName' => 'Constants',
+        'name' => 'Constants used',
+        'shortName' => 'Constants used',
         'description' => 'Constants used in code.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_COUNT,
-        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_IN_DETAILS,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
@@ -1398,7 +1408,7 @@ return [
     ],
     [
         'key' => 'superglobalMetric',
-        'name' => 'Superglobal score',
+        'name' => 'Superglobal index',
         'shortName' => 'Superglobal score',
         'description' => 'Superglobal score.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_FLOAT,
@@ -1537,5 +1547,49 @@ return [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::MethodCollection,
         ],
     ],
+
+    ['key' => 'functionType', 'type' => 'storage',],
+    ['key' => 'overallFileMetricsCollectionMaxCc', 'type' => 'storage',],
+    ['key' => 'overallFileMetricsCollectionMaxMaintainabilityIndex', 'type' => 'storage',],
+    ['key' => 'overallFileMetricsCollectionMaxDifficulty', 'type' => 'storage',],
+    ['key' => 'overallFileMetricsCollectionMaxEffort', 'type' => 'storage',],
+    ['key' => 'overallFileMetricsCollectionMinCc', 'type' => 'storage',],
+    ['key' => 'overallFileMetricsCollectionMinMaintainabilityIndex', 'type' => 'storage',],
+    ['key' => 'overallFileMetricsCollectionMinDifficulty', 'type' => 'storage',],
+    ['key' => 'overallFileMetricsCollectionMinEffort', 'type' => 'storage',],
+    ['key' => 'overallFileMetricsCollectionAvgCc', 'type' => 'storage',],
+    ['key' => 'overallFileMetricsCollectionAvgMaintainabilityIndex', 'type' => 'storage',],
+    ['key' => 'overallFileMetricsCollectionAvgDifficulty', 'type' => 'storage',],
+    ['key' => 'overallFileMetricsCollectionAvgEffort', 'type' => 'storage',],
+    ['key' => 'overallFunctionMetricsCollectionMaxCc', 'type' => 'storage',],
+    ['key' => 'overallFunctionMetricsCollectionMaxMaintainabilityIndex', 'type' => 'storage',],
+    ['key' => 'overallFunctionMetricsCollectionMaxDifficulty', 'type' => 'storage',],
+    ['key' => 'overallFunctionMetricsCollectionMaxEffort', 'type' => 'storage',],
+    ['key' => 'overallFunctionMetricsCollectionMinCc', 'type' => 'storage',],
+    ['key' => 'overallFunctionMetricsCollectionMinMaintainabilityIndex', 'type' => 'storage',],
+    ['key' => 'overallFunctionMetricsCollectionMinDifficulty', 'type' => 'storage',],
+    ['key' => 'overallFunctionMetricsCollectionMinEffort', 'type' => 'storage',],
+    ['key' => 'overallFunctionMetricsCollectionAvgCc', 'type' => 'storage',],
+    ['key' => 'overallFunctionMetricsCollectionAvgMaintainabilityIndex', 'type' => 'storage',],
+    ['key' => 'overallFunctionMetricsCollectionAvgDifficulty', 'type' => 'storage',],
+    ['key' => 'overallFunctionMetricsCollectionAvgEffort', 'type' => 'storage',],
+    ['key' => 'overallClassMetricsCollectionMaxCc', 'type' => 'storage',],
+    ['key' => 'overallClassMetricsCollectionMaxMaintainabilityIndex', 'type' => 'storage',],
+    ['key' => 'overallClassMetricsCollectionMaxDifficulty', 'type' => 'storage',],
+    ['key' => 'overallClassMetricsCollectionMaxEffort', 'type' => 'storage',],
+    ['key' => 'overallClassMetricsCollectionMaxLcom', 'type' => 'storage',],
+    ['key' => 'overallClassMetricsCollectionMaxInstability', 'type' => 'storage',],
+    ['key' => 'overallClassMetricsCollectionMinCc', 'type' => 'storage',],
+    ['key' => 'overallClassMetricsCollectionMinMaintainabilityIndex', 'type' => 'storage',],
+    ['key' => 'overallClassMetricsCollectionMinDifficulty', 'type' => 'storage',],
+    ['key' => 'overallClassMetricsCollectionMinEffort', 'type' => 'storage',],
+    ['key' => 'overallClassMetricsCollectionMinLcom', 'type' => 'storage',],
+    ['key' => 'overallClassMetricsCollectionMinInstability', 'type' => 'storage',],
+    ['key' => 'overallClassMetricsCollectionAvgCc', 'type' => 'storage',],
+    ['key' => 'overallClassMetricsCollectionAvgMaintainabilityIndex', 'type' => 'storage',],
+    ['key' => 'overallClassMetricsCollectionAvgDifficulty', 'type' => 'storage',],
+    ['key' => 'overallClassMetricsCollectionAvgEffort', 'type' => 'storage',],
+    ['key' => 'overallClassMetricsCollectionAvgLcom', 'type' => 'storage',],
+    ['key' => 'overallClassMetricsCollectionAvgInstability', 'type' => 'storage',],
 
 ];

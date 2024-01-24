@@ -79,7 +79,7 @@ readonly class MetricsSplitter
                     $data['path'] = $metric->getPath();
                     $data['name'] = $metric->getName();
                     $data['internal'] = true;
-
+                    $data['classUses'] = $metric->getCollection('usedClasses')->getAsArray();
                     $classCollection->set($data, $data['id']);
                     break;
             }

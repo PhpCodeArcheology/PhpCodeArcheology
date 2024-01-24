@@ -9,7 +9,6 @@ use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
 use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
 use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
-use PhpCodeArch\Metrics\Model\ProjectMetrics\ProjectMetricsCollection;
 
 class ProjectCalculator implements CalculatorInterface
 {

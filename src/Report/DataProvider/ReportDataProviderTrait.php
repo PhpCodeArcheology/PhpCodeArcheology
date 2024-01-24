@@ -33,7 +33,8 @@ trait ReportDataProviderTrait
 
             foreach ($metricTypes as $metricType) {
                 if (! isset($values[$metricType->getKey()])) {
-                    $valueData['value'] = '-';
+                    $valueData = $metricType->__toArray();
+                    $valueData['value'] = '-'.$metricType->getKey();
                     $valueData['rawValue'] = '-';
                     $valueData['sortValue'] = -1;
                     $detailData[] = $valueData;
@@ -51,6 +52,8 @@ trait ReportDataProviderTrait
                 $valueData['value'] = $metricValue->__toString();
                 $valueData['rawValue'] = $metricValue->getValue();
                 $valueData['sortValue'] = $metricValue->getSortValue();
+                $valueData['problemLevel'] = $metricValue->getMaxProblemLevel();
+                $valueData['problemText'] = $metricValue->getProblemMessages();
 
                 $detailData[] = $valueData;
             }
