@@ -55,6 +55,7 @@
 
 
   {% if class.methods|length > 0 %}
+    {% set folder = 'methods' %}
     {% set tableName = 'Methods' %}
     {% set tableHeaders = class.methodTableHeaders %}
     {% set functions = class.methods %}

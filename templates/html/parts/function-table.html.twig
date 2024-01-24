@@ -32,7 +32,7 @@
         <td class="border border-slate-500 text-left px-2 py-0.5" data-sort="{{ function.name }}">
           {% if function.namespace %}<span class="text-white/40">{{ function.namespace }}</span><br>{% endif %}
           {% if scope %}<span class="text-white/40">{{ scope }}</span><br>{% endif %}
-          <a href="{% if isSubdir %}../{% endif %}functions/{{ function.id }}.html" class="font-semibold inline-block" title="{{ function.name }}">{% if function.singleName %}{{ function.singleName }}{% else %}{{ function.name }}{% endif %}</a>
+          <a href="{% if isSubdir %}../{% endif %}{{ folder }}/{{ function.id }}.html" class="font-semibold inline-block" title="{{ function.name }}">{% if function.singleName %}{{ function.singleName }}{% else %}{{ function.name }}{% endif %}</a>
         </td>
         <td class="border border-slate-500 text-right px-2 py-0.5" data-sort="{{ function.parameterCount }}">
           <span

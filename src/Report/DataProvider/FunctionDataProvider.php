@@ -20,6 +20,15 @@ class FunctionDataProvider implements ReportDataProviderInterface
                 'parameters'
             )->getAsArray();
             $function['parameterCount'] = count($parameterCollection);
+            $function['parameters'] = $parameterCollection;
+        });
+
+        $methods = array_filter($functions, function($function) {
+            return $function['functionType']->getValue() === 'method';
+        });
+
+        $functions = array_filter($functions, function($function) {
+            return $function['functionType']->getValue() === 'function';
         });
 
         $listMetrics = $this->metricsController->getListMetricsByCollectionType(
@@ -33,13 +42,16 @@ class FunctionDataProvider implements ReportDataProviderInterface
         $functions = $this->setDataFromMetricTypesAndArrayToArrayKey($functions, $detailMetrics, 'detailData');
         $functions = $this->setDataFromMetricTypesAndArrayToArrayKey($functions, $listMetrics, 'listData');
 
-        $methods = array_filter($functions, function($function) {
-            return $function['functionType']->getValue() === 'method';
-        });
+        $methodListMetrics = $this->metricsController->getListMetricsByCollectionType(
+            MetricCollectionTypeEnum::MethodCollection
+        );
 
-        $functions = array_filter($functions, function($function) {
-            return $function['functionType']->getValue() === 'function';
-        });
+        $methodDetailMetrics = $this->metricsController->getDetailMetricsByCollectionType(
+            MetricCollectionTypeEnum::MethodCollection
+        );
+
+        $methods = $this->setDataFromMetricTypesAndArrayToArrayKey($methods, $methodDetailMetrics, 'detailData');
+        $methods = $this->setDataFromMetricTypesAndArrayToArrayKey($methods, $methodListMetrics, 'listData');
 
         $this->templateData['functions'] = $functions;
         $this->templateData['methods'] = $methods;

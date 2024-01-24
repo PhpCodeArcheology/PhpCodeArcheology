@@ -607,6 +607,17 @@ return [
         ],
     ],
     [
+        'key' => 'classInfo',
+        'name' => 'Class',
+        'shortName' => '',
+        'description' => '',
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_ARRAY,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_IN_DETAILS,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::MethodCollection,
+        ],
+    ],
+    [
         'key' => 'interface',
         'name' => 'Interface',
         'shortName' => '',

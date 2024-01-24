@@ -34,7 +34,7 @@ trait ReportDataProviderTrait
             foreach ($metricTypes as $metricType) {
                 if (! isset($values[$metricType->getKey()])) {
                     $valueData = $metricType->__toArray();
-                    $valueData['value'] = '-'.$metricType->getKey();
+                    $valueData['value'] = '-'.$metricType->getKey(); // TODO Remove this
                     $valueData['rawValue'] = '-';
                     $valueData['sortValue'] = -1;
                     $detailData[] = $valueData;

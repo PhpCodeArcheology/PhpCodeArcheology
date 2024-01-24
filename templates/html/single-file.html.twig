@@ -23,6 +23,7 @@
     </div>
 
     {% if file.functions %}
+      {% set folder = 'functions' %}
       {% set tableName = 'Functions' %}
       {% set functions = file.functions %}
       {% set tableHeaders = file.functionTableHeaders %}

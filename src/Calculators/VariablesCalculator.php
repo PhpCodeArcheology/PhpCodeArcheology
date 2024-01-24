@@ -35,7 +35,13 @@ class VariablesCalculator implements CalculatorInterface
             'functions'
         )->getAsArray();
 
-        $elements = array_merge($classes, $files, $functions);
+        $methods = $this->metricsController->getCollection(
+            MetricCollectionTypeEnum::ProjectCollection,
+            null,
+            'methods'
+        )->getAsArray();
+
+        $elements = array_merge($classes, $files, $functions, $methods);
 
         foreach ($elements as $elementId => $elementName) {
             $classMetricCollection = $this->metricsController->getMetricCollectionByIdentifierString($elementId);

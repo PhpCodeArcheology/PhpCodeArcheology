@@ -8,6 +8,7 @@ use PhpCodeArch\Application\Application;
 use PhpCodeArch\Application\CliOutput;
 use PhpCodeArch\Application\Config;
 use PhpCodeArch\Report\DataProvider\DataProviderFactory;
+use PhpCodeArch\Report\DataProvider\FunctionDataProvider;
 use PhpCodeArch\Report\Helper\FileCopier;
 use Twig\Environment;
 use Twig\Error\LoaderError;
@@ -49,6 +50,7 @@ class HtmlReport implements ReportInterface
         mkdir($this->outputDir . 'files');
         mkdir($this->outputDir . 'classes');
         mkdir($this->outputDir . 'functions');
+        mkdir($this->outputDir . 'methods');
 
         $fc = new FileCopier();
         $fc->setFiles([
@@ -93,6 +95,29 @@ class HtmlReport implements ReportInterface
 
         $this->output->outNl("\033[32m"."Report ready.\033[0m");
         $this->output->outNl();
+    }
+
+    /**
+     * @param mixed $functionData
+     * @param array $templateData
+     * @return void
+     * @throws LoaderError
+     * @throws RuntimeError
+     * @throws SyntaxError
+     */
+    public function createFunctionFile(mixed $functionData, string $folder): void
+    {
+        $outputFile = $folder . '/' . $functionData['id'] . '.html';
+
+        $templateData = [];
+        $templateData['function'] = $functionData;
+        $templateData['version'] = Application::VERSION;
+
+        $templateData['pageTitle'] = 'Function metrics';
+        $templateData['currentPage'] = $outputFile;
+        $templateData['isSubdir'] = true;
+
+        $this->renderTemplate('single-function.html.twig', $templateData, $outputFile);
     }
 
     /**
@@ -188,20 +213,12 @@ class HtmlReport implements ReportInterface
         $templateData = $this->dataProviderFactory->getFunctionDataProvider();
         $data = $templateData->getTemplateData();
 
-        $functions = array_merge($data['functions'], $data['methods']);
+        foreach ($data['functions'] as $functionData) {
+            $this->createFunctionFile($functionData, 'functions');
+        }
 
-        foreach ($functions as $functionData) {
-            $outputFile = 'functions/' . $functionData['id'] . '.html';
-
-            $templateData = [];
-            $templateData['function'] = $functionData;
-            $templateData['version'] = Application::VERSION;
-
-            $templateData['pageTitle'] = 'Function metrics';
-            $templateData['currentPage'] = $outputFile;
-            $templateData['isSubdir'] = true;
-
-            $this->renderTemplate('single-function.html.twig', $templateData, $outputFile);
+        foreach ($data['methods'] as $functionData) {
+            $this->createFunctionFile($functionData, 'methods');
         }
     }
 

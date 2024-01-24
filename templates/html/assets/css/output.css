@@ -639,10 +639,6 @@ video {
   height: 50vh;
 }
 
-.h-8 {
-  height: 2rem;
-}
-
 .w-4 {
   width: 1rem;
 }
@@ -654,10 +650,6 @@ video {
 
 .w-full {
   width: 100%;
-}
-
-.w-8 {
-  width: 2rem;
 }
 
 .max-w-\[80vw\] {
@@ -673,10 +665,6 @@ video {
   transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
 }
 
-.cursor-pointer {
-  cursor: pointer;
-}
-
 .cursor-help {
   cursor: help;
 }
@@ -685,8 +673,8 @@ video {
   cursor: move;
 }
 
-.cursor-grab {
-  cursor: grab;
+.cursor-pointer {
+  cursor: pointer;
 }
 
 .list-disc {
@@ -789,6 +777,11 @@ video {
   background-color: rgb(0 0 0 / 0.45);
 }
 
+.bg-blue-900 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(30 58 138 / var(--tw-bg-opacity));
+}
+
 .bg-cyan-950\/25 {
   background-color: rgb(8 51 68 / 0.25);
 }
@@ -811,29 +804,14 @@ video {
   background-color: rgb(69 10 10 / var(--tw-bg-opacity));
 }
 
-.bg-yellow-700 {
-  --tw-bg-opacity: 1;
-  background-color: rgb(161 98 7 / var(--tw-bg-opacity));
-}
-
-.bg-zinc-900 {
-  --tw-bg-opacity: 1;
-  background-color: rgb(24 24 27 / var(--tw-bg-opacity));
-}
-
-.bg-blue-900 {
-  --tw-bg-opacity: 1;
-  background-color: rgb(30 58 138 / var(--tw-bg-opacity));
-}
-
 .bg-yellow-900 {
   --tw-bg-opacity: 1;
   background-color: rgb(113 63 18 / var(--tw-bg-opacity));
 }
 
-.bg-cyan-800 {
+.bg-zinc-900 {
   --tw-bg-opacity: 1;
-  background-color: rgb(21 94 117 / var(--tw-bg-opacity));
+  background-color: rgb(24 24 27 / var(--tw-bg-opacity));
 }
 
 .bg-body-pattern {
@@ -895,8 +873,8 @@ video {
   padding-left: 1rem;
 }
 
-.pl-2 {
-  padding-left: 0.5rem;
+.pr-4 {
+  padding-right: 1rem;
 }
 
 .text-left {
@@ -917,6 +895,11 @@ video {
 
 .font-display {
   font-family: Oswald;
+}
+
+.text-2xl {
+  font-size: 1.5rem;
+  line-height: 2rem;
 }
 
 .text-3xl {
@@ -979,6 +962,11 @@ video {
   color: rgb(156 163 175 / var(--tw-text-opacity));
 }
 
+.text-green-500 {
+  --tw-text-opacity: 1;
+  color: rgb(34 197 94 / var(--tw-text-opacity));
+}
+
 .text-pink-600 {
   --tw-text-opacity: 1;
   color: rgb(219 39 119 / var(--tw-text-opacity));
@@ -997,13 +985,12 @@ video {
   color: rgb(255 255 255 / 0.4);
 }
 
-.text-green-500 {
-  --tw-text-opacity: 1;
-  color: rgb(34 197 94 / var(--tw-text-opacity));
-}
-
 .opacity-0 {
   opacity: 0;
+}
+
+.opacity-85 {
+  opacity: 0.85;
 }
 
 .backdrop-blur-sm {

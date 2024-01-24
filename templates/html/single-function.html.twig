@@ -1,8 +1,43 @@
 {% include('parts/header.html.twig') %}
 
+{% set isMethod = function.functionType.getValue() == 'method' %}
+{% if isMethod %}
+  {% set scope %}
+    {% if function.public.getValue() %}public{% elseif function.protected.getValue() %}protected{% else %}private{% endif %}
+    {% if function.static.getValue() %}static{% endif %}
+  {% endset %}
+{% endif %}
+{% set h1Title = isMethod ? 'Method' : 'Function' %}
+{% set information = isMethod ? scope : function.namespace %}
+{% set functionName = isMethod ? function.name : function.singleName %}
+{% set divider = isMethod ? ' ' : '/' %}
+
 <div class="mt-6 lg:w-5/6">
-  <h1 class="mb-3 text-lg font-semibold font-display">Function metrics for:</h1>
-  <h2 class="mb-6 text-3xl"><span class="text-white/40">{{ function.namespace }}\</span><span class="font-semibold inline-block" title="{{ function.namespace }}\{{ function.singleName }}">{{ function.singleName }}</span></h2>
+  <h1 class="mb-3 text-lg font-semibold font-display">{{ h1Title }} metrics for:</h1>
+  <h2 class="mb-6 text-3xl">
+    <span class="text-white/40">{{ information }}{{ divider }}</span>
+    <span class="font-semibold inline-block" title="{{ information }}{{ divider }}{{ functionName }}">
+      {{ functionName }}
+    </span>
+  </h2>
+
+  <div class="mt-8 rounded-xl border border-cyan-800 bg-cyan-950/45 p-4">
+    <h3 class="mb-3 text-xl font-semibold font-display">Parameters</h3>
+    {% if function.parameterCount > 0 %}
+      <table>
+        <tbody>
+        {% for parameter in function.parameters %}
+          <tr>
+            <td class="text-white/40 pr-4">{{ parameter.type }}{% if parameter.type is empty %}untyped{% endif %}</td>
+            <td class="text-lg font-semibold">{{ parameter.name }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="font-semibold">No parameters used</p>
+    {% endif %}
+  </div>
 
   <div class="mt-8 rounded-xl border border-cyan-800 bg-cyan-950/45 p-4">
     <h3 class="mb-3 text-xl font-semibold font-display">Dependencies</h3>
@@ -49,7 +84,11 @@
 
   <div class="my-8 grid sm:grid-cols-3 gap-3">
     {% for element in function.detailData %}
-      {% include('parts/metric-tile.html.twig') %}
+      {% if element.key == 'classInfo' %}
+        {% include('parts/classname-tile.html.twig') %}
+      {% else %}
+        {% include('parts/metric-tile.html.twig') %}
+      {% endif %}
     {% endfor %}
   </div>
 </div>

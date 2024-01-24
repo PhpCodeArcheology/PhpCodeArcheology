@@ -115,9 +115,12 @@ class GlobalsVisitor implements NodeVisitor, VisitorInterface
     {
         $className = end($this->currentClassName);
         $functionName = end($this->currentFunctionName);
+        $methodName = end($this->currentMethodName);
 
-        $this->countVariableNodes($node, $functionName, $className);
-        $this->countConstantNodes($node, $functionName, $className);
+        $this->countVariableNodes($node, $functionName, false);
+        $this->countConstantNodes($node, $functionName, false);
+        $this->countVariableNodes($node, $methodName, $className);
+        $this->countConstantNodes($node, $methodName, $className);
 
         switch (true) {
             case $node instanceof Node\Stmt\Function_:

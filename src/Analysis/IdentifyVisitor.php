@@ -71,7 +71,7 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
         'methods' => 0,
     ];
 
-    public function init()
+    public function init(): void
     {
         $projectCollections = [
             'classes' => new ClassNameCollection(),
@@ -363,6 +363,13 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
         $className = (string) ClassName::ofNode($node);
         $namespace = str_replace((string) $node->name, '', ClassName::ofNode($node)->__toString());
         $namespace = rtrim($namespace, '\\');
+        $singleName = (string) $node->name;
+
+        $classInfo = [
+            'name' => $className,
+            'namespace' => $namespace,
+            'singleName' => $singleName,
+        ];
 
         $identifierData = [
             'path' => $this->path,
@@ -385,7 +392,7 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
             'final' => false,
             'realClass' => false,
             'anonymous' => str_starts_with($className, 'anonymous@'),
-            'singleName' => (string) $node->name,
+            'singleName' => $singleName,
             'namespace' => $namespace,
         ];
 
@@ -481,11 +488,12 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
             $classMetricsData
         );
 
-        $this->handleClassMethods($node, $identifierData);
+        $this->handleClassMethods($classInfo, $node, $identifierData);
         $this->classes[$classId] = $className;
     }
 
     private function handleClassMethods(
+        array $classInfo,
         Node\Stmt\Class_|Node\Stmt\Trait_|Node\Stmt\Enum_|Node\Stmt\Interface_ $node,
         array $classIdentifierData): void
     {
@@ -511,7 +519,7 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
 
             ++ $classMetricData['methodCount'];
 
-            $data = $this->handleClassMethod($stmt, $classIdentifierData);
+            $data = $this->handleClassMethod($classInfo, $stmt, $classIdentifierData);
 
             $classMetricData['privateCount'] += intval($data['private']);
             $classMetricData['publicCount'] += intval($data['public']);
@@ -546,7 +554,7 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
         );
     }
 
-    private function handleClassMethod(Node\Stmt\ClassMethod $node, array $classIdentifierData): array
+    private function handleClassMethod(array $classInfo, Node\Stmt\ClassMethod $node, array $classIdentifierData): array
     {
         $methodIdentifierData = [
             'path' => $classIdentifierData['name'],
@@ -577,6 +585,7 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
         $this->handleParameters($node, $methodIdentifierData);
 
         $methodData = [
+            'classInfo' => $classInfo,
             'functionType' => 'method',
             'protected' => $node->isProtected(),
             'public' => $node->isPublic(),
