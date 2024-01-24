@@ -19,8 +19,16 @@ class FunctionDataProvider implements ReportDataProviderInterface
                 $key,
                 'parameters'
             )->getAsArray();
+
+            $dependencies = $this->metricsController->getCollectionByIdentifierString(
+                $key,
+                'dependencies'
+            )?->getAsArray();
+
+
             $function['parameterCount'] = count($parameterCollection);
             $function['parameters'] = $parameterCollection;
+            $function['dependencies'] = $dependencies;
         });
 
         $methods = array_filter($functions, function($function) {

@@ -9,6 +9,7 @@ use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\Collections\ClassNameCollection;
+use PhpCodeArch\Metrics\Model\Collections\EnumNameCollection;
 use PhpCodeArch\Metrics\Model\Collections\InterfaceNameCollection;
 use PhpCodeArch\Metrics\Model\Collections\TraitNameCollection;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
@@ -26,6 +27,8 @@ class CouplingCalculator implements CalculatorInterface
     private ClassNameCollection $extends;
 
     private TraitNameCollection $traits;
+
+    private EnumNameCollection $enums;
 
     private int $usedByCount = 0;
 
@@ -49,6 +52,7 @@ class CouplingCalculator implements CalculatorInterface
             'classes',
             'interfaces',
             'traits',
+            'enums',
         ];
 
         foreach ($collections as $collectionKey) {
@@ -195,7 +199,12 @@ class CouplingCalculator implements CalculatorInterface
             ++ $metricValues['usesCount'];
             $metricValues['uses'][] = $dependency;
 
-            $checkArray = array_merge($this->classes->getAsArray(), $this->interfaces->getAsArray(), $this->traits->getAsArray());
+            $checkArray = array_merge(
+                $this->classes->getAsArray(),
+                $this->interfaces->getAsArray(),
+                $this->traits->getAsArray(),
+                $this->enums->getAsArray()
+            );
 
             $isTrait = true;
 

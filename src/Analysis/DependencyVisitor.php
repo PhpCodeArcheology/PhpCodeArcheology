@@ -11,6 +11,7 @@ use PhpCodeArch\Metrics\Model\Collections\InterfaceNameCollection;
 use PhpCodeArch\Metrics\Model\Collections\TraitNameCollection;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
+use PhpParser\PrettyPrinter\Standard;
 use function PhpCodeArch\getNodeName;
 
 class DependencyVisitor implements NodeVisitor, VisitorInterface
@@ -121,6 +122,11 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface
             case $node instanceof Node\Expr\StaticCall:
                 $this->setDependency($node);
                 $this->setUses($node);
+                break;
+
+            case $node instanceof Node\Expr\ClassConstFetch:
+                $this->setDependency($node->class);
+                $this->setUses($node->class);
                 break;
 
             case $node instanceof Node\Stmt\TraitUse:

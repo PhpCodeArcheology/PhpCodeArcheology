@@ -69,19 +69,13 @@
   <div class="mt-8 rounded-xl border border-cyan-800 bg-cyan-950/45 p-4">
     <h3 class="mb-3 text-xl font-semibold font-display">Dependencies</h3>
 
-    {% if function.usedClasses|length or function.usedBy.getValue()|length %}
+    {% if function.dependencies|length %}
       <table class="w-full border-collapse">
         <tbody>
-        {% if function.usedClasses|length %}
+        {% if function.dependencies|length %}
           <tr class="odd:bg-cyan-950/85 even:bg-cyan-950/55 border-t border-white/15">
-            <th class="text-left p-2 align-top">Uses</th>
-            <td class="p-2">{{ function.usedClasses|sort|join('<br>')|raw }}</td>
-          </tr>
-        {% endif %}
-        {% if function.usedBy.getValue()|length %}
-          <tr class="odd:bg-cyan-950/85 even:bg-cyan-950/55 border-t border-white/15">
-            <th class="text-left p-2 align-top">Used by</th>
-            <td class="p-2">{{ function.usedBy.getValue()|sort|join('<br>')|raw }}</td>
+            <th class="text-left p-2 align-top">Class dependencies</th>
+            <td class="p-2">{{ function.dependencies|sort|join('<br>')|raw }}</td>
           </tr>
         {% endif %}
         </tbody>

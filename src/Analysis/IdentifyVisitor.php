@@ -647,17 +647,16 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
         array $identifierData): void
     {
         $returnType = 'void';
-        if (isset($node->returnType)) {
-            $returnType = $this->getTypeName($node->returnType);
-        }
 
         $docBlock = $node->getDocComment();
         $docBlockText = $docBlock ? $docBlock->getText() : '';
-
         if (preg_match('/^\s*\* @return (.*)/m', $docBlockText, $matches)) {
             $returnType = trim($matches[1]);
         }
 
+        if (isset($node->returnType)) {
+            $returnType = $this->getTypeName($node->returnType);
+        }
 
         $metricsType = $node instanceof Node\Stmt\ClassMethod ? MetricCollectionTypeEnum::MethodCollection : MetricCollectionTypeEnum::FunctionCollection;
 
