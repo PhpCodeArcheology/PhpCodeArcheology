@@ -18,13 +18,30 @@
     {% for class in classes %}
       <tr class="even:bg-cyan-950/45 odd:bg-cyan-950/85 transition-colors hover:bg-cyan-800">
         <td class="border border-slate-500 text-left px-2 py-0.5" data-sort="{{ class.name }}">
-          {% if class.anonymous.getValue() %}
-            <span class="text-white/40">{{ class.filePath }}</span><br>
-            <a href="{% if isSubdir %}../{% endif %}classes/{{ class.id }}.html" class="font-semibold inline-block" title="{{ class.name }}">{{ class.name }}</a>
-          {% else %}
-            {% if class.namespace %}<span class="text-white/40">{{ class.namespace }}</span><br>{% endif %}
-            <a href="{% if isSubdir %}../{% endif %}classes/{{ class.id }}.html" class="font-semibold inline-block" title="{{ class.name }}">{{ class.singleName }}</a>
-          {% endif %}
+          <div class="flex gap-4 justify-between items-start">
+            <div>
+              {% if class.anonymous.getValue() %}
+                <span class="text-white/40">{{ class.filePath }}</span><br>
+                <a href="{% if isSubdir %}../{% endif %}classes/{{ class.id }}.html" class="font-semibold inline-block" title="{{ class.name }}">{{ class.name }}</a>
+              {% else %}
+                {% if class.namespace %}<span class="text-white/40">{{ class.namespace }}</span><br>{% endif %}
+                <a href="{% if isSubdir %}../{% endif %}classes/{{ class.id }}.html" class="font-semibold inline-block" title="{{ class.name }}">{{ class.singleName }}</a>
+              {% endif %}
+            </div>
+            {% if class.interface.getValue() %}
+              <div class="rounded px-2 py-0.5 bg-amber-900 mt-0.5">Interface</div>
+            {% elseif class.trait.getValue() %}
+              <div class="rounded px-2 py-0.5 bg-purple-900 mt-0.5">Trait</div>
+            {% elseif class.enum.getValue() %}
+              <div class="rounded px-2 py-0.5 bg-emerald-900 mt-0.5">Enum</div>
+            {% elseif class.abstract.getValue() %}
+              <div class="rounded px-2 py-0.5 bg-fuchsia-900 mt-0.5">Abstract</div>
+            {% elseif class.anonymous.getValue() %}
+              <div class="rounded px-2 py-0.5 bg-gray-800 mt-0.5">Anonymous</div>
+            {% else %}
+              <div class="rounded px-2 py-0.5 bg-blue-900 mt-0.5">Class</div>
+            {% endif %}
+          </div>
         </td>
         {% for data in class.listData %}
           {% include('parts/tbody-td-sortable.html.twig') %}
