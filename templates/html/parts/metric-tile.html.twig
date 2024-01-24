@@ -1,4 +1,11 @@
-<div class="bg-cyan-950/50 rounded-lg border-t-4 border-cyan-600 p-3 transition-transform hover:scale-110 hover:shadow-black hover:shadow-2xl">
+{% set color = "bg-blue-900" %}
+{% if element.problemLevel == 2 %}
+  {% set color = "bg-yellow-900" %}
+{% elseif element.problemLevel == 3 %}
+  {% set color = "bg-red-900" %}
+{% endif %}
+<div class="{% if element.problemLevel > 0 %}{{ color }}{% else %}bg-cyan-950/50{% endif %} rounded-lg border-t-4 border-cyan-600 p-3 transition-transform hover:scale-110 hover:shadow-black hover:shadow-2xl"
+     title="{% if element.problemLevel > 0 %}{{ element.problemText|join(' ') }}{% endif %}">
   <div class="text-lg text-cyan-200">{{ element.name }}</div>
   <div class="text-3xl font-bold">
     {% if ': ' in element.value %}
