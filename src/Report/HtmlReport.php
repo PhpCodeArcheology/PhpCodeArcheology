@@ -111,7 +111,8 @@ class HtmlReport implements ReportInterface
 
         $templateData = [];
         $templateData['function'] = $functionData;
-        $templateData['version'] = Application::VERSION;
+        $templateData['version'] = $functionData['version'];
+        $templateData['createDate'] = $functionData['createDate'];
 
         $templateData['pageTitle'] = 'Function metrics';
         $templateData['currentPage'] = $outputFile;
@@ -159,7 +160,8 @@ class HtmlReport implements ReportInterface
 
             $templateData = [];
             $templateData['file'] = $fileData;
-            $templateData['version'] = Application::VERSION;
+            $templateData['version'] = $data['version'];
+            $templateData['createDate'] = $data['createDate'];
 
             $templateData['pageTitle'] = 'File metrics';
             $templateData['currentPage'] = $outputFile;
@@ -180,7 +182,8 @@ class HtmlReport implements ReportInterface
 
             $templateData = [];
             $templateData['class'] = $classData;
-            $templateData['version'] = Application::VERSION;
+            $templateData['version'] = $data['version'];
+            $templateData['createDate'] = $data['createDate'];
 
             $templateData['pageTitle'] = 'Class metrics';
             $templateData['currentPage'] = $outputFile;
@@ -214,10 +217,14 @@ class HtmlReport implements ReportInterface
         $data = $templateData->getTemplateData();
 
         foreach ($data['functions'] as $functionData) {
+            $functionData['version'] = $data['version'];
+            $functionData['createDate'] = $data['createDate'];
             $this->createFunctionFile($functionData, 'functions');
         }
 
         foreach ($data['methods'] as $functionData) {
+            $functionData['version'] = $data['version'];
+            $functionData['createDate'] = $data['createDate'];
             $this->createFunctionFile($functionData, 'methods');
         }
     }
