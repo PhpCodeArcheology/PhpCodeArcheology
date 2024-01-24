@@ -1,6 +1,15 @@
 {% include('parts/header.html.twig') %}
 
 <div class="mt-6 lg:w-5/6">
+  <div class="mb-7 text-sm">
+    <ul class="flex gap-1">
+      <li class="flex after:content-['⮁'] gap-1">
+        <a href="../index.html" class="text-cyan-500">Project</a>
+      </li>
+      <li>Classes</li>
+    </ul>
+  </div>
+
   <h1 class="mb-6 text-3xl font-semibold font-display">Classes</h1>
 
   {% include('parts/class-table.html.twig') %}

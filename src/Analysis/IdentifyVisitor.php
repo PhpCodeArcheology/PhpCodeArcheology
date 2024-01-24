@@ -391,12 +391,6 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
         $namespace = rtrim($namespace, '\\');
         $singleName = (string) $node->name;
 
-        $classInfo = [
-            'name' => $className,
-            'namespace' => $namespace,
-            'singleName' => $singleName,
-        ];
-
         $identifierData = [
             'path' => $this->path,
             'name' => $className,
@@ -409,6 +403,13 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
 
         $className = $classMetricCollection->getName();
         $classId = (string) $classMetricCollection->getIdentifier();
+
+        $classInfo = [
+            'id' => $classId,
+            'name' => $className,
+            'namespace' => $namespace,
+            'singleName' => $singleName,
+        ];
 
         $classMetricsData = [
             'interface' => false,
