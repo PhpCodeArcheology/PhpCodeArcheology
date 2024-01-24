@@ -20,10 +20,10 @@
         <td class="border border-slate-500 text-left px-2 py-0.5" data-sort="{{ class.name }}">
           {% if class.anonymous.getValue() %}
             <span class="text-white/40">{{ class.filePath }}</span><br>
-            <a href="classes/{{ class.id }}.html" class="font-semibold inline-block" title="{{ class.name }}">{{ class.name }}</a>
+            <a href="{% if isSubdir %}../{% endif %}classes/{{ class.id }}.html" class="font-semibold inline-block" title="{{ class.name }}">{{ class.name }}</a>
           {% else %}
             {% if class.namespace %}<span class="text-white/40">{{ class.namespace }}</span><br>{% endif %}
-            <a href="classes/{{ class.id }}.html" class="font-semibold inline-block" title="{{ class.name }}">{{ class.singleName }}</a>
+            <a href="{% if isSubdir %}../{% endif %}classes/{{ class.id }}.html" class="font-semibold inline-block" title="{{ class.name }}">{{ class.singleName }}</a>
           {% endif %}
         </td>
         {% for data in class.listData %}
