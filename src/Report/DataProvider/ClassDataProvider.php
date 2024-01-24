@@ -5,9 +5,6 @@ declare(strict_types=1);
 namespace PhpCodeArch\Report\DataProvider;
 
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
-use PhpCodeArch\Metrics\Model\Collections\ClassNameCollection;
-use PhpCodeArch\Metrics\Model\Collections\InterfaceNameCollection;
-use PhpCodeArch\Metrics\Model\Collections\TraitNameCollection;
 
 class ClassDataProvider implements ReportDataProviderInterface
 {
