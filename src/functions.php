@@ -10,11 +10,21 @@ use PhpParser\Node\Expr\StaticCall;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Name;
 use PhpParser\Node\Name\FullyQualified;
+use PhpParser\Node\NullableType;
 use PhpParser\PrettyPrinter\Standard;
 
+/**
+ * @param mixed $node
+ * @return string|null
+ */
 function getNodeName(mixed $node): ?string
 {
     $prettyPrinter = new Standard();
+
+    if ($node instanceof NullableType) {
+        $returnType = 'null|';
+        return $returnType.getNodeName($node->type);
+    }
 
     if (is_string($node)) {
         return $node;

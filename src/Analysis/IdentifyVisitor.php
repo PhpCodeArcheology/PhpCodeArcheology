@@ -287,17 +287,7 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
             $type = null;
 
             if ($parameter->type !== null) {
-                switch (true) {
-                    case $parameter->type instanceof Node\Name\FullyQualified:
-                    case $parameter->type instanceof Node\Name:
-                        $type = getNodeName($parameter->type);
-                        break;
-
-                    case $parameter->type instanceof Node\Identifier:
-                    case $parameter->type instanceof Node\Expr\Variable:
-                        $type = $parameter->type->name;
-                        break;
-                }
+                $type = $this->getTypeName($parameter->type);
             }
 
             $name = '$' . (string) $parameter->var->name;
@@ -321,6 +311,28 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
             $parameterCollection,
             'parameters'
         );
+    }
+
+    private function getTypeName(mixed $type): string
+    {
+        switch (true) {
+            case $type instanceof Node\Name\FullyQualified:
+            case $type instanceof Node\Name:
+            case $type instanceof Node\NullableType:
+                return getNodeName($type);
+
+            case $type instanceof Node\Identifier:
+            case $type instanceof Node\Expr\Variable:
+                return $type->name;
+
+            case $type instanceof Node\UnionType:
+                $types = array_map(function($type) {
+                    return $this->getTypeName($type);
+                }, $type->types);
+                return implode('|', $types);
+        }
+
+        return 'unidentified type';
     }
 
     /**
@@ -636,8 +648,16 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
     {
         $returnType = 'void';
         if (isset($node->returnType)) {
-            $returnType = getNodeName($node->returnType);
+            $returnType = $this->getTypeName($node->returnType);
         }
+
+        $docBlock = $node->getDocComment();
+        $docBlockText = $docBlock ? $docBlock->getText() : '';
+
+        if (preg_match('/^\s*\* @return (.*)/m', $docBlockText, $matches)) {
+            $returnType = trim($matches[1]);
+        }
+
 
         $metricsType = $node instanceof Node\Stmt\ClassMethod ? MetricCollectionTypeEnum::MethodCollection : MetricCollectionTypeEnum::FunctionCollection;
 
