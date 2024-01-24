@@ -1,79 +1,67 @@
 (function() {
-  const sortableTables = document.querySelectorAll('table.sortable');
+  window.addEventListener('load', function () {
+    const firstHeads = document.querySelectorAll('.sortable th:first-child')
+    firstHeads.forEach(firstHead => {
+      firstHead.click();
+    });
+  });
 
-  sortableTables.forEach(table => {
-    const sortableHeaders = table.querySelectorAll('thead th[data-sortable]');
-    const sortIcons = table.querySelectorAll('.sort-icon');
-    const tBody = table.querySelector('tbody');
+  const ths = document.querySelectorAll('.sortable th');
+  ths.forEach(th => {
+    th.addEventListener('click', event => {
+      ths.forEach(tmpTh => {
+        tmpTh.querySelector('.sort-icon').classList.add('opacity-0');
+      });
 
-    let currentSort = table.dataset.currentsort.split(':');
-
-    const sortTable = (a, b) => {
-      const column = parseInt(currentSort[0])
-      const dir = currentSort[1];
-
-      const td1 = a.children;
-      const td2 = b.children;
-
-      const sortIcon = sortIcons[column];
-      sortIcons.forEach(icon => {
-        icon.classList.add('opacity-0');
-      })
+      const sortIcon = th.querySelector('.sort-icon');
       sortIcon.classList.remove('opacity-0');
 
-      let value1 = td1[column].dataset.sort;
-      let value2 = td2[column].dataset.sort;
-
-      switch (currentSort[2]) {
-        case 'int':
-        case 'float':
-        case 'number':
-          value1 = parseFloat(value1);
-          value2 = parseFloat(value2);
-          break;
-
-        case 'string':
-          value1 = value1.toLowerCase();
-          value2 = value2.toLowerCase();
-          break;
-      }
-
-      if (value1 === value2) {
-        return 0;
-      }
-
-      if (dir === 'asc') {
+      if (th.getAttribute('aria-sort') === 'ascending') {
         sortIcon.classList.remove('rotate-180');
-        return value1 > value2 ? 1 : -1;
       }
+      else {
+        sortIcon.classList.add('rotate-180');
+      }
+    });
+  });
 
-      sortIcon.classList.add('rotate-180');
-      return value1 > value2 ? -1 : 1;
+  const nameFilters = document.querySelectorAll('.namefilter');
+
+  const handleSearch = nameFilter => {
+    const table = nameFilter.parentElement.parentElement.nextElementSibling.querySelector('table');
+    const tBody = table.querySelector('tbody');
+    const trs = tBody.querySelectorAll('tr');
+
+    if (nameFilter.value === '') {
+      trs.forEach(tr => {
+        tr.classList.remove('hidden');
+      });
+
+      return;
     }
 
-    Array.from(tBody.querySelectorAll('tr'))
-      .sort(sortTable)
-      .forEach(tr => tBody.appendChild(tr));
+    trs.forEach(tr => {
+      const filterTd = tr.querySelector('.filter-name');
+      const tdValue = filterTd.dataset.filter;
 
-    sortableHeaders.forEach((th, thId) => {
-      th.classList.add('cursor-pointer');
+      if (tdValue.toUpperCase().indexOf(nameFilter.value.toUpperCase()) > -1) {
+        tr.classList.remove('hidden');
+      } else {
+        tr.classList.add('hidden');
+      }
+    });
+  };
 
-      th.addEventListener('click', event => {
-        event.preventDefault();
+  nameFilters.forEach(nameFilter => {
+    const resetButton = nameFilter.nextElementSibling;
 
-        if (parseInt(currentSort[0]) === thId) {
-          currentSort[1] = currentSort[1] === 'asc' ? 'desc' : 'asc';
-        }
-        else {
-          currentSort = [thId, 'asc', th.dataset.sortable];
-        }
+    resetButton.addEventListener('click', event => {
+      nameFilter.value = '';
+      handleSearch(nameFilter);
+    });
 
-        table.classList.add('opacity-0.5');
-        Array.from(tBody.querySelectorAll('tr'))
-          .sort(sortTable)
-          .forEach(tr => tBody.appendChild(tr));
-        table.classList.remove('opacity-0.5');
-      });
+    nameFilter.addEventListener('keyup', event => {
+      handleSearch(nameFilter);
     });
   });
 })();

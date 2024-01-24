@@ -13,8 +13,15 @@
 
   <p>This is a sortable list of all PHP files in your project.</p>
 
+  <div class="filters mb-4 flex justify-end">
+    <div>
+      <input type="text" name="filter" class="namefilter text-black rounded px-2 py-0.5" placeholder="Search file name">
+      <button class="button-reset">Reset</button>
+    </div>
+  </div>
+
   <div class="relative overflow-x-auto">
-    <table class="sortable my-6 w-full border-collapse border border-slate-500 text-sm rounded-xl transition-opacity" data-currentsort="0:asc:string">
+    <table class="sortable asc my-6 w-full border-collapse border border-slate-500 text-sm rounded-xl transition-opacity" data-currentsort="0:asc:string">
       <thead class="bg-cyan-950/25">
         <tr>
           <th class="border border-slate-500 text-left px-2 py-0.5" data-sortable="string">
@@ -31,7 +38,7 @@
       <tbody>
         {% for file in files %}
           <tr class="even:bg-cyan-950/45 odd:bg-cyan-950/85 transition-colors hover:bg-cyan-800">
-            <td class="border border-slate-500 text-left px-2 py-0.5" data-sort="{{ file.dirName }}/{{ file.fileName }}">
+            <td class="border border-slate-500 text-left px-2 py-0.5 filter-name" data-filter="{{ file.fileName }}" data-sort="{{ file.dirName }}/{{ file.fileName }}">
               <a href="files/{{ file.id }}.html" class="block w-full">
                 <span class="text-white/40">{{ file.dirName }}/</span><br>
                 <span class="font-semibold inline-block{% if file.errors|length > 0 %} bg-red-900{% endif %}" title="{{ file.dirName }}/{{ file.fileName }}">{{ file.fileName }}{% if file.errors|length > 0 %}  ({{ file.errors|length }} error{% if file.errors|length > 1 %}s{% endif %}){% endif %}</span>
