@@ -1559,6 +1559,7 @@ return [
         ],
     ],
 
+    ['key' => 'returnType', 'type' => 'storage',],
     ['key' => 'functionType', 'type' => 'storage',],
     ['key' => 'overallFileMetricsCollectionMaxCc', 'type' => 'storage',],
     ['key' => 'overallFileMetricsCollectionMaxMaintainabilityIndex', 'type' => 'storage',],

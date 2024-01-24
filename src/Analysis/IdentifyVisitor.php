@@ -265,6 +265,24 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
     {
         $parameterCollection = new ParameterCollection();
 
+        $docBlock = $node->getDocComment();
+        $docBlockText = $docBlock ? $docBlock->getText() : '';
+
+        $docBlockText = str_replace('*/', '', $docBlockText);
+        $docBlockText = preg_replace('/^\s*\*\s?/m', '', $docBlockText);
+
+        $pattern = '/@param\s+([^\s]+)\s+(\$[^\s]+)(?:\s+([^@]*))?/ms';
+        preg_match_all($pattern, $docBlockText, $matches, PREG_SET_ORDER);
+
+        $paramDetails = [];
+        foreach ($matches as $match) {
+            $paramDetails[$match[2]] = [
+                'type' => $match[1],
+                'variable' => $match[2],
+                'description' => trim($match[3] ?? '')
+            ];
+        }
+
         foreach ($node->getParams() as $parameter) {
             $type = null;
 
@@ -282,13 +300,20 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
                 }
             }
 
+            $name = '$' . (string) $parameter->var->name;
+
+            if ($type === null && isset($paramDetails[$name])) {
+                $type = $paramDetails[$name]['type'];
+            }
+
             $parameterCollection->set([
-                'name' => '$' . (string) $parameter->var->name,
+                'name' => $name,
                 'type' => $type,
+                'description' => isset($paramDetails[$name]) ? $paramDetails[$name]['description'] : '',
             ]);
         }
 
-        $metricsType = $node instanceof Node\Stmt\ClassMethod ? MetricCollectionTypeEnum::ClassCollection : MetricCollectionTypeEnum::FunctionCollection;
+        $metricsType = $node instanceof Node\Stmt\ClassMethod ? MetricCollectionTypeEnum::MethodCollection : MetricCollectionTypeEnum::FunctionCollection;
 
         $this->metricsController->setCollection(
             $metricsType,
@@ -328,6 +353,7 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
         );
 
         $this->handleParameters($node, $identifierData);
+        $this->handleReturn($node, $identifierData);
 
         $this->metricsController->changeMetricValue(
             MetricCollectionTypeEnum::ProjectCollection,
@@ -583,6 +609,7 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
         );
 
         $this->handleParameters($node, $methodIdentifierData);
+        $this->handleReturn($node, $methodIdentifierData);
 
         $methodData = [
             'classInfo' => $classInfo,
@@ -600,5 +627,24 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
         );
 
         return $methodData;
+    }
+
+    private function handleReturn(
+        Node\Stmt\Function_|Node\Stmt\ClassMethod $node,
+        array $identifierData): void
+    {
+        $returnType = 'void';
+        if (isset($node->returnType)) {
+            $returnType = getNodeName($node->returnType);
+        }
+
+        $metricsType = $node instanceof Node\Stmt\ClassMethod ? MetricCollectionTypeEnum::MethodCollection : MetricCollectionTypeEnum::FunctionCollection;
+
+        $this->metricsController->setMetricValue(
+            $metricsType,
+            $identifierData,
+            $returnType,
+            'returnType'
+        );
     }
 }

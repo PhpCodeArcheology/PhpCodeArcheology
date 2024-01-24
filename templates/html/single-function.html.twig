@@ -30,6 +30,7 @@
           <tr>
             <td class="text-white/40 pr-4">{{ parameter.type }}{% if parameter.type is empty %}untyped{% endif %}</td>
             <td class="text-lg font-semibold">{{ parameter.name }}</td>
+            <td class="italic text-white/60">{{ parameter.description }}</td>
           </tr>
         {% endfor %}
         </tbody>
@@ -37,6 +38,11 @@
     {% else %}
       <p class="font-semibold">No parameters used</p>
     {% endif %}
+  </div>
+
+  <div class="mt-8 rounded-xl border border-cyan-800 bg-cyan-950/45 p-4">
+    <h3 class="mb-3 text-xl font-semibold font-display">Return type</h3>
+    <p class="text-lg font-semibold">{{ function.returnType.getValue() }}</p>
   </div>
 
   <div class="mt-8 rounded-xl border border-cyan-800 bg-cyan-950/45 p-4">
