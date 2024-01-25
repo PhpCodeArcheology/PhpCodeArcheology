@@ -85,6 +85,8 @@
     {% endif %}
   </div>
 
+  {% include('parts/divider.html.twig') %}
+
   <div class="my-8 grid sm:grid-cols-3 gap-3">
     {% for element in function.detailData %}
       {% if element.key == 'classInfo' %}

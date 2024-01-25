@@ -77,6 +77,8 @@
     {% endif %}
   </div>
 
+  {% include('parts/divider.html.twig') %}
+
   <div class="my-8 grid sm:grid-cols-3 gap-3">
     {% for element in class.detailData %}
       {% if element.key == 'package' %}
@@ -92,10 +94,14 @@
     {% set tableName = 'Methods' %}
     {% set tableHeaders = class.methodTableHeaders %}
     {% set functions = class.methods %}
+
+    {% include('parts/divider.html.twig') %}
     {% include('parts/function-table.html.twig') %}
   {% endif %}
 
-  <h3 class="mt-8 mb-3 text-2xl font-semibold font-display">Class chart</h3>
+  {% include('parts/divider.html.twig') %}
+
+  <h3 class="mt-8 mb-4 text-2xl font-semibold font-display">Class chart</h3>
 
   <div id="graphDiv" class="cursor-move">
     <div class="text-green-500 font-semibold">Please wait, chart is being generated.</div>

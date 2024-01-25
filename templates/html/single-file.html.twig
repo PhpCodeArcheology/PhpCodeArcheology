@@ -26,6 +26,7 @@
       </ul>
       <p class="italic text-xs">Parse errors prevent the file from being parsed. Because of this, no data is available.<br>Please fix the errors and run the analysis again.</p>
     </div>
+    {% include('parts/divider.html.twig') %}
   {% else %}
 
     <div class="my-8 grid sm:grid-cols-3 gap-3">
@@ -39,12 +40,14 @@
       {% set tableName = 'Functions' %}
       {% set functions = file.functions %}
       {% set tableHeaders = file.functionTableHeaders %}
+      {% include('parts/divider.html.twig') %}
       {% include('parts/function-table.html.twig') %}
     {% endif %}
 
     {% if file.classes %}
       {% set classes = file.classes %}
       {% set tableHeaders = file.classTableHeaders %}
+      {% include('parts/divider.html.twig') %}
       {% include('parts/class-table.html.twig') %}
     {% endif %}
 
