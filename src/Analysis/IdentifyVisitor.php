@@ -11,6 +11,7 @@ use PhpCodeArch\Metrics\Model\Collections\FunctionNameCollection;
 use PhpCodeArch\Metrics\Model\Collections\InterfaceNameCollection;
 use PhpCodeArch\Metrics\Model\Collections\FileNameCollection;
 use PhpCodeArch\Metrics\Model\Collections\ParameterCollection;
+use PhpCodeArch\Metrics\Model\Collections\PropertyCollection;
 use PhpCodeArch\Metrics\Model\Collections\TraitNameCollection;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
@@ -332,7 +333,7 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
                 return implode('|', $types);
         }
 
-        return 'unidentified type';
+        return 'implicit mixed';
     }
 
     /**
@@ -528,6 +529,8 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
         );
 
         $this->handleClassMethods($classInfo, $node, $identifierData);
+        $this->handleClassProperties($classInfo, $node, $identifierData);
+
         $this->classes[$classId] = $className;
     }
 
@@ -646,7 +649,7 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
         Node\Stmt\Function_|Node\Stmt\ClassMethod $node,
         array $identifierData): void
     {
-        $returnType = 'void';
+        $returnType = 'not specified';
 
         $docBlock = $node->getDocComment();
         $docBlockText = $docBlock ? $docBlock->getText() : '';
@@ -665,6 +668,64 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
             $identifierData,
             $returnType,
             'returnType'
+        );
+    }
+
+    private function handleClassProperties(array $classInfo, Node\Stmt\Trait_|Node\Stmt\Enum_|Node\Stmt\Interface_|Node\Stmt\Class_ $node, array $identifierData)
+    {
+        $propertyCollection = new PropertyCollection();
+
+        foreach ($node->getProperties() as $property) {
+            $docBlock = $property->getDocComment();
+            $docBlockText = $docBlock ? $docBlock->getText() : '';
+
+            $docBlockText = str_replace('*/', '', $docBlockText);
+            $docBlockText = preg_replace('/^\s*\*\s?/m', '', $docBlockText);
+
+            $pattern = '/@var\s+([^\s]+)(?:\s+(.*))?/ms';
+
+            $docBlockVar = [];
+            if (preg_match($pattern, $docBlockText, $matches)) {
+                $docBlockVar = [
+                    'type' => $matches[1],
+                    'comment' => $matches[2] ?? '',
+                ];
+            }
+
+            $scope = $property->isPrivate() ? 'private' : 'public';
+            $scope = $property->isProtected() ? 'protected' : $scope;
+
+            foreach ($property->props as $prop) {
+                $propName = '$' . $prop->name->toString();
+                $propType = $this->getTypeName($property->type);
+                $comment = '';
+
+                if (count($docBlockVar) > 0) {
+                    $propType = $docBlockVar['type'];
+                    $comment = $docBlockVar['comment'];
+                }
+
+                $propertyCollection->set([
+                    'name' => $propName,
+                    'type' => $propType,
+                    'comment' => $comment,
+                    'scope' => $scope,
+                ]);
+            }
+        }
+
+        $this->metricsController->setCollection(
+            MetricCollectionTypeEnum::ClassCollection,
+            $identifierData,
+            $propertyCollection,
+            'properties'
+        );
+
+        $this->metricsController->setMetricValue(
+            MetricCollectionTypeEnum::ClassCollection,
+            $identifierData,
+            count($propertyCollection),
+            'propertyCount'
         );
     }
 }

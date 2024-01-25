@@ -9,6 +9,9 @@ use PhpCodeArch\Metrics\Model\MetricsContainer;
 
 trait CalculatorTrait
 {
+    /**
+     * @var string[] Das ist ein Test
+     */
     private array $usedMetricTypes;
 
     public function __construct(

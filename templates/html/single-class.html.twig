@@ -35,6 +35,25 @@
   </h2>
 
   <div class="mt-8 rounded-xl border border-cyan-800 bg-cyan-950/45 p-4">
+    <h3 class="mb-3 text-xl font-semibold font-display">Properties</h3>
+    {% if class.propertyCount.getValue() > 0 %}
+      <table>
+        <tbody>
+        {% for property in class.properties %}
+          <tr>
+            <td class="text-white/40 pr-4">{{ property.scope }} {{ property.type }}{% if property.type is empty %}implicit mixed{% endif %}</td>
+            <td class="text-lg font-semibold">{{ property.name }}</td>
+            <td class="italic text-white/60 pl-4">{{ property.comment }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="font-semibold">No properties used</p>
+    {% endif %}
+  </div>
+
+  <div class="mt-8 rounded-xl border border-cyan-800 bg-cyan-950/45 p-4">
     <h3 class="mb-3 text-xl font-semibold font-display">Dependencies</h3>
 
     {% if class.extends|length or class.interfaces|length or class.usedClasses|length or class.usedBy.getValue()|length or class.traits|length %}

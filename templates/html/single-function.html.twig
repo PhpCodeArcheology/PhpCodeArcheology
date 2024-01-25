@@ -49,9 +49,9 @@
         <tbody>
         {% for parameter in function.parameters %}
           <tr>
-            <td class="text-white/40 pr-4">{{ parameter.type }}{% if parameter.type is empty %}untyped{% endif %}</td>
+            <td class="text-white/40 pr-4">{{ parameter.type }}{% if parameter.type is empty %}implicit mixed{% endif %}</td>
             <td class="text-lg font-semibold">{{ parameter.name }}</td>
-            <td class="italic text-white/60">{{ parameter.description }}</td>
+            <td class="italic text-white/60 pl-4">{{ parameter.description }}</td>
           </tr>
         {% endfor %}
         </tbody>

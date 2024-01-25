@@ -695,6 +695,17 @@ return [
         ],
     ],
     [
+        'key' => 'propertyCount',
+        'name' => 'Property count',
+        'shortName' => 'Properties',
+        'description' => '',
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
+        ],
+    ],
+    [
         'key' => 'methodCount',
         'name' => 'Method count',
         'shortName' => 'Methods',
