@@ -10,6 +10,26 @@
   {% if usesCharts %}
   <script src="https://cdn.plot.ly/plotly-2.27.0.min.js" charset="utf-8"></script>
   {% endif %}
+
+  <style>
+    .title-state {
+      fill: rgba(8, 51, 68) !important;
+    }
+
+    #classDiagramm_classDiagram-extensionEnd path,
+    .relation {
+      stroke: rgb(21, 94, 117) !important;
+    }
+
+    .nodeLabel {
+      color: white !important;
+    }
+
+    .cluster > rect {
+      stroke: rgba(255, 255, 255, .5) !important;
+    }
+  </style>
+
 </head>
 <body class="bg-zinc-900 text-white bg-body-pattern">
 <header class="sticky top-0 z-40 w-full backdrop-blur-sm bg-black/45">

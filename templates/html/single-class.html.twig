@@ -61,10 +61,13 @@
 
   <div class="my-8 grid sm:grid-cols-3 gap-3">
     {% for element in class.detailData %}
-      {% include('parts/metric-tile.html.twig') %}
+      {% if element.key == 'package' %}
+        {% include('parts/package-tile.html.twig') %}
+      {% else %}
+        {% include('parts/metric-tile.html.twig') %}
+      {% endif %}
     {% endfor %}
   </div>
-
 
   {% if class.methods|length > 0 %}
     {% set folder = 'methods' %}
@@ -73,6 +76,49 @@
     {% set functions = class.methods %}
     {% include('parts/function-table.html.twig') %}
   {% endif %}
+
+  <h3 class="mt-8 mb-3 text-2xl font-semibold font-display">Class chart</h3>
+
+  <div id="graphDiv" class="cursor-move">
+    <div class="text-green-500 font-semibold">Please wait, chart is being generated.</div>
+  </div>
 </div>
+
+<script src="https://bumbu.me/svg-pan-zoom/dist/svg-pan-zoom.js"></script>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: false, maxTextSize: 500000, class: {useMaxWidth: false}});
+
+  const drawDiagram = async function () {
+    const element = document.querySelector('#graphDiv');
+
+    const graphDefinition = `
+  classDiagram
+      {% for usedClass in class.usedClasses %}
+        {{ class.singleName }} --|> \`{{ usedClass }}\`
+      {% endfor %}
+      {% for usedByClass in class.usedBy.getValue() %}
+         \`{{ usedByClass }}\` --|> {{ class.singleName }}
+      {% endfor %}
+        `;
+
+    const { svg } = await mermaid.render('classDiagramm', graphDefinition);
+
+    element.innerHTML = svg.replace(/[ ]*max-width:[ 0-9\.]*px;/i , '');
+
+    document.getElementById('classDiagramm').classList.add('h-[50vh]', 'border', 'border-cyan-500', 'rounded-xl');
+
+    const panZoomTiger = svgPanZoom('#classDiagramm', {
+      zoomEnabled: true,
+      controlIconsEnabled: false,
+      fit: true,
+      center: true,
+      maxZoom: 50,
+    });
+
+    //panZoomTiger.zoom(10);
+  };
+  await drawDiagram();
+</script>
 
 {% include('parts/footer.html.twig') %}
