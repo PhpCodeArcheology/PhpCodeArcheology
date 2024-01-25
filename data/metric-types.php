@@ -695,6 +695,17 @@ return [
         ],
     ],
     [
+        'key' => 'constantCount',
+        'name' => 'Constant count',
+        'shortName' => 'Constants',
+        'description' => '',
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
+        ],
+    ],
+    [
         'key' => 'propertyCount',
         'name' => 'Property count',
         'shortName' => 'Properties',

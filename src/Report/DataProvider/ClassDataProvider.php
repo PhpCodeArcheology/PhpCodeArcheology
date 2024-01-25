@@ -37,6 +37,7 @@ class ClassDataProvider implements ReportDataProviderInterface
             list($methodData, $methodTableHeaders) = $this->getMethods($methodCollection, $methods);
 
             $collectionKeys = [
+                'constants',
                 'properties',
                 'dependencies',
                 'usedClasses',

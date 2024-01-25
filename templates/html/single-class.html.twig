@@ -35,6 +35,27 @@
   </h2>
 
   <div class="mt-8 rounded-xl border border-cyan-800 bg-cyan-950/45 p-4">
+    <h3 class="mb-3 text-xl font-semibold font-display">Constants</h3>
+    {% if class.constantCount.getValue() > 0 %}
+      <table>
+        <tbody>
+        {% for property in class.constants %}
+          <tr>
+            <td class="text-white/40 pr-4">{{ property.scope }}</td>
+            <td class="text-lg font-semibold">{{ property.name }}</td>
+            <td class="italic text-white/70 pl-4">{{ property.valueType }}</td>
+            <td class="italic text-white/80 pl-4"><pre>{{ property.value }}</pre></td>
+            <td class="italic text-white/60 pl-4">{{ property.comment }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="font-semibold">No constants used</p>
+    {% endif %}
+  </div>
+
+  <div class="mt-8 rounded-xl border border-cyan-800 bg-cyan-950/45 p-4">
     <h3 class="mb-3 text-xl font-semibold font-display">Properties</h3>
     {% if class.propertyCount.getValue() > 0 %}
       <table>

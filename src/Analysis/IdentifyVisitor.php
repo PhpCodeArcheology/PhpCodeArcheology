@@ -6,6 +6,8 @@ namespace PhpCodeArch\Analysis;
 
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 use PhpCodeArch\Metrics\Model\Collections\ClassNameCollection;
+use PhpCodeArch\Metrics\Model\Collections\CollectionInterface;
+use PhpCodeArch\Metrics\Model\Collections\ConstantCollection;
 use PhpCodeArch\Metrics\Model\Collections\EnumNameCollection;
 use PhpCodeArch\Metrics\Model\Collections\FunctionNameCollection;
 use PhpCodeArch\Metrics\Model\Collections\InterfaceNameCollection;
@@ -529,6 +531,7 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
         );
 
         $this->handleClassMethods($classInfo, $node, $identifierData);
+        $this->handleClassConstants($classInfo, $node, $identifierData);
         $this->handleClassProperties($classInfo, $node, $identifierData);
 
         $this->classes[$classId] = $className;
@@ -671,47 +674,12 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
         );
     }
 
-    private function handleClassProperties(array $classInfo, Node\Stmt\Trait_|Node\Stmt\Enum_|Node\Stmt\Interface_|Node\Stmt\Class_ $node, array $identifierData)
+    private function handleClassProperties(array $classInfo, Node\Stmt\Trait_|Node\Stmt\Enum_|Node\Stmt\Interface_|Node\Stmt\Class_ $node, array $identifierData): void
     {
         $propertyCollection = new PropertyCollection();
 
         foreach ($node->getProperties() as $property) {
-            $docBlock = $property->getDocComment();
-            $docBlockText = $docBlock ? $docBlock->getText() : '';
-
-            $docBlockText = str_replace('*/', '', $docBlockText);
-            $docBlockText = preg_replace('/^\s*\*\s?/m', '', $docBlockText);
-
-            $pattern = '/@var\s+([^\s]+)(?:\s+(.*))?/ms';
-
-            $docBlockVar = [];
-            if (preg_match($pattern, $docBlockText, $matches)) {
-                $docBlockVar = [
-                    'type' => $matches[1],
-                    'comment' => $matches[2] ?? '',
-                ];
-            }
-
-            $scope = $property->isPrivate() ? 'private' : 'public';
-            $scope = $property->isProtected() ? 'protected' : $scope;
-
-            foreach ($property->props as $prop) {
-                $propName = '$' . $prop->name->toString();
-                $propType = $this->getTypeName($property->type);
-                $comment = '';
-
-                if (count($docBlockVar) > 0) {
-                    $propType = $docBlockVar['type'];
-                    $comment = $docBlockVar['comment'];
-                }
-
-                $propertyCollection->set([
-                    'name' => $propName,
-                    'type' => $propType,
-                    'comment' => $comment,
-                    'scope' => $scope,
-                ]);
-            }
+            $this->handlePropOrConst($property, 'props', $propertyCollection);
         }
 
         $this->metricsController->setCollection(
@@ -727,5 +695,90 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
             count($propertyCollection),
             'propertyCount'
         );
+    }
+
+    private function handleClassConstants(array $classInfo, Node\Stmt\Trait_|Node\Stmt\Enum_|Node\Stmt\Interface_|Node\Stmt\Class_ $node, array $identifierData): void
+    {
+        $constantCollection = new ConstantCollection();
+
+        foreach ($node->getConstants() as $constant) {
+            $this->handlePropOrConst($constant, 'consts', $constantCollection);
+        }
+
+        $this->metricsController->setCollection(
+            MetricCollectionTypeEnum::ClassCollection,
+            $identifierData,
+            $constantCollection,
+            'constants'
+        );
+
+        $this->metricsController->setMetricValue(
+            MetricCollectionTypeEnum::ClassCollection,
+            $identifierData,
+            count($constantCollection),
+            'constantCount'
+        );
+    }
+
+    private function handlePropOrConst(Node\Stmt\Property|Node\Stmt\ClassConst $element, string $arrayKey, CollectionInterface $collection): void
+    {
+        $docBlock = $element->getDocComment();
+        $docBlockText = $docBlock ? $docBlock->getText() : '';
+
+        $docBlockText = str_replace('*/', '', $docBlockText);
+        $docBlockText = preg_replace('/^\s*\*\s?/m', '', $docBlockText);
+
+        $pattern = '/@var\s+([^\s]+)(?:\s+(.*))?/ms';
+
+        $docBlockVar = [];
+        if (preg_match($pattern, $docBlockText, $matches)) {
+            $docBlockVar = [
+                'type' => $matches[1],
+                'comment' => $matches[2] ?? '',
+            ];
+        }
+
+        $scope = $element->isPrivate() ? 'private' : 'public';
+        $scope = $element->isProtected() ? 'protected' : $scope;
+
+        $propNamePrefix = $element instanceof Node\Stmt\Property ? '$' : '';
+
+        foreach ($element->{$arrayKey} as $prop) {
+            $propName = $propNamePrefix . $prop->name->toString();
+            $propType = $this->getTypeName($element->type);
+            $propComment = '';
+
+            $value = null;
+            $valueType = null;
+            if ($element instanceof Node\Stmt\ClassConst) {
+                $value = $prop->value->getAttribute('rawValue');
+
+                $valueType = match (true) {
+                    $prop->value instanceof Node\Expr\Array_ => 'array',
+                    $prop->value instanceof Node\Expr\ConstFetch => 'constant',
+                    default => gettype($prop->value->value),
+                };
+
+                if ($valueType == 'constant') {
+                    $value = $prop->value->name->toString();
+                    $valueType = '';
+                }
+            }
+
+            if (count($docBlockVar) > 0) {
+                $propType = $docBlockVar['type'];
+                $propComment = $docBlockVar['comment'];
+            }
+
+            $collection->set([
+                'name' => $propName,
+                'type' => $propType,
+                'comment' => $propComment,
+                'scope' => $scope,
+                'value' => $value,
+                'valueType' => $valueType,
+            ]);
+        }
+
     }
 }

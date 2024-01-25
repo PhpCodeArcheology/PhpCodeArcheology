@@ -26,6 +26,7 @@ class MetricType
      * @param string $shortName
      * @param string|null $description
      * @param int $valueType
+     * @param int|array $visibility
      */
     private function __construct(
         private readonly string $key,
