@@ -4,7 +4,7 @@
   <div class="mb-7 text-sm">
     <ul class="flex gap-1">
       <li class="flex after:content-['⮁'] gap-1">
-        <a href="index.html" class="text-cyan-500">Project</a>
+        <a href="index.html" class="text-cyan-500">Home</a>
       </li>
       <li>Class coupling</li>
     </ul>
@@ -32,13 +32,30 @@
       {% for class in classes %}
         <tr class="even:bg-cyan-950/45 odd:bg-cyan-950/85 transition-colors hover:bg-cyan-800">
           <td class="border border-slate-500 text-left px-2 py-0.5" data-sort="{{ class.name }}">
-            {% if class.anonymous %}
-              <span class="text-white/40">{{ class.filePath }}</span><br>
-              <a href="classes/{{ class.id }}.html" class="font-semibold inline-block" title="{{ class.name }}">{{ class.name }}</a>
-            {% else %}
-              {% if class.namespace %}<span class="text-white/40">{{ class.namespace }}</span><br>{% endif %}
-              <a href="classes/{{ class.id }}.html" class="font-semibold inline-block" title="{{ class.name }}">{{ class.singleName }}</a>
-            {% endif %}
+            <div class="flex gap-4 justify-between items-start">
+              <a href="{% if isSubdir %}../{% endif %}classes/{{ class.id }}.html" class="group block flex-1">
+                {% if class.anonymous.getValue() %}
+                  <span class="text-white/40 group-hover:text-white">{{ class.filePath }}</span><br>
+                  <span class="font-semibold inline-block group-hover:text-cyan-400" title="{{ class.name }}">{{ class.name }}</span>
+                {% else %}
+                  {% if class.namespace %}<span class="text-white/40 group-hover:text-white">{{ class.namespace }}</span><br>{% endif %}
+                  <span class="font-semibold inline-block group-hover:text-cyan-400" title="{{ class.name }}">{{ class.singleName }}</span>
+                {% endif %}
+              </a>
+              {% if class.interface.getValue() %}
+                <div class="rounded px-2 py-0.5 bg-amber-900 mt-0.5">Interface</div>
+              {% elseif class.trait.getValue() %}
+                <div class="rounded px-2 py-0.5 bg-purple-900 mt-0.5">Trait</div>
+              {% elseif class.enum.getValue() %}
+                <div class="rounded px-2 py-0.5 bg-emerald-900 mt-0.5">Enum</div>
+              {% elseif class.abstract.getValue() %}
+                <div class="rounded px-2 py-0.5 bg-fuchsia-900 mt-0.5">Abstract</div>
+              {% elseif class.anonymous.getValue() %}
+                <div class="rounded px-2 py-0.5 bg-gray-800 mt-0.5">Anonymous</div>
+              {% else %}
+                <div class="rounded px-2 py-0.5 bg-blue-900 mt-0.5">Class</div>
+              {% endif %}
+            </div>
           </td>
           {% for data in class.listData %}
             {% include('parts/tbody-td-sortable.html.twig') %}

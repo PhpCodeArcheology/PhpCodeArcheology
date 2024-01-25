@@ -4,7 +4,7 @@
   <div class="mb-7 text-sm">
     <ul class="flex gap-1">
       <li class="flex after:content-['⮁'] gap-1">
-        <a href="../index.html" class="text-cyan-500">Project</a>
+        <a href="../index.html" class="text-cyan-500">Home</a>
       </li>
       <li class="flex after:content-['⮁'] gap-1">
         <a href="../classes-list.html" class="text-cyan-500">Classes</a>
@@ -14,7 +14,25 @@
   </div>
 
   <h1 class="mb-3 text-lg font-semibold font-display">Class metrics for:</h1>
-  <h2 class="mb-6 text-3xl"><span class="text-white/40">{{ class.namespace }}\</span><span class="font-semibold inline-block" title="{{ class.namespace }}\{{ class.singleName }}">{{ class.singleName }}</span></h2>
+  <h2 class="mb-6 text-3xl flex justify-between gap-4 items-center">
+    <div>
+      <span class="text-white/40">{{ class.namespace }}\</span>
+      <span class="font-semibold inline-block" title="{{ class.namespace }}\{{ class.singleName }}">{{ class.singleName }}</span>
+    </div>
+    {% if class.interface.getValue() %}
+      <div class="rounded px-2 py-0.5 bg-amber-900 mt-0.5">Interface</div>
+    {% elseif class.trait.getValue() %}
+      <div class="rounded px-2 py-0.5 bg-purple-900 mt-0.5">Trait</div>
+    {% elseif class.enum.getValue() %}
+      <div class="rounded px-2 py-0.5 bg-emerald-900 mt-0.5">Enum</div>
+    {% elseif class.abstract.getValue() %}
+      <div class="rounded px-2 py-0.5 bg-fuchsia-900 mt-0.5">Abstract</div>
+    {% elseif class.anonymous.getValue() %}
+      <div class="rounded px-2 py-0.5 bg-gray-800 mt-0.5">Anonymous</div>
+    {% else %}
+      <div class="rounded px-2 py-0.5 bg-blue-900 mt-0.5">Class</div>
+    {% endif %}
+  </h2>
 
   <div class="mt-8 rounded-xl border border-cyan-800 bg-cyan-950/45 p-4">
     <h3 class="mb-3 text-xl font-semibold font-display">Dependencies</h3>
@@ -94,11 +112,22 @@
 
     const graphDefinition = `
   classDiagram
+      {% for interface in class.interfaces %}
+      class \`{{ interface|split('\\')|last }}\`
+      <<interface>> \`{{ interface|split('\\')|last }}\`
+      {% endfor %}
+
+      {% for interface in class.interfaces %}
+         {{ class.singleName }} ..|> \`{{ interface|split('\\')|last }}\` : implements
+      {% endfor %}
+      {% for extendedClass in class.extends %}
+         {{ class.singleName }} --|> \`{{ extendedClass|split('\\')|last }}\` : extends
+      {% endfor %}
       {% for usedClass in class.usedClasses %}
-        {{ class.singleName }} --|> \`{{ usedClass }}\`
+        {{ class.singleName }} --> \`{{ usedClass|split('\\')|last }}\` : uses
       {% endfor %}
       {% for usedByClass in class.usedBy.getValue() %}
-         \`{{ usedByClass }}\` --|> {{ class.singleName }}
+         \`{{ usedByClass|split('\\')|last }}\` --> {{ class.singleName }} : uses
       {% endfor %}
         `;
 

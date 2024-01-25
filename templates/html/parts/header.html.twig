@@ -17,6 +17,9 @@
     }
 
     #classDiagramm_classDiagram-extensionEnd path,
+    #classDiagramm_classDiagram-dependencyEnd path,
+    #classDiagramm_classDiagram-aggregationEnd path,
+    #classDiagramm_classDiagram-extensionEnd path,
     .relation {
       stroke: rgb(21, 94, 117) !important;
     }
@@ -27,6 +30,11 @@
 
     .cluster > rect {
       stroke: rgba(255, 255, 255, .5) !important;
+    }
+
+    #classDiagramm .edgeLabel .label span {
+      background: transparent !important;
+      color: white !important;
     }
   </style>
 

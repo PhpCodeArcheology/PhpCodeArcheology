@@ -27,15 +27,15 @@
       <tr class="even:bg-cyan-950/45 odd:bg-cyan-950/85 transition-colors hover:bg-cyan-800">
         <td class="border border-slate-500 text-left px-2 py-0.5 filter-name" data-filter="{{ class.singleName }}" data-sort="{{ class.singleName }}">
           <div class="flex gap-4 justify-between items-start">
-            <div>
+            <a href="{% if isSubdir %}../{% endif %}classes/{{ class.id }}.html" class="group block flex-1">
               {% if class.anonymous.getValue() %}
-                <span class="text-white/40">{{ class.filePath }}</span><br>
-                <a href="{% if isSubdir %}../{% endif %}classes/{{ class.id }}.html" class="font-semibold inline-block" title="{{ class.name }}">{{ class.name }}</a>
+                <span class="text-white/40 group-hover:text-white">{{ class.filePath }}</span><br>
+                <span class="font-semibold inline-block group-hover:text-cyan-400" title="{{ class.name }}">{{ class.name }}</span>
               {% else %}
-                {% if class.namespace %}<span class="text-white/40">{{ class.namespace }}</span><br>{% endif %}
-                <a href="{% if isSubdir %}../{% endif %}classes/{{ class.id }}.html" class="font-semibold inline-block" title="{{ class.name }}">{{ class.singleName }}</a>
+                {% if class.namespace %}<span class="text-white/40 group-hover:text-white">{{ class.namespace }}</span><br>{% endif %}
+                <span class="font-semibold inline-block group-hover:text-cyan-400" title="{{ class.name }}">{{ class.singleName }}</span>
               {% endif %}
-            </div>
+            </a>
             {% if class.interface.getValue() %}
               <div class="rounded px-2 py-0.5 bg-amber-900 mt-0.5">Interface</div>
             {% elseif class.trait.getValue() %}
