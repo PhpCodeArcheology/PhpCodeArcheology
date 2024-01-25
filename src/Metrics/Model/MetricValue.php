@@ -84,4 +84,14 @@ class MetricValue
     {
         return array_map(fn($problem) => $problem->getMessage(), $this->problems);
     }
+
+    public function getProblems(): array
+    {
+        return $this->problems;
+    }
+
+    public function hasProblems(): bool
+    {
+        return count($this->problems) > 0;
+    }
 }

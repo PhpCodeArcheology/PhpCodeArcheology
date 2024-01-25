@@ -10,4 +10,9 @@ readonly class TooComplexProblem extends AbstractProblem
     {
         return new TooComplexProblem($problemLevel, $message);
     }
+
+    public function getName(): string
+    {
+        return 'Too complex code';
+    }
 }

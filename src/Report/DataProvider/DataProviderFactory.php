@@ -53,6 +53,11 @@ class DataProviderFactory
         return new FunctionDataProvider($this->metricsController, $this->reportDataContainer);
     }
 
+    public function getProblemDataProvider(): ProblemDataProvider
+    {
+        return new ProblemDataProvider($this->metricsController, $this->reportDataContainer);
+    }
+
     private function predictProgrammingParadigm(): void
     {
         $classCount = $this->data['OverallClasses'];

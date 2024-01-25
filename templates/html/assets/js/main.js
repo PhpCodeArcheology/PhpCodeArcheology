@@ -9,6 +9,10 @@
   const ths = document.querySelectorAll('.sortable th');
   ths.forEach(th => {
     th.addEventListener('click', event => {
+      if (th.classList.contains('no-sort')) {
+        return;
+      }
+
       ths.forEach(tmpTh => {
         tmpTh.querySelector('.sort-icon').classList.add('opacity-0');
       });
