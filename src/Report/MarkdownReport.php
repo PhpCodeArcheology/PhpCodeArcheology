@@ -10,45 +10,37 @@ use PhpCodeArch\Report\DataProvider\DataProviderFactory;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
 
-class MarkdownReport implements ReportInterface
+class MarkdownReport extends HtmlReport
 {
-    use ReportTrait;
-
-    public function __construct(
-        private Config              $config,
-        private DataProviderFactory $reportData,
-        private FilesystemLoader    $twigLoader,
-        private Environment         $twig,
-        private CliOutput           $output
-    )
+    public function __construct(Config $config, DataProviderFactory $dataProviderFactory, FilesystemLoader $twigLoader, Environment $twig, CliOutput $output)
     {
-        $this->outputDir = $config->get('reportDir') . DIRECTORY_SEPARATOR;
+        parent::__construct($config, $dataProviderFactory, $twigLoader, $twig, $output);
 
         $this->templateDir = realpath(__DIR__ . '/../../templates/markdown') . DIRECTORY_SEPARATOR;
-
-        if (! is_dir($this->outputDir)) {
-            mkdir(directory: $this->outputDir, recursive: true);
-        }
-
         $this->twigLoader->setPaths($this->templateDir);
-        $this->twig->setCache(false);
     }
 
     public function generate(): void
     {
         $this->clearReportDir();
 
-        mkdir($this->outputDir . '/files');
+        mkdir($this->outputDir . 'files');
+        mkdir($this->outputDir . 'classes');
+        mkdir($this->outputDir . 'functions');
+        mkdir($this->outputDir . 'methods');
 
-        $templateData = $this->reportData->getProjectDataProvider();
-        $this->renderTemplate('index.md.twig', $templateData->getTemplateData(), 'index.md');
+        $this->generateReportFiles();
+    }
 
-        $templateData = $this->reportData->getFilesDataProvider();
-        $this->renderTemplate('files.md.twig', $templateData->getTemplateData(), 'files.md');
+    protected function renderTemplate(string $template, array $data, string $outputFile): void
+    {
+        $template = str_replace('.html.twig', '.md.twig', $template);
+        $outputFile = str_replace('.html', '.md', $outputFile);
+        $data['currentPage'] = str_replace('.html', '.md', $data['currentPage']);
 
-        foreach ($templateData->getFiles() as $fileData) {
-            $fileData['createDate'] = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
-            $this->renderTemplate('file.md.twig', $fileData, 'files/' . $fileData['id'] . '.md');
-        }
+        $templateWrapper = $this->twig->load($template);
+        ob_start();
+        echo $templateWrapper->render($data);
+        file_put_contents($this->outputDir . $outputFile, ob_get_clean());
     }
 }

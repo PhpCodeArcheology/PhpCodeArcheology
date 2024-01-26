@@ -10,16 +10,16 @@ use Twig\Error\SyntaxError;
 
 trait ReportTrait
 {
-    private string $outputDir = '';
+    protected string $outputDir = '';
 
-    private string $templateDir = '';
+    protected string $templateDir = '';
 
-    private function clearReportDir(): void
+    protected function clearReportDir(): void
     {
         $this->deleteDirContents($this->outputDir);
     }
 
-    private function deleteDirContents(string $dir): void
+    protected function deleteDirContents(string $dir): void
     {
         if (!str_ends_with($dir, '/')) {
             $dir .= '/';
@@ -41,7 +41,7 @@ trait ReportTrait
      * @throws RuntimeError
      * @throws LoaderError
      */
-    private function renderTemplate(string $template, array $data, string $outputFile): void
+    protected function renderTemplate(string $template, array $data, string $outputFile): void
     {
         $templateWrapper = $this->twig->load($template);
         ob_start();

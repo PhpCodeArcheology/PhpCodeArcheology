@@ -1,0 +1,199 @@
+{% include('parts/header.html.twig') %}
+
+<div class="mt-6 lg:w-5/6">
+  <div class="mb-7 text-sm">
+    <ul class="flex gap-1">
+      <li class="flex after:content-['⮁'] gap-1">
+        <a href="../index.html" class="text-cyan-500">Home</a>
+      </li>
+      <li class="flex after:content-['⮁'] gap-1">
+        <a href="../classes-list.html" class="text-cyan-500">Classes</a>
+      </li>
+      <li>{{ class.singleName }}</li>
+    </ul>
+  </div>
+
+  <h1 class="mb-3 text-lg font-semibold font-display">Class metrics for:</h1>
+  <h2 class="mb-6 text-3xl flex justify-between gap-4 items-center">
+    <div>
+      <span class="text-white/40">{{ class.namespace }}\</span>
+      <span class="font-semibold inline-block" title="{{ class.namespace }}\{{ class.singleName }}">{{ class.singleName }}</span>
+    </div>
+    {% if class.interface.getValue() %}
+      <div class="rounded px-2 py-0.5 bg-amber-900 mt-0.5">Interface</div>
+    {% elseif class.trait.getValue() %}
+      <div class="rounded px-2 py-0.5 bg-purple-900 mt-0.5">Trait</div>
+    {% elseif class.enum.getValue() %}
+      <div class="rounded px-2 py-0.5 bg-emerald-900 mt-0.5">Enum</div>
+    {% elseif class.abstract.getValue() %}
+      <div class="rounded px-2 py-0.5 bg-fuchsia-900 mt-0.5">Abstract</div>
+    {% elseif class.anonymous.getValue() %}
+      <div class="rounded px-2 py-0.5 bg-gray-800 mt-0.5">Anonymous</div>
+    {% else %}
+      <div class="rounded px-2 py-0.5 bg-blue-900 mt-0.5">Class</div>
+    {% endif %}
+  </h2>
+
+  <div class="mt-8 rounded-xl border border-cyan-800 bg-cyan-950/45 p-4">
+    <h3 class="mb-3 text-xl font-semibold font-display">Constants</h3>
+    {% if class.constantCount.getValue() > 0 %}
+      <table>
+        <tbody>
+        {% for property in class.constants %}
+          <tr>
+            <td class="text-white/40 pr-4">{{ property.scope }}</td>
+            <td class="text-lg font-semibold">{{ property.name }}</td>
+            <td class="italic text-white/70 pl-4">{{ property.valueType }}</td>
+            <td class="italic text-white/80 pl-4"><pre>{{ property.value }}</pre></td>
+            <td class="italic text-white/60 pl-4">{{ property.comment }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="font-semibold">No constants used</p>
+    {% endif %}
+  </div>
+
+  <div class="mt-8 rounded-xl border border-cyan-800 bg-cyan-950/45 p-4">
+    <h3 class="mb-3 text-xl font-semibold font-display">Properties</h3>
+    {% if class.propertyCount.getValue() > 0 %}
+      <table>
+        <tbody>
+        {% for property in class.properties %}
+          <tr>
+            <td class="text-white/40 pr-4">{{ property.scope }} {{ property.type }}{% if property.type is empty %}implicit mixed{% endif %}</td>
+            <td class="text-lg font-semibold">{{ property.name }}</td>
+            <td class="italic text-white/60 pl-4">{{ property.comment }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="font-semibold">No properties used</p>
+    {% endif %}
+  </div>
+
+  <div class="mt-8 rounded-xl border border-cyan-800 bg-cyan-950/45 p-4">
+    <h3 class="mb-3 text-xl font-semibold font-display">Dependencies</h3>
+
+    {% if class.extends|length or class.interfaces|length or class.usedClasses|length or class.usedBy.getValue()|length or class.traits|length %}
+    <table class="w-full border-collapse">
+      <tbody>
+        {% if class.interfaces|length %}
+          <tr class="odd:bg-cyan-950/85 even:bg-cyan-950/55 border-t border-white/15">
+            <th class="text-left p-2 align-top">Implements</th>
+            <td class="p-2">{{ class.interfaces|sort|join('<br>')|raw }}</td>
+          </tr>
+        {% endif %}
+        {% if class.extends|length %}
+        <tr class="odd:bg-cyan-950/85 even:bg-cyan-950/55 border-t border-white/15">
+          <th class="text-left p-2 align-top">Extends</th>
+          <td class="p-2">{{ class.extends|sort|join('<br>')|raw }}</td>
+        </tr>
+        {% endif %}
+        {% if class.traits|length %}
+          <tr class="odd:bg-cyan-950/85 even:bg-cyan-950/55 border-t border-white/15">
+            <th class="text-left p-2 align-top">Traits</th>
+            <td class="p-2">{{ class.traits|sort|join('<br>')|raw }}</td>
+          </tr>
+        {% endif %}
+        {% if class.usedClasses|length %}
+        <tr class="odd:bg-cyan-950/85 even:bg-cyan-950/55 border-t border-white/15">
+          <th class="text-left p-2 align-top">Uses</th>
+          <td class="p-2">{{ class.usedClasses|sort|join('<br>')|raw }}</td>
+        </tr>
+        {% endif %}
+        {% if class.usedBy.getValue()|length %}
+          <tr class="odd:bg-cyan-950/85 even:bg-cyan-950/55 border-t border-white/15">
+            <th class="text-left p-2 align-top">Used by</th>
+            <td class="p-2">{{ class.usedBy.getValue()|sort|join('<br>')|raw }}</td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+    {% else %}
+      <p class="font-semibold">No dependencies found.</p>
+    {% endif %}
+  </div>
+
+  {% include('parts/divider.html.twig') %}
+
+  <div class="my-8 grid sm:grid-cols-3 gap-3">
+    {% for element in class.detailData %}
+      {% if element.key == 'package' %}
+        {% include('parts/package-tile.html.twig') %}
+      {% else %}
+        {% include('parts/metric-tile.html.twig') %}
+      {% endif %}
+    {% endfor %}
+  </div>
+
+  {% if class.methods|length > 0 %}
+    {% set folder = 'methods' %}
+    {% set tableName = 'Methods' %}
+    {% set tableHeaders = class.methodTableHeaders %}
+    {% set functions = class.methods %}
+
+    {% include('parts/divider.html.twig') %}
+    {% include('parts/function-table.html.twig') %}
+  {% endif %}
+
+  {% include('parts/divider.html.twig') %}
+
+  <h3 class="mt-8 mb-4 text-2xl font-semibold font-display">Class chart</h3>
+
+  <div id="graphDiv" class="cursor-move">
+    <div class="text-green-500 font-semibold">Please wait, chart is being generated.</div>
+  </div>
+</div>
+
+<script src="https://bumbu.me/svg-pan-zoom/dist/svg-pan-zoom.js"></script>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: false, maxTextSize: 500000, class: {useMaxWidth: false}});
+
+  const drawDiagram = async function () {
+    const element = document.querySelector('#graphDiv');
+
+    const graphDefinition = `
+  classDiagram
+      {% for interface in class.interfaces %}
+      class \`{{ interface|split('\\')|last }}\`
+      <<interface>> \`{{ interface|split('\\')|last }}\`
+      {% endfor %}
+
+      {% for interface in class.interfaces %}
+         {{ class.singleName }} ..|> \`{{ interface|split('\\')|last }}\` : implements
+      {% endfor %}
+      {% for extendedClass in class.extends %}
+         {{ class.singleName }} --|> \`{{ extendedClass|split('\\')|last }}\` : extends
+      {% endfor %}
+      {% for usedClass in class.usedClasses %}
+        {{ class.singleName }} --> \`{{ usedClass|split('\\')|last }}\` : uses
+      {% endfor %}
+      {% for usedByClass in class.usedBy.getValue() %}
+         \`{{ usedByClass|split('\\')|last }}\` --> {{ class.singleName }} : uses
+      {% endfor %}
+        `;
+
+    const { svg } = await mermaid.render('classDiagramm', graphDefinition);
+
+    element.innerHTML = svg.replace(/[ ]*max-width:[ 0-9\.]*px;/i , '');
+
+    document.getElementById('classDiagramm').classList.add('h-[50vh]', 'border', 'border-cyan-500', 'rounded-xl');
+
+    const panZoomTiger = svgPanZoom('#classDiagramm', {
+      zoomEnabled: true,
+      controlIconsEnabled: false,
+      fit: true,
+      center: true,
+      maxZoom: 50,
+    });
+
+    //panZoomTiger.zoom(10);
+  };
+  await drawDiagram();
+</script>
+
+{% include('parts/footer.html.twig') %}

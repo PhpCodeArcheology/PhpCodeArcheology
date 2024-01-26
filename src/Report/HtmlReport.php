@@ -25,8 +25,8 @@ class HtmlReport implements ReportInterface
     public function __construct(
         private readonly Config              $config,
         private readonly DataProviderFactory $dataProviderFactory,
-        private readonly FilesystemLoader    $twigLoader,
-        private readonly Environment         $twig,
+        protected readonly FilesystemLoader    $twigLoader,
+        protected readonly Environment         $twig,
         private readonly CliOutput           $output)
     {
         $this->outputDir = $config->get('reportDir') . DIRECTORY_SEPARATOR;
@@ -61,7 +61,7 @@ class HtmlReport implements ReportInterface
         $this->generateReportFiles();
     }
 
-    private function generateReportFiles(): void
+    protected function generateReportFiles(): void
     {
         $createMethods = [
             [$this, 'generateIndexPage'],
@@ -126,7 +126,7 @@ class HtmlReport implements ReportInterface
      * @throws RuntimeError
      * @throws LoaderError
      */
-    private function generateIndexPage(): void
+    protected function generateIndexPage(): void
     {
         $templateData = $this->dataProviderFactory->getProjectDataProvider();
         $data = $templateData->getTemplateData();
@@ -141,7 +141,7 @@ class HtmlReport implements ReportInterface
      * @throws RuntimeError
      * @throws LoaderError
      */
-    private function generateFilePage(): void
+    protected function generateFilePage(): void
     {
         $templateData = $this->dataProviderFactory->getFilesDataProvider();
         $data = $templateData->getTemplateData();
@@ -150,7 +150,7 @@ class HtmlReport implements ReportInterface
         $this->renderTemplate('files.html.twig', $data, 'files.html');
     }
 
-    private function generateFilesPages(): void
+    protected function generateFilesPages(): void
     {
         $templateData = $this->dataProviderFactory->getFilesDataProvider();
         $data = $templateData->getTemplateData();
@@ -172,7 +172,7 @@ class HtmlReport implements ReportInterface
 
     }
 
-    private function generateClassesPages(): void
+    protected function generateClassesPages(): void
     {
         $templateData = $this->dataProviderFactory->getClassDataProvider();
         $data = $templateData->getTemplateData();
@@ -193,7 +193,7 @@ class HtmlReport implements ReportInterface
         }
     }
 
-    private function generateClassPage(): void
+    protected function generateClassPage(): void
     {
         $templateData = $this->dataProviderFactory->getClassDataProvider();
         $data = $templateData->getTemplateData();
@@ -202,7 +202,7 @@ class HtmlReport implements ReportInterface
         $this->renderTemplate('classes.html.twig', $data, 'classes-list.html');
     }
 
-    private function generateFunctionPage(): void
+    protected function generateFunctionPage(): void
     {
         $templateData = $this->dataProviderFactory->getFunctionDataProvider();
         $data = $templateData->getTemplateData();
@@ -211,7 +211,7 @@ class HtmlReport implements ReportInterface
         $this->renderTemplate('functions-list.html.twig', $data, 'functions-list.html');
     }
 
-    private function generateFunctionsPages(): void
+    protected function generateFunctionsPages(): void
     {
         $templateData = $this->dataProviderFactory->getFunctionDataProvider();
         $data = $templateData->getTemplateData();
@@ -229,7 +229,7 @@ class HtmlReport implements ReportInterface
         }
     }
 
-    private function generatePackagesPage(): void
+    protected function generatePackagesPage(): void
     {
         $templateData = $this->dataProviderFactory->getPackagDataProvider();
         $data = $templateData->getTemplateData();
@@ -239,7 +239,7 @@ class HtmlReport implements ReportInterface
         $this->renderTemplate('packages-list.html.twig', $data, 'packages-list.html');
     }
 
-    private function generateClassCouplingPage(): void
+    protected function generateClassCouplingPage(): void
     {
         $templateData = $this->dataProviderFactory->getClassCouplingDataProvider();
         $data = $templateData->getTemplateData();
@@ -248,7 +248,7 @@ class HtmlReport implements ReportInterface
         $this->renderTemplate('class-coupling.html.twig', $data, 'class-coupling.html');
     }
 
-    private function generateClassChartPage(): void
+    protected function generateClassChartPage(): void
     {
         $templateData = $this->dataProviderFactory->getClassesChartDataProvider();
         $data = $templateData->getTemplateData();
@@ -257,7 +257,7 @@ class HtmlReport implements ReportInterface
         $this->renderTemplate('classes-chart.html.twig', $data, 'classes-chart.html');
     }
 
-    private function generateProblemsPage(): void
+    protected function generateProblemsPage(): void
     {
         $templateData = $this->dataProviderFactory->getProblemDataProvider();
         $data = $templateData->getTemplateData();

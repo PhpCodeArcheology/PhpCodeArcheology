@@ -1,0 +1,101 @@
+{% include('parts/header.html.twig') %}
+
+{% set isMethod = function.functionType.getValue() == 'method' %}
+{% set breadCrumbLi = '' %}
+{% if isMethod %}
+  {% set scope %}
+    {% if function.public.getValue() %}public{% elseif function.protected.getValue() %}protected{% else %}private{% endif %}
+    {% if function.static.getValue() %}static{% endif %}
+  {% endset %}
+  {% set breadCrumbLi %}
+    <li class="flex after:content-['⮁'] gap-1">
+      <a href="../classes-list.html" class="text-cyan-500">Classes</a>
+    </li>
+  {% endset %}
+{% endif %}
+{% set h1Title = isMethod ? 'Method' : 'Function' %}
+{% set information = isMethod ? scope : function.namespace %}
+{% set functionName = isMethod ? function.name : function.singleName %}
+{% set divider = isMethod ? ' ' : '/' %}
+{% set breadCrumbMiddle = isMethod ? function.detailData[0].rawValue.singleName : 'Functions' %}
+{% set breadCrumbLink = isMethod ? 'classes/' ~ function.detailData[0].rawValue.id : 'functions-list' %}
+
+<div class="mt-6 lg:w-5/6">
+  <div class="mb-7 text-sm">
+    <ul class="flex gap-1">
+      <li class="flex after:content-['⮁'] gap-1">
+        <a href="../index.html" class="text-cyan-500">Home</a>
+      </li>
+      {{ breadCrumbLi }}
+      <li class="flex after:content-['⮁'] gap-1">
+        <a href="../{{ breadCrumbLink }}.html" class="text-cyan-500">{{ breadCrumbMiddle }}</a>
+      </li>
+      <li>{{ functionName }}</li>
+    </ul>
+  </div>
+
+  <h1 class="mb-3 text-lg font-semibold font-display">{{ h1Title }} metrics for:</h1>
+  <h2 class="mb-6 text-3xl">
+    <span class="text-white/40">{{ information }}{{ divider }}</span>
+    <span class="font-semibold inline-block" title="{{ information }}{{ divider }}{{ functionName }}">
+      {{ functionName }}
+    </span>
+  </h2>
+
+  <div class="mt-8 rounded-xl border border-cyan-800 bg-cyan-950/45 p-4">
+    <h3 class="mb-3 text-xl font-semibold font-display">Parameters</h3>
+    {% if function.parameterCount > 0 %}
+      <table>
+        <tbody>
+        {% for parameter in function.parameters %}
+          <tr>
+            <td class="text-white/40 pr-4">{{ parameter.type }}{% if parameter.type is empty %}implicit mixed{% endif %}</td>
+            <td class="text-lg font-semibold">{{ parameter.name }}</td>
+            <td class="italic text-white/60 pl-4">{{ parameter.description }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="font-semibold">No parameters used</p>
+    {% endif %}
+  </div>
+
+  <div class="mt-8 rounded-xl border border-cyan-800 bg-cyan-950/45 p-4">
+    <h3 class="mb-3 text-xl font-semibold font-display">Return type</h3>
+    <p class="text-lg font-semibold">{{ function.returnType.getValue() }}</p>
+  </div>
+
+  <div class="mt-8 rounded-xl border border-cyan-800 bg-cyan-950/45 p-4">
+    <h3 class="mb-3 text-xl font-semibold font-display">Dependencies</h3>
+
+    {% if function.dependencies|length %}
+      <table class="w-full border-collapse">
+        <tbody>
+        {% if function.dependencies|length %}
+          <tr class="odd:bg-cyan-950/85 even:bg-cyan-950/55 border-t border-white/15">
+            <th class="text-left p-2 align-top">Class dependencies</th>
+            <td class="p-2">{{ function.dependencies|sort|join('<br>')|raw }}</td>
+          </tr>
+        {% endif %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="font-semibold">No dependencies found.</p>
+    {% endif %}
+  </div>
+
+  {% include('parts/divider.html.twig') %}
+
+  <div class="my-8 grid sm:grid-cols-3 gap-3">
+    {% for element in function.detailData %}
+      {% if element.key == 'classInfo' %}
+        {% include('parts/classname-tile.html.twig') %}
+      {% else %}
+        {% include('parts/metric-tile.html.twig') %}
+      {% endif %}
+    {% endfor %}
+  </div>
+</div>
+
+{% include('parts/footer.html.twig') %}

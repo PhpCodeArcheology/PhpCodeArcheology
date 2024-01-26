@@ -1,0 +1,16 @@
+{% set color = "bg-blue-900" %}
+{% if element.problemLevel == 2 %}
+  {% set color = "bg-yellow-900" %}
+{% elseif element.problemLevel == 3 %}
+  {% set color = "bg-red-900" %}
+{% endif %}
+
+{{ element.name }}<br>
+{% if ': ' in element.value %}
+{% set value = element.value|split(': ') %}
+**{{ value[1] }}**<br>
+*{{ value[0] }}*
+{% else %}
+**{{ element.value }}**
+{% endif %}<br>
+{% if element.problemLevel > 0 %}{{ element.problemText|join(' ') }}{% endif %}

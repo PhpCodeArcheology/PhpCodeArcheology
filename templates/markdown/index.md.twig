@@ -1,15 +1,11 @@
-# PhpLegacyArcheology Report
+{% include('parts/header.md.twig') %}
 
-## General statistics
+# Project metrics
 
-| Element | Count |
-|---------|-------|
+This is an overview of the project metrics as a whole. This list gives you a quick glimpse on what is going on in your project.
+
 {% for element in elements %}
-| {{ element.name }} | {{ element.value }} |
+  {% include('parts/metric-tile.md.twig') %}
 {% endfor %}
 
-## Detailed statistics
-
-- [Files](files.md)
-
-{{ include('_created.md.twig') }}
+{% include('parts/footer.md.twig') %}

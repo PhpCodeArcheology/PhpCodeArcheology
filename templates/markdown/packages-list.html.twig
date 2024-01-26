@@ -1,0 +1,137 @@
+{% include('parts/header.html.twig') %}
+
+<div class="mt-6 lg:w-5/6">
+  <div class="mb-7 text-sm">
+    <ul class="flex gap-1">
+      <li class="flex after:content-['⮁'] gap-1">
+        <a href="index.html" class="text-cyan-500">Home</a>
+      </li>
+      <li>Packages</li>
+    </ul>
+  </div>
+
+  <h1 class="mb-6 text-3xl font-semibold font-display">Packages</h1>
+
+  <div class="w-full">
+    <div id="ai-chart" class="w-full h-[50vh]"></div>
+  </div>
+
+  <div class="relative overflow-x-auto">
+    <table class="sortable asc my-6 w-full border-collapse border border-slate-500 text-sm rounded-xl transition-opacity" data-currentsort="0:asc:string">
+      <thead class="bg-cyan-950/25">
+      <tr>
+        <th class="border border-slate-500 text-left px-2 py-0.5" data-sortable="string">
+            <span class="label-box flex justify-between items-center gap-1">
+              <span class="label-name">Package</span>
+              <span class="sort-icon transition-all opacity-0"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M12.53 16.28a.75.75 0 0 1-1.06 0l-7.5-7.5a.75.75 0 0 1 1.06-1.06L12 14.69l6.97-6.97a.75.75 0 1 1 1.06 1.06l-7.5 7.5Z" clip-rule="evenodd" /></svg></span>
+            </span>
+        </th>
+        {% for header in tableHeaders %}
+          {% include('parts/thead-th-sortable.html.twig') %}
+        {% endfor %}
+      </tr>
+      </thead>
+      <tbody>
+        {% for package in packages %}
+        <tr class="even:bg-cyan-950/45 odd:bg-cyan-950/85 transition-colors hover:bg-cyan-800">
+          <td class="border border-slate-500 text-left px-2 py-0.5" data-sort="{{ package.name }}">
+            <span class="font-semibold inline-block">{{ package.name }}</span>
+          </td>
+          {% for data in package.listData %}
+            {% include('parts/tbody-td-sortable.html.twig') %}
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  aiChart = document.getElementById('ai-chart');
+
+  const trace1 = {
+    x: {{ aiChart.x|raw }},
+    y: {{ aiChart.y|raw }},
+    text: {{ aiChart.count|raw }},
+    mode: 'markers',
+    type: 'scatter',
+    name: 'Package',
+    marker: {
+      opacity: 0.5,
+      size: 15,
+    },
+  };
+
+  const trace2 = {
+    x: [0, 1],
+    y: [1, 0],
+    mode: 'lines',
+    name: 'Baseline',
+    type: 'scatter',
+    line: {
+      color: 'rgb(180, 0, 0)',
+      dash: 'dot',
+      width: 1.
+    }
+  };
+
+  const layout = {
+    xaxis: {
+      title: 'Instability',
+    },
+    yaxis: {
+      title: 'Abstractness',
+    },
+    title: 'Instability-Abstractness Chart',
+    shapes: [
+      {
+        type: 'path',
+        path: 'M 0 0 L 0 0.4 L 0.4 0 Z',
+        fillcolor: 'rgba(120, 0, 0, 0.2)',
+        line: {
+          color: 'transparent',
+        }
+      },
+      {
+        type: 'path',
+        path: 'M 0.6 1 L 1 1 L 1 0.6 Z',
+        fillcolor: 'rgba(120, 0, 0, 0.2)',
+        line: {
+          color: 'transparent',
+        }
+      },
+      {
+        type: 'path',
+        path: 'M 0 0.4 L 0 0.75 L 0.75 0 L 0.4 0 Z',
+        fillcolor: 'rgba(164, 124, 3, 0.2)',
+        line: {
+          color: 'transparent',
+        }
+      },
+      {
+        type: 'path',
+        path: 'M 0.25 1 L 0.6 1 L 1 0.6 L 1 0.25 Z',
+        fillcolor: 'rgba(164, 124, 3, 0.2)',
+        line: {
+          color: 'transparent',
+        }
+      },
+      {
+        type: 'path',
+        path: 'M 0 0.75 L 0 1 L 0.25 1 L 1 0.25 L 1 0 L 0.75 0 Z',
+        fillcolor: 'rgba(0, 120, 0, 0.2)',
+        line: {
+          color: 'transparent',
+        }
+      },
+    ],
+  };
+
+  const data = [trace1, trace2];
+
+
+  Plotly.newPlot(aiChart, data, layout);
+</script>
+
+{% include('parts/footer.html.twig') %}
