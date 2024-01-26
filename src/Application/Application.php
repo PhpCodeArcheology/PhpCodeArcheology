@@ -87,7 +87,13 @@ final readonly class Application
      */
     private function createConfig(array $argv): Config
     {
-        $config = (new ArgumentParser())->parse($argv);
+        try {
+            $config = (new ArgumentParser())->parse($argv);
+        } catch (ParamException $e) {
+            echo PHP_EOL . "Error: {$e->getMessage()}";
+            exit;
+        }
+
         $config->set('runningDir', getcwd());
 
         $configFileFinder = new ConfigFileFinder($config);
@@ -108,7 +114,7 @@ final readonly class Application
         try {
             $config->validate();
         } catch (ConfigException $e) {
-            echo "Fehler: {$e->getMessage()}";
+            echo PHP_EOL . "Error: {$e->getMessage()}";
             exit;
         }
 

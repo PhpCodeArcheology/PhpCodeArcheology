@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Application;
 
-use PhpCodeArch\Application\ConfigFile\Exceptions\ReportDirNotFoundException;
-
 final class ArgumentParser
 {
     public function parse(array $argv): Config
@@ -37,9 +35,24 @@ final class ArgumentParser
                     case 'report-dir':
                         $config->set('reportDir', realpath($value));
                         break;
+
+                    default:
+                        throw new ParamException('CLI parameter "' . $param . '" does not exist.');
                 }
 
                 unset($argv[$key]);
+            }
+            elseif (preg_match('#--([\w\-]+)#', $value, $matches)) {
+                $param = $matches[1];
+
+                switch ($param) {
+                    case 'version':
+                        echo PHP_EOL . "PhpCodeArcheology v" . Application::VERSION;
+                        exit;
+
+                    default:
+                        throw new ParamException('CLI parameter "' . $param . '" does not exist.');
+                }
             }
         }
 

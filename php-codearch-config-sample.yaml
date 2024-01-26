@@ -1,8 +1,30 @@
 ---
+############################################
+# PhpCodeArcheology Config File
+############################################
+
+# List all folders that should be analyzed in include:
 include:
   - "src"
+
+# List all folders that should be not analyzed in exclude:
 exclude:
+
+# If your project uses files with other extensions (such as
+# .inc), you are able to define these extensions here:
 extensions:
   - "php"
-reportDir: "tmp"
+
+# The packageSize parameter determines the number of
+# namespace segments to use for identifying a package.
+# For instance, with the default value of 2, the namespace
+# "Metrics\Model\Collections" would yield the package
+# "Metrics\Model".
+packageSize: 2
+
+# The folder in which the report will be created
+reportDir: "tmp/report"
+
+# The report type.
+# Either html or markdown
 reportType: "html"
