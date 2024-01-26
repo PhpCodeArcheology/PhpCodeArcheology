@@ -17,11 +17,21 @@ use PhpCodeArch\Metrics\Model\Collections\PropertyCollection;
 use PhpCodeArch\Metrics\Model\Collections\TraitNameCollection;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
+use PhpParser\PrettyPrinter\Standard;
 use function PhpCodeArch\getNodeName;
+
+if (!defined('DNS_MX')) {
+
+    define('DNS_MX', 1);
+    define('DNS_A', 1);
+    define('DNS_AAAA', 1);
+}
 
 class IdentifyVisitor implements NodeVisitor, VisitorInterface
 {
     use VisitorTrait;
+
+    const TEST = DNS_MX + DNS_A + DNS_AAAA;
 
     /**
      * @var string[]
@@ -750,16 +760,22 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
 
             $value = null;
             $valueType = null;
+
             if ($element instanceof Node\Stmt\ClassConst) {
                 $value = $prop->value->getAttribute('rawValue');
 
                 $valueType = match (true) {
                     $prop->value instanceof Node\Expr\Array_ => 'array',
-                    $prop->value instanceof Node\Expr\ConstFetch => 'constant',
-                    default => gettype($prop->value->value),
+                    $prop->value instanceof Node\Expr\ConstFetch, $prop->value instanceof Node\Expr\ClassConstFetch => 'constant',
+                    default => isset($prop->value->value) ? gettype($prop->value->value) : '',
                 };
 
-                if ($valueType == 'constant') {
+                if ($valueType === '') {
+                    $prettyPrinter = new Standard();
+                    $value = $prettyPrinter->prettyPrintExpr($prop->value);
+                }
+
+                if ($valueType === 'constant') {
                     $value = $prop->value->name->toString();
                     $valueType = '';
                 }
