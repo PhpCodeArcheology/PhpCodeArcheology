@@ -24,7 +24,6 @@ use PhpCodeArch\Predictions\TooComplexPrediction;
 use PhpCodeArch\Predictions\TooDependentPrediction;
 use PhpCodeArch\Predictions\TooLongPrediction;
 use PhpCodeArch\Predictions\TooMuchHtmlPrediction;
-use PhpCodeArch\Report\Data\ReportDataCollection;
 use PhpCodeArch\Report\Data\ReportDataContainer;
 use PhpCodeArch\Report\DataProvider\DataProviderFactory;
 use PhpCodeArch\Report\Helper\MetricsSplitter;
@@ -145,7 +144,7 @@ final readonly class Application
      * @param Config $config
      * @return void
      */
-    public function createMetricController(Config $config): void
+    private function createMetricController(Config $config): void
     {
         $metricsCollection = new MetricsContainer();
         $this->metricsController = new MetricsController($metricsCollection);
@@ -157,7 +156,7 @@ final readonly class Application
      * @param CliOutput $output
      * @return void
      */
-    public function runCalculators(CliOutput $output): void
+    private function runCalculators(CliOutput $output): void
     {
         $packageIACalculator = new PackageInstabilityAbstractnessCalculator($this->metricsController);
 
@@ -177,7 +176,7 @@ final readonly class Application
      * @param CliOutput $output
      * @return array
      */
-    public function runPredictors(MetricsController $metricsController, CliOutput $output): array
+    private function runPredictors(MetricsController $metricsController, CliOutput $output): array
     {
         $predictions = new PredictionService([
             new TooLongPrediction(),
@@ -195,7 +194,7 @@ final readonly class Application
      * @param array $problems
      * @return void
      */
-    public function setProblems(array $problems): void
+    private function setProblems(array $problems): void
     {
         $this->metricsController->setMetricValues(
             MetricCollectionTypeEnum::ProjectCollection,
@@ -212,7 +211,7 @@ final readonly class Application
      * @param CliOutput $output
      * @return ReportDataContainer
      */
-    public function getReportDataContainer(CliOutput $output): ReportDataContainer
+    private function getReportDataContainer(CliOutput $output): ReportDataContainer
     {
         $reportDataContainer = new ReportDataContainer();
         $splitter = new MetricsSplitter($this->metricsController, $reportDataContainer, $output);

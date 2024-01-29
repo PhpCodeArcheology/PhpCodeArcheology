@@ -6,6 +6,7 @@ namespace Test\Feature\Analysis;
 
 use PhpCodeArch\Analysis\IdentifyVisitor;
 use PhpCodeArch\Analysis\LocVisitor;
+use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
 use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
@@ -23,28 +24,31 @@ function getLocVisitors(): array
 }
 
 it('counts loc, lloc and cloc correctly', function($testFile, $expected) {
-    $metrics = getMetricsForVisitors($testFile, getLocVisitors());
+    $metricsController = getMetricsForVisitors($testFile, getLocVisitors());
 
-    $projectMetrics = $metrics->get('project');
+    $projectMetrics = $metricsController->getMetricCollection(
+        MetricCollectionTypeEnum::ProjectCollection,
+        null
+    );
 
-    $loc = $projectMetrics->get('OverallLoc');
-    $lloc = $projectMetrics->get('OverallLloc');
-    $cloc = $projectMetrics->get('OverallCloc');
+    $loc = $projectMetrics->get('overallLoc')->getValue();
+    $lloc = $projectMetrics->get('overallLloc')->getValue();
+    $cloc = $projectMetrics->get('overallCloc')->getValue();
 
     expect($loc)->toBe($expected['loc'])
         ->and($lloc)->toBe($expected['lloc'])
         ->and($cloc)->toBe($expected['cloc']);
 
 
-    foreach ($metrics->getAll() as $metric) {
+    foreach ($metricsController->getAllCollections() as $metric) {
         switch (true) {
             case $metric instanceof FileMetricsCollection:
                 $fileData = [
-                    'loc' => $metric->get('loc'),
-                    'lloc' => $metric->get('lloc'),
-                    'cloc' => $metric->get('cloc'),
-                    'llocOutside' => $metric->get('llocOutside'),
-                    'htmlLoc' => $metric->get('htmlLoc'),
+                    'loc' => $metric->get('loc')->getValue(),
+                    'lloc' => $metric->get('lloc')->getValue(),
+                    'cloc' => $metric->get('cloc')->getValue(),
+                    'llocOutside' => $metric->get('llocOutside')->getValue(),
+                    'htmlLoc' => $metric->get('htmlLoc')->getValue(),
                 ];
 
                 expect($fileData)->toBe($expected['file']);
@@ -58,9 +62,9 @@ it('counts loc, lloc and cloc correctly', function($testFile, $expected) {
                 }
 
                 $functionData = [
-                    'loc' => $metric->get('loc'),
-                    'lloc' => $metric->get('lloc'),
-                    'cloc' => $metric->get('cloc'),
+                    'loc' => $metric->get('loc')->getValue(),
+                    'lloc' => $metric->get('lloc')->getValue(),
+                    'cloc' => $metric->get('cloc')->getValue(),
                 ];
 
                 expect($functionData)->toBe($expected['functions'][$fnName]);
@@ -75,25 +79,25 @@ it('counts loc, lloc and cloc correctly', function($testFile, $expected) {
                 }
 
                 $classData = [
-                    'loc' => $metric->get('loc'),
-                    'lloc' => $metric->get('lloc'),
-                    'cloc' => $metric->get('cloc'),
+                    'loc' => $metric->get('loc')->getValue(),
+                    'lloc' => $metric->get('lloc')->getValue(),
+                    'cloc' => $metric->get('cloc')->getValue(),
                 ];
 
                 expect($classData)->toBe($expected['classes'][$className]['data']);
 
-                $methods = $metric->get('methods');
-                foreach ($methods as $methodMetric) {
-                    $methodName = $methodMetric->getName();
+                $methods = $metric->getCollection('methods');
+                foreach ($methods as $key => $methodName) {
+                    $methodMetric = $metricsController->getMetricCollectionByIdentifierString($key);
 
                     if (! isset($expected['classes'][$className]['methods'][$methodName])) {
                         continue;
                     }
 
                     $methodsData = [
-                        'loc' => $methodMetric->get('loc'),
-                        'lloc' => $methodMetric->get('lloc'),
-                        'cloc' => $methodMetric->get('cloc'),
+                        'loc' => $methodMetric->get('loc')->getValue(),
+                        'lloc' => $methodMetric->get('lloc')->getValue(),
+                        'cloc' => $methodMetric->get('cloc')->getValue(),
                     ];
 
                     expect($methodsData)->toBe($expected['classes'][$className]['methods'][$methodName]);

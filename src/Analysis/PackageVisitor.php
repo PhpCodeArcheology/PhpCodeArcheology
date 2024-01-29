@@ -18,7 +18,7 @@ class PackageVisitor implements NodeVisitor, VisitorInterface
 {
     use VisitorTrait;
 
-    private array $packages = ['_global'];
+    private array $packages = [];
 
     private string $fileNamespace = '';
 
@@ -32,13 +32,11 @@ class PackageVisitor implements NodeVisitor, VisitorInterface
 
     public function init(): void
     {
-        $this->metricsController->setCollectionDataOrCreateEmptyCollection(
+        $this->metricsController->setCollection(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
-            'packages',
-            null,
-            '_global',
-            new PackageNameCollection()
+            new PackageNameCollection(),
+            'packages'
         );
 
         $this->metricsController->createMetricCollection(

@@ -12,6 +12,9 @@ declare(strict_types=1);
 
 namespace Test\Feature\Analysis;
 
+use PhpCodeArch\Application\Config;
+use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
 use PhpCodeArch\Metrics\Model\MetricsContainer;
 use PhpCodeArch\Metrics\Model\ProjectMetrics\ProjectMetricsCollection;
@@ -23,7 +26,6 @@ use PhpParser\ParserFactory;
 /**
  * Bootstraps the analyzer by setting up necessary metrics and parser configurations.
  *
- * @param string $file
  * @return array The array includes the source code, the metrics object, the created parser
  *               and the traverser
  */
@@ -35,11 +37,14 @@ function setupCore(): array
     $metrics = new MetricsContainer();
     $metrics->set('project', $projectMetrics);
 
+    $metricsController = new MetricsController($metrics);
+    $metricsController->registerMetricTypes();
+
     $parser = (new ParserFactory())->createForNewestSupportedVersion();
     $traverser = new NodeTraverser();
 
     return [
-        $metrics,
+        $metricsController,
         $parser,
         $traverser,
     ];
@@ -48,14 +53,21 @@ function setupAnalyzer(string $file): array
 {
     $code = file_get_contents($file);
 
-    [$metrics, $parser, $traverser] = setupCore();
+    [$metricsController, $parser, $traverser] = setupCore();
 
-    $fileMetrics = new FileMetricsCollection($file);
-    $metrics->push($fileMetrics);
+    /**
+     * @var MetricsController $metricsController
+     */
+    $metricsController->createMetricCollection(
+        MetricCollectionTypeEnum::FileCollection,
+        ['path' => $file]
+    );
+
+    $metricsController->createProjectMetricsCollection([$file]);
 
     return [
         $code,
-        $metrics,
+        $metricsController,
         $parser,
         $traverser,
     ];
@@ -64,16 +76,26 @@ function setupAnalyzer(string $file): array
 /**
  * @param array $visitors Array of Visitor class names
  * @param NodeTraverser $traverser
- * @param MetricsContainer $metrics
+ * @param MetricsController $metricsController
  * @param string $file
  * @return void
  */
-function setVisitors(array $visitors, NodeTraverser $traverser, MetricsContainer $metrics, string $file): void
+function setVisitors(array $visitors, NodeTraverser $traverser, MetricsController $metricsController, string $file): void
 {
     $traverser->addVisitor(new NameResolver());
 
     foreach ($visitors as $visitor) {
-        $visitorObject = new $visitor($metrics);
+        $visitorObject = new $visitor($metricsController);
+
+        if (method_exists($visitorObject, 'init')) {
+            $visitorObject->init();
+        }
+
+        if (method_exists($visitorObject, 'injectConfig')) {
+            $visitorObject->injectConfig(new Config());
+        }
+
+
         $visitorObject->setPath($file);
         $traverser->addVisitor($visitorObject);
     }
@@ -94,42 +116,55 @@ function parseCode(string $code, Parser $parser, NodeTraverser $traverser): void
 /**
  * @param string $file
  * @param array $visitors Array of Visitor class names
- * @return MetricsContainer
+ * @return MetricsController
  */
-function getMetrics(string $file, array $visitors): MetricsContainer
+function getMetrics(string $file, array $visitors): MetricsController
 {
-    [$code, $metrics, $parser, $traverser] = setupAnalyzer($file);
+    [$code, $metricsController, $parser, $traverser] = setupAnalyzer($file);
 
-    setVisitors($visitors, $traverser, $metrics, $file);
-
+    setVisitors($visitors, $traverser, $metricsController, $file);
     parseCode($code, $parser, $traverser);
 
-    return $metrics;
+    return $metricsController;
 }
 
 /**
  * @param string $file
  * @param array $visitors
- * @return MetricsContainer
+ * @return MetricsController
  */
-function getMetricsForVisitors(string $file, array $visitors): MetricsContainer
+function getMetricsForVisitors(string $file, array $visitors): MetricsController
 {
     return getMetrics($file, $visitors);
 }
 
-function getMetricsForMultipleFilesAndVisitors(array $files, array $visitors): MetricsContainer
+function getMetricsForMultipleFilesAndVisitors(array $files, array $visitors): MetricsController
 {
     [
-        $metrics,
+        $metricsController,
         $parser,
         $traverser,
     ] = setupCore();
 
+    $metricsController->createProjectMetricsCollection($files);
+
     $traverser->addVisitor(new NameResolver());
+
+    $config = new Config();
+    $config->set('packageSize', 2);
 
     $visitorObjects = [];
     foreach ($visitors as $visitor) {
-        $visitorObject = new $visitor($metrics);
+        $visitorObject = new $visitor($metricsController);
+
+        if (method_exists($visitorObject, 'init')) {
+            $visitorObject->init();
+        }
+
+        if (method_exists($visitorObject, 'injectConfig')) {
+            $visitorObject->injectConfig($config);
+        }
+
         $traverser->addVisitor($visitorObject);
         $visitorObjects[] = $visitorObject;
     }
@@ -141,11 +176,13 @@ function getMetricsForMultipleFilesAndVisitors(array $files, array $visitors): M
 
         $phpCode = file_get_contents($file);
 
-        $fileMetrics = new FileMetricsCollection($file);
-        $metrics->push($fileMetrics);
+        $metricsController->createMetricCollection(
+            MetricCollectionTypeEnum::FileCollection,
+            ['path' => $file]
+        );
 
         parseCode($phpCode, $parser, $traverser);
     }
 
-    return $metrics;
+    return $metricsController;
 }

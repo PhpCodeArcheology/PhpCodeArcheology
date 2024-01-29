@@ -32,16 +32,16 @@ function getMaintainabilityVisitors(): array
 function getHalstead(MetricsCollectionInterface $metric): array
 {
     return [
-        'mi' => $metric->get('maintainabilityIndex'),
-        'miWOC' => $metric->get('maintainabilityIndexWithoutComments'),
-        'cW' => $metric->get('commentWeight'),
+        'mi' => $metric->get('maintainabilityIndex')->getValue(),
+        'miWOC' => $metric->get('maintainabilityIndexWithoutComments')->getValue(),
+        'cW' => $metric->get('commentWeight')->getValue(),
     ];
 }
 
 it('calculates maintainability index correctly', function($testFile, $expects) {
-    $metrics = getMetricsForVisitors($testFile, getMaintainabilityVisitors());
+    $metricsController = getMetricsForVisitors($testFile, getMaintainabilityVisitors());
 
-    foreach ($metrics->getAll() as $metric) {
+    foreach ($metricsController->getAllCollections() as $metric) {
         switch (true) {
             case $metric instanceof FileMetricsCollection:
                 $halstead = getHalstead($metric);
@@ -72,9 +72,10 @@ it('calculates maintainability index correctly', function($testFile, $expects) {
                     break;
                 }
 
-                $methods = $metric->get('methods');
-                foreach ($methods as $methodMetric) {
-                    $methodName = $methodMetric->getName();
+                $methods = $metric->getCollection('methods');
+                foreach ($methods as $key => $methodName) {
+                    $methodMetric = $metricsController->getMetricCollectionByIdentifierString($key);
+
                     if (! isset($expects['classes'][$className]['methods'][$methodName])) {
                         continue;
                     }

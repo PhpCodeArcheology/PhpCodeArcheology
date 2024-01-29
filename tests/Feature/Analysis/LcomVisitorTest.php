@@ -22,9 +22,9 @@ function getLcomVisitors(): array
 
 it('calculates lcom correctly', function($testFile, $expects) {
 
-    $metrics = getMetricsForVisitors($testFile, getLcomVisitors());
+    $metricsController = getMetricsForVisitors($testFile, getLcomVisitors());
 
-    foreach ($metrics->getAll() as $metric) {
+    foreach ($metricsController->getAllCollections() as $metric) {
         if (! $metric instanceof ClassMetricsCollection) {
             continue;
         }
@@ -33,7 +33,7 @@ it('calculates lcom correctly', function($testFile, $expects) {
             continue;
         }
 
-        expect($metric->get('lcom'))->toBe($expects['classes'][$metric->getName()]['lcom']);
+        expect($metric->get('lcom')->getValue())->toBe($expects['classes'][$metric->getName()]['lcom']);
     }
 
 })->with($lcomTests);

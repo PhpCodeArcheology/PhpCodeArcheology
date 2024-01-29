@@ -117,8 +117,8 @@ class GlobalsVisitor implements NodeVisitor, VisitorInterface
         $functionName = end($this->currentFunctionName);
         $methodName = end($this->currentMethodName);
 
-        $this->countVariableNodes($node, $functionName, false);
-        $this->countConstantNodes($node, $functionName, false);
+        $this->countVariableNodes($node, $functionName, false, true);
+        $this->countConstantNodes($node, $functionName, false, true);
         $this->countVariableNodes($node, $methodName, $className);
         $this->countConstantNodes($node, $methodName, $className);
 
@@ -202,11 +202,13 @@ class GlobalsVisitor implements NodeVisitor, VisitorInterface
      * @param false|string $className
      * @return void
      */
-    public function countVariableNodes(Node $node, false|string $functionName, false|string $className): void
+    public function countVariableNodes(Node $node, false|string $functionName, false|string $className, bool $countGlobal = false): void
     {
         if ($node instanceof Node\Expr\Variable && is_string($node->name)) {
             if (in_array($node->name, array_keys($this->superglobals))) {
-                ++$this->superglobals[$node->name];
+                if ($countGlobal === false) {
+                    ++$this->superglobals[$node->name];
+                }
 
                 if ($functionName) {
                     ++$this->superglobalsFunction[$functionName][$node->name];
@@ -217,10 +219,12 @@ class GlobalsVisitor implements NodeVisitor, VisitorInterface
                 }
             }
             elseif (!in_array($node->name, ['this', 'self'])) {
-                if (!isset($this->variableMap[$node->name])) {
-                    $this->variableMap[$node->name] = 0;
+                if ($countGlobal) {
+                    if (!isset($this->variableMap[$node->name])) {
+                        $this->variableMap[$node->name] = 0;
+                    }
+                    ++$this->variableMap[$node->name];
                 }
-                ++$this->variableMap[$node->name];
 
                 if ($functionName) {
                     if (!isset($this->functionVariableMap[$functionName][$node->name])) {

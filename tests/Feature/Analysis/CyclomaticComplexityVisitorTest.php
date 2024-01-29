@@ -23,17 +23,17 @@ function getCycloVisitors(): array
 }
 
 it('calculates cyclomatic complexity correctly', function($testFile, $expected) {
-    $metrics = getMetricsForVisitors($testFile, getCycloVisitors());
+    $metricsController = getMetricsForVisitors($testFile, getCycloVisitors());
 
-    foreach ($metrics->getAll() as $metrics) {
+    foreach ($metricsController->getAllCollections() as $metrics) {
         switch (true) {
             case $metrics instanceof FileMetricsCollection:
-                $cc = $metrics->get('cc');
+                $cc = $metrics->get('cc')->getValue();
                 expect($cc)->toBe($expected['file']['cc']);
                 break;
 
             case $metrics instanceof FunctionMetricsCollection:
-                $cc = $metrics->get('cc');
+                $cc = $metrics->get('cc')->getValue();
                 $functionName = $metrics->getName();
 
                 if (!isset($expected['function'][$functionName])) {
@@ -46,11 +46,11 @@ it('calculates cyclomatic complexity correctly', function($testFile, $expected) 
                 break;
 
             case $metrics instanceof ClassMetricsCollection:
-                $cc = $metrics->get('cc');
+                $cc = $metrics->get('cc')->getValue();
                 $className = $metrics->getName();
                 $className = str_starts_with($className, 'anonymous') ? 'anonymous' : $className;
 
-                $methods = $metrics->get('methods');
+                $methods = $metrics->getCollection('methods');
 
                 if (!isset($expected['classes'][$className])) {
                     break;
@@ -59,15 +59,15 @@ it('calculates cyclomatic complexity correctly', function($testFile, $expected) 
                 $expectedForClass = $expected['classes'][$className];
                 expect($cc)->toBe($expectedForClass['cc']);
 
-                foreach ($methods as $methodMetric) {
-                    $methodName = $methodMetric->getName();
+                foreach ($methods as $key => $methodName) {
+                    $methodMetric = $metricsController->getMetricCollectionByIdentifierString($key);
 
                     if (! isset($expected['classes'][$className]['methods'][$methodName])) {
                         continue;
                     }
 
                     $expectedForMethod = $expected['classes'][$className]['methods'][$methodName];
-                    expect($methodMetric->get('cc'))->toBe($expectedForMethod['cc']);
+                    expect($methodMetric->get('cc')->getValue())->toBe($expectedForMethod['cc']);
                 }
                 break;
 

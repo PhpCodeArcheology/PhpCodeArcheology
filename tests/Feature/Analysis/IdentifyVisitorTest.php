@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Test\Feature\Analysis;
 
 use PhpCodeArch\Analysis\IdentifyVisitor;
+use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 
 require_once __DIR__ . '/test_helpers.php';
 
@@ -20,19 +21,27 @@ function getIdVisitors(): array
 }
 
 it('detects functions correctly', function($testFile, $expected) {
-    $metrics = getMetricsForVisitors($testFile, getIdVisitors());
+    $metricsController = getMetricsForVisitors($testFile, getIdVisitors());
 
-    $projectMetrics = $metrics->get('project');
+    $projectMetrics = $metricsController->getMetricCollection(
+        MetricCollectionTypeEnum::ProjectCollection,
+        null
+    );
 
-    $functions = $metrics->get('functions');
+    $functions = $metricsController->getCollection(
+        MetricCollectionTypeEnum::ProjectCollection,
+        null,
+        'functions'
+    )->getAsArray();
 
     expect(count($functions))->toBe($expected['functionCount'])
-        ->and($projectMetrics->get('OverallFunctions'))->toBe($expected['functionCount'])
+        ->and($projectMetrics->get('overallFunctionCount')->getValue())->toBe($expected['functionCount'])
         ->and(array_values($functions))->toBe($expected['functionNames']);
 
     $functionNames = [];
     foreach ($functions as $key => $name) {
-        $functionNames[] = $metrics->get($key)->getName();
+        $functionMetrics = $metricsController->getMetricCollectionByIdentifierString($key);
+        $functionNames[] = $functionMetrics->getName();
     }
 
     expect($functionNames)->toBe($expected['functionNames']);
@@ -40,22 +49,31 @@ it('detects functions correctly', function($testFile, $expected) {
 })->with($testFunctions);
 
 it('detects classes correctly', function($testFile, $expected) {
-    $metrics = getMetricsForVisitors($testFile, getIdVisitors());
+    $metricsController = getMetricsForVisitors($testFile, getIdVisitors());
 
-    $projectMetrics = $metrics->get('project');
+    $projectMetrics = $metricsController->getMetricCollection(
+        MetricCollectionTypeEnum::ProjectCollection,
+        null
+    );
 
-    $classes = $metrics->get('classes');
+    $classes = $metricsController->getCollection(
+        MetricCollectionTypeEnum::ProjectCollection,
+        null,
+        'classes'
+    )->getAsArray();
+
     $classNamesFromClassesArray = array_map(function($className) {
         return str_starts_with($className, 'anonymous') ? 'anonymous' : $className;
     }, $classes);
 
     expect(count($classes))->toBe($expected['classCount'])
-        ->and($projectMetrics->get('OverallClasses'))->toBe($expected['classCount'])
+        ->and($projectMetrics->get('overallClasses')->getValue())->toBe($expected['classCount'])
         ->and(array_values($classNamesFromClassesArray))->toBe($expected['classNames']);
 
     $classNames = [];
     foreach ($classes as $key => $name) {
-        $className = str_starts_with($metrics->get($key)->getName(), 'anonymous') ? 'anonymous' : $metrics->get($key)->getName();
+        $classMetrics = $metricsController->getMetricCollectionByIdentifierString($key);
+        $className = str_starts_with($classMetrics->getName(), 'anonymous') ? 'anonymous' : $classMetrics->getName();
         $classNames[] = $className;
     }
 
@@ -64,38 +82,43 @@ it('detects classes correctly', function($testFile, $expected) {
 })->with($testClasses);
 
 it('detects methods correctly', function($testFile, $expected) {
-    $metrics = getMetricsForVisitors($testFile, getIdVisitors());
+    $metricsController = getMetricsForVisitors($testFile, getIdVisitors());
 
-    $projectMetrics = $metrics->get('project');
+    $projectMetrics = $metricsController->getMetricCollection(
+        MetricCollectionTypeEnum::ProjectCollection,
+        null
+    );
 
-    $classes = $metrics->get('classes');
+    $classes = $metricsController->getCollection(
+        MetricCollectionTypeEnum::ProjectCollection,
+        null,
+        'classes'
+    )->getAsArray();
 
     $methods = [];
     $methodCountOfAnonymousClass = 0;
     $methodNamesOfAnonymousClass = [];
     foreach ($classes as $key => $className) {
-        $classMetrics = $metrics->get($key);
-        $classMethods = $classMetrics->get('methods');
+        $classMetrics = $metricsController->getMetricCollectionByIdentifierString($key);
+        $classMethods = $classMetrics->getCollection('methods')->getAsArray();
         $methods = array_merge($methods, $classMethods);
 
-        if ($classMetrics->get('anonymous')) {
+        if ($classMetrics->get('anonymous')->getValue()) {
             $methodCountOfAnonymousClass += count($classMethods);
-            foreach ($classMethods as $methodMetric) {
-                $methodNamesOfAnonymousClass[] = $methodMetric->getName();
+            foreach ($classMethods as $methodName) {
+                $methodNamesOfAnonymousClass[] = $methodName;
             }
         }
     }
 
-    $methodNames = array_map(function($method) {
-        return $method->getName();
-    }, array_values($methods));
+    $methods = array_values($methods);
 
-    expect($projectMetrics->get('OverallMethods'))->toBe($expected['methodCount'])
+    expect($projectMetrics->get('overAllMethodsCount')->getValue())->toBe($expected['methodCount'])
         ->and(count($methods))->toBe($expected['methodCount'])
-        ->and($methodNames)->toBe($expected['methodNames'])
-        ->and($projectMetrics->get('OverallPublicMethods'))->toBe($expected['publicMethods'])
-        ->and($projectMetrics->get('OverallPrivateMethods'))->toBe($expected['privateMethods'])
-        ->and($projectMetrics->get('OverallStaticMethods'))->toBe($expected['staticMethods'])
+        ->and($methods)->toBe($expected['methodNames'])
+        ->and($projectMetrics->get('overAllPublicMethodsCount')->getValue())->toBe($expected['publicMethods'])
+        ->and($projectMetrics->get('overAllPrivateMethodsCount')->getValue())->toBe($expected['privateMethods'])
+        ->and($projectMetrics->get('overAllStaticMethodsCount')->getValue())->toBe($expected['staticMethods'])
         ->and(count($classes))->toBe($expected['classCount']);
 
     if (isset($expected['methodCountAnonymousClass'])) {
@@ -108,10 +131,25 @@ it('detects methods correctly', function($testFile, $expected) {
 it('detects correct class types', function() {
     $testFile = __DIR__ . '/testfiles/class-types.php';
 
-    $metrics = getMetricsForVisitors($testFile, getIdVisitors());
+    $metricsController = getMetricsForVisitors($testFile, getIdVisitors());
 
-    expect(count($metrics->get('classes')))->toBe(1)
-        ->and(count($metrics->get('interfaces')))->toBe(1)
-        ->and(count($metrics->get('traits')))->toBe(1)
-        ->and(count($metrics->get('enums')))->toBe(1);
+    $collections = [
+        'classes' => [],
+        'interfaces' => [],
+        'traits' => [],
+        'enums' => [],
+    ];
+
+    array_walk($collections, function(&$value, $key) use($metricsController) {
+        $value = $metricsController->getCollection(
+            MetricCollectionTypeEnum::ProjectCollection,
+            null,
+            $key
+        )->getAsArray();
+    });
+
+    expect(count($collections['classes']))->toBe(1)
+        ->and(count($collections['interfaces']))->toBe(1)
+        ->and(count($collections['traits']))->toBe(1)
+        ->and(count($collections['enums']))->toBe(1);
 });

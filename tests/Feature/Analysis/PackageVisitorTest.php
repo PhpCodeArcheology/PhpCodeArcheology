@@ -6,6 +6,7 @@ namespace Test\Feature\Analysis;
 
 use PhpCodeArch\Analysis\IdentifyVisitor;
 use PhpCodeArch\Analysis\PackageVisitor;
+use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
 use PhpCodeArch\Metrics\Model\PackageMetrics\PackageMetricsCollection;
 
@@ -22,14 +23,19 @@ function getPackageVisitors(): array
 }
 
 it('detects file namespaces and packages correctly', function($testFiles, $expects) {
-    $metrics = getMetricsForMultipleFilesAndVisitors($testFiles, getPackageVisitors());
+    $metricsController = getMetricsForMultipleFilesAndVisitors($testFiles, getPackageVisitors());
 
-    $packages = $metrics->get('packages');
+    $packages = $metricsController->getCollection(
+        MetricCollectionTypeEnum::ProjectCollection,
+        null,
+        'packages'
+    )->getAsArray();
+
     expect($packages)->toBeArray()
         ->and(in_array('_global', $packages))->toBeTrue()
         ->and($packages)->toBe($expects['foundPackages']);
 
-    foreach ($metrics->getAll() as $metric) {
+    foreach ($metricsController->getAllCollections() as $metric) {
         if (! $metric instanceof FileMetricsCollection) {
             continue;
         }
@@ -37,25 +43,25 @@ it('detects file namespaces and packages correctly', function($testFiles, $expec
         $file = $metric->getName();
         $expectedNamespace = $expects['fileNamespaces'][$file];
 
-        expect($metric->get('namespace'))->toBeString()
-            ->and($metric->get('namespace'))->toBe($expectedNamespace);
+        expect($metric->get('namespace')->getValue())->toBeString()
+            ->and($metric->get('namespace')->getValue())->toBe($expectedNamespace);
     }
 })->with($packageTests);
 
 it('assigns elements to the correct package', function($testFiles, $expects) {
-    $metrics = getMetricsForMultipleFilesAndVisitors($testFiles, getPackageVisitors());
+    $metricsController = getMetricsForMultipleFilesAndVisitors($testFiles, getPackageVisitors());
 
     $packageMetricCount = 0;
-    foreach ($metrics->getAll() as $metric) {
+    foreach ($metricsController->getAllCollections() as $metric) {
         if (!$metric instanceof PackageMetricsCollection) {
             continue;
         }
 
         $metricExpects = $expects['packageMetrics'][$metric->getName()];
 
-        $functionCount = count($metric->get('functions'));
-        $classCount = count($metric->get('classes'));
-        $fileCount = count($metric->get('files'));
+        $functionCount = count($metric->getCollection('functions')->getAsArray());
+        $classCount = count($metric->getCollection('classes')->getAsArray());
+        $fileCount = count($metric->getCollection('files')->getAsArray());
 
         expect($fileCount)->toBe($metricExpects['fileCount'])
             ->and($functionCount)->toBe($metricExpects['functionCount'])

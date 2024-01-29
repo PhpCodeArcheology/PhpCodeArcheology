@@ -23,19 +23,19 @@ function getDepVisitors(): array
 }
 
 it('detects the dependencies correctly', function($testFile, $expects) {
-    $metrics = getMetricsForVisitors($testFile, getDepVisitors());
+    $metricsController = getMetricsForVisitors($testFile, getDepVisitors());
 
-    foreach ($metrics->getAll() as $metrics) {
+    foreach ($metricsController->getAllCollections() as $metrics) {
         switch (true) {
             case $metrics instanceof FileMetricsCollection:
-                $dependencies = $metrics->get('dependencies');
+                $dependencies = $metrics->getCollection('dependencies')->getAsArray();
 
                 expect(count($dependencies))->toBe($expects['file']['dependencyCount'])
                     ->and($dependencies)->toBe($expects['file']['dependencies']);
                 break;
 
             case $metrics instanceof FunctionMetricsCollection:
-                $dependencies = $metrics->get('dependencies');
+                $dependencies = $metrics->getCollection('dependencies')->getAsArray();
                 $fnName = $metrics->getName();
 
                 if (! isset($expects['functions'][$fnName])) {
@@ -48,7 +48,9 @@ it('detects the dependencies correctly', function($testFile, $expects) {
                 break;
 
             case $metrics instanceof ClassMetricsCollection:
-                $dependencies = $metrics->get('dependencies');
+                $dependencies = $metrics->getCollection('dependencies')->getAsArray();
+                $interfaces = $metrics->getCollection('interfaces')->getAsArray();
+                $extends = $metrics->getCollection('extends')->getAsArray();
                 $className = $metrics->getName();
 
                 $className = str_starts_with($className, 'anonymous') ? 'anonymous' : $className;
@@ -61,13 +63,13 @@ it('detects the dependencies correctly', function($testFile, $expects) {
 
                 expect(count($dependencies))->toBe($classExpects['dependencyCount'])
                     ->and($dependencies)->toBe($classExpects['dependencies'])
-                    ->and($metrics->get('interfaces'))->toBe($classExpects['interfaces'])
-                    ->and($metrics->get('extends'))->toBe($classExpects['extends']);
+                    ->and($interfaces)->toBe($classExpects['interfaces'])
+                    ->and($extends)->toBe($classExpects['extends']);
 
-                $methods = $metrics->get('methods');
+                $methods = $metrics->getCollection('methods');
 
-                foreach ($methods as $methodMetric) {
-                    $methodName = $methodMetric->getName();
+                foreach ($methods as $key => $methodName) {
+                    $methodMetric = $metricsController->getMetricCollectionByIdentifierString($key);
 
                     if (! isset($classExpects['methods'][$methodName])) {
                         continue;
@@ -75,7 +77,7 @@ it('detects the dependencies correctly', function($testFile, $expects) {
 
                     $methodExpects = $classExpects['methods'][$methodName];
 
-                    $dependencies = $methodMetric->get('dependencies');
+                    $dependencies = $methodMetric->getCollection('dependencies')->getAsArray();
 
                     expect(count($dependencies))->toBe($methodExpects['dependencyCount'])
                         ->and($dependencies)->toBe($methodExpects['dependencies']);

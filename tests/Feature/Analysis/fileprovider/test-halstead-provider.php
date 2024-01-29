@@ -36,7 +36,7 @@ return [
                                 'operators' => 3,
                                 'operands' => 6,
                                 'uniqueOperators' => 3,
-                                'uniqueOperands' => 4,
+                                'uniqueOperands' => 3,
                             ],
                         ],
                         'testMethod2' => [
@@ -44,7 +44,7 @@ return [
                                 'operators' => 3,
                                 'operands' => 7,
                                 'uniqueOperators' => 2,
-                                'uniqueOperands' => 6,
+                                'uniqueOperands' => 3,
                             ],
                         ],
                     ],
@@ -68,9 +68,9 @@ return [
             'classes' => [
                 'Creator' => [
                     'counted' => [
-                        'operators' => 6,
-                        'operands' => 7,
-                        'uniqueOperators' => 3,
+                        'operators' => 8,
+                        'operands' => 12,
+                        'uniqueOperators' => 7,
                         'uniqueOperands' => 6,
                     ],
                     'methods' => [
@@ -79,15 +79,15 @@ return [
                                 'operators' => 3,
                                 'operands' => 6,
                                 'uniqueOperators' => 3,
-                                'uniqueOperands' => 4,
+                                'uniqueOperands' => 3,
                             ],
                         ],
                         'testMethod2' => [
                             'counted' => [
-                                'operators' => 6,
-                                'operands' => 7,
-                                'uniqueOperators' => 3,
-                                'uniqueOperands' => 6,
+                                'operators' => 5,
+                                'operands' => 6,
+                                'uniqueOperators' => 5,
+                                'uniqueOperands' => 3,
                             ],
                         ],
                     ],
@@ -105,7 +105,7 @@ return [
                                 'operators' => 4,
                                 'operands' => 7,
                                 'uniqueOperators' => 2,
-                                'uniqueOperands' => 6,
+                                'uniqueOperands' => 3,
                             ],
                         ],
                     ],

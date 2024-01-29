@@ -26,7 +26,7 @@ function getHalVisitors(): array
 function getCounts(MetricsCollectionInterface $metrics, array $expected, array $counting): array
 {
     $countedInMetrics = array_map(function($key) use($metrics) {
-        return $metrics->get($key);
+        return $metrics->get($key)->getValue();
     }, $counting);
 
     $expectedCounted = array_values($expected);
@@ -49,7 +49,7 @@ function getCounts(MetricsCollectionInterface $metrics, array $expected, array $
  */
 function getOperatorsAndOperands(string $testFile, array $expects): array
 {
-    $metrics = getMetricsForVisitors($testFile, getHalVisitors());
+    $metricsController = getMetricsForVisitors($testFile, getHalVisitors());
 
     $counting = [
         'operators',
@@ -60,7 +60,7 @@ function getOperatorsAndOperands(string $testFile, array $expects): array
 
     $operatorsAndOperands = [];
 
-    foreach ($metrics->getAll() as $metrics) {
+    foreach ($metricsController->getAllCollections() as $metrics) {
         switch (true) {
             case $metrics instanceof FileMetricsCollection:
                 $operatorsAndOperands[$metrics->getName()] = [
@@ -107,9 +107,9 @@ function getOperatorsAndOperands(string $testFile, array $expects): array
                     ),
                 ];
 
-                $methods = $metrics->get('methods');
-                foreach ($methods as $methodMetric) {
-                    $methodName = $methodMetric->getName();
+                $methods = $metrics->getCollection('methods');
+                foreach ($methods as $key => $methodName) {
+                    $methodMetric = $metricsController->getMetricCollectionByIdentifierString($key);
 
                     if (!isset($expects['classes'][$className]['methods'][$methodName])) {
                         break;
@@ -194,7 +194,7 @@ it('counts calculates halstead values correctly', function($testFile, $expects) 
 
         $actualHalsteadMetrics = [];
         foreach ($metricKeys as $key) {
-            $actualHalsteadMetrics[$key] = $counted['metric']->get($key);
+            $actualHalsteadMetrics[$key] = $counted['metric']->get($key)->getValue();
         }
 
         expect($actualHalsteadMetrics)->toBe($expectedHalsteadMetrics);

@@ -20,18 +20,9 @@ use PhpParser\NodeVisitor;
 use PhpParser\PrettyPrinter\Standard;
 use function PhpCodeArch\getNodeName;
 
-if (!defined('DNS_MX')) {
-
-    define('DNS_MX', 1);
-    define('DNS_A', 1);
-    define('DNS_AAAA', 1);
-}
-
 class IdentifyVisitor implements NodeVisitor, VisitorInterface
 {
     use VisitorTrait;
-
-    const TEST = DNS_MX + DNS_A + DNS_AAAA;
 
     /**
      * @var string[]

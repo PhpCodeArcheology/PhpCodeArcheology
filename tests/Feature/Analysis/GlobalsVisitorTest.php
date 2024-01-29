@@ -23,12 +23,12 @@ function getGlobalsVisitors(): array
 }
 
 it('counts globals correctly', function($testFile, $expected) {
-    $metrics = getMetricsForVisitors($testFile, getGlobalsVisitors());
+    $metricsController = getMetricsForVisitors($testFile, getGlobalsVisitors());
 
-    foreach ($metrics->getAll() as $metrics) {
+    foreach ($metricsController->getAllCollections() as $metrics) {
         switch (true) {
             case $metrics instanceof FileMetricsCollection:
-                $superglobals = $metrics->get('superglobals');
+                $superglobals = $metrics->get('superglobals')->getValue();
                 $superglobalsSum = array_sum($superglobals);
 
                 expect($superglobals)->toBe($expected['file']['superglobals'])
@@ -36,7 +36,7 @@ it('counts globals correctly', function($testFile, $expected) {
                 break;
 
             case $metrics instanceof FunctionMetricsCollection:
-                $superglobals = $metrics->get('superglobals');
+                $superglobals = $metrics->get('superglobals')->getValue();
                 $superglobalsSum = array_sum($superglobals);
 
                 if (!isset($expected['functions'][$metrics->getName()])) {
@@ -50,7 +50,7 @@ it('counts globals correctly', function($testFile, $expected) {
                 break;
 
             case $metrics instanceof ClassMetricsCollection:
-                $superglobals = $metrics->get('superglobals');
+                $superglobals = $metrics->get('superglobals')->getValue();
                 $superglobalsSum = array_sum($superglobals);
 
                 if (!isset($expected['classes'][$metrics->getName()])) {
@@ -62,15 +62,15 @@ it('counts globals correctly', function($testFile, $expected) {
                 expect($superglobals)->toBe($expectedForClass['superglobals'])
                     ->and($superglobalsSum)->toBe($expectedForClass['superglobalsSum']);
 
-                $methods = $metrics->get('methods');
-                foreach ($methods as $method) {
-                    $methodName = $method->getName();
+                $methods = $metrics->getCollection('methods');
+                foreach ($methods as $key => $methodName) {
+                    $methodMetric = $metricsController->getMetricCollectionByIdentifierString($key);
 
                     if (! isset($expected['classes'][$metrics->getName()]['methods'][$methodName])) {
                         continue;
                     }
 
-                    $superglobals = $method->get('superglobals');
+                    $superglobals = $methodMetric->get('superglobals')->getValue();
                     $superglobalsSum = array_sum($superglobals);
 
                     $expectedForMethod = $expected['classes'][$metrics->getName()]['methods'][$methodName];

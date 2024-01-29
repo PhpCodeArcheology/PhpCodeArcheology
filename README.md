@@ -2,11 +2,11 @@
 
 ## Bugs
 
-- Some classes get counted three times in pb
+- [x] Some classes get counted three times in pb
 
 ## Todo
 
-- [ ] Maybe rename to PhpLegacyArcheology or PhpLegacyExplorer
+- [x] Maybe rename to PhpLegacyArcheology or PhpLegacyExplorer
 - [x] Support _interfaces_ and _traits_
 - [x] Add correct path handling
 - [ ] Spaghetti metric for files and overall
@@ -14,10 +14,10 @@
 - [x] Dependence on super globals of functions, classes and methods
 - [x] Before using data providers there has to be some kind of data creation, because wie need to have all data before using providers
 - [ ] Detect code in comments
-- [ ] Add cli counter for processing data after traverse files
-- [ ] Add max lcom
-- [ ] Add min maintainability index
-- [ ] Add Metrics Manager! A manager class that holds categorized metrics
+- [x] Add cli counter for processing data after traverse files
+- [x] Add max lcom
+- [x] Add min maintainability index
+- [x] Add Metrics Manager! A manager class that holds categorized metrics
 
 ## Docs
 
