@@ -6,19 +6,19 @@ return [
         [
             'file' => [
                 'counted' => [
-                    'operators' => 13,
-                    'operands' => 25,
-                    'uniqueOperators' => 8,
+                    'operators' => 15,
+                    'operands' => 28,
+                    'uniqueOperators' => 10,
                     'uniqueOperands' => 12,
                 ],
             ],
             'functions' => [
                 'cycloTest' => [
                     'counted' => [
-                        'operators' => 5,
-                        'operands' => 6,
-                        'uniqueOperators' => 4,
-                        'uniqueOperands' => 5,
+                        'operators' => 7,
+                        'operands' => 9,
+                        'uniqueOperators' => 6,
+                        'uniqueOperands' => 6,
                     ],
                 ],
             ],

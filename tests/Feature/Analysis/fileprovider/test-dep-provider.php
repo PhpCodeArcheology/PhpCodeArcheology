@@ -45,8 +45,9 @@ return [
                     ],
                 ],
                 \Testfile\BarClass::class => [
-                    'dependencyCount' => 2,
+                    'dependencyCount' => 3,
                     'dependencies' => [
+                        \Testfile\TestTrait::class,
                         \Testfile\ClassWithStaticMethod::class,
                         \Testfile\FooClass::class,
                     ],
@@ -64,11 +65,20 @@ return [
                     ],
                 ],
                 \Testfile\ClassWithStaticMethod::class => [
-                    'dependencyCount' => 0,
-                    'dependencies' => [],
+                    'dependencyCount' => 1,
+                    'dependencies' => [
+                        \Testfile\FooClass::class,
+                    ],
                     'interfaces' => [],
                     'extends' => [],
-                    'methods' => [],
+                    'methods' => [
+                        'testMethod2' => [
+                            'dependencyCount' => 1,
+                            'dependencies' => [
+                                \Testfile\FooClass::class,
+                            ],
+                        ],
+                    ],
                 ],
             ],
         ],

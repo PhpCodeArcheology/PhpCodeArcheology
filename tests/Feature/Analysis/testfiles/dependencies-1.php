@@ -6,6 +6,9 @@ namespace Testfile;
 
 use PhpParser\NodeTraverser;
 
+trait TestTrait
+{}
+
 interface FooInterface
 {}
 
@@ -19,6 +22,7 @@ class X extends AbstractClass
 
 class FooClass implements FooInterface
 {
+    const TEST = 1;
     public function __construct(
         private NodeTraverser $traverser
     )
@@ -34,6 +38,8 @@ class FooClass implements FooInterface
 
 class BarClass extends FooClass
 {
+    use TestTrait;
+
     public function testMethod3()
     {
         ClassWithStaticMethod::testMethod2();
@@ -45,6 +51,8 @@ class ClassWithStaticMethod
     public static function testMethod2()
     {
         $x = 2;
+
+        FooClass::TEST;
     }
 }
 

@@ -18,6 +18,7 @@ use PhpCodeArch\Metrics\Model\MetricType;
 use PhpCodeArch\Metrics\Model\MetricValue;
 
 beforeEach(function() {
+    return;
     $metrics = new MetricsContainer();
 
     $this->metricsController = new MetricsController($metrics);

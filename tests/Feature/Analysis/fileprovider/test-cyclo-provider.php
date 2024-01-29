@@ -1,15 +1,15 @@
 <?php
 
 return [
-    /*[
+    [
         __DIR__ . '/../testfiles/cyclomatic-complexity-1.php',
         [
             'file' => [
-                'cc' => 8,
+                'cc' => 10,
             ],
             'function' => [
                 'cycloTest' => [
-                    'cc' => 2,
+                    'cc' => 4,
                 ],
             ],
             'classes' => [
@@ -71,7 +71,7 @@ return [
             ],
             'classes' => [],
         ],
-    ],*/
+    ],
     [
         __DIR__ . '/../testfiles/MessageBus.php',
         [

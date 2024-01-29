@@ -11,7 +11,6 @@ use PhpCodeArch\Metrics\Model\Collections\InterfaceNameCollection;
 use PhpCodeArch\Metrics\Model\Collections\TraitNameCollection;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
-use PhpParser\PrettyPrinter\Standard;
 use function PhpCodeArch\getNodeName;
 
 class DependencyVisitor implements NodeVisitor, VisitorInterface
