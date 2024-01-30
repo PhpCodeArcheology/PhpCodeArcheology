@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Report;
 
-use PhpCodeArch\Application\Application;
 use PhpCodeArch\Application\CliOutput;
 use PhpCodeArch\Application\Config;
 use PhpCodeArch\Report\DataProvider\DataProviderFactory;
-use PhpCodeArch\Report\DataProvider\FunctionDataProvider;
 use PhpCodeArch\Report\Helper\FileCopier;
 use Twig\Environment;
 use Twig\Error\LoaderError;
@@ -23,11 +21,11 @@ class HtmlReport implements ReportInterface
     private string $assetDir;
 
     public function __construct(
-        private readonly Config              $config,
-        private readonly DataProviderFactory $dataProviderFactory,
-        protected readonly FilesystemLoader    $twigLoader,
-        protected readonly Environment         $twig,
-        private readonly CliOutput           $output)
+        private readonly Config             $config,
+        private readonly DataProviderFactory  $dataProviderFactory,
+        protected readonly FilesystemLoader $twigLoader,
+        protected readonly Environment      $twig,
+        private readonly CliOutput          $output)
     {
         $this->outputDir = $config->get('reportDir') . DIRECTORY_SEPARATOR;
 
@@ -98,7 +96,7 @@ class HtmlReport implements ReportInterface
 
     /**
      * @param mixed $functionData
-     * @param array $templateData
+     * @param string $folder
      * @return void
      * @throws LoaderError
      * @throws RuntimeError
@@ -106,18 +104,13 @@ class HtmlReport implements ReportInterface
      */
     public function createFunctionFile(mixed $functionData, string $folder): void
     {
-        $outputFile = $folder . '/' . $functionData['id'] . '.html';
+        $outputFile = $folder . '/' . $functionData['function']->getIdentifier() . '.html';
 
-        $templateData = [];
-        $templateData['function'] = $functionData;
-        $templateData['version'] = $functionData['version'];
-        $templateData['createDate'] = $functionData['createDate'];
+        $functionData['pageTitle'] = $functionData['isMethod'] ? 'Method metrics' : 'Function metrics';
+        $functionData['currentPage'] = $outputFile;
+        $functionData['isSubdir'] = true;
 
-        $templateData['pageTitle'] = 'Function metrics';
-        $templateData['currentPage'] = $outputFile;
-        $templateData['isSubdir'] = true;
-
-        $this->renderTemplate('single-function.html.twig', $templateData, $outputFile);
+        $this->renderTemplate('single-function.html.twig', $functionData, $outputFile);
     }
 
     /**
@@ -155,12 +148,12 @@ class HtmlReport implements ReportInterface
         $data = $templateData->getTemplateData();
 
         foreach ($data['files'] as $fileKey => $fileData) {
-            $outputFile = 'files/' . $fileData['id'] . '.html';
+            $outputFile = 'files/' . $fileKey . '.html';
 
-            $templateData = [];
+            $templateData = $data;
+            unset($templateData['files']);
+
             $templateData['file'] = $fileData;
-            $templateData['version'] = $data['version'];
-            $templateData['createDate'] = $data['createDate'];
 
             $templateData['pageTitle'] = 'File metrics';
             $templateData['currentPage'] = $outputFile;
@@ -177,12 +170,12 @@ class HtmlReport implements ReportInterface
         $data = $templateData->getTemplateData();
 
         foreach ($data['classes'] as $classKey => $classData) {
-            $outputFile = 'classes/' . $classData['id'] . '.html';
+            $outputFile = 'classes/' . $classKey . '.html';
 
-            $templateData = [];
+            $templateData = $data;
+            unset($templateData['classes']);
+
             $templateData['class'] = $classData;
-            $templateData['version'] = $data['version'];
-            $templateData['createDate'] = $data['createDate'];
 
             $templateData['pageTitle'] = 'Class metrics';
             $templateData['currentPage'] = $outputFile;
@@ -216,15 +209,25 @@ class HtmlReport implements ReportInterface
         $data = $templateData->getTemplateData();
 
         foreach ($data['functions'] as $functionData) {
-            $functionData['version'] = $data['version'];
-            $functionData['createDate'] = $data['createDate'];
-            $this->createFunctionFile($functionData, 'functions');
+            $templateData = $data;
+            unset($templateData['functions']);
+            unset($templateData['methods']);
+
+            $templateData['isMethod'] = false;
+            $templateData['function'] = $functionData;
+
+            $this->createFunctionFile($templateData, 'functions');
         }
 
         foreach ($data['methods'] as $functionData) {
-            $functionData['version'] = $data['version'];
-            $functionData['createDate'] = $data['createDate'];
-            $this->createFunctionFile($functionData, 'methods');
+            $templateData = $data;
+            unset($templateData['functions']);
+            unset($templateData['methods']);
+
+            $templateData['isMethod'] = true;
+            $templateData['function'] = $functionData;
+
+            $this->createFunctionFile($templateData, 'methods');
         }
     }
 

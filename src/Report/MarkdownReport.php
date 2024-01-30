@@ -7,6 +7,7 @@ namespace PhpCodeArch\Report;
 use PhpCodeArch\Application\CliOutput;
 use PhpCodeArch\Application\Config;
 use PhpCodeArch\Report\DataProvider\DataProviderFactory;
+use PhpCodeArch\Report\DataProvider\ReportDataProviderInterface;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
 

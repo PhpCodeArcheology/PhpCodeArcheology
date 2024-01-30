@@ -6,7 +6,6 @@ namespace PhpCodeArch\Report\DataProvider;
 
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 use PhpCodeArch\Metrics\Model\MetricType;
-use PhpCodeArch\Metrics\Model\ProjectMetrics\OverallMetricsEnum;
 
 class ProjectDataProvider implements ReportDataProviderInterface
 {
@@ -27,12 +26,7 @@ class ProjectDataProvider implements ReportDataProviderInterface
         $data = [];
         foreach ($metricTypes as $metricType) {
             $value = $projectMetrics->get($metricType->getKey());
-            $value = $value?->__toString() ?? '-';
-
-            $metricData = $metricType->__toArray();
-            $metricData['value'] = $value;
-
-            $data[] = $metricData;
+            $data[$metricType->getKey()] = $value;
         }
 
         $this->templateData['elements'] = $data;

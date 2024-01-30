@@ -35,24 +35,24 @@
       </thead>
       <tbody>
       {% for function in functionProblems %}
-        {% set folder = function.data.functionType.getValue() == 'method' ? 'methods' : 'functions' %}
-        {% if function.data.functionType.getValue() == 'method' %}
+        {% set folder = function.data.get('functionType').getValue() == 'method' ? 'methods' : 'functions' %}
+        {% if function.data.get('functionType').getValue() == 'method' %}
           {% set scope %}
-            {% if function.data.public.getValue() %}public{% elseif function.data.protected.getValue() %}protected{% else %}private{% endif %}
-            {% if function.data.static.getValue() %}static{% endif %}
+            {% if function.data.get('public').getValue() %}public{% elseif function.data.get('protected').getValue() %}protected{% else %}private{% endif %}
+            {% if function.data.get('static').getValue() %}static{% endif %}
           {% endset %}
         {% endif %}
 
         <tr class="even:bg-cyan-950/45 odd:bg-cyan-950/85 transition-colors hover:bg-cyan-800">
-          <td class="border border-slate-500 text-left px-2 py-0.5 filter-name" data-filter="{{ function.data.name }}" data-sort="{{ function.data.name }}">
+          <td class="border border-slate-500 text-left px-2 py-0.5 filter-name" data-filter="{{ function.data.getName() }}" data-sort="{{ function.data.getName() }}">
             <div class="flex gap-4 justify-between items-start">
               <div>
-                {% if function.data.namespace %}<span class="text-white/40">{{ function.data.namespace }}</span><br>{% endif %}
-                {% if function.data.classInfo %}<span class="text-white/40">{{ function.data.classInfo.getValue().name }}</span><br>{% endif %}
+                {% if function.data.get('namespace') %}<span class="text-white/40">{{ function.data.get('namespace') }}</span><br>{% endif %}
+                {% if function.data.get('classInfo') %}<span class="text-white/40">{{ function.data.get('classInfo').getValue().name }}</span><br>{% endif %}
                 {% if scope %}<span class="text-white/40">{{ scope }}</span> {% endif %}
-                <a href="{% if isSubdir %}../{% endif %}{{ folder }}/{{ function.id }}.html" class="font-semibold inline-block" title="{{ function.data.name }}">{% if function.data.singleName %}{{ function.data.singleName }}{% else %}{{ function.data.name }}{% endif %}</a>
+                <a href="{% if isSubdir %}../{% endif %}{{ folder }}/{{ function.data.getIdentifier() }}.html" class="font-semibold inline-block" title="{{ function.data.getName() }}">{% if function.data.get('singleName') %}{{ function.data.get('singleName') }}{% else %}{{ function.data.getName() }}{% endif %}</a>
               </div>
-              {% if function.data.functionType.getValue() == 'method' %}
+              {% if function.data.get('functionType').getValue() == 'method' %}
                 <div class="rounded px-2 py-0.5 bg-emerald-800 mt-0.5">Method</div>
               {% else %}
                 <div class="rounded px-2 py-0.5 bg-blue-900 mt-0.5">Function</div>

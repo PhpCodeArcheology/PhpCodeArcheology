@@ -248,9 +248,9 @@ class MetricsController
     {
         $this->metricsContainer->get($identifierString)->set(
             $key,
-            MetricValue::ofValueAndType(
+            MetricValue::ofValueAndTypeKey(
                 $value,
-                $this->metricTypeMap[$key]
+                $key
             )
         );
     }
@@ -441,5 +441,40 @@ class MetricsController
     public function setProblemByIdentifierString(string $identifierString, string $key, ProblemInterface $problem): void
     {
         $this->metricsContainer->get($identifierString)->get($key)?->addProblem($problem);
+    }
+
+    public function setMetricTypeToMetricValue(MetricValue &$metricValue): void
+    {
+        $metricType = $this->metricTypeMap[$metricValue->getMetricTypeKey()];
+        $metricValue->setMetricType($metricType);
+    }
+
+    public function getMetricCollectionsByCollectionKeys(MetricCollectionTypeEnum $metricsType, ?array $identifierArray, string $collectionKey): array
+    {
+        $collectionArray = $this->getCollection(
+            $metricsType,
+            $identifierArray,
+            $collectionKey
+        )->getAsArray();
+
+        $keys = array_keys($collectionArray);
+
+        $metrics = [];
+        foreach ($this->getMetricsByKeys($keys) as $metric) {
+            $metrics[$metric[0]] = $metric[1];
+        }
+
+        return $metrics;
+    }
+
+    private function getMetricsByKeys(array $keys): \Generator
+    {
+        foreach ($this->metricsContainer->getAll() as $key => $metrics) {
+            if (!in_array($key, $keys)) {
+                continue;
+            }
+
+            yield [$key, $metrics];
+        }
     }
 }

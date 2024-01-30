@@ -13,7 +13,7 @@ class FunctionMetricsFactory
     public static function createFromMetricsByNameAndPath(
         MetricsContainer $metrics,
         mixed            $name,
-        mixed            $path): FunctionMetricsCollection
+        mixed            $path): MetricsCollectionInterface
     {
         $functionId = (string) FunctionAndClassIdentifier::ofNameAndPath((string) $name, (string) $path);
 

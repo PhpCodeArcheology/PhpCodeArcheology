@@ -1,13 +1,13 @@
 {% set color = "bg-blue-900" %}
-{% if data.problemLevel == 2 %}
+{% if data.getMaxProblemLevel() == 2 %}
   {% set color = "bg-yellow-900" %}
-{% elseif data.problemLevel == 3 %}
+{% elseif data.getMaxProblemLevel() == 3 %}
   {% set color = "bg-red-900" %}
 {% endif %}
-<td class="border border-slate-500 text-right px-2 py-0.5" data-sort="{{ data.sortValue }}">
+<td class="border border-slate-500 text-right px-2 py-0.5" data-sort="{{ data.getSortValue() }}">
   <span
-    class="inline-block px-1.5 py-0.5 {% if data.problemLevel > 0 %}rounded-md cursor-help {{ color }}{% endif %}"
-    title="{% if data.problemLevel > 0 %}{{ data.problemText|join(' ') }}{% endif %}">
-    {{ data.value }}
+    class="inline-block px-1.5 py-0.5 {% if data.getMaxProblemLevel() > 0 %}rounded-md cursor-help {{ color }}{% endif %}"
+    title="{% if data.getMaxProblemLevel() > 0 %}{{ data.getProblemMessages()|join(' ') }}{% endif %}">
+    {{ data }}
   </span>
 </td>

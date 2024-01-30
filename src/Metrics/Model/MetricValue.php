@@ -13,15 +13,17 @@ class MetricValue
      */
     private array $problems = [];
 
+    private readonly MetricType $type;
+
     private function __construct(
         private readonly mixed $value,
-        private readonly MetricType $type)
+        private readonly string $metricTypeKey)
     {
     }
 
-    public static function ofValueAndType(mixed $value, MetricType $type): MetricValue
+    public static function ofValueAndTypeKey(mixed $value, string $typeKey): MetricValue
     {
-        return new static($value, $type);
+        return new static($value, $typeKey);
     }
 
     public function getValueFormatted(): mixed
@@ -61,9 +63,19 @@ class MetricValue
         };
     }
 
+    public function setMetricType(MetricType $metricType): void
+    {
+        $this->type = $metricType;
+    }
+
     public function getMetricType(): MetricType
     {
         return $this->type;
+    }
+
+    public function getMetricTypeKey(): string
+    {
+        return $this->metricTypeKey;
     }
 
     public function addProblem(ProblemInterface $problem): void

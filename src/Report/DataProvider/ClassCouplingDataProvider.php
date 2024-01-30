@@ -14,10 +14,14 @@ class ClassCouplingDataProvider implements ReportDataProviderInterface
 
     public function gatherData(): void
     {
-        $classes = $this->reportDataContainer->get('classes')->getAll();
+        $classes = $this->metricsController->getMetricCollectionsByCollectionKeys(
+            MetricCollectionTypeEnum::ProjectCollection,
+            null,
+            'classes'
+        );
 
         $classes = array_filter($classes, function($class) {
-            return $class['realClass']->getValue() === true;
+            return $class->get('realClass')->getValue() === true;
         });
 
         $metrics = $this->metricsController->getMetricsByCollectionTypeAndVisibility(
@@ -26,12 +30,18 @@ class ClassCouplingDataProvider implements ReportDataProviderInterface
             false
         );
 
-        $classes = $this->setDataFromMetricTypesAndArrayToArrayKey($classes, $metrics, 'listData');
+//        $classes = $this->setDataFromMetricTypesAndArrayToArrayKey($classes, $metrics, 'listData');
 
-        $this->templateData['classes'] = $classes;
-        $this->templateData['tableHeaders'] = array_map(function($metricType) {
-            return $metricType->__toArray();
-        }, $metrics);
+        $templateData = [
+            'classes' => $classes,
+            'tableHeaders' => array_map(function($metricType) {
+                return $metricType->__toArray();
+            }, $metrics),
+             'listMetricKeys' => array_map(function($metricType) {
+                return $metricType->getKey();
+            }, $metrics),
+        ];
 
+        $this->templateData = array_merge($this->templateData, $templateData);
     }
 }

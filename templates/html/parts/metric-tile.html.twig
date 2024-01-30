@@ -1,18 +1,18 @@
 {% set color = "bg-blue-900" %}
-{% if element.problemLevel == 2 %}
+{% if element.getMaxProblemLevel() == 2 %}
   {% set color = "bg-yellow-900" %}
-{% elseif element.problemLevel == 3 %}
+{% elseif element.getMaxProblemLevel() == 3 %}
   {% set color = "bg-red-900" %}
 {% endif %}
-<div class="{% if element.problemLevel > 0 %}{{ color }}{% else %}bg-cyan-950/50{% endif %} rounded-lg border-t-4 border-cyan-600 p-3 transition-transform hover:scale-110 hover:shadow-black hover:shadow-2xl"
-     title="{% if element.problemLevel > 0 %}{{ element.problemText|join(' ') }}{% endif %}">
-  <div class="text-lg text-cyan-200">{{ element.name }}</div>
+<div class="{% if element.getMaxProblemLevel() > 0 %}{{ color }}{% else %}bg-cyan-950/50{% endif %} rounded-lg border-t-4 border-cyan-600 p-3 transition-transform hover:scale-110 hover:shadow-black hover:shadow-2xl"
+     title="{% if element.getMaxProblemLevel() > 0 %}{{ element.getProblemMessages()|join(' ') }}{% endif %}">
+  <div class="text-lg text-cyan-200">{{ element.getMetricType().getName() }}</div>
   <div class="text-3xl font-bold">
-    {% if ': ' in element.value %}
-      {% set value = element.value|split(': ') %}
+    {% if ': ' in element.getValue() %}
+      {% set value = element.getValue()|split(': ') %}
       {{ value[1] }}<br><span class="text-xs font-normal inline-block">{{ value[0] }}</span>
     {% else %}
-      {{ element.value }}
+      {{ element }}
     {% endif %}
   </div>
 </div>

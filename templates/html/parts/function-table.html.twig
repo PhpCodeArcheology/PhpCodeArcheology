@@ -30,27 +30,29 @@
     </thead>
     <tbody>
     {% for function in functions %}
-      {% if function.functionType.getValue() == 'method' %}
+      {% if function.get('functionType').getValue() == 'method' %}
         {% set scope %}
-          {% if function.public.getValue() %}public{% elseif function.protected.getValue() %}protected{% else %}private{% endif %}
-          {% if function.static.getValue() %}static{% endif %}
+          {% if function.get('public').getValue() %}public{% elseif function.get('protected').getValue() %}protected{% else %}private{% endif %}
+          {% if function.get('static').getValue() %}static{% endif %}
         {% endset %}
       {% endif %}
+      {% set parameters = function.getCollection('parameters').getAsArray() %}
       <tr class="even:bg-cyan-950/45 odd:bg-cyan-950/85 transition-colors hover:bg-cyan-800">
-        <td class="border border-slate-500 text-left px-2 py-0.5 filter-name" data-filter="{{ function.name }}" data-sort="{{ function.name }}">
-          <a href="{% if isSubdir %}../{% endif %}{{ folder }}/{{ function.id }}.html" class="group block">
-            {% if function.namespace %}<span class="text-white/40 group-hover:text-white">{{ function.namespace }}</span><br>{% endif %}
+        <td class="border border-slate-500 text-left px-2 py-0.5 filter-name" data-filter="{{ function.getName() }}" data-sort="{{ function.getName() }}">
+          <a href="{% if isSubdir %}../{% endif %}{{ folder }}/{{ function.getIdentifier }}.html" class="group block">
+            {% if function.get('namespace') %}<span class="text-white/40 group-hover:text-white">{{ function.get('namespace') }}</span><br>{% endif %}
             {% if scope %}<span class="text-white/40 group-hover:text-white">{{ scope }}</span><br>{% endif %}
-            <span class="font-semibold inline-block group-hover:text-cyan-400" title="{{ function.name }}">{% if function.singleName %}{{ function.singleName }}{% else %}{{ function.name }}{% endif %}</span>
+            <span class="font-semibold inline-block group-hover:text-cyan-400" title="{{ function.getName() }}">{% if function.get('singleName') %}{{ function.get('singleName') }}{% else %}{{ function.getName() }}{% endif %}</span>
           </a>
         </td>
-        <td class="border border-slate-500 text-right px-2 py-0.5" data-sort="{{ function.parameterCount }}">
+        <td class="border border-slate-500 text-right px-2 py-0.5" data-sort="{{ parameters|length }}">
           <span
             class="inline-block px-1.5 py-0.5">
-            {{ function.parameterCount }}
+            {{ parameters|length }}
           </span>
         </td>
-        {% for data in function.listData %}
+        {% for metricKey in listMetricKeys %}
+          {% set data = function.get(metricKey) %}
           {% include('parts/tbody-td-sortable.html.twig') %}
         {% endfor %}
       </tr>

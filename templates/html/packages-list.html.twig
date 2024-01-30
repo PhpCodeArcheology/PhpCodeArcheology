@@ -34,10 +34,12 @@
       <tbody>
         {% for package in packages %}
         <tr class="even:bg-cyan-950/45 odd:bg-cyan-950/85 transition-colors hover:bg-cyan-800">
-          <td class="border border-slate-500 text-left px-2 py-0.5" data-sort="{{ package.name }}">
-            <span class="font-semibold inline-block">{{ package.name }}</span>
+          <td class="border border-slate-500 text-left px-2 py-0.5" data-sort="{{ package.getName() }}">
+            <span class="font-semibold inline-block">{{ package.getName() }}</span>
           </td>
-          {% for data in package.listData %}
+          {% for metricKey in listMetricKeys %}
+            {% set data = package.get(metricKey) %}
+
             {% include('parts/tbody-td-sortable.html.twig') %}
           {% endfor %}
         </tr>

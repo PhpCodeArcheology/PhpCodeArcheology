@@ -6,7 +6,9 @@ namespace PhpCodeArch\Report;
 
 use PhpCodeArch\Application\CliOutput;
 use PhpCodeArch\Application\Config;
+use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Report\DataProvider\DataProviderFactory;
+use PhpCodeArch\Report\DataProvider\ReportDataProviderInterface;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
 
@@ -17,7 +19,7 @@ class ReportFactory
      */
     public static function create(
         Config              $config,
-        DataProviderFactory $reportData,
+        DataProviderFactory   $reportDataFactory,
         FilesystemLoader    $twigLoader,
         Environment         $twig,
         CliOutput           $output
@@ -26,8 +28,8 @@ class ReportFactory
         $type = strtolower($config->get('reportType') ?? 'markdown');
 
         return match ($type) {
-            'markdown' => new MarkdownReport($config, $reportData, $twigLoader, $twig, $output),
-            'html' => new HtmlReport($config, $reportData, $twigLoader, $twig, $output),
+            'markdown' => new MarkdownReport($config, $reportDataFactory, $twigLoader, $twig, $output),
+            'html' => new HtmlReport($config, $reportDataFactory, $twigLoader, $twig, $output),
             default => throw new ReportTypeNotSupported("Report type $type not supported."),
         };
     }

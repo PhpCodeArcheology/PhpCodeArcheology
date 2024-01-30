@@ -36,26 +36,26 @@
       <tbody>
       {% for class in classProblems %}
         <tr class="even:bg-cyan-950/45 odd:bg-cyan-950/85 transition-colors hover:bg-cyan-800">
-          <td class="border border-slate-500 text-left px-2 py-0.5 filter-name" data-filter="{{ class.data.singleName }}" data-sort="{{ class.data.singleName }}">
+          <td class="border border-slate-500 text-left px-2 py-0.5 filter-name" data-filter="{{ class.data.get('singleName') }}" data-sort="{{ class.data.get('singleName') }}">
             <div class="flex gap-4 justify-between items-start">
               <div>
-                {% if class.data.anonymous.getValue() %}
-                  <span class="text-white/40">{{ class.filePath }}</span><br>
-                  <a href="{% if isSubdir %}../{% endif %}classes/{{ class.id }}.html" class="font-semibold inline-block" title="{{ class.data.name }}">{{ class.data.name }}</a>
+                {% if class.data.get('anonymous').getValue() %}
+                  <span class="text-white/40">{{ class.getPath() }}</span><br>
+                  <a href="{% if isSubdir %}../{% endif %}classes/{{ class.getIdentifier() }}.html" class="font-semibold inline-block" title="{{ class.data.getName() }}">{{ class.data.getName() }}</a>
                 {% else %}
-                  {% if class.data.namespace %}<span class="text-white/40">{{ class.data.namespace }}</span><br>{% endif %}
-                  <a href="{% if isSubdir %}../{% endif %}classes/{{ class.id }}.html" class="font-semibold inline-block" title="{{ class.data.name }}">{{ class.data.singleName }}</a>
+                  {% if class.data.get('namespace') %}<span class="text-white/40">{{ class.data.get('namespace') }}</span><br>{% endif %}
+                  <a href="{% if isSubdir %}../{% endif %}classes/{{ class.getIdentifier() }}.html" class="font-semibold inline-block" title="{{ class.data.getName() }}">{{ class.data.get('singleName') }}</a>
                 {% endif %}
               </div>
-              {% if class.data.interface.getValue() %}
+              {% if class.data.get('interface').getValue() %}
                 <div class="rounded px-2 py-0.5 bg-amber-900 mt-0.5">Interface</div>
-              {% elseif class.data.trait.getValue() %}
+              {% elseif class.data.get('trait').getValue() %}
                 <div class="rounded px-2 py-0.5 bg-purple-900 mt-0.5">Trait</div>
-              {% elseif class.data.enum.getValue() %}
+              {% elseif class.data.get('enum').getValue() %}
                 <div class="rounded px-2 py-0.5 bg-emerald-900 mt-0.5">Enum</div>
-              {% elseif class.data.abstract.getValue() %}
+              {% elseif class.data.get('abstract').getValue() %}
                 <div class="rounded px-2 py-0.5 bg-fuchsia-900 mt-0.5">Abstract</div>
-              {% elseif class.data.anonymous.getValue() %}
+              {% elseif class.data.get('anonymous').getValue() %}
                 <div class="rounded px-2 py-0.5 bg-gray-800 mt-0.5">Anonymous</div>
               {% else %}
                 <div class="rounded px-2 py-0.5 bg-blue-900 mt-0.5">Class</div>

@@ -12,31 +12,37 @@ class FunctionDataProvider implements ReportDataProviderInterface
 
     public function gatherData(): void
     {
-        $functions = $this->reportDataContainer->get('functions')->getAll();
+        $functions = $this->metricsController->getMetricCollectionsByCollectionKeys(
+            MetricCollectionTypeEnum::ProjectCollection,
+            null,
+            'functions'
+        );
 
-        array_walk($functions, function(&$function, $key) {
+        $methods = $this->metricsController->getMetricCollectionsByCollectionKeys(
+            MetricCollectionTypeEnum::ProjectCollection,
+            null,
+            'methods'
+        );
+
+        $parameters = [];
+        $dependencies = [];
+
+        $functionsAndMethods = array_merge($functions, $methods);
+
+        array_walk($functionsAndMethods, function($function, $key) use (&$parameters, &$dependencies) {
             $parameterCollection = $this->metricsController->getCollectionByIdentifierString(
                 $key,
                 'parameters'
             )->getAsArray();
 
-            $dependencies = $this->metricsController->getCollectionByIdentifierString(
+            $dependencyCollection = $this->metricsController->getCollectionByIdentifierString(
                 $key,
                 'dependencies'
             )?->getAsArray();
 
 
-            $function['parameterCount'] = count($parameterCollection);
-            $function['parameters'] = $parameterCollection;
-            $function['dependencies'] = $dependencies;
-        });
-
-        $methods = array_filter($functions, function($function) {
-            return $function['functionType']->getValue() === 'method';
-        });
-
-        $functions = array_filter($functions, function($function) {
-            return $function['functionType']->getValue() === 'function';
+            $parameters[$key] = $parameterCollection;
+            $dependencies[$key] = $dependencyCollection;
         });
 
         $listMetrics = $this->metricsController->getListMetricsByCollectionType(
@@ -47,9 +53,6 @@ class FunctionDataProvider implements ReportDataProviderInterface
             MetricCollectionTypeEnum::FunctionCollection
         );
 
-        $functions = $this->setDataFromMetricTypesAndArrayToArrayKey($functions, $detailMetrics, 'detailData');
-        $functions = $this->setDataFromMetricTypesAndArrayToArrayKey($functions, $listMetrics, 'listData');
-
         $methodListMetrics = $this->metricsController->getListMetricsByCollectionType(
             MetricCollectionTypeEnum::MethodCollection
         );
@@ -58,14 +61,28 @@ class FunctionDataProvider implements ReportDataProviderInterface
             MetricCollectionTypeEnum::MethodCollection
         );
 
-        $methods = $this->setDataFromMetricTypesAndArrayToArrayKey($methods, $methodDetailMetrics, 'detailData');
-        $methods = $this->setDataFromMetricTypesAndArrayToArrayKey($methods, $methodListMetrics, 'listData');
+        $templateData = [
+            'functions' => $functions,
+            'methods' => $methods,
+            'dependencies' => $dependencies,
+            'parameters' => $parameters,
+            'functionTableHeaders' => array_map(function($metricType) {
+                return $metricType->__toArray();
+            }, $listMetrics),
+            'methodTableHeaders' => array_map(function($metricType) {
+                return $metricType->__toArray();
+            }, $methodListMetrics),
+            'listMetricKeys' => array_map(function($metricType) {
+                return $metricType->getKey();
+            }, $listMetrics),
+            'functionDetailMetricKeys' => array_map(function($metricType) {
+                return $metricType->getKey();
+            }, $detailMetrics),
+            'methodDetailMetricKeys' => array_map(function($metricType) {
+                return $metricType->getKey();
+            }, $methodDetailMetrics),
+        ];
 
-        $this->templateData['functions'] = $functions;
-        $this->templateData['methods'] = $methods;
-
-        $this->templateData['tableHeaders'] = array_map(function($metricType) {
-            return $metricType->__toArray();
-        }, $listMetrics);
+        $this->templateData = array_merge($this->templateData, $templateData);
     }
 }

@@ -10,48 +10,43 @@ class FilesDataProvider implements ReportDataProviderInterface
 {
     use ReportDataProviderTrait;
 
-    private array $files;
-
     public function gatherData(): void
     {
-        $files = $this->reportDataContainer->get('files')->getAll();
-        $classes = $this->reportDataContainer->get('classes')->getAll();
-        $functions = $this->reportDataContainer->get('functions')->getAll();
+        $files = $this->metricsController->getMetricCollectionsByCollectionKeys(
+            MetricCollectionTypeEnum::ProjectCollection,
+            null,
+            'files'
+        );
 
-        $files = array_map(function($file) use ($classes, $functions) {
-            $file['errors'] = $this->metricsController->getCollectionByIdentifierString(
-                $file['id'],
-                'errors'
-            )->getAsArray();
+        $classes = $this->metricsController->getMetricCollectionsByCollectionKeys(
+            MetricCollectionTypeEnum::ProjectCollection,
+            null,
+            'classes'
+        );
 
-            list($fileListMetrics, $fileFunctions) = $this->getTableData(
-                $file['id'],
-                'functions',
-                MetricCollectionTypeEnum::FunctionCollection,
-                $functions
-            );
+        $functions = $this->metricsController->getMetricCollectionsByCollectionKeys(
+            MetricCollectionTypeEnum::ProjectCollection,
+            null,
+            'functions'
+        );
 
-            $file['functionTableHeaders'] = array_map(function($metricType) {
-                return $metricType->__toArray();
-            }, $fileListMetrics);
+        $fileClasses = [];
+        $fileFunctions = [];
+        foreach ($files as $fileKey => $_) {
+            $classKeyNamePairs = $this->metricsController->getCollectionByIdentifierString(
+                $fileKey,
+                'classes'
+            )?->getAsArray() ?? [];
 
-            $file['functions'] = $fileFunctions;
+            $fileClasses[$fileKey] = array_intersect_key($classes, $classKeyNamePairs);
 
-            list($classListMetrics, $fileClasses) = $this->getTableData(
-                $file['id'],
-                'classes',
-                MetricCollectionTypeEnum::ClassCollection,
-                $classes
-            );
+            $functionKeyNamePairs = $this->metricsController->getCollectionByIdentifierString(
+                $fileKey,
+                'functions'
+            )?->getAsArray() ?? [];
 
-            $file['classTableHeaders'] = array_map(function($metricType) {
-                return $metricType->__toArray();
-            }, $classListMetrics);
-
-            $file['classes'] = $fileClasses;
-
-            return $file;
-        }, $files);
+            $fileFunctions[$fileKey] = array_intersect_key($functions, $functionKeyNamePairs);
+        }
 
         $listMetrics = $this->metricsController->getListMetricsByCollectionType(
             MetricCollectionTypeEnum::FileCollection
@@ -61,40 +56,41 @@ class FilesDataProvider implements ReportDataProviderInterface
             MetricCollectionTypeEnum::FileCollection
         );
 
-        $files = $this->setDataFromMetricTypesAndArrayToArrayKey($files, $detailMetrics, 'detailData');
-        $files = $this->setDataFromMetricTypesAndArrayToArrayKey($files, $listMetrics, 'listData');
-
-        $this->templateData['files'] = $files;
-        $this->templateData['tableHeaders'] = array_map(function($metricType) {
-            return $metricType->__toArray();
-        }, $listMetrics);
-
-        $this->files = $files;
-    }
-
-    public function getFiles(): array
-    {
-        return $this->files;
-    }
-
-    function getTableData(string $identifierString, string $collectionKey, MetricCollectionTypeEnum $metricCollectionType, array $elements): array
-    {
-        $listMetrics = $this->metricsController->getListMetricsByCollectionType(
-            $metricCollectionType
+        $classListMetrics = $this->metricsController->getListMetricsByCollectionType(
+            MetricCollectionTypeEnum::ClassCollection
         );
 
-        $keyAndNames = $this->metricsController->getCollectionByIdentifierString(
-            $identifierString,
-            $collectionKey
-        )?->getAsArray() ?? [];
+        $functionListMetrics = $this->metricsController->getListMetricsByCollectionType(
+            MetricCollectionTypeEnum::FunctionCollection
+        );
 
-        $ids = array_keys($keyAndNames);
+        $templateData = [
+            'files' => $files,
+            'fileClasses' => $fileClasses,
+            'fileFunctions' => $fileFunctions,
+            'tableHeaders' => array_map(function($metricType) {
+                return $metricType->__toArray();
+            }, $listMetrics),
+            'functionTableHeaders' => array_map(function($metricType) {
+                return $metricType->__toArray();
+            }, $functionListMetrics),
+            'classTableHeaders' => array_map(function($metricType) {
+                return $metricType->__toArray();
+            }, $classListMetrics),
+            'listMetricKeys' => array_map(function($metricType) {
+                return $metricType->getKey();
+            }, $listMetrics),
+            'detailMetricKeys' => array_map(function($metricType) {
+                return $metricType->getKey();
+            }, $detailMetrics),
+            'classListMetricKeys' => array_map(function($metricType) {
+                return $metricType->getKey();
+            }, $classListMetrics),
+            'functionListMetricKeys' => array_map(function($metricType) {
+                return $metricType->getKey();
+            }, $functionListMetrics),
+        ];
 
-        $tableData = array_filter($elements, function ($key) use ($ids) {
-            return in_array($key, $ids);
-        }, ARRAY_FILTER_USE_KEY);
-
-        $tableData = $this->setDataFromMetricTypesAndArrayToArrayKey($tableData, $listMetrics, 'listData');
-        return [$listMetrics, $tableData];
+        $this->templateData = array_merge($this->templateData, $templateData);
     }
 }

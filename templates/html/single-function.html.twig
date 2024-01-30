@@ -1,11 +1,11 @@
 {% include('parts/header.html.twig') %}
 
-{% set isMethod = function.functionType.getValue() == 'method' %}
+{% set isMethod = function.get('functionType').getValue() == 'method' %}
 {% set breadCrumbLi = '' %}
 {% if isMethod %}
   {% set scope %}
-    {% if function.public.getValue() %}public{% elseif function.protected.getValue() %}protected{% else %}private{% endif %}
-    {% if function.static.getValue() %}static{% endif %}
+    {% if function.get('public').getValue() %}public{% elseif function.get('protected').getValue() %}protected{% else %}private{% endif %}
+    {% if function.get('static').getValue() %}static{% endif %}
   {% endset %}
   {% set breadCrumbLi %}
     <li class="flex after:content-['⮁'] gap-1">
@@ -14,10 +14,10 @@
   {% endset %}
 {% endif %}
 {% set h1Title = isMethod ? 'Method' : 'Function' %}
-{% set information = isMethod ? scope : function.namespace %}
-{% set functionName = isMethod ? function.name : function.singleName %}
+{% set information = isMethod ? scope : function.get('namespace') %}
+{% set functionName = isMethod ? function.getName() : function.get('singleName') %}
 {% set divider = isMethod ? ' ' : '/' %}
-{% set breadCrumbMiddle = isMethod ? function.detailData[0].rawValue.singleName : 'Functions' %}
+{% set breadCrumbMiddle = isMethod ? function.get('classInfo').getValue()['singleName'] : 'Functions' %}
 {% set breadCrumbLink = isMethod ? 'classes/' ~ function.detailData[0].rawValue.id : 'functions-list' %}
 
 <div class="mt-6 lg:w-5/6">
@@ -44,10 +44,11 @@
 
   <div class="mt-8 rounded-xl border border-cyan-800 bg-cyan-950/45 p-4">
     <h3 class="mb-3 text-xl font-semibold font-display">Parameters</h3>
-    {% if function.parameterCount > 0 %}
+    {% set parameters = parameters[function.getIdentifier().__toString()] %}
+    {% if parameters|length > 0 %}
       <table>
         <tbody>
-        {% for parameter in function.parameters %}
+        {% for parameter in parameters %}
           <tr>
             <td class="text-white/40 pr-4">{{ parameter.type }}{% if parameter.type is empty %}implicit mixed{% endif %}</td>
             <td class="text-lg font-semibold">{{ parameter.name }}</td>
@@ -63,21 +64,20 @@
 
   <div class="mt-8 rounded-xl border border-cyan-800 bg-cyan-950/45 p-4">
     <h3 class="mb-3 text-xl font-semibold font-display">Return type</h3>
-    <p class="text-lg font-semibold">{{ function.returnType.getValue() }}</p>
+    <p class="text-lg font-semibold">{{ function.get('returnType').getValue() }}</p>
   </div>
 
   <div class="mt-8 rounded-xl border border-cyan-800 bg-cyan-950/45 p-4">
     <h3 class="mb-3 text-xl font-semibold font-display">Dependencies</h3>
 
-    {% if function.dependencies|length %}
+    {% set dependencies = dependencies[function.getIdentifier().__toString()] %}
+    {% if dependencies|length %}
       <table class="w-full border-collapse">
         <tbody>
-        {% if function.dependencies|length %}
           <tr class="odd:bg-cyan-950/85 even:bg-cyan-950/55 border-t border-white/15">
             <th class="text-left p-2 align-top">Class dependencies</th>
-            <td class="p-2">{{ function.dependencies|sort|join('<br>')|raw }}</td>
+            <td class="p-2">{{ dependencies|sort|join('<br>')|raw }}</td>
           </tr>
-        {% endif %}
         </tbody>
       </table>
     {% else %}
@@ -88,8 +88,11 @@
   {% include('parts/divider.html.twig') %}
 
   <div class="my-8 grid sm:grid-cols-3 gap-3">
-    {% for element in function.detailData %}
-      {% if element.key == 'classInfo' %}
+    {% set detailMetricKeys = isMethod ? methodDetailMetricKeys : functionDetailMetricKeys %}
+    {% for metricKey in detailMetricKeys %}
+      {% set element = function.get(metricKey) %}
+
+      {% if metricKey == 'classInfo' %}
         {% include('parts/classname-tile.html.twig') %}
       {% else %}
         {% include('parts/metric-tile.html.twig') %}

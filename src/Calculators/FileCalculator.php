@@ -4,13 +4,11 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Calculators;
 
-use PhpCodeArch\Analysis\HalsteadMetricsVisitor;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsEnum;
 use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
 use PhpCodeArch\Metrics\Model\MetricValue;
-use PhpCodeArch\Metrics\Model\PackageMetrics\PackageMetricsCollection;
 
 class FileCalculator implements CalculatorInterface
 {
@@ -62,19 +60,6 @@ class FileCalculator implements CalculatorInterface
                 ['path' => $fileName],
                 $fileMetrics
             );
-
-
-            /*
-             * TODO: Maybe reintegrate this?
-            if (count($fileMetric->get('errors')) > 0 || ! $fileMetric->get('loc')) {
-                $metrics = FileMetricsEnum::values();
-                foreach ($metrics as $metricKey) {
-                    $fileMetric->set($metricKey, 0);
-                }
-            }
-
-            $this->metrics->set($key, $fileMetric);
-            */
         }
 
         foreach ($this->metricsController->getAllCollections() as &$metrics) {
@@ -82,10 +67,9 @@ class FileCalculator implements CalculatorInterface
                 continue;
             }
 
-            $metricType = $this->metricsController->getMetricTypeByKey('filePath');
-            $value = MetricValue::ofValueAndType(
+            $value = MetricValue::ofValueAndTypeKey(
                 str_replace($commonPath, '', $metrics->getPath()),
-                $metricType
+                'filePath'
             );
 
             $metrics->set('filePath', $value);

@@ -10,8 +10,8 @@
 
     const graphDefinition = `
   classDiagram
-      {% for class in classes %}{% for name in class.classUses %}
-        {{ class.singleName }} --|> {{ name }}
+      {% for class in classes %}{% for name in usedClassesOfClass[class.getIdentifier().__toString()] %}
+        {{ class.get('singleName') }} --|> {{ name }}
       {% endfor %}{% endfor %}
       {% for namespace,singleClassNames in namespaces %}
         namespace {{ namespace }} {

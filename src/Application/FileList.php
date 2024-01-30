@@ -21,6 +21,8 @@ final class FileList
         }, $exclude);
 
         foreach ($this->config->get('files') as $file) {
+            $file = realpath($file);
+
             if (is_dir($file)) {
                 $file = rtrim($file, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
                 $dir = new \RecursiveDirectoryIterator($file);

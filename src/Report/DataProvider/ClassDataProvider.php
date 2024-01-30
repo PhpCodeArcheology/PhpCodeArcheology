@@ -14,8 +14,27 @@ class ClassDataProvider implements ReportDataProviderInterface
 
     public function gatherData(): void
     {
-        $classes = $this->reportDataContainer->get('classes')->getAll();
-        $methods = $this->reportDataContainer->get('functions')->getAll();
+        $classes = $this->metricsController->getMetricCollectionsByCollectionKeys(
+            MetricCollectionTypeEnum::ProjectCollection,
+            null,
+            'classes'
+        );
+
+        $methods = $this->metricsController->getMetricCollectionsByCollectionKeys(
+            MetricCollectionTypeEnum::ProjectCollection,
+            null,
+            'methods'
+        );
+
+        $classMethods = [];
+        foreach ($classes as $classKey => $_) {
+            $methodKeyNamePairs = $this->metricsController->getCollectionByIdentifierString(
+                $classKey,
+                'methods'
+            )?->getAsArray() ?? [];
+
+            $classMethods[$classKey] = array_intersect_key($methods, $methodKeyNamePairs);
+        }
 
         $listMetrics = $this->metricsController->getListMetricsByCollectionType(
             MetricCollectionTypeEnum::ClassCollection
@@ -25,44 +44,31 @@ class ClassDataProvider implements ReportDataProviderInterface
             MetricCollectionTypeEnum::ClassCollection
         );
 
-        $classes = $this->setDataFromMetricTypesAndArrayToArrayKey($classes, $detailMetrics, 'detailData');
-        $classes = $this->setDataFromMetricTypesAndArrayToArrayKey($classes, $listMetrics, 'listData');
+        $methodListMetrics = $this->metricsController->getListMetricsByCollectionType(
+            MetricCollectionTypeEnum::MethodCollection
+        );
 
-        array_walk($classes, function(&$class, $classId) use ($methods) {
-            $methodCollection = $this->metricsController->getCollectionByIdentifierString(
-                $classId,
-                'methods'
-            )->getAsArray();
+        $templateData = [
+            'classes' => $classes,
+            'methods' => $classMethods,
+            'tableHeaders' => array_map(function($metricType) {
+                return $metricType->__toArray();
+            }, $listMetrics),
+            'methodTableHeaders' => array_map(function($metricType) {
+                return $metricType->__toArray();
+            }, $methodListMetrics),
+            'listMetricKeys' => array_map(function($metricType) {
+                return $metricType->getKey();
+            }, $listMetrics),
+            'detailMetricKeys' => array_map(function($metricType) {
+                return $metricType->getKey();
+            }, $detailMetrics),
+            'methodListMetricKeys' => array_map(function($metricType) {
+                return $metricType->getKey();
+            }, $methodListMetrics),
+        ];
 
-            list($methodData, $methodTableHeaders) = $this->getMethods($methodCollection, $methods);
-
-            $collectionKeys = [
-                'constants',
-                'properties',
-                'dependencies',
-                'usedClasses',
-                'traits',
-                'interfaces',
-                'extends',
-            ];
-
-            foreach ($collectionKeys as $collectionKey) {
-                $class[$collectionKey] = $this->metricsController->getCollectionByIdentifierString(
-                    $classId,
-                    $collectionKey
-                )->getAsArray();;
-            }
-
-            $class['methods'] = $methodData;
-            $class['methodTableHeaders'] = $methodTableHeaders;
-        });
-
-        $this->templateData['classes'] = $classes;
-        $this->templateData['tableHeaders'] = array_map(function($metricType) {
-            return $metricType->__toArray();
-        }, $listMetrics);
-
-        $this->classes = $classes;
+        $this->templateData = array_merge($this->templateData, $templateData);
     }
 
     /**

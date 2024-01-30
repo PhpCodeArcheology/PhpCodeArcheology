@@ -14,7 +14,7 @@ interface ReportInterface
 {
     public function __construct(
         Config              $config,
-        DataProviderFactory $reportData,
+        DataProviderFactory  $reportDataFactory,
         FilesystemLoader    $twigLoader,
         Environment         $twig,
         CliOutput           $output);

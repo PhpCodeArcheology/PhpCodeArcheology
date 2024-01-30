@@ -91,17 +91,4 @@ trait MetricsCollectionTrait
     {
         return $this->hasCollection($key) ? $this->collections[$key] : null;
     }
-
-    private function setMetricValue(string $key, mixed $value): void
-    {
-        $this->set($key, MetricValue::ofValueAndType($value, $this->usedMetricTypes[$key]));
-    }
-
-    private function setMetricValues(MetricsCollectionInterface &$metrics, array $keyValuePairs): void
-    {
-        foreach ($keyValuePairs as $key => $value) {
-            $this->setMetricValue($metrics, $key, $value);
-        }
-    }
-
 }

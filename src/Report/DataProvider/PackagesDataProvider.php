@@ -12,14 +12,14 @@ class PackagesDataProvider implements ReportDataProviderInterface
 
     public function gatherData(): void
     {
-        $packages = $this->reportDataContainer->get('packages')->getAll();
+        $packages = $this->metricsController->getMetricCollectionsByCollectionKeys(
+            MetricCollectionTypeEnum::ProjectCollection,
+            null,
+            'packages'
+        );
+
         $packages = array_filter($packages, function($package) {
-            $packageName = $package['name'];
-            $metric = $this->metricsController->getMetricCollection(
-                MetricCollectionTypeEnum::PackageCollection,
-                ['name' => $packageName]
-            );
-            $classes = $metric->getCollection('classes');
+            $classes = $package->getCollection('classes');
             return count($classes->getAsArray()) !== 0;
         });
 
@@ -27,23 +27,12 @@ class PackagesDataProvider implements ReportDataProviderInterface
             MetricCollectionTypeEnum::PackageCollection
         );
 
-        $detailMetrics = $this->metricsController->getDetailMetricsByCollectionType(
-            MetricCollectionTypeEnum::PackageCollection
-        );
-
-        $packages = $this->setDataFromMetricTypesAndArrayToArrayKey($packages, $detailMetrics, 'detailData');
-        $packages = $this->setDataFromMetricTypesAndArrayToArrayKey($packages, $listMetrics, 'listData');
-
         $aiMap = [];
         foreach ($packages as $package) {
-            $packageName = $package['name'];
-            $metric = $this->metricsController->getMetricCollection(
-                MetricCollectionTypeEnum::PackageCollection,
-                ['name' => $packageName]
-            );
+            $packageName = $package->getName();
 
-            $a = $metric->get('abstractness')->getValue();
-            $i = $metric->get('instability')->getValue();
+            $a = $package->get('abstractness')->getValue();
+            $i = $package->get('instability')->getValue();
 
             $aiKey = sprintf('%s-%s', $a, $i);
 
@@ -74,10 +63,17 @@ class PackagesDataProvider implements ReportDataProviderInterface
         $chartData['y'] = json_encode($chartData['y']);
         $chartData['count'] = json_encode($chartData['count']);
 
-        $this->templateData['aiChart'] = $chartData;
-        $this->templateData['packages'] = $packages;
-        $this->templateData['tableHeaders'] = array_map(function($metricType) {
-            return $metricType->__toArray();
-        }, $listMetrics);
+        $templateData = [
+            'aiChart' => $chartData,
+            'packages' => $packages,
+            'tableHeaders' =>array_map(function($metricType) {
+                return $metricType->__toArray();
+            }, $listMetrics),
+            'listMetricKeys' => array_map(function($metricType) {
+                return $metricType->getKey();
+            }, $listMetrics),
+        ];
+
+        $this->templateData = array_merge($this->templateData, $templateData);
     }
 }

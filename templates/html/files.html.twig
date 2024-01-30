@@ -37,14 +37,16 @@
       </thead>
       <tbody>
         {% for file in files %}
+          {% set errors = file.getCollection('errors').getAsArray() %}
           <tr class="even:bg-cyan-950/45 odd:bg-cyan-950/85 transition-colors hover:bg-cyan-800">
-            <td class="border border-slate-500 text-left px-2 py-0.5 filter-name" data-filter="{{ file.fileName }}" data-sort="{{ file.dirName }}/{{ file.fileName }}">
-              <a href="files/{{ file.id }}.html" class="block w-full">
-                <span class="text-white/40">{{ file.dirName }}/</span><br>
-                <span class="font-semibold inline-block{% if file.errors|length > 0 %} bg-red-900{% endif %}" title="{{ file.dirName }}/{{ file.fileName }}">{{ file.fileName }}{% if file.errors|length > 0 %}  ({{ file.errors|length }} error{% if file.errors|length > 1 %}s{% endif %}){% endif %}</span>
+            <td class="border border-slate-500 text-left px-2 py-0.5 filter-name" data-filter="{{ file.get('fileName') }}" data-sort="{{ file.get('dirName') }}/{{ file.get('fileName') }}">
+              <a href="files/{{ file.getIdentifier }}.html" class="block w-full">
+                <span class="text-white/40">{{ file.get('dirName') }}/</span><br>
+                <span class="font-semibold inline-block{% if errors|length > 0 %} bg-red-900{% endif %}" title="{{ file.get('dirName') }}/{{ file.get('fileName') }}">{{ file.get('fileName') }}{% if errors|length > 0 %}  ({{ errors|length }} error{% if errors|length > 1 %}s{% endif %}){% endif %}</span>
               </a>
             </td>
-            {% for data in file.listData %}
+            {% for metricKey in listMetricKeys %}
+              {% set data = file.get(metricKey) %}
               {% include('parts/tbody-td-sortable.html.twig') %}
             {% endfor %}
           </tr>

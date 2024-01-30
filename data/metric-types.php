@@ -578,6 +578,8 @@ return [
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FunctionCollection,
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::MethodCollection,
         ],
     ],
     [

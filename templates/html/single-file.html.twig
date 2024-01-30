@@ -9,18 +9,19 @@
       <li class="flex after:content-['⮁'] gap-1">
         <a href="../files.html" class="text-cyan-500">Files</a>
       </li>
-      <li>{{ file.fileName }}</li>
+      <li>{{ file.get('fileName') }}</li>
     </ul>
   </div>
 
   <h1 class="mb-3 text-lg font-semibold font-display">File metrics for:</h1>
-  <h2 class="mb-6 text-3xl"><span class="text-white/40">{{ file.dirName }}/</span><span class="font-semibold inline-block" title="{{ file.dirName }}/{{ file.fileName }}">{{ file.fileName }}</span></h2>
+  <h2 class="mb-6 text-3xl"><span class="text-white/40">{{ file.get('dirName') }}/</span><span class="font-semibold inline-block" title="{{ file.get('dirName') }}/{{ file.get('fileName') }}">{{ file.get('fileName') }}</span></h2>
 
-  {% if file.errors|length > 0 %}
+  {% set errors = file.getCollection('errors').getAsArray() %}
+  {% if errors|length > 0 %}
     <div class="my-8 bg-red-950 rounded-lg border-t-4 border-red-600 text-white w-fit p-3">
-      <h3 class="text-xl font-medium">Parse error{% if file.errors|length > 1 %}s{% endif %}</h3>
+      <h3 class="text-xl font-medium">Parse error{% if errors|length > 1 %}s{% endif %}</h3>
       <ul class="mb-4 list-disc pl-3">
-        {% for error in file.errors %}
+        {% for error in errors %}
           <li class="mt-1">{{ error }}</li>
         {% endfor %}
       </ul>
@@ -30,23 +31,26 @@
   {% else %}
 
     <div class="my-8 grid sm:grid-cols-3 gap-3">
-      {% for element in file.detailData %}
+      {% for metricKey in detailMetricKeys %}
+        {% set element = file.get(metricKey) %}
         {% include('parts/metric-tile.html.twig') %}
       {% endfor %}
     </div>
 
-    {% if file.functions %}
+    {% set functions = fileFunctions[file.getIdentifier.__toString] %}
+    {% if functions %}
       {% set folder = 'functions' %}
       {% set tableName = 'Functions' %}
-      {% set functions = file.functions %}
-      {% set tableHeaders = file.functionTableHeaders %}
+      {% set listMetricKeys = functionListMetricKeys %}
+      {% set tableHeaders = functionTableHeaders %}
       {% include('parts/divider.html.twig') %}
       {% include('parts/function-table.html.twig') %}
     {% endif %}
 
-    {% if file.classes %}
-      {% set classes = file.classes %}
-      {% set tableHeaders = file.classTableHeaders %}
+    {% set classes = fileClasses[file.getIdentifier.__toString] %}
+    {% if classes %}
+      {% set listMetricKeys = classListMetricKeys %}
+      {% set tableHeaders = classTableHeaders %}
       {% include('parts/divider.html.twig') %}
       {% include('parts/class-table.html.twig') %}
     {% endif %}

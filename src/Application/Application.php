@@ -24,7 +24,6 @@ use PhpCodeArch\Predictions\TooComplexPrediction;
 use PhpCodeArch\Predictions\TooDependentPrediction;
 use PhpCodeArch\Predictions\TooLongPrediction;
 use PhpCodeArch\Predictions\TooMuchHtmlPrediction;
-use PhpCodeArch\Report\Data\ReportDataContainer;
 use PhpCodeArch\Report\DataProvider\DataProviderFactory;
 use PhpCodeArch\Report\Helper\MetricsSplitter;
 use PhpCodeArch\Report\ReportFactory;
@@ -37,7 +36,7 @@ use Twig\Loader\FilesystemLoader;
 
 final readonly class Application
 {
-    const VERSION = '0.1.1';
+    const VERSION = '0.2.0';
 
     private MetricsController $metricsController;
 
@@ -55,12 +54,12 @@ final readonly class Application
 
         $this->createMetricController($config);
         $this->createAndRunAnalyzer($config, $fileList, $output);
+
+
         $this->runCalculators($output);
 
         $problems = $this->runPredictors($this->metricsController, $output);
         $this->setProblems($problems);
-
-        $reportDataContainer = $this->getReportDataContainer($output);
 
         $twigLoader = new FilesystemLoader();
         $twig = new Environment($twigLoader, [
@@ -68,11 +67,11 @@ final readonly class Application
         ]);
         $twig->addExtension(new DebugExtension());
 
-        $reportData = new DataProviderFactory($this->metricsController, $reportDataContainer);
+        $dataProviderFactory = new DataProviderFactory($this->metricsController);
 
         $report = ReportFactory::create(
             $config,
-            $reportData,
+            $dataProviderFactory,
             $twigLoader,
             $twig,
             $output
@@ -132,7 +131,7 @@ final readonly class Application
     {
         $analyzer = new Analyzer(
             $config,
-            (new ParserFactory())->createForNewestSupportedVersion(),
+            (new ParserFactory())->createForHostVersion(),
             new NodeTraverser(),
             $this->metricsController,
             $output);

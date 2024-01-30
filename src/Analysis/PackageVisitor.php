@@ -178,18 +178,18 @@ class PackageVisitor implements NodeVisitor, VisitorInterface
         if (! in_array($packageName, $this->packages)) {
             $this->packages[] = $packageName;
 
+            $packageCollection = $this->metricsController->createMetricCollection(
+                MetricCollectionTypeEnum::PackageCollection,
+                ['name' => $packageName],
+            );
+
             $this->metricsController->setCollectionDataOrCreateEmptyCollection(
                 MetricCollectionTypeEnum::ProjectCollection,
                 null,
                 'packages',
-                null,
+                (string) $packageCollection->getIdentifier(),
                 $packageName,
                 new PackageNameCollection()
-            );
-
-            $this->metricsController->createMetricCollection(
-                MetricCollectionTypeEnum::PackageCollection,
-                ['name' => $packageName],
             );
 
             $this->initCollections($packageName);

@@ -159,8 +159,7 @@ beforeEach(function() {
         }
 
         foreach ($class['data'] as $key => $value) {
-            $metricType = MetricType::fromKey($key);
-            $metricValue = MetricValue::ofValueAndType($value, $metricType);
+            $metricValue = MetricValue::ofValueAndTypeKey($value, $key);
             $classMetrics->set($key, $metricValue);
         }
     });
