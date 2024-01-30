@@ -1,11 +1,10 @@
-# PhpLegacyAnalyzer
+# PhpCodeArcheology
 
-**PhpCodeArcheology** analyzes your PHP project and provides metrics about your files, classes, methods and functions. 
-The HTML report gives you all the information to the deepest level that you need to evaluate your project.
+**PhpCodeArcheology** analyzes your PHP project, providing detailed metrics on files, classes, methods, and functions. The comprehensive HTML report equips you with deep insights necessary for evaluating your project.
 
 ## Installation
 
-Install PhpCodeArcheology with Composer.
+Install PhpCodeArcheology using Composer by running the following command in your terminal:
 
 ```
 composer require PhpCodeArcheology/PhpCodeArcheology --dev
@@ -13,7 +12,7 @@ composer require PhpCodeArcheology/PhpCodeArcheology --dev
 
 ## Quick start
 
-Start PhpCodeArcheology in your project root:
+To start PhpCodeArcheology, run the following command in your project root:
 
 ```
 ./vendor/bin/phpcodearcheology
@@ -21,7 +20,7 @@ Start PhpCodeArcheology in your project root:
 
 Out of the box, PhpCodeArcheology scans your **src** dir and creates the report in *tmp/report*.
 
-To include oder exclude folders, define new php file extensions or other settings, use a [yaml configuration file](php-codearch-config-sample.yaml). Please name it *php-codearch-config.yaml* and put it into your project root.
+To customize scanning, such as including or excluding folders, defining new PHP file extensions, or other settings, create a `php-codearch-config.yaml` configuration file in your project root. Refer to this [sample configuration file](php-codearch-config-sample.yaml) for guidance.
 
 ## Documentation
 
