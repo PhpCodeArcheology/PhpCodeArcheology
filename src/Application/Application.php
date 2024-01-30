@@ -37,7 +37,7 @@ use Twig\Loader\FilesystemLoader;
 
 final readonly class Application
 {
-    const VERSION = '0.0.1';
+    const VERSION = '0.1.0';
 
     private MetricsController $metricsController;
 

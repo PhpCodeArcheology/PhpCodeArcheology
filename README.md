@@ -1,23 +1,35 @@
 # PhpLegacyAnalyzer
 
-## Bugs
+**PhpCodeArcheology** analyzes your PHP project and provides metrics about your files, classes, methods and functions. 
+The HTML report gives you all the information to the deepest level that you need to evaluate your project.
 
-- [x] Some classes get counted three times in pb
+## Installation
 
-## Todo
+Install PhpCodeArcheology with Composer.
 
-- [x] Maybe rename to PhpLegacyArcheology or PhpLegacyExplorer
-- [x] Support _interfaces_ and _traits_
-- [x] Add correct path handling
-- [ ] Spaghetti metric for files and overall
-- [x] Use of globals and super globals
-- [x] Dependence on super globals of functions, classes and methods
-- [x] Before using data providers there has to be some kind of data creation, because wie need to have all data before using providers
-- [ ] Detect code in comments
-- [x] Add cli counter for processing data after traverse files
-- [x] Add max lcom
-- [x] Add min maintainability index
-- [x] Add Metrics Manager! A manager class that holds categorized metrics
+```
+composer require PhpCodeArcheology/PhpCodeArcheology --dev
+```
+
+## Quick start
+
+Start PhpCodeArcheology in your project root:
+
+```
+./vendor/bin/phpcodearcheology
+```
+
+Out of the box, PhpCodeArcheology scans your **src** dir and creates the report in *tmp/report*.
+
+To include oder exclude folders, define new php file extensions or other settings, use a [yaml configuration file](php-codearch-config-sample.yaml). Please name it *php-codearch-config.yaml* and put it into your project root.
+
+## Documentation
+
+More on how to use PhpCodeArcheology and on the used metrics is following here.
+
+## Author
+
+Marcus Kober, [@mrcskbr](https://twitter.com/mrcskbr), [GitHub](https://github.com/marcuskober)
 
 ## Docs
 
@@ -27,6 +39,7 @@
 - https://web.archive.org/web/20061211051845/http://www.parlezuml.com/metrics/OO%20Design%20Principles%20%26%20Metrics.pdf
 - https://en.wikipedia.org/wiki/Software_package_metrics
 - https://kariera.future-processing.pl/blog/object-oriented-metrics-by-robert-martin/
+- https://codinghelmet.com/articles/how-to-use-module-coupling-and-instability-metrics-to-guide-refactoring
 
 ## Tools
 
