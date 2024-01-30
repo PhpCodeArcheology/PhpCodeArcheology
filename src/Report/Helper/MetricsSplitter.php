@@ -38,11 +38,10 @@ readonly class MetricsSplitter
         $countSum = number_format(count($this->metricsController->getAllCollections()));
         foreach ($this->metricsController->getAllCollections() as $metric) {
             $this->output->cls();
-            $this->output->out(
+            $this->output->outWithMemory(
                 "Splitting metric \033[34m" .
                 number_format($count + 1) .
-                "\033[0m of \033[32m$countSum\033[0m... " .
-                memory_get_usage() . " bytes of memory"
+                "\033[0m of \033[32m$countSum\033[0m..."
             );
 
             ++ $count;
@@ -91,11 +90,10 @@ readonly class MetricsSplitter
         $countSum = number_format(count($fileCollection));
         foreach ($fileCollection as &$data) {
             $this->output->cls();
-            $this->output->out(
+            $this->output->outWithMemory(
                 "Setting up file \033[34m" .
                 number_format($count + 1) .
-                "\033[0m of \033[32m$countSum\033[0m... " .
-                memory_get_usage() . " bytes of memory"
+                "\033[0m of \033[32m$countSum\033[0m..."
             );
 
             ++ $count;

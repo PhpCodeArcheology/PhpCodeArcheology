@@ -33,11 +33,10 @@ readonly class CalculatorService
 
         foreach ($this->metricsController->getAllCollections() as $metric) {
             $this->output->cls();
-            $this->output->out(
+            $this->output->outWithMemory(
                 "Running calculator on metric \033[34m" .
                 number_format($count + 1) .
-                "\033[0m of \033[32m$metricsCollectionCount\033[0m... " .
-                memory_get_usage() . " bytes of memory"
+                "\033[0m of \033[32m$metricsCollectionCount\033[0m..."
             );
 
             ++ $count;

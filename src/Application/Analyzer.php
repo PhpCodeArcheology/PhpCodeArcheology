@@ -163,14 +163,13 @@ readonly class Analyzer
     private function progressOutput(int $count, int $fileCount, int $projectFileErrors): void
     {
         $this->output->cls();
-        $this->output->out(
+        $this->output->outWithMemory(
             "Analysing file \033[34m" .
             number_format($count + 1) .
             "\033[0m of \033[32m$fileCount\033[0m... (" .
             ($projectFileErrors > 0 ? "\033[31m" : '') .
             $projectFileErrors .
-            " errors\033[0m) " .
-            memory_get_usage() . " bytes of memory"
+            " errors\033[0m)"
         );
     }
 }

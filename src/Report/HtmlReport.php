@@ -81,11 +81,10 @@ class HtmlReport implements ReportInterface
         $countSum = count($createMethods);
         foreach ($createMethods as $method) {
             $this->output->cls();
-            $this->output->out(
+            $this->output->outWithMemory(
                 "Creating report part \033[34m" .
                 number_format($count + 1) .
-                "\033[0m of \033[32m$countSum\033[0m... " .
-                memory_get_usage() . " bytes of memory"
+                "\033[0m of \033[32m$countSum\033[0m..."
             );
 
             ++ $count;
