@@ -207,7 +207,7 @@ class MetricsController
         ?array $identifierData,
         string $key): ?MetricValue
     {
-        $identifierString = $this->getIdentifier($metricsType, $identifierData);
+        $identifierString = MetricsController::getIdentifier($metricsType, $identifierData);
 
         return $this->metricsContainer->get($identifierString)->get($key);
     }
@@ -218,7 +218,7 @@ class MetricsController
         mixed $value,
         string $key): void
     {
-        $identifierString = $this->getIdentifier($metricsType, $identifierData);
+        $identifierString = MetricsController::getIdentifier($metricsType, $identifierData);
         $this->setMetricValueByIdentifierString($identifierString, $key, $value);
     }
 
@@ -228,7 +228,7 @@ class MetricsController
         CollectionInterface $collection,
         string $key): void
     {
-        $identifierString = $this->getIdentifier($metricsType, $identifierData);
+        $identifierString = MetricsController::getIdentifier($metricsType, $identifierData);
 
         $this->metricsContainer->get($identifierString)->setCollection($key, $collection);
     }
@@ -260,7 +260,7 @@ class MetricsController
         ?array $identifierData,
         array $keyValuePairs): void
     {
-        $identifierString = $this->getIdentifier($metricsType, $identifierData);
+        $identifierString = MetricsController::getIdentifier($metricsType, $identifierData);
 
         foreach ($keyValuePairs as $key => $value) {
             $this->setMetricValueByIdentifierString($identifierString, $key, $value);
@@ -281,7 +281,7 @@ class MetricsController
         );
     }
 
-    private function getIdentifier(MetricCollectionTypeEnum $metricsType, ?array $identifierData): string
+    public static function getIdentifier(MetricCollectionTypeEnum $metricsType, ?array $identifierData): string
     {
         return match ($metricsType) {
             MetricCollectionTypeEnum::ProjectCollection => $metricsType->name,
@@ -319,7 +319,7 @@ class MetricsController
 
     public function getMetricCollection(MetricCollectionTypeEnum $metricsType, ?array $identifierData): MetricsCollectionInterface
     {
-        $identifierString = $this->getIdentifier($metricsType, $identifierData);
+        $identifierString = MetricsController::getIdentifier($metricsType, $identifierData);
 
         return $this->getMetricCollectionByIdentifierString($identifierString);
     }

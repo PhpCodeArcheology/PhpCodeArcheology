@@ -73,7 +73,7 @@ class LimitsAndAveragesCalculator implements CalculatorInterface
                 foreach ($data as $key => $value) {
                     $projectKey = 'overall' . $className .  ucfirst($valueType) . ucfirst($key);
 
-                    $this->metricsController->setMetricValue(
+                    $this->repository->saveMetricValue(
                         MetricCollectionTypeEnum::ProjectCollection,
                         null,
                         $value,

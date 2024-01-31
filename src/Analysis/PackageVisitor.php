@@ -32,14 +32,14 @@ class PackageVisitor implements NodeVisitor, VisitorInterface
 
     public function init(): void
     {
-        $this->metricsController->setCollection(
+        $this->repository->saveCollection(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             new PackageNameCollection(),
             'packages'
         );
 
-        $this->metricsController->createMetricCollection(
+        $this->repository->createMetricCollection(
             MetricCollectionTypeEnum::PackageCollection,
             ['name' => '_global'],
         );
@@ -91,7 +91,7 @@ class PackageVisitor implements NodeVisitor, VisitorInterface
                 $package = $this->detectPackage($node);
                 $this->getCurrentPackageMetric($package);
 
-                $this->metricsController->setMetricValue(
+                $this->repository->saveMetricValue(
                     MetricCollectionTypeEnum::ClassCollection,
                     [
                         'path' => $this->path,
@@ -103,7 +103,7 @@ class PackageVisitor implements NodeVisitor, VisitorInterface
 
                 $this->packageData[$package]['classes'][] = ClassName::ofNode($node)->__toString();
 
-                $this->metricsController->setCollectionDataUnique(
+                $this->repository->saveCollectionDataUnique(
                     MetricCollectionTypeEnum::PackageCollection,
                     ['name' => $package],
                     'classes',
@@ -119,7 +119,7 @@ class PackageVisitor implements NodeVisitor, VisitorInterface
                 $package = $this->detectPackage($node);
                 $this->getCurrentPackageMetric($package);
 
-                $this->metricsController->setMetricValue(
+                $this->repository->saveMetricValue(
                     MetricCollectionTypeEnum::FunctionCollection,
                     [
                         'path' => $this->path,
@@ -131,7 +131,7 @@ class PackageVisitor implements NodeVisitor, VisitorInterface
 
                 $this->packageData[$package]['functions'][] = $functionName;
 
-                $this->metricsController->setCollectionDataUnique(
+                $this->repository->saveCollectionDataUnique(
                     MetricCollectionTypeEnum::PackageCollection,
                     ['name' => $package],
                     'functions',
@@ -146,21 +146,21 @@ class PackageVisitor implements NodeVisitor, VisitorInterface
 
     public function afterTraverse(array $nodes): void
     {
-        $this->metricsController->setMetricValue(
+        $this->repository->saveMetricValue(
             MetricCollectionTypeEnum::FileCollection,
             ['path' => $this->path],
             $this->fileNamespace,
             'namespace'
         );
 
-        $this->metricsController->setMetricValue(
+        $this->repository->saveMetricValue(
             MetricCollectionTypeEnum::FileCollection,
             ['path' => $this->path],
             $this->filePackage,
             'package'
         );
 
-        $this->metricsController->setCollectionDataUnique(
+        $this->repository->saveCollectionDataUnique(
             MetricCollectionTypeEnum::PackageCollection,
             ['name' => $this->fileNamespace],
             'files',
@@ -178,12 +178,12 @@ class PackageVisitor implements NodeVisitor, VisitorInterface
         if (! in_array($packageName, $this->packages)) {
             $this->packages[] = $packageName;
 
-            $packageCollection = $this->metricsController->createMetricCollection(
+            $packageCollection = $this->repository->createMetricCollection(
                 MetricCollectionTypeEnum::PackageCollection,
                 ['name' => $packageName],
             );
 
-            $this->metricsController->setCollectionDataOrCreateEmptyCollection(
+            $this->repository->setCollectionDataOrCreateEmptyCollection(
                 MetricCollectionTypeEnum::ProjectCollection,
                 null,
                 'packages',
@@ -250,7 +250,7 @@ class PackageVisitor implements NodeVisitor, VisitorInterface
         ];
 
         foreach ($collections as $collectionName => $collectionObject) {
-            $this->metricsController->setCollection(
+            $this->repository->saveCollection(
                 MetricCollectionTypeEnum::PackageCollection,
                 ['name' => $packageName],
                 $collectionObject,

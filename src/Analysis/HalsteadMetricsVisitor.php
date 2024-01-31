@@ -100,7 +100,7 @@ class HalsteadMetricsVisitor implements NodeVisitor, VisitorInterface
             case $node instanceof Node\Stmt\Enum_:
                 $className = array_pop($this->currentClassName);
 
-                $this->metricsController->setMetricValues(
+                $this->repository->saveMetricValues(
                     MetricCollectionTypeEnum::ClassCollection,
                     [
                         'path' => $this->path,
@@ -113,7 +113,7 @@ class HalsteadMetricsVisitor implements NodeVisitor, VisitorInterface
             case $node instanceof Node\Stmt\Function_:
                 $functionName = array_pop($this->currentFunctionName);
 
-                $this->metricsController->setMetricValues(
+                $this->repository->saveMetricValues(
                     MetricCollectionTypeEnum::FunctionCollection,
                     [
                         'path' => $this->path,
@@ -129,7 +129,7 @@ class HalsteadMetricsVisitor implements NodeVisitor, VisitorInterface
 
                 $key = sprintf('%s::%s', $className, $methodName);
 
-                $this->metricsController->setMetricValues(
+                $this->repository->saveMetricValues(
                     MetricCollectionTypeEnum::MethodCollection,
                     [
                         'path' => $className,
@@ -149,7 +149,7 @@ class HalsteadMetricsVisitor implements NodeVisitor, VisitorInterface
         // Calculate file metrics
         $halstead = $this->calculateMetrics($this->operators, $this->operands);
 
-        $this->metricsController->setMetricValues(
+        $this->repository->saveMetricValues(
             MetricCollectionTypeEnum::FileCollection,
             ['path' => $this->path],
             $halstead,

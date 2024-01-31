@@ -10,6 +10,7 @@ use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
 use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
 use PhpCodeArch\Predictions\Problems\TooComplexProblem;
+use PhpCodeArch\Repository\RepositoryInterface;
 
 /**
  * Predict, if an element is too complex
@@ -24,31 +25,33 @@ class TooComplexPrediction implements PredictionInterface
 {
     use PredictionTrait;
 
-    public function predict(MetricsController $metricsController): int
+    public function predict(RepositoryInterface $repository): int
     {
         $problemCount = 0;
 
-        foreach ($metricsController->getAllCollections() as $metric) {
+        foreach ($repository->getAllMetricCollections() as $metric) {
             switch (true) {
                 case $metric instanceof ClassMetricsCollection:
-                    $methodCollection = $metricsController->getCollectionByIdentifierString(
+                    $methodCollection = $repository->loadCollection(
+                        null,
                         (string) $metric->getIdentifier(),
                         'methods'
                     );
 
-                    $problemCount += $this->handleStandardComplexity($metricsController, (string) $metric->getIdentifier(), get_class($metric));
-                    $problemCount += $this->handleLcom($metricsController, (string) $metric->getIdentifier(), get_class($metric));
+                    $problemCount += $this->handleStandardComplexity($repository, (string) $metric->getIdentifier(), get_class($metric));
+                    $problemCount += $this->handleLcom($repository, (string) $metric->getIdentifier(), get_class($metric));
 
                     $methodCc = 0;
                     foreach ($methodCollection as $methodKey => $methodName) {
-                        $ccValue = $metricsController->getMetricValueByIdentifierString(
+                        $ccValue = $repository->loadMetricValue(
+                            null,
                             $methodKey,
                             'cc'
                         )->getValue();
 
                         $methodCc += $ccValue;
 
-                        $problemCount += $this->handleStandardComplexity($metricsController, $methodKey, FunctionMetricsCollection::class);
+                        $problemCount += $this->handleStandardComplexity($repository, $methodKey, FunctionMetricsCollection::class);
                     }
 
                     $avgMethodCc = count($methodCollection) > 0 ? $methodCc / count($methodCollection) : 0;
@@ -62,14 +65,15 @@ class TooComplexPrediction implements PredictionInterface
                             message: 'Class is too complex.'
                         );
 
-                        $metricsController->setProblemByIdentifierString(
-                            identifierString: (string) $metric->getIdentifier(),
-                            key: 'cc',
-                            problem: $problem
+                        $repository->saveProblem(
+                            (string) $metric->getIdentifier(),
+                            'cc',
+                            $problem
                         );
                     }
 
-                    $metricsController->setMetricValuesByIdentifierString(
+                    $repository->saveMetricValues(
+                        null,
                         (string) $metric->getIdentifier(),
                         [
                             'avgMethodCc' => $avgMethodCc,
@@ -83,17 +87,17 @@ class TooComplexPrediction implements PredictionInterface
                             message: 'Avg. method complexity is too high.'
                         );
 
-                        $metricsController->setProblemByIdentifierString(
-                            identifierString: (string) $metric->getIdentifier(),
-                            key: 'avgMethodCc',
-                            problem: $problem
+                        $repository->saveProblem(
+                            (string) $metric->getIdentifier(),
+                            'avgMethodCc',
+                            $problem
                         );
                     }
                     break;
 
                 case $metric instanceof FileMetricsCollection:
                 case $metric instanceof FunctionMetricsCollection:
-                    $problemCount += $this->handleStandardComplexity($metricsController, (string) $metric->getIdentifier(), get_class($metric));
+                    $problemCount += $this->handleStandardComplexity($repository, (string) $metric->getIdentifier(), get_class($metric));
                 break;
             }
         }
@@ -106,9 +110,10 @@ class TooComplexPrediction implements PredictionInterface
         return PredictionInterface::ERROR;
     }
 
-    private function getMetricValues(MetricsController $metricsController, string $identifierString, array $metricKeys): array
+    private function getMetricValues(RepositoryInterface $repository, string $identifierString, array $metricKeys): array
     {
-        $metricValues = $metricsController->getMetricValuesByIdentifierString(
+        $metricValues = $repository->loadMetricValues(
+            null,
             $identifierString,
             $metricKeys
         );
@@ -122,16 +127,16 @@ class TooComplexPrediction implements PredictionInterface
         return $values;
     }
 
-    private function handleLcom(MetricsController $metricsController, string $identifierString, string $metricClass): int
+    private function handleLcom(RepositoryInterface $repository, string $identifierString, string $metricClass): int
     {
         $className = basename(str_replace('\\', '/', $metricClass));
-        $values = $this->getMetricValues($metricsController, $identifierString, [
+        $values = $this->getMetricValues($repository, $identifierString, [
             'lcom',
         ]);
 
         $problemCount = 0;
 
-        $avgLcom = $metricsController->getMetricValue(
+        $avgLcom = $repository->loadMetricValue(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             sprintf('overall%sAvgLcom', $className)
@@ -144,7 +149,7 @@ class TooComplexPrediction implements PredictionInterface
                 $max = $avgLcom + $avgLcom * 0.3;
                 return $value > $max;
             },
-            $metricsController,
+            $repository,
             $identifierString,
             TooComplexProblem::class,
             $this->getLevel(),
@@ -154,11 +159,11 @@ class TooComplexPrediction implements PredictionInterface
         return $problemCount;
     }
 
-    private function handleStandardComplexity(MetricsController $metricsController, string $identifierString, string $metricClass): int
+    private function handleStandardComplexity(RepositoryInterface $repository, string $identifierString, string $metricClass): int
     {
         $className = basename(str_replace('\\', '/', $metricClass));
 
-        $values = $this->getMetricValues($metricsController, $identifierString, [
+        $values = $this->getMetricValues($repository, $identifierString, [
             'lloc',
             'cc',
             'difficulty',
@@ -175,7 +180,7 @@ class TooComplexPrediction implements PredictionInterface
                 $maxComplexity = $values['lloc'] > 20 ? 20 : 10;
                 return $value > $maxComplexity;
             },
-            $metricsController,
+            $repository,
             $identifierString,
             TooComplexProblem::class,
             $this->getLevel(),
@@ -188,14 +193,14 @@ class TooComplexPrediction implements PredictionInterface
             function($value) {
                 return $value > 20;
             },
-            $metricsController,
+            $repository,
             $identifierString,
             TooComplexProblem::class,
             $this->getLevel(),
             'Difficulty is too high.'
         );
 
-        $avgEffort = $metricsController->getMetricValue(
+        $avgEffort = $repository->loadMetricValue(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             sprintf('overall%sAvgEffort', $className)
@@ -209,14 +214,14 @@ class TooComplexPrediction implements PredictionInterface
 
                 return $value > $max;
             },
-            $metricsController,
+            $repository,
             $identifierString,
             TooComplexProblem::class,
             $this->getLevel(),
             'Effort more than 30% above average effort (' . number_format($avgEffort) . ').'
         );
 
-        $avgMi = $metricsController->getMetricValue(
+        $avgMi = $repository->loadMetricValue(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             sprintf('overall%sAvgMaintainabilityIndex', $className)
@@ -230,7 +235,7 @@ class TooComplexPrediction implements PredictionInterface
 
                 return $value < $min;
             },
-            $metricsController,
+            $repository,
             $identifierString,
             TooComplexProblem::class,
             $this->getLevel(),
@@ -240,7 +245,7 @@ class TooComplexPrediction implements PredictionInterface
         return $problemCount;
     }
 
-    public function check(string $key, mixed $value, string|\Closure $callback, MetricsController $metricsController, string $identifierString, string $problemClass, int $problemLevel, string $problemMessage): int
+    public function check(string $key, mixed $value, string|\Closure $callback, RepositoryInterface $repository, string $identifierString, string $problemClass, int $problemLevel, string $problemMessage): int
     {
         $isProblem = call_user_func($callback, $value);
 
@@ -254,7 +259,7 @@ class TooComplexPrediction implements PredictionInterface
             $problemClass,
             $problemLevel,
             $problemMessage,
-            $metricsController
+            $repository
         );
 
         return 1;

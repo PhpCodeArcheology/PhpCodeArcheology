@@ -114,7 +114,7 @@ class LocVisitor implements NodeVisitor, VisitorInterface
             'overallLloc' => 'lloc',
         ];
 
-        $this->metricsController->setMetricValues(
+        $this->repository->saveMetricValues(
             MetricCollectionTypeEnum::FileCollection,
             ['path' => $this->path],
             $fileMetricData
@@ -123,7 +123,7 @@ class LocVisitor implements NodeVisitor, VisitorInterface
         foreach ($projectMetricKeys as $projectMetricKey => $fileMetricKey) {
             $fileMetricValue = $fileMetricData[$fileMetricKey];
 
-            $this->metricsController->changeMetricValue(
+            $this->repository->changeMetricValue(
                 MetricCollectionTypeEnum::ProjectCollection,
                 null,
                 $projectMetricKey,
@@ -209,7 +209,7 @@ class LocVisitor implements NodeVisitor, VisitorInterface
      */
     public function afterTraverse(array $nodes): void
     {
-        $llocFile = $this->metricsController->getMetricValue(
+        $llocFile = $this->repository->loadMetricValue(
             MetricCollectionTypeEnum::FileCollection,
             ['path' => $this->path],
             'lloc'
@@ -222,7 +222,7 @@ class LocVisitor implements NodeVisitor, VisitorInterface
             'htmlLoc' => $this->fileHtmlLoc,
         ];
 
-        $this->metricsController->setMetricValues(
+        $this->repository->saveMetricValues(
             MetricCollectionTypeEnum::FileCollection,
             ['path' => $this->path],
             $fileMetrics
@@ -236,7 +236,7 @@ class LocVisitor implements NodeVisitor, VisitorInterface
         ];
 
         foreach ($projectMetricIncrements as $key => $increment) {
-            $this->metricsController->changeMetricValue(
+            $this->repository->changeMetricValue(
                 MetricCollectionTypeEnum::ProjectCollection,
                 null,
                 $key,
@@ -313,7 +313,7 @@ class LocVisitor implements NodeVisitor, VisitorInterface
 
         $this->functionNodes[$functionName] = [];
 
-        $this->metricsController->setMetricValues(
+        $this->repository->saveMetricValues(
             MetricCollectionTypeEnum::FunctionCollection,
             [
                 'path' => $this->path,
@@ -344,7 +344,7 @@ class LocVisitor implements NodeVisitor, VisitorInterface
             'htmlLoc' => $this->classHtmlLoc[$className],
         ];
 
-        $this->metricsController->setMetricValues(
+        $this->repository->saveMetricValues(
             MetricCollectionTypeEnum::ClassCollection,
             [
                 'path' => $this->path,
@@ -387,7 +387,7 @@ class LocVisitor implements NodeVisitor, VisitorInterface
         $methodMetrics['loc'] = $methodLoc;
         $methodMetrics['htmlLoc'] = $this->methodHtmlLoc[$className][$methodName];
 
-        $this->metricsController->setMetricValues(
+        $this->repository->saveMetricValues(
             MetricCollectionTypeEnum::MethodCollection,
             [
                 'path' => $className,

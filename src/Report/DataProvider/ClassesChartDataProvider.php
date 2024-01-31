@@ -13,7 +13,7 @@ class ClassesChartDataProvider implements ReportDataProviderInterface
 
     public function gatherData(): void
     {
-        $classes = $this->metricsController->getMetricCollectionsByCollectionKeys(
+        $classes = $this->repository->getMetricCollectionsByCollectionKeys(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             'classes'
@@ -61,43 +61,7 @@ class ClassesChartDataProvider implements ReportDataProviderInterface
             }
         }
 
-        /*
-        $classes = array_map(function($class) use (&$namespaces) {
-            $classPath = explode('\\', $class['name']);
-            $className = array_pop($classPath);
-            $namespace = implode('', $classPath);
-            if (empty($namespace)) {
-                $namespace = 'global';
-            }
 
-            if (!isset($namespaces[$namespace])) {
-                $namespaces[$namespace] = [];
-            }
-
-            $namespaces[$namespace][] = $className;
-
-            foreach ($class['classUses'] as &$usedClass) {
-                $classPath = explode('\\', $usedClass);
-                $className = array_pop($classPath);
-                $namespace = implode('', $classPath);
-                if (empty($namespace)) {
-                    $namespace = 'global';
-                }
-
-                if (!isset($namespaces[$namespace])) {
-                    $namespaces[$namespace] = [];
-                }
-
-                if (!in_array($className, $namespaces[$namespace])) {
-                    $namespaces[$namespace][] = $className;
-                }
-
-                $usedClass = $className;
-            }
-
-            return $class;
-        }, $classes);
-*/
         $this->templateData['classes'] = $classes;
         $this->templateData['namespaces'] = $namespaces;
         $this->templateData['usedClassesOfClass'] = $usedClassesOfClass;

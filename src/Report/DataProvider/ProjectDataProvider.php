@@ -13,12 +13,12 @@ class ProjectDataProvider implements ReportDataProviderInterface
 
     function gatherData(): void
     {
-        $projectMetrics = $this->metricsController->getMetricCollection(
+        $projectMetrics = $this->repository->getMetricCollection(
             MetricCollectionTypeEnum::ProjectCollection,
             null
         );
 
-        $metricTypes = $this->metricsController->getMetricsByCollectionTypeAndVisibility(
+        $metricTypes = $this->repository->getMetricsByCollectionTypeAndVisibility(
             MetricCollectionTypeEnum::ProjectCollection,
             MetricType::SHOW_EVERYWHERE
         );

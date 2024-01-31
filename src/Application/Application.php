@@ -25,9 +25,10 @@ use PhpCodeArch\Predictions\TooDependentPrediction;
 use PhpCodeArch\Predictions\TooLongPrediction;
 use PhpCodeArch\Predictions\TooMuchHtmlPrediction;
 use PhpCodeArch\Report\DataProvider\DataProviderFactory;
-use PhpCodeArch\Report\Helper\MetricsSplitter;
 use PhpCodeArch\Report\ReportFactory;
 use PhpCodeArch\Report\ReportTypeNotSupported;
+use PhpCodeArch\Repository\MemoryRepository;
+use PhpCodeArch\Repository\RepositoryInterface;
 use PhpParser\NodeTraverser;
 use PhpParser\ParserFactory;
 use Twig\Environment;
@@ -36,9 +37,7 @@ use Twig\Loader\FilesystemLoader;
 
 final readonly class Application
 {
-    const VERSION = '0.2.0';
-
-    private MetricsController $metricsController;
+    const string VERSION = '0.3.0';
 
     /**
      * @throws ConfigFileExtensionNotSupportedException
@@ -52,14 +51,14 @@ final readonly class Application
 
         $output = new CliOutput();
 
-        $this->createMetricController($config);
-        $this->createAndRunAnalyzer($config, $fileList, $output);
+        $metricsController = $this->createMetricController($config);
+        $repository = $this->setRepository('memory', $metricsController);
+        $this->createAndRunAnalyzer($config, $repository, $fileList, $output);
 
+        $this->runCalculators($repository, $output);
 
-        $this->runCalculators($output);
-
-        $problems = $this->runPredictors($this->metricsController, $output);
-        $this->setProblems($problems);
+        $problems = $this->runPredictors($repository, $output);
+        $this->setProblems($repository, $problems);
 
         $twigLoader = new FilesystemLoader();
         $twig = new Environment($twigLoader, [
@@ -67,7 +66,7 @@ final readonly class Application
         ]);
         $twig->addExtension(new DebugExtension());
 
-        $dataProviderFactory = new DataProviderFactory($this->metricsController);
+        $dataProviderFactory = new DataProviderFactory($repository);
 
         $report = ReportFactory::create(
             $config,
@@ -127,13 +126,13 @@ final readonly class Application
         return $fileList;
     }
 
-    private function createAndRunAnalyzer(Config $config, FileList $fileList, CliOutput $output): void
+    private function createAndRunAnalyzer(Config $config, RepositoryInterface $repository, FileList $fileList, CliOutput $output): void
     {
         $analyzer = new Analyzer(
             $config,
             (new ParserFactory())->createForHostVersion(),
             new NodeTraverser(),
-            $this->metricsController,
+            $repository,
             $output);
 
         $analyzer->analyze($fileList);
@@ -141,41 +140,44 @@ final readonly class Application
 
     /**
      * @param Config $config
-     * @return void
+     * @return MetricsController
      */
-    private function createMetricController(Config $config): void
+    private function createMetricController(Config $config): MetricsController
     {
         $metricsCollection = new MetricsContainer();
-        $this->metricsController = new MetricsController($metricsCollection);
-        $this->metricsController->registerMetricTypes();
-        $this->metricsController->createProjectMetricsCollection($config->get('files'));
+        $metricsController = new MetricsController($metricsCollection);
+        $metricsController->registerMetricTypes();
+        $metricsController->createProjectMetricsCollection($config->get('files'));
+
+        return $metricsController;
     }
 
     /**
+     * @param RepositoryInterface $repository
      * @param CliOutput $output
      * @return void
      */
-    private function runCalculators(CliOutput $output): void
+    private function runCalculators(RepositoryInterface $repository, CliOutput $output): void
     {
-        $packageIACalculator = new PackageInstabilityAbstractnessCalculator($this->metricsController);
+        $packageIACalculator = new PackageInstabilityAbstractnessCalculator($repository);
 
         $calculatorService = new CalculatorService([
-            new FileCalculator($this->metricsController),
-            new VariablesCalculator($this->metricsController),
-            new CouplingCalculator($this->metricsController, $packageIACalculator),
-            new ProjectCalculator($this->metricsController),
-            new LimitsAndAveragesCalculator($this->metricsController),
-        ], $this->metricsController, $output);
+            new FileCalculator($repository),
+            new VariablesCalculator($repository),
+            new CouplingCalculator($repository, $packageIACalculator),
+            new ProjectCalculator($repository),
+            new LimitsAndAveragesCalculator($repository),
+        ], $repository, $output);
 
         $calculatorService->run();
     }
 
     /**
-     * @param MetricsController $metricsController
+     * @param RepositoryInterface $repository
      * @param CliOutput $output
      * @return array
      */
-    private function runPredictors(MetricsController $metricsController, CliOutput $output): array
+    private function runPredictors(RepositoryInterface $repository, CliOutput $output): array
     {
         $predictions = new PredictionService([
             new TooLongPrediction(),
@@ -183,19 +185,20 @@ final readonly class Application
             new TooComplexPrediction(),
             new TooDependentPrediction(),
             new TooMuchHtmlPrediction(),
-        ], $metricsController, $output);
+        ], $repository, $output);
         $predictions->predict();
 
         return $predictions->getProblemCount();
     }
 
     /**
+     * @param RepositoryInterface $repository
      * @param array $problems
      * @return void
      */
-    private function setProblems(array $problems): void
+    private function setProblems(RepositoryInterface $repository, array $problems): void
     {
-        $this->metricsController->setMetricValues(
+        $repository->saveMetricValues(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             [
@@ -206,16 +209,11 @@ final readonly class Application
         );
     }
 
-    /**
-     * @param CliOutput $output
-     * @return ReportDataContainer
-     */
-    private function getReportDataContainer(CliOutput $output): ReportDataContainer
+    private function setRepository(string $type, MetricsController $metricsController): RepositoryInterface
     {
-        $reportDataContainer = new ReportDataContainer();
-        $splitter = new MetricsSplitter($this->metricsController, $reportDataContainer, $output);
-        $splitter->split();
-
-        return $reportDataContainer;
+        switch($type) {
+            case 'memory':
+                return new MemoryRepository($metricsController);
+        }
     }
 }

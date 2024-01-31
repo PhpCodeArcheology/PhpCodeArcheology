@@ -17,6 +17,7 @@ use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 use PhpCodeArch\Metrics\Model\Collections\ErrorCollection;
 use PhpCodeArch\Metrics\Model\Collections\FileNameCollection;
+use PhpCodeArch\Repository\RepositoryInterface;
 use PhpParser\Error;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
@@ -28,7 +29,7 @@ readonly class Analyzer
         private Config            $config,
         private Parser            $parser,
         private NodeTraverser     $traverser,
-        private MetricsController $metricsController,
+        private RepositoryInterface $repository,
         private CliOutput         $output,
     )
     {
@@ -41,7 +42,7 @@ readonly class Analyzer
         $fileCount = count($fileList->getFiles());
         $projectFileErrors = $this->traverseFiles($fileList, $visitorObjects);
 
-        $this->metricsController->setMetricValues(
+        $this->repository->saveMetricValues(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             [
@@ -78,7 +79,7 @@ readonly class Analyzer
         $visitorObjects = [];
         foreach ($visitorList as $visitorClass) {
             $visitorObject = new $visitorClass(
-                metricsController: $this->metricsController
+                repository: $this->repository
             );
 
             if (method_exists($visitorObject, 'init')) {
@@ -118,14 +119,14 @@ readonly class Analyzer
 
             $fileErrorCollection = new ErrorCollection();
 
-            $fileMetricCollection = $this->metricsController->createMetricCollection(
+            $fileMetricCollection = $this->repository->createMetricCollection(
                 MetricCollectionTypeEnum::FileCollection,
                 ['path' => $file]
             );
 
             $fileNameCollection->set($file, (string) $fileMetricCollection->getIdentifier());
 
-            $this->metricsController->setCollection(
+            $this->repository->saveCollection(
                 MetricCollectionTypeEnum::FileCollection,
                 ['path' => $file],
                 $fileErrorCollection,
@@ -148,7 +149,7 @@ readonly class Analyzer
             $this->traverser->traverse($ast);
         }
 
-        $this->metricsController->setCollection(
+        $this->repository->saveCollection(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             $fileNameCollection,

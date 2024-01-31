@@ -100,13 +100,15 @@ class ProjectCalculator implements CalculatorInterface
 
                 $this->lcomSum += $metrics->get('lcom')?->getValue() ?? 0;
 
-                $methodCollection = $this->metricsController->getCollectionByIdentifierString(
+                $methodCollection = $this->repository->loadCollection(
+                    null,
                     (string) $metrics->getIdentifier(),
                     'methods'
                 );
 
                 foreach ($methodCollection as $methodIdentifierString => $methodName) {
-                    $methodCC = $this->metricsController->getMetricValueByIdentifierString(
+                    $methodCC = $this->repository->loadMetricValue(
+                        null,
                         $methodIdentifierString,
                         'cc'
                     )->getValue();
@@ -140,7 +142,7 @@ class ProjectCalculator implements CalculatorInterface
             $this->data[$key] = $output;
         }
 
-        $metricValues = $this->metricsController->getMetricValues(
+        $metricValues = $this->repository->loadMetricValues(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             [
@@ -169,7 +171,7 @@ class ProjectCalculator implements CalculatorInterface
         $this->data['overallAvgMI'] = $this->getAvgOrZero($this->miSum, $metricValues['overallFiles']);
         $this->data['overallCommentWeight'] = $this->getAvgOrZero($this->commentWeightSum, $this->metricCount);
 
-        $this->metricsController->setMetricValues(
+        $this->repository->saveMetricValues(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             $this->data

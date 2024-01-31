@@ -4,21 +4,21 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Predictions;
 
-use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
 use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
 use PhpCodeArch\Metrics\Model\PackageMetrics\PackageMetricsCollection;
 use PhpCodeArch\Metrics\Model\ProjectMetrics\ProjectMetricsCollection;
 use PhpCodeArch\Predictions\Problems\TooLongProblem;
+use PhpCodeArch\Repository\RepositoryInterface;
 
 class TooLongPrediction implements PredictionInterface
 {
-    public function predict(MetricsController $metricsController): int
+    public function predict(RepositoryInterface $repository): int
     {
         $problemCount = 0;
 
-        foreach ($metricsController->getAllCollections() as $metric) {
+        foreach ($repository->getAllMetricCollections() as $metric) {
             if (is_array($metric)
                 || $metric instanceof ProjectMetricsCollection
                 || $metric instanceof PackageMetricsCollection) {
@@ -34,10 +34,11 @@ class TooLongPrediction implements PredictionInterface
             $lloc = $metric->get('lloc')?->getValue() ?? 0;
             $isTooLong = $lloc > $maxLloc;
 
-            $metricsController->setMetricValueByIdentifierString(
+            $repository->saveMetricValue(
+                null,
                 (string) $metric->getIdentifier(),
-                'predictionTooLong',
-                $isTooLong
+                $isTooLong,
+                'predictionTooLong'
             );
 
             if ($isTooLong) {
@@ -48,10 +49,10 @@ class TooLongPrediction implements PredictionInterface
                     message: 'Too many logical lines of code.'
                 );
 
-                $metricsController->setProblemByIdentifierString(
-                    identifierString: (string) $metric->getIdentifier(),
-                    key: 'lloc',
-                    problem: $problem
+                $repository->saveProblem(
+                    (string) $metric->getIdentifier(),
+                    'lloc',
+                    $problem
                 );
             }
 
@@ -59,23 +60,26 @@ class TooLongPrediction implements PredictionInterface
                 continue;
             }
 
-            $methodCollection = $metricsController->getCollectionByIdentifierString(
+            $methodCollection = $repository->loadCollection(
+                null,
                 (string) $metric->getIdentifier(),
                 'methods'
             );
 
             foreach ($methodCollection as $methodIdString => $methodName) {
-                $lloc = $metricsController->getMetricValueByIdentifierString(
+                $lloc = $repository->loadMetricValue(
+                    null,
                     $methodIdString,
                     'lloc'
                 );
 
                 $isTooLong = $lloc->getValue() > 30;
 
-                $metricsController->setMetricValueByIdentifierString(
+                $repository->saveMetricValue(
+                    null,
                     $methodIdString,
-                    'predictionTooLong',
-                    $isTooLong
+                    $isTooLong,
+                    'predictionTooLong'
                 );
 
                 if (! $isTooLong) {
@@ -89,10 +93,10 @@ class TooLongPrediction implements PredictionInterface
                     message: 'Too many logical lines of code.'
                 );
 
-                $metricsController->setProblemByIdentifierString(
-                    identifierString: $methodIdString,
-                    key: 'lloc',
-                    problem: $problem
+                $repository->saveProblem(
+                    $methodIdString,
+                    'lloc',
+                    $problem
                 );
 
                 $problem = TooLongProblem::ofProblemLevelAndMessage(
@@ -100,10 +104,10 @@ class TooLongPrediction implements PredictionInterface
                     message: 'Too many logical lines of code in at least one method.'
                 );
 
-                $metricsController->setProblemByIdentifierString(
-                    identifierString: (string) $metric->getIdentifier(),
-                    key: 'lloc',
-                    problem: $problem
+                $repository->saveProblem(
+                    (string) $metric->getIdentifier(),
+                    'lloc',
+                    $problem
                 );
 
             }

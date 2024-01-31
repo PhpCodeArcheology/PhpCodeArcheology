@@ -34,7 +34,7 @@ class FileCalculator implements CalculatorInterface
             $commonPath .= '/';
         }
 
-        $this->metricsController->setMetricValue(
+        $this->repository->saveMetricValue(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             $commonPath,
@@ -55,14 +55,14 @@ class FileCalculator implements CalculatorInterface
                 'fileName' => $pathInfo['basename'],
             ];
 
-            $this->metricsController->setMetricValues(
+            $this->repository->saveMetricValues(
                 MetricCollectionTypeEnum::FileCollection,
                 ['path' => $fileName],
                 $fileMetrics
             );
         }
 
-        foreach ($this->metricsController->getAllCollections() as &$metrics) {
+        foreach ($this->repository->getAllMetricCollections() as &$metrics) {
             if ($metrics instanceof FileMetricsCollection) {
                 continue;
             }

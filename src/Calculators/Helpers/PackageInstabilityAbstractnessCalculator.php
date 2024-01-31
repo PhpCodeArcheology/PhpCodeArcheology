@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Calculators\Helpers;
 
-use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
+use PhpCodeArch\Repository\RepositoryInterface;
 
 class PackageInstabilityAbstractnessCalculator
 {
@@ -20,12 +20,12 @@ class PackageInstabilityAbstractnessCalculator
     private array $concreteClasses = [];
     private string $currentPackage;
 
-    public function __construct(private MetricsController $metricsController)
+    public function __construct(private RepositoryInterface $repository)
     {}
 
     public function beforeTraverse(): void
     {
-        $packagesCollection = $this->metricsController->getCollection(
+        $packagesCollection = $this->repository->loadCollection(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             'packages'
@@ -44,7 +44,7 @@ class PackageInstabilityAbstractnessCalculator
     public function afterTraverse(): void
     {
         foreach ($this->packages as $packageName => $packageData) {
-            $this->metricsController->setMetricValues(
+            $this->repository->saveMetricValues(
                 MetricCollectionTypeEnum::PackageCollection,
                 ['name' => $packageName],
                 $packageData
@@ -54,7 +54,7 @@ class PackageInstabilityAbstractnessCalculator
                 continue;
             }
 
-            $packageMetrics = $this->metricsController->getMetricValues(
+            $packageMetrics = $this->repository->loadMetricValues(
                 MetricCollectionTypeEnum::PackageCollection,
                 ['name' => $packageName],
                 [
@@ -75,7 +75,7 @@ class PackageInstabilityAbstractnessCalculator
                 'distanceFromMainline' => $distanceFromMainline,
             ];
 
-            $this->metricsController->setMetricValues(
+            $this->repository->saveMetricValues(
                 MetricCollectionTypeEnum::PackageCollection,
                 ['name' => $packageName],
                 $newPackageMetrics
@@ -85,7 +85,8 @@ class PackageInstabilityAbstractnessCalculator
 
     public function handlePackage(string $identifierString, $className): array
     {
-        $classMetrics = $this->metricsController->getMetricValuesByIdentifierString(
+        $classMetrics = $this->repository->loadMetricValues(
+            null,
             $identifierString,
             ['package', 'realClass', 'abstract', 'interface']
         );
@@ -126,7 +127,7 @@ class PackageInstabilityAbstractnessCalculator
 
     public function handleDependency(string $dependency, string $identifierString, bool $isTrait): void
     {
-        $usedByMetric = $this->metricsController->getMetricCollectionByIdentifierString($identifierString);
+        $usedByMetric = $this->repository->getMetricCollection(null, $identifierString);
 
         if ($this->currentPackage !== $usedByMetric->get('package')->getValue() && ! $isTrait) {
             if (! in_array($dependency, $this->packagesMap['uses'][$this->currentPackage])) {

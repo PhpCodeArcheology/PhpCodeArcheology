@@ -7,6 +7,7 @@ namespace PhpCodeArch\Predictions;
 use PhpCodeArch\Application\CliOutput;
 use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\Model\MetricsContainer;
+use PhpCodeArch\Repository\RepositoryInterface;
 
 class PredictionService
 {
@@ -20,7 +21,7 @@ class PredictionService
          * @var PredictionInterface[]
          */
         private readonly array $predictions,
-        private readonly MetricsController $metricsController,
+        private readonly RepositoryInterface $repository,
         private readonly CliOutput $output
     )
     {
@@ -46,7 +47,7 @@ class PredictionService
             ++ $count;
 
             $this->problemCount[$prediction->getLevel()] += $prediction->predict(
-                $this->metricsController
+                $this->repository
             );
         }
 

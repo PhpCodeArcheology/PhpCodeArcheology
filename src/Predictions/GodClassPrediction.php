@@ -4,23 +4,24 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Predictions;
 
-use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
+use PhpCodeArch\Repository\RepositoryInterface;
 
 class GodClassPrediction implements PredictionInterface
 {
-    public function predict(MetricsController $metricsController): int
+    public function predict(RepositoryInterface $repository): int
     {
         $problemCount = 0;
 
-        foreach ($metricsController->getAllCollections() as $metric) {
+        foreach ($repository->getAllMetricCollections() as $metric) {
             if (! $metric instanceof ClassMetricsCollection) {
                 continue;
             }
 
             $suspectIndex = 0;
 
-            $classMetrics = (object) $metricsController->getMetricValuesByIdentifierString(
+            $classMetrics = (object) $repository->loadMetricValues(
+                null,
                 (string) $metric->getIdentifier(),
                 [
                     'publicCount',
@@ -46,13 +47,15 @@ class GodClassPrediction implements PredictionInterface
                 ++ $suspectIndex;
             }
 
-            $methodCollection = $metricsController->getCollectionByIdentifierString(
+            $methodCollection = $repository->loadCollection(
+                null,
                 (string) $metric->getIdentifier(),
                 'methods'
             );
 
             foreach ($methodCollection as $methodIdString => $methodName) {
-                $tooLong = $metricsController->getMetricValueByIdentifierString(
+                $tooLong = $repository->loadMetricValue(
+                    null,
                     $methodIdString,
                     'predictionTooLong'
                 );
@@ -67,7 +70,8 @@ class GodClassPrediction implements PredictionInterface
                 ++ $problemCount;
             }
 
-            $metricsController->setMetricValuesByIdentifierString(
+            $repository->saveMetricValues(
+                null,
                 (string) $metric->getIdentifier(),
                 [
                     'predictionGodObject' => $maybeIsGodObject,

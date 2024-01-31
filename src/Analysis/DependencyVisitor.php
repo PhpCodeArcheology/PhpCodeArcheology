@@ -145,7 +145,7 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface
     {
         $dependencyCollection = new ClassNameCollection($this->outsideDependencies);
 
-        $this->metricsController->setCollection(
+        $this->repository->saveCollection(
             MetricCollectionTypeEnum::FileCollection,
             ['path' => $this->path],
             $dependencyCollection,
@@ -378,7 +378,7 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface
         ];
 
         foreach ($collections as $collectionKey => $collection) {
-            $this->metricsController->setCollection(
+            $this->repository->saveCollection(
                 MetricCollectionTypeEnum::ClassCollection,
                 [
                     'path' => $this->path,
@@ -398,7 +398,7 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface
     {
         $functionName = (string) $node->namespacedName;
 
-        $this->metricsController->setCollection(
+        $this->repository->saveCollection(
             MetricCollectionTypeEnum::FunctionCollection,
             [
                 'path' => $this->path,
@@ -420,7 +420,7 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface
         $className = end($this->currentClassName);
         $methodName = (string) $node->name;
 
-        $this->metricsController->setCollection(
+        $this->repository->saveCollection(
             MetricCollectionTypeEnum::MethodCollection,
             [
                 'path' => $className,
