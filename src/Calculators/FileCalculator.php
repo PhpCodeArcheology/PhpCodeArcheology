@@ -6,7 +6,6 @@ namespace PhpCodeArch\Calculators;
 
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
-use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsEnum;
 use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
 use PhpCodeArch\Metrics\Model\MetricValue;
 

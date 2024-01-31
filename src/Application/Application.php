@@ -37,7 +37,7 @@ use Twig\Loader\FilesystemLoader;
 
 final readonly class Application
 {
-    const string VERSION = '0.3.0';
+    const string VERSION = '0.3.1';
 
     /**
      * @throws ConfigFileExtensionNotSupportedException
@@ -212,7 +212,7 @@ final readonly class Application
     private function setRepository(string $type, MetricsController $metricsController): RepositoryInterface
     {
         switch($type) {
-            case 'memory':
+            default:
                 return new MemoryRepository($metricsController);
         }
     }

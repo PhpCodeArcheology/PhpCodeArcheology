@@ -15,6 +15,7 @@ class DataProviderFactory
     public function __construct(
         private readonly RepositoryInterface $repository)
     {
+        /** @noinspection PhpEmptyStatementInspection */
         foreach ($this->setMetricValues() as $_) {
             // Only runs the generator
         }
@@ -23,6 +24,7 @@ class DataProviderFactory
     private function setMetricValues(): \Generator
     {
         foreach ($this->repository->getAllMetricCollections() as $metricCollection) {
+            /** @noinspection PhpEmptyStatementInspection */
             foreach ($this->setMetricValuesInCollection($metricCollection) as $_) {
                 // Only runs the generator
             }

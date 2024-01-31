@@ -36,7 +36,7 @@ class TooComplexPrediction implements PredictionInterface
                         null,
                         (string) $metric->getIdentifier(),
                         'methods'
-                    );
+                    )->getAsArray();
 
                     $problemCount += $this->handleStandardComplexity($repository, (string) $metric->getIdentifier(), get_class($metric));
                     $problemCount += $this->handleLcom($repository, (string) $metric->getIdentifier(), get_class($metric));
