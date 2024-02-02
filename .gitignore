@@ -2,5 +2,6 @@
 /report/
 /tmp/
 /vendor/
+.DS_Store
 debug.txt
 php-codearch-config.yaml
