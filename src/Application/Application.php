@@ -58,7 +58,7 @@ final readonly class Application
         $this->setProblems($metricsController, $problems);
 
         $twigLoader = new FilesystemLoader();
-        $twig = new Environment($twigLoader, [
+        $twig = new Environment($twigLoader, options: [
             'debug' => true,
         ]);
         $twig->addExtension(new DebugExtension());
