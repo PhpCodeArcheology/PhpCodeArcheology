@@ -1,4 +1,4 @@
-{% include('parts/header.html.twig') %}
+{% include('@Parts/header.html.twig') %}
 
 <div class="mt-6 lg:w-5/6">
   <div class="mb-7 text-sm">
@@ -124,15 +124,15 @@
     {% endif %}
   </div>
 
-  {% include('parts/divider.html.twig') %}
+  {% include('@Parts/divider.html.twig') %}
 
   <div class="my-8 grid sm:grid-cols-3 gap-3">
     {% for metricKey in detailMetricKeys %}
       {% set element = class.get(metricKey) %}
       {% if metricKey == 'package' %}
-        {% include('parts/package-tile.html.twig') %}
+        {% include('@Parts/package-tile.html.twig') %}
       {% else %}
-        {% include('parts/metric-tile.html.twig') %}
+        {% include('@Parts/metric-tile.html.twig') %}
       {% endif %}
     {% endfor %}
   </div>
@@ -145,11 +145,11 @@
     {% set listMetricKeys = methodListMetricKeys %}
     {% set functions = methods[class.getIdentifier().__toString()] %}
 
-    {% include('parts/divider.html.twig') %}
-    {% include('parts/function-table.html.twig') %}
+    {% include('@Parts/divider.html.twig') %}
+    {% include('@Parts/function-table.html.twig') %}
   {% endif %}
 
-  {% include('parts/divider.html.twig') %}
+  {% include('@Parts/divider.html.twig') %}
 
   <h3 class="mt-8 mb-4 text-2xl font-semibold font-display">Class chart</h3>
 
@@ -206,4 +206,4 @@
   await drawDiagram();
 </script>
 
-{% include('parts/footer.html.twig') %}
+{% include('@Parts/footer.html.twig') %}

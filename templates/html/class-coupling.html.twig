@@ -1,4 +1,4 @@
-{% include('parts/header.html.twig') %}
+{% include('@Parts/header.html.twig') %}
 
 <div class="mt-6 lg:w-5/6">
   <div class="mb-7 text-sm">
@@ -24,7 +24,7 @@
           </span>
         </th>
         {% for header in tableHeaders %}
-          {% include('parts/thead-th-sortable.html.twig') %}
+          {% include('@Parts/thead-th-sortable.html.twig') %}
         {% endfor %}
       </tr>
       </thead>
@@ -59,7 +59,7 @@
           </td>
           {% for metricKey in listMetricKeys %}
             {% set data = class.get(metricKey) %}
-            {% include('parts/tbody-td-sortable.html.twig') %}
+            {% include('@Parts/tbody-td-sortable.html.twig') %}
           {% endfor %}
         </tr>
       {% endfor %}
@@ -68,4 +68,4 @@
   </div>
 </div>
 
-{% include('parts/footer.html.twig') %}
+{% include('@Parts/footer.html.twig') %}

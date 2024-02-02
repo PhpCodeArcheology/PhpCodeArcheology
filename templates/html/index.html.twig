@@ -1,4 +1,4 @@
-{% include('parts/header.html.twig') %}
+{% include('@Parts/header.html.twig') %}
 
 <div class="mt-6 lg:w-5/6">
   <div class="mb-7 text-sm">
@@ -14,9 +14,9 @@
 
   <div class="my-8 grid sm:grid-cols-3 gap-3">
     {% for element in elements %}
-      {% include('parts/metric-tile.html.twig') %}
+      {% include('@Parts/metric-tile.html.twig') %}
     {% endfor %}
   </div>
 </div>
 
-{% include('parts/footer.html.twig') %}
+{% include('@Parts/footer.html.twig') %}

@@ -24,7 +24,7 @@
           </span>
       </th>
       {% for header in tableHeaders %}
-        {% include('parts/thead-th-sortable.html.twig') %}
+        {% include('@Parts/thead-th-sortable.html.twig') %}
       {% endfor %}
     </tr>
     </thead>
@@ -54,7 +54,7 @@
         </td>
         {% for metricKey in listMetricKeys %}
           {% set data = function.get(metricKey) %}
-          {% include('parts/tbody-td-sortable.html.twig') %}
+          {% include('@Parts/tbody-td-sortable.html.twig') %}
         {% endfor %}
       </tr>
     {% endfor %}

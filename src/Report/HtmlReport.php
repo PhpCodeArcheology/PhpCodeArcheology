@@ -37,6 +37,7 @@ class HtmlReport implements ReportInterface
         }
 
         $this->twigLoader->setPaths($this->templateDir);
+        $this->twigLoader->addPath($this->templateDir . 'parts', 'Parts');
         $this->twig->setCache(false);
     }
 

@@ -2,7 +2,7 @@
 
 <div class="filters mb-4 flex justify-end">
   <div>
-    <input type="text" name="filter" class="namefilter text-black rounded px-2 py-0.5" placeholder="Search class name">
+    <label><input type="text" name="filter" class="namefilter text-black rounded px-2 py-0.5" placeholder="Search class name"></label>
     <button class="button-reset">Reset</button>
   </div>
 </div>
@@ -14,11 +14,11 @@
       <th class="border border-slate-500 text-left px-2 py-0.5 cursor-pointer" data-sortable="string">
           <span class="label-box flex justify-between items-center gap-1">
             <span class="label-name">Name</span>
-            <span class="sort-icon transition-all opacity-0"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M12.53 16.28a.75.75 0 0 1-1.06 0l-7.5-7.5a.75.75 0 0 1 1.06-1.06L12 14.69l6.97-6.97a.75.75 0 1 1 1.06 1.06l-7.5 7.5Z" clip-rule="evenodd" /></svg></span>
+            <span class="sort-icon transition-all opacity-0"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M12.53 16.28a.75.75 0 0 1-1.06 0l-7.5-7.5a.75.75 0 0 1 1.06-1.06L12 14.69l6.97-6.97a.75.75 0 1 1 1.06 1.06l-7.5 7.5Z" clip-rule="evenodd"></path></svg></span>
           </span>
       </th>
       {% for header in tableHeaders %}
-        {% include('parts/thead-th-sortable.html.twig') %}
+        {% include('@Parts/thead-th-sortable.html.twig') %}
       {% endfor %}
     </tr>
     </thead>
@@ -54,7 +54,7 @@
         </td>
         {% for metricKey in listMetricKeys %}
           {% set data = class.get(metricKey) %}
-          {% include('parts/tbody-td-sortable.html.twig') %}
+          {% include('@Parts/tbody-td-sortable.html.twig') %}
         {% endfor %}
       </tr>
     {% endfor %}

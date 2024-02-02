@@ -1,4 +1,4 @@
-{% include('parts/header.html.twig') %}
+{% include('@Parts/header.html.twig') %}
 
 <div class="mt-6 lg:w-5/6">
   <div class="mb-7 text-sm">
@@ -27,13 +27,13 @@
       </ul>
       <p class="italic text-xs">Parse errors prevent the file from being parsed. Because of this, no data is available.<br>Please fix the errors and run the analysis again.</p>
     </div>
-    {% include('parts/divider.html.twig') %}
+    {% include('@Parts/divider.html.twig') %}
   {% else %}
 
     <div class="my-8 grid sm:grid-cols-3 gap-3">
       {% for metricKey in detailMetricKeys %}
         {% set element = file.get(metricKey) %}
-        {% include('parts/metric-tile.html.twig') %}
+        {% include('@Parts/metric-tile.html.twig') %}
       {% endfor %}
     </div>
 
@@ -43,19 +43,19 @@
       {% set tableName = 'Functions' %}
       {% set listMetricKeys = functionListMetricKeys %}
       {% set tableHeaders = functionTableHeaders %}
-      {% include('parts/divider.html.twig') %}
-      {% include('parts/function-table.html.twig') %}
+      {% include('@Parts/divider.html.twig') %}
+      {% include('@Parts/function-table.html.twig') %}
     {% endif %}
 
     {% set classes = fileClasses[file.getIdentifier.__toString] %}
     {% if classes %}
       {% set listMetricKeys = classListMetricKeys %}
       {% set tableHeaders = classTableHeaders %}
-      {% include('parts/divider.html.twig') %}
-      {% include('parts/class-table.html.twig') %}
+      {% include('@Parts/divider.html.twig') %}
+      {% include('@Parts/class-table.html.twig') %}
     {% endif %}
 
   {% endif %}
 </div>
 
-{% include('parts/footer.html.twig') %}
+{% include('@Parts/footer.html.twig') %}

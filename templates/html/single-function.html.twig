@@ -1,4 +1,4 @@
-{% include('parts/header.html.twig') %}
+{% include('@Parts/header.html.twig') %}
 
 {% set isMethod = function.get('functionType').getValue() == 'method' %}
 {% set breadCrumbLi = '' %}
@@ -85,7 +85,7 @@
     {% endif %}
   </div>
 
-  {% include('parts/divider.html.twig') %}
+  {% include('@Parts/divider.html.twig') %}
 
   <div class="my-8 grid sm:grid-cols-3 gap-3">
     {% set detailMetricKeys = isMethod ? methodDetailMetricKeys : functionDetailMetricKeys %}
@@ -93,12 +93,12 @@
       {% set element = function.get(metricKey) %}
 
       {% if metricKey == 'classInfo' %}
-        {% include('parts/classname-tile.html.twig') %}
+        {% include('@Parts/classname-tile.html.twig') %}
       {% else %}
-        {% include('parts/metric-tile.html.twig') %}
+        {% include('@Parts/metric-tile.html.twig') %}
       {% endif %}
     {% endfor %}
   </div>
 </div>
 
-{% include('parts/footer.html.twig') %}
+{% include('@Parts/footer.html.twig') %}
