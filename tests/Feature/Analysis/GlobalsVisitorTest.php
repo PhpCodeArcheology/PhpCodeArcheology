@@ -85,3 +85,66 @@ it('counts globals correctly', function($testFile, $expected) {
     }
 
 })->with($globalsTests);
+
+it('counts constants correctly', function($testFile, $expected) {
+    $metricsController = getMetricsForVisitors($testFile, getGlobalsVisitors());
+
+    foreach ($metricsController->getAllCollections() as $metrics) {
+        switch (true) {
+            case $metrics instanceof FileMetricsCollection:
+                $constants = $metrics->get('constants')->getValue();
+                $constantsSum = array_sum($constants);
+
+                expect($constants)->toBe($expected['file']['constants'])
+                    ->and($constantsSum)->toBe($expected['file']['constantsSum']);
+                break;
+
+            case $metrics instanceof FunctionMetricsCollection:
+                $constants = $metrics->get('constants')->getValue();
+                $constantsSum = array_sum($constants);
+
+                if (!isset($expected['functions'][$metrics->getName()])) {
+                    break;
+                }
+
+                $expectedForFunction = $expected['functions'][$metrics->getName()];
+                expect($constants)->toBe($expectedForFunction['constants'])
+                    ->and($constantsSum)->toBe($expectedForFunction['constantsSum']);
+                break;
+
+            case $metrics instanceof ClassMetricsCollection:
+                $constants = $metrics->get('constants')->getValue();
+                $constantsSum = array_sum($constants);
+
+                if (!isset($expected['classes'][$metrics->getName()])) {
+                    break;
+                }
+
+                $expectedForClass = $expected['classes'][$metrics->getName()];
+
+                expect($constants)->toBe($expectedForClass['constants'])
+                    ->and($constantsSum)->toBe($expectedForClass['constantsSum']);
+
+                $methods = $metrics->getCollection('methods');
+                foreach ($methods as $key => $methodName) {
+                    $methodMetric = $metricsController->getMetricCollectionByIdentifierString($key);
+
+                    if (! isset($expected['classes'][$metrics->getName()]['methods'][$methodName])) {
+                        continue;
+                    }
+
+                    $constants = $methodMetric->get('constants')->getValue();
+                    $constantsSum = array_sum($constants);
+
+                    $expectedForMethod = $expected['classes'][$metrics->getName()]['methods'][$methodName];
+
+                    expect($constants)->toBe($expectedForMethod['constants'])
+                        ->and($constantsSum)->toBe($expectedForMethod['constantsSum']);
+                }
+
+                break;
+
+        }
+    }
+
+})->with($globalsTests);

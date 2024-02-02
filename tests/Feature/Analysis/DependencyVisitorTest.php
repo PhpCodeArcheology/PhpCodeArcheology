@@ -51,6 +51,7 @@ it('detects the dependencies correctly', function($testFile, $expects) {
                 $dependencies = $metrics->getCollection('dependencies')->getAsArray();
                 $interfaces = $metrics->getCollection('interfaces')->getAsArray();
                 $extends = $metrics->getCollection('extends')->getAsArray();
+                $traits = $metrics->getCollection('traits')->getAsArray();
                 $className = $metrics->getName();
 
                 $className = str_starts_with($className, 'anonymous') ? 'anonymous' : $className;
@@ -64,6 +65,7 @@ it('detects the dependencies correctly', function($testFile, $expects) {
                 expect(count($dependencies))->toBe($classExpects['dependencyCount'])
                     ->and($dependencies)->toBe($classExpects['dependencies'])
                     ->and($interfaces)->toBe($classExpects['interfaces'])
+                    ->and($traits)->toBe($classExpects['traits'])
                     ->and($extends)->toBe($classExpects['extends']);
 
                 $methods = $metrics->getCollection('methods');

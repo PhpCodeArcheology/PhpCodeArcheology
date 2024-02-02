@@ -7,6 +7,10 @@ return [
         __DIR__ . '/../testfiles/globals.php',
         [
             'file' => [
+                'constants' => [
+                    'TEST_CONSTANT_1' => 4,
+                ],
+                'constantsSum' => 4,
                 'superglobals' => [
                     'GLOBALS' => 1,
                     '_SERVER' => 1,
@@ -22,6 +26,10 @@ return [
             ],
             'functions' => [
                 'testRequest' => [
+                    'constants' => [
+                        'TEST_CONSTANT_1' => 1,
+                    ],
+                    'constantsSum' => 1,
                     'superglobals' => [
                         'GLOBALS' => 1,
                         '_SERVER' => 0,
@@ -38,6 +46,10 @@ return [
             ],
             'classes' => [
                 'ServerStats' => [
+                    'constants' => [
+                        'TEST_CONSTANT_1' => 1,
+                    ],
+                    'constantsSum' => 1,
                     'superglobals' => [
                         'GLOBALS' => 0,
                         '_SERVER' => 1,
@@ -52,6 +64,10 @@ return [
                     'superglobalsSum' => 5,
                     'methods' => [
                         'parseData' => [
+                            'constants' => [
+                                'TEST_CONSTANT_1' => 1,
+                            ],
+                            'constantsSum' => 1,
                             'superglobals' => [
                                 'GLOBALS' => 0,
                                 '_SERVER' => 1,
@@ -66,6 +82,8 @@ return [
                             'superglobalsSum' => 1,
                         ],
                         'createTesterClass' => [
+                            'constants' => [],
+                            'constantsSum' => 0,
                             'superglobals' => [
                                 'GLOBALS' => 0,
                                 '_SERVER' => 0,
@@ -80,6 +98,8 @@ return [
                             'superglobalsSum' => 3,
                         ],
                         'reactToEnv' => [
+                            'constants' => [],
+                            'constantsSum' => 0,
                             'superglobals' => [
                                 'GLOBALS' => 0,
                                 '_SERVER' => 0,
@@ -96,6 +116,8 @@ return [
                     ],
                 ],
                 'anonymous@000000000000050d0000000000000000' => [
+                    'constants' => [],
+                    'constantsSum' => 0,
                     'superglobals' => [
                         'GLOBALS' => 0,
                         '_SERVER' => 0,
@@ -110,6 +132,8 @@ return [
                     'superglobalsSum' => 2,
                     'methods' => [
                         'test' => [
+                            'constants' => [],
+                            'constantsSum' => 0,
                             'superglobals' => [
                                 'GLOBALS' => 0,
                                 '_SERVER' => 0,

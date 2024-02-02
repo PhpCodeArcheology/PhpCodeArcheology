@@ -238,10 +238,6 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface
             return;
         }
 
-        if (count($this->currentClassName) === 0) {
-            return;
-        }
-
         $className = end($this->currentClassName);
 
         if (in_array($dependency, $this->classTraits[$className])) {
@@ -350,10 +346,6 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface
 
             foreach ($extends as $id => $class) {
                 $className = $this->setDependency($class);
-
-                if (! $className) {
-                    continue;
-                }
 
                 $extends[$id] = $className;
             }

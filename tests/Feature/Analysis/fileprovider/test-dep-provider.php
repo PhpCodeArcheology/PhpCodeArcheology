@@ -31,6 +31,7 @@ return [
                         \Testfile\FooInterface::class,
                     ],
                     'extends' => [],
+                    'traits' => [],
                     'methods' => [
                         '__construct' => [
                             'dependencyCount' => 1,
@@ -55,6 +56,9 @@ return [
                     'extends' => [
                         \Testfile\FooClass::class,
                     ],
+                    'traits' => [
+                        \Testfile\TestTrait::class,
+                    ],
                     'methods' => [
                         'testMethod3' => [
                             'dependencyCount' => 1,
@@ -71,6 +75,7 @@ return [
                     ],
                     'interfaces' => [],
                     'extends' => [],
+                    'traits' => [],
                     'methods' => [
                         'testMethod2' => [
                             'dependencyCount' => 1,
@@ -99,6 +104,7 @@ return [
                     'interfaces' => [
                     ],
                     'extends' => [],
+                    'traits' => [],
                     'methods' => [
                         'create' => [
                             'dependencyCount' => 0,
@@ -116,6 +122,7 @@ return [
                         'Testfile\AnonClassInterface',
                     ],
                     'extends' => [],
+                    'traits' => [],
                     'methods' => [
                         'testMethod1' => [
                             'dependencyCount' => 1,
@@ -155,6 +162,7 @@ return [
                     'extends' => [
                         \Testfile\TheGreatExtender::class,
                     ],
+                    'traits' => [],
                     'methods' => [
                         'testMethod1' => [
                             'dependencyCount' => 1,

@@ -1,5 +1,7 @@
 <?php
 
+const TEST_CONSTANT_1 = 1;
+
 $test = $_POST['test'];
 
 function testRequest($_REQUEST) {
@@ -8,6 +10,7 @@ function testRequest($_REQUEST) {
     }
 
     $GLOBALS['cartoon'] = 'Donald Duck';
+    $v = TEST_CONSTANT_1;
 }
 
 class ServerStats
@@ -15,6 +18,7 @@ class ServerStats
     public function parseData()
     {
         $server = $_SERVER;
+        $v = TEST_CONSTANT_1;
     }
 
     public function createTesterClass()
