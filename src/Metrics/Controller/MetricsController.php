@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Metrics\Controller;
 
+use Closure;
+use Generator;
 use PhpCodeArch\Metrics\Identity\FileIdentifier;
 use PhpCodeArch\Metrics\Identity\FunctionAndClassIdentifier;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
@@ -11,7 +13,6 @@ use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\Collections\CollectionInterface;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
 use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
-use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsFactory;
 use PhpCodeArch\Metrics\Model\MetricsContainer;
 use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
 use PhpCodeArch\Metrics\Model\MetricType;
@@ -98,20 +99,8 @@ class MetricsController
 
     /**
      * @param MetricCollectionTypeEnum $collectionType
-     * @return array|MetricType[]
-     */
-    public function getMetricTypesOfCollection(MetricCollectionTypeEnum $collectionType): array
-    {
-        if (! isset($this->metricTypes[$collectionType->name])) {
-            return [];
-        }
-
-        return $this->metricTypes[$collectionType->name];
-    }
-
-    /**
-     * @param MetricCollectionTypeEnum $collectionType
      * @param int $visibility
+     * @param bool $showEverywhere
      * @return array
      */
     public function getMetricsByCollectionTypeAndVisibility(MetricCollectionTypeEnum $collectionType, int $visibility, bool $showEverywhere = true): array
@@ -148,35 +137,8 @@ class MetricsController
     }
 
     /**
-     * @param string $key
-     * @return MetricType|null
-     */
-    public function getMetricTypeByKey(string $key): ?MetricType
-    {
-        if (! isset($this->metricTypeMap[$key])) {
-            return null;
-        }
-
-        return $this->metricTypeMap[$key];
-    }
-
-    /**
-     * @param array $keys
-     * @return array
-     */
-    public function getMetricTypesByKeys(array $keys): array
-    {
-        $types = [];
-
-        foreach ($keys as $key) {
-            $types[$key] = $this->getMetricTypeByKey($key);
-        }
-
-        return $types;
-    }
-
-    /**
      * @param array $files
+     * @return ProjectMetricsCollection
      */
     public function createProjectMetricsCollection(array $files): ProjectMetricsCollection
     {
@@ -237,7 +199,7 @@ class MetricsController
         MetricCollectionTypeEnum $metricsType,
         ?array $identifierData,
         string $key,
-        string|\Closure $callback
+        string|Closure $callback
     ): void
     {
         $value = $this->getMetricValue($metricsType, $identifierData, $key)?->getValue() ?? null;
@@ -267,11 +229,6 @@ class MetricsController
         }
     }
 
-    public function pushMetricsCollection(MetricsCollectionInterface $fileMetrics): void
-    {
-        $this->metricsContainer->push($fileMetrics);
-    }
-
     public static function getIdentifier(MetricCollectionTypeEnum $metricsType, ?array $identifierData): string
     {
         return match ($metricsType) {
@@ -282,7 +239,6 @@ class MetricsController
                 $identifierData['path']
             ),
             MetricCollectionTypeEnum::PackageCollection => $identifierData['name'],
-            default => 'unidentified',
         };
     }
 
@@ -434,7 +390,7 @@ class MetricsController
         $this->metricsContainer->get($identifierString)->get($key)?->addProblem($problem);
     }
 
-    public function setMetricTypeToMetricValue(MetricValue &$metricValue): void
+    public function setMetricTypeToMetricValue(MetricValue $metricValue): void
     {
         $metricType = $this->metricTypeMap[$metricValue->getMetricTypeKey()];
         $metricValue->setMetricType($metricType);
@@ -458,7 +414,7 @@ class MetricsController
         return $metrics;
     }
 
-    private function getMetricsByKeys(array $keys): \Generator
+    private function getMetricsByKeys(array $keys): Generator
     {
         foreach ($this->metricsContainer->getAll() as $key => $metrics) {
             if (!in_array($key, $keys)) {
