@@ -14,7 +14,7 @@ class ClassCouplingDataProvider implements ReportDataProviderInterface
 
     public function gatherData(): void
     {
-        $classes = $this->repository->getMetricCollectionsByCollectionKeys(
+        $classes = $this->metricsController->getMetricCollectionsByCollectionKeys(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             'classes'
@@ -24,11 +24,13 @@ class ClassCouplingDataProvider implements ReportDataProviderInterface
             return $class->get('realClass')->getValue() === true;
         });
 
-        $metrics = $this->repository->getMetricsByCollectionTypeAndVisibility(
+        $metrics = $this->metricsController->getMetricsByCollectionTypeAndVisibility(
             MetricCollectionTypeEnum::ClassCollection,
             MetricType::SHOW_COUPLING,
             false
         );
+
+//        $classes = $this->setDataFromMetricTypesAndArrayToArrayKey($classes, $metrics, 'listData');
 
         $templateData = [
             'classes' => $classes,

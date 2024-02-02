@@ -272,6 +272,15 @@ class MetricsController
         $this->metricsContainer->push($fileMetrics);
     }
 
+    public function getFunctionMetrics(mixed $namespacedName, string $path): FunctionMetricsCollection
+    {
+        return FunctionMetricsFactory::createFromMetricsByNameAndPath(
+            $this->metricsContainer,
+            $namespacedName,
+            $path
+        );
+    }
+
     public static function getIdentifier(MetricCollectionTypeEnum $metricsType, ?array $identifierData): string
     {
         return match ($metricsType) {

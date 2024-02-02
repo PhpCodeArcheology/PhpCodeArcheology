@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Report\DataProvider;
 
-use PhpCodeArch\Repository\RepositoryInterface;
+use PhpCodeArch\Metrics\Controller\MetricsController;
 
 interface ReportDataProviderInterface
 {
-    public function __construct(RepositoryInterface $repository);
+    public function __construct(MetricsController $metricsController);
 
     public function getTemplateData(): array;
 

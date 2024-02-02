@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Predictions;
 
-use PhpCodeArch\Repository\RepositoryInterface;
+use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\Model\MetricsContainer;
 
 interface PredictionInterface
 {
@@ -12,7 +13,7 @@ interface PredictionInterface
     const WARNING = 2;
     const ERROR = 3;
 
-    public function predict(RepositoryInterface $repository): int;
+    public function predict(MetricsController $metricsController): int;
 
     public function getLevel(): int;
 }

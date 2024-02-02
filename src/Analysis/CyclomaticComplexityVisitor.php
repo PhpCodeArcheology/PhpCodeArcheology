@@ -113,7 +113,7 @@ class CyclomaticComplexityVisitor implements NodeVisitor, VisitorInterface
             case $node instanceof Node\Stmt\Enum_:
                 $className = array_pop($this->currentClassName);
 
-                $this->repository->saveMetricValue(
+                $this->metricsController->setMetricValue(
                     MetricCollectionTypeEnum::ClassCollection,
                     [
                         'path' => $this->path,
@@ -128,7 +128,7 @@ class CyclomaticComplexityVisitor implements NodeVisitor, VisitorInterface
                 $className = end($this->currentClassName);
                 $methodName = array_pop($this->currentFunctionName);
 
-                $this->repository->saveMetricValue(
+                $this->metricsController->setMetricValue(
                     MetricCollectionTypeEnum::MethodCollection,
                     [
                         'path' => $className,
@@ -142,7 +142,7 @@ class CyclomaticComplexityVisitor implements NodeVisitor, VisitorInterface
             case $node instanceof Node\Stmt\Function_:
                 $functionName = array_pop($this->currentFunctionName);
 
-                $this->repository->saveMetricValue(
+                $this->metricsController->setMetricValue(
                     MetricCollectionTypeEnum::FunctionCollection,
                     [
                         'path' => $this->path,
@@ -187,7 +187,7 @@ class CyclomaticComplexityVisitor implements NodeVisitor, VisitorInterface
      */
     public function afterTraverse(array $nodes): void
     {
-        $this->repository->saveMetricValue(
+        $this->metricsController->setMetricValue(
             MetricCollectionTypeEnum::FileCollection,
             ['path' => $this->path],
             $this->fileCc,

@@ -126,7 +126,7 @@ class GlobalsVisitor implements NodeVisitor, VisitorInterface
             case $node instanceof Node\Stmt\Function_:
                 $functionName = array_pop($this->currentFunctionName);
 
-                $this->repository->saveMetricValues(
+                $this->metricsController->setMetricValues(
                     MetricCollectionTypeEnum::FunctionCollection,
                     [
                         'path' => $this->path,
@@ -144,7 +144,7 @@ class GlobalsVisitor implements NodeVisitor, VisitorInterface
                 $className = end($this->currentClassName);
                 $methodName = array_pop($this->currentMethodName);
 
-                $this->repository->saveMetricValues(
+                $this->metricsController->setMetricValues(
                     MetricCollectionTypeEnum::MethodCollection,
                     [
                         'path' => $className,
@@ -164,7 +164,7 @@ class GlobalsVisitor implements NodeVisitor, VisitorInterface
             case $node instanceof Node\Stmt\Enum_:
                 $className = array_pop($this->currentClassName);
 
-                $this->repository->saveMetricValues(
+                $this->metricsController->setMetricValues(
                     MetricCollectionTypeEnum::ClassCollection,
                     [
                         'path' => $this->path,
@@ -185,7 +185,7 @@ class GlobalsVisitor implements NodeVisitor, VisitorInterface
      */
     public function afterTraverse(array $nodes): void
     {
-        $this->repository->saveMetricValues(
+        $this->metricsController->setMetricValues(
             MetricCollectionTypeEnum::FileCollection,
             ['path' => $this->path],
             [

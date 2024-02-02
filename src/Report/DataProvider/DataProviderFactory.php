@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Report\DataProvider;
 
+use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
 use PhpCodeArch\Metrics\Model\MetricValue;
 use PhpCodeArch\Repository\RepositoryInterface;
@@ -13,9 +14,8 @@ class DataProviderFactory
     private array $data = [];
 
     public function __construct(
-        private readonly RepositoryInterface $repository)
+        private readonly MetricsController $metricsController)
     {
-        /** @noinspection PhpEmptyStatementInspection */
         foreach ($this->setMetricValues() as $_) {
             // Only runs the generator
         }
@@ -23,8 +23,7 @@ class DataProviderFactory
 
     private function setMetricValues(): \Generator
     {
-        foreach ($this->repository->getAllMetricCollections() as $metricCollection) {
-            /** @noinspection PhpEmptyStatementInspection */
+        foreach ($this->metricsController->getAllCollections() as $metricCollection) {
             foreach ($this->setMetricValuesInCollection($metricCollection) as $_) {
                 // Only runs the generator
             }
@@ -39,7 +38,7 @@ class DataProviderFactory
              * @var MetricValue $metricValue
              */
 
-            $this->repository->setMetricTypeToMetricValue($metricValue);
+            $this->metricsController->setMetricTypeToMetricValue($metricValue);
 
             yield;
         }
@@ -47,42 +46,42 @@ class DataProviderFactory
 
     public function getProjectDataProvider(): ProjectDataProvider
     {
-        return new ProjectDataProvider($this->repository);
+        return new ProjectDataProvider($this->metricsController);
     }
 
     public function getFilesDataProvider(): FilesDataProvider
     {
-        return new FilesDataProvider($this->repository);
+        return new FilesDataProvider($this->metricsController);
     }
 
     public function getClassDataProvider(): ClassDataProvider
     {
-        return new ClassDataProvider($this->repository);
+        return new ClassDataProvider($this->metricsController);
     }
 
     public function getPackagDataProvider(): PackagesDataProvider
     {
-        return new PackagesDataProvider($this->repository);
+        return new PackagesDataProvider($this->metricsController);
     }
 
     public function getClassCouplingDataProvider(): ClassCouplingDataProvider
     {
-        return new ClassCouplingDataProvider($this->repository);
+        return new ClassCouplingDataProvider($this->metricsController);
     }
 
     public function getClassesChartDataProvider(): ClassesChartDataProvider
     {
-        return new ClassesChartDataProvider($this->repository);
+        return new ClassesChartDataProvider($this->metricsController);
     }
 
     public function getFunctionDataProvider(): FunctionDataProvider
     {
-        return new FunctionDataProvider($this->repository);
+        return new FunctionDataProvider($this->metricsController);
     }
 
     public function getProblemDataProvider(): ProblemDataProvider
     {
-        return new ProblemDataProvider($this->repository);
+        return new ProblemDataProvider($this->metricsController);
     }
 
     private function predictProgrammingParadigm(): void

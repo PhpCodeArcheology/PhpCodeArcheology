@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Calculators;
 
-use PhpCodeArch\Repository\RepositoryInterface;
+use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\Model\MetricsContainer;
 
 trait CalculatorTrait
 {
@@ -14,7 +15,7 @@ trait CalculatorTrait
     private array $usedMetricTypes;
 
     public function __construct(
-        private readonly RepositoryInterface $repository)
+        private readonly MetricsController $metricsController)
     {
     }
 }

@@ -12,13 +12,13 @@ class FunctionDataProvider implements ReportDataProviderInterface
 
     public function gatherData(): void
     {
-        $functions = $this->repository->getMetricCollectionsByCollectionKeys(
+        $functions = $this->metricsController->getMetricCollectionsByCollectionKeys(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             'functions'
         );
 
-        $methods = $this->repository->getMetricCollectionsByCollectionKeys(
+        $methods = $this->metricsController->getMetricCollectionsByCollectionKeys(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             'methods'
@@ -30,14 +30,12 @@ class FunctionDataProvider implements ReportDataProviderInterface
         $functionsAndMethods = array_merge($functions, $methods);
 
         array_walk($functionsAndMethods, function($function, $key) use (&$parameters, &$dependencies) {
-            $parameterCollection = $this->repository->loadCollection(
-                null,
+            $parameterCollection = $this->metricsController->getCollectionByIdentifierString(
                 $key,
                 'parameters'
             )->getAsArray();
 
-            $dependencyCollection = $this->repository->loadCollection(
-                null,
+            $dependencyCollection = $this->metricsController->getCollectionByIdentifierString(
                 $key,
                 'dependencies'
             )?->getAsArray();
@@ -47,19 +45,19 @@ class FunctionDataProvider implements ReportDataProviderInterface
             $dependencies[$key] = $dependencyCollection;
         });
 
-        $listMetrics = $this->repository->getListMetricsByCollectionType(
+        $listMetrics = $this->metricsController->getListMetricsByCollectionType(
             MetricCollectionTypeEnum::FunctionCollection
         );
 
-        $detailMetrics = $this->repository->getDetailMetricsByCollectionType(
+        $detailMetrics = $this->metricsController->getDetailMetricsByCollectionType(
             MetricCollectionTypeEnum::FunctionCollection
         );
 
-        $methodListMetrics = $this->repository->getListMetricsByCollectionType(
+        $methodListMetrics = $this->metricsController->getListMetricsByCollectionType(
             MetricCollectionTypeEnum::MethodCollection
         );
 
-        $methodDetailMetrics = $this->repository->getDetailMetricsByCollectionType(
+        $methodDetailMetrics = $this->metricsController->getDetailMetricsByCollectionType(
             MetricCollectionTypeEnum::MethodCollection
         );
 

@@ -4,29 +4,26 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Predictions;
 
-use PhpCodeArch\Predictions\Problems\ProblemInterface;
-use PhpCodeArch\Repository\RepositoryInterface;
+use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Predictions\Problems\TooComplexProblem;
 
 trait PredictionTrait
 {
-    private function createProblem(string $identifierString, string|array $keys, string $problemClass, int $level, string $message, RepositoryInterface $repository): void
+    private function createProblem(string $identifierString, string|array $keys, string $problemClass, int $level, string $message, MetricsController $metricsController): void
     {
         if (is_string($keys)) {
             $keys = [$keys];
         }
 
         foreach ($keys as $key) {
-            /**
-             * @var ProblemInterface $problemClass
-             */
-            $problem = $problemClass::ofProblemLevelAndMessage(
+            $problem = TooComplexProblem::ofProblemLevelAndMessage(
                 problemLevel: $level,
                 message: $message
             );
 
-            $repository->saveProblem(
-                identifier: $identifierString,
-                problemKey: $key,
+            $metricsController->setProblemByIdentifierString(
+                identifierString: $identifierString,
+                key: $key,
                 problem: $problem
             );
         }

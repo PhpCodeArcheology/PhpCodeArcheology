@@ -2,7 +2,7 @@
 
 namespace PhpCodeArch\Analysis;
 
-use PhpCodeArch\Repository\RepositoryInterface;
+use PhpCodeArch\Metrics\Controller\MetricsController;
 
 trait VisitorTrait
 {
@@ -10,9 +10,9 @@ trait VisitorTrait
 
     public function __construct(
         /**
-         * @var RepositoryInterface $repository
+         * @var MetricsController $metricsController
          */
-        private readonly RepositoryInterface $repository,
+        private readonly MetricsController $metricsController,
     )
     {
         if (method_exists($this, 'init')) {

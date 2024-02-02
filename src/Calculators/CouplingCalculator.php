@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PhpCodeArch\Calculators;
 
 use PhpCodeArch\Calculators\Helpers\PackageInstabilityAbstractnessCalculator;
+use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\Collections\ClassNameCollection;
@@ -14,7 +15,6 @@ use PhpCodeArch\Metrics\Model\Collections\TraitNameCollection;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
 use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
 use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
-use PhpCodeArch\Repository\RepositoryInterface;
 
 class CouplingCalculator implements CalculatorInterface
 {
@@ -41,7 +41,7 @@ class CouplingCalculator implements CalculatorInterface
     private array $concreteClasses = [];
 
     public function __construct(
-        private readonly RepositoryInterface $repository,
+        private readonly MetricsController $metricsController,
         private readonly PackageInstabilityAbstractnessCalculator $packageCalculator)
     {
     }
@@ -56,7 +56,7 @@ class CouplingCalculator implements CalculatorInterface
         ];
 
         foreach ($collections as $collectionKey) {
-            $this->$collectionKey = $this->repository->loadCollection(
+            $this->$collectionKey = $this->metricsController->getCollection(
                 MetricCollectionTypeEnum::ProjectCollection,
                 null,
                 $collectionKey
@@ -91,8 +91,7 @@ class CouplingCalculator implements CalculatorInterface
             return;
         }
 
-        $this->repository->saveMetricValues(
-            null,
+        $this->metricsController->setMetricValuesByIdentifierString(
             $identifierString,
             $metricValues
         );
@@ -103,8 +102,7 @@ class CouplingCalculator implements CalculatorInterface
         $this->packageCalculator->afterTraverse();
 
         foreach ($this->classes as $classId => $className) {
-            $metricValues = $this->repository->loadMetricValues(
-                null,
+            $metricValues = $this->metricsController->getMetricValuesByIdentifierString(
                 $classId,
                 [
                     'usesCount',
@@ -122,11 +120,10 @@ class CouplingCalculator implements CalculatorInterface
              */
             $instability = ($usesForInstabilityCount + $usedByCount) > 0 ? $usesForInstabilityCount / ($usesForInstabilityCount + $usedByCount) : 0;
 
-            $this->repository->saveMetricValue(
-                null,
+            $this->metricsController->setMetricValueByIdentifierString(
                 $classId,
-                $instability,
-                'instability'
+                'instability',
+                $instability
             );
 
             $this->usesCount += $usesCount;
@@ -149,7 +146,7 @@ class CouplingCalculator implements CalculatorInterface
         $overallAbstractness = $abstractClassesCount / ($abstractClassesCount + $concreteClassesCount);
         $overallDistanceFromMainline = $overallAbstractness + $avgInstability - 1;
 
-        $this->repository->saveMetricValues(
+        $this->metricsController->setMetricValues(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             [
@@ -164,8 +161,7 @@ class CouplingCalculator implements CalculatorInterface
 
     private function handeClass(string $identifierString, string $className): array
     {
-        $metricValues = $this->repository->loadMetricValues(
-            null,
+        $metricValues = $this->metricsController->getMetricValuesByIdentifierString(
             $identifierString,
             [
                 'uses',
@@ -190,8 +186,7 @@ class CouplingCalculator implements CalculatorInterface
 
         [$this->abstractClasses, $this->concreteClasses] = $this->packageCalculator->handlePackage($identifierString, $className);
 
-        $dependencyCollection = $this->repository->loadCollection(
-            null,
+        $dependencyCollection = $this->metricsController->getCollectionByIdentifierString(
             $identifierString,
             'dependencies'
         );
@@ -232,8 +227,7 @@ class CouplingCalculator implements CalculatorInterface
 
             $this->packageCalculator->handleDependency($dependency, $classIdentifierString, $isTrait);
 
-            $usedByMetricValues = $this->repository->loadMetricValues(
-                null,
+            $usedByMetricValues = $this->metricsController->getMetricValuesByIdentifierString(
                 $classIdentifierString,
                 [
                     'usedBy',
@@ -247,8 +241,7 @@ class CouplingCalculator implements CalculatorInterface
             $classUsedBy[] = $className;
             ++ $classUsedByCount;
 
-            $this->repository->saveMetricValues(
-                null,
+            $this->metricsController->setMetricValuesByIdentifierString(
                 $classIdentifierString,
                 [
                     'usedBy' => $classUsedBy,
@@ -272,20 +265,17 @@ class CouplingCalculator implements CalculatorInterface
 
     private function handleMetric(string $identifierString, string $usedByKey, string $usedByCountKey, string $name): ?array
     {
-        $usedBy = $this->repository->loadMetricValue(
-            null,
+        $usedBy = $this->metricsController->getMetricValueByIdentifierString(
             $identifierString,
             $usedByKey
         );
 
-        $usedByCount = $this->repository->loadMetricValue(
-            null,
+        $usedByCount = $this->metricsController->getMetricValueByIdentifierString(
             $identifierString,
             $usedByCountKey
         );
 
-        $dependencyCollection = $this->repository->loadCollection(
-            null,
+        $dependencyCollection = $this->metricsController->getCollectionByIdentifierString(
             $identifierString,
             'dependencies'
         ) ?? [];

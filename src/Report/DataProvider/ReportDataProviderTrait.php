@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace PhpCodeArch\Report\DataProvider;
 
 use PhpCodeArch\Application\Application;
-use PhpCodeArch\Repository\RepositoryInterface;
+use PhpCodeArch\Metrics\Controller\MetricsController;
 
 trait ReportDataProviderTrait
 {
     private array $templateData = [];
     public function __construct(
-        private readonly RepositoryInterface $repository)
+        private readonly MetricsController $metricsController)
     {
         $this->templateData['createDate'] = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
         $this->templateData['version'] = Application::VERSION;

@@ -17,25 +17,25 @@ class VariablesCalculator implements CalculatorInterface
 
     public function afterTraverse(): void
     {
-        $classes = $this->repository->loadCollection(
+        $classes = $this->metricsController->getCollection(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             'classes'
         )->getAsArray();
 
-        $files = $this->repository->loadCollection(
+        $files = $this->metricsController->getCollection(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             'files'
         )->getAsArray();
 
-        $functions = $this->repository->loadCollection(
+        $functions = $this->metricsController->getCollection(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             'functions'
         )->getAsArray();
 
-        $methods = $this->repository->loadCollection(
+        $methods = $this->metricsController->getCollection(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             'methods'
@@ -44,7 +44,7 @@ class VariablesCalculator implements CalculatorInterface
         $elements = array_merge($classes, $files, $functions, $methods);
 
         foreach ($elements as $elementId => $elementName) {
-            $classMetricCollection = $this->repository->getMetricCollection(null, $elementId);
+            $classMetricCollection = $this->metricsController->getMetricCollectionByIdentifierString($elementId);
 
             $superglobals = $classMetricCollection->get('superglobals')?->getValue() ?? [];
             $variables = $classMetricCollection->get('variables')?->getValue() ?? [];
@@ -76,7 +76,7 @@ class VariablesCalculator implements CalculatorInterface
                     )
                     : 0;
 
-            $this->repository->saveMetricValues(null, $elementId, $metricValues);
+            $this->metricsController->setMetricValuesByIdentifierString($elementId, $metricValues);
         }
     }
 }

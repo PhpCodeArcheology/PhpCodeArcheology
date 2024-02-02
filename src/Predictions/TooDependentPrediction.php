@@ -8,16 +8,15 @@ use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
 use PhpCodeArch\Predictions\Problems\TooDependentProblem;
-use PhpCodeArch\Repository\RepositoryInterface;
 
 class TooDependentPrediction implements PredictionInterface
 {
 
-    public function predict(RepositoryInterface $repository): int
+    public function predict(MetricsController $metricsController): int
     {
         $problemCount = 0;
 
-        foreach ($repository->getAllMetricCollections() as $metric) {
+        foreach ($metricsController->getAllCollections() as $metric) {
             switch (true) {
                 case $metric instanceof ClassMetricsCollection:
                 case $metric instanceof FunctionMetricsCollection:
@@ -25,11 +24,10 @@ class TooDependentPrediction implements PredictionInterface
 
                     $tooDependent = ($metric->get('usesCount')?->getValue() ?? 0) > $maxDependency;
 
-                    $repository->saveMetricValue(
-                        null,
+                    $metricsController->setMetricValueByIdentifierString(
                         (string) $metric->getIdentifier(),
-                        $tooDependent,
-                        'predictionTooDependent'
+                        'predictionTooDependent',
+                        $tooDependent
                     );
 
                     if (!$tooDependent) {
@@ -41,10 +39,10 @@ class TooDependentPrediction implements PredictionInterface
                         message: 'The element maybe is too dependent, exceeding ' . $maxDependency . ' dependencies.'
                     );
 
-                    $repository->saveProblem(
-                        (string) $metric->getIdentifier(),
-                        'uses',
-                        $problem
+                    $metricsController->setProblemByIdentifierString(
+                        identifierString: (string) $metric->getIdentifier(),
+                        key: 'uses',
+                        problem: $problem
                     );
 
                     ++ $problemCount;

@@ -63,7 +63,7 @@ class MaintainabilityIndexVisitor implements NodeVisitor, VisitorInterface
             case $node instanceof Node\Stmt\Function_:
                 $functionName = array_pop($this->currentFunctionName);
 
-                $functionMetricCollection = $this->repository->getMetricCollection(
+                $functionMetricCollection = $this->metricsController->getMetricCollection(
                     MetricCollectionTypeEnum::FunctionCollection,
                     [
                         'path' => $this->path,
@@ -71,7 +71,7 @@ class MaintainabilityIndexVisitor implements NodeVisitor, VisitorInterface
                     ]
                 );
 
-                $this->repository->saveMetricValues(
+                $this->metricsController->setMetricValues(
                     MetricCollectionTypeEnum::FunctionCollection,
                     [
                         'path' => $this->path,
@@ -85,7 +85,7 @@ class MaintainabilityIndexVisitor implements NodeVisitor, VisitorInterface
                 $className = end($this->currentClassName);
                 $methodName = array_pop($this->currentFunctionName);
 
-                $methodMetricCollection = $this->repository->getMetricCollection(
+                $methodMetricCollection = $this->metricsController->getMetricCollection(
                     MetricCollectionTypeEnum::MethodCollection,
                     [
                         'path' => $className,
@@ -93,7 +93,7 @@ class MaintainabilityIndexVisitor implements NodeVisitor, VisitorInterface
                     ]
                 );
 
-                $this->repository->saveMetricValues(
+                $this->metricsController->setMetricValues(
                     MetricCollectionTypeEnum::MethodCollection,
                     [
                         'path' => $className,
@@ -110,7 +110,7 @@ class MaintainabilityIndexVisitor implements NodeVisitor, VisitorInterface
             case $node instanceof Node\Stmt\Enum_:
                 $className = array_pop($this->currentClassName);
 
-                $classMetricCollection = $this->repository->getMetricCollection(
+                $classMetricCollection = $this->metricsController->getMetricCollection(
                     MetricCollectionTypeEnum::ClassCollection,
                     [
                         'path' => $this->path,
@@ -118,7 +118,7 @@ class MaintainabilityIndexVisitor implements NodeVisitor, VisitorInterface
                     ]
                 );
 
-                $this->repository->saveMetricValues(
+                $this->metricsController->setMetricValues(
                     MetricCollectionTypeEnum::ClassCollection,
                     [
                         'path' => $this->path,
@@ -136,14 +136,14 @@ class MaintainabilityIndexVisitor implements NodeVisitor, VisitorInterface
      */
     public function afterTraverse(array $nodes): void
     {
-        $fileMetricCollection = $this->repository->getMetricCollection(
+        $fileMetricCollection = $this->metricsController->getMetricCollection(
             MetricCollectionTypeEnum::FileCollection,
             [
                 'path' => $this->path,
             ]
         );
 
-        $this->repository->saveMetricValues(
+        $this->metricsController->setMetricValues(
             MetricCollectionTypeEnum::FileCollection,
             [
                 'path' => $this->path,

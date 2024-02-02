@@ -12,19 +12,19 @@ class FilesDataProvider implements ReportDataProviderInterface
 
     public function gatherData(): void
     {
-        $files = $this->repository->getMetricCollectionsByCollectionKeys(
+        $files = $this->metricsController->getMetricCollectionsByCollectionKeys(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             'files'
         );
 
-        $classes = $this->repository->getMetricCollectionsByCollectionKeys(
+        $classes = $this->metricsController->getMetricCollectionsByCollectionKeys(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             'classes'
         );
 
-        $functions = $this->repository->getMetricCollectionsByCollectionKeys(
+        $functions = $this->metricsController->getMetricCollectionsByCollectionKeys(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             'functions'
@@ -33,16 +33,14 @@ class FilesDataProvider implements ReportDataProviderInterface
         $fileClasses = [];
         $fileFunctions = [];
         foreach ($files as $fileKey => $_) {
-            $classKeyNamePairs = $this->repository->loadCollection(
-                null,
+            $classKeyNamePairs = $this->metricsController->getCollectionByIdentifierString(
                 $fileKey,
                 'classes'
             )?->getAsArray() ?? [];
 
             $fileClasses[$fileKey] = array_intersect_key($classes, $classKeyNamePairs);
 
-            $functionKeyNamePairs = $this->repository->loadCollection(
-                null,
+            $functionKeyNamePairs = $this->metricsController->getCollectionByIdentifierString(
                 $fileKey,
                 'functions'
             )?->getAsArray() ?? [];
@@ -50,19 +48,19 @@ class FilesDataProvider implements ReportDataProviderInterface
             $fileFunctions[$fileKey] = array_intersect_key($functions, $functionKeyNamePairs);
         }
 
-        $listMetrics = $this->repository->getListMetricsByCollectionType(
+        $listMetrics = $this->metricsController->getListMetricsByCollectionType(
             MetricCollectionTypeEnum::FileCollection
         );
 
-        $detailMetrics = $this->repository->getDetailMetricsByCollectionType(
+        $detailMetrics = $this->metricsController->getDetailMetricsByCollectionType(
             MetricCollectionTypeEnum::FileCollection
         );
 
-        $classListMetrics = $this->repository->getListMetricsByCollectionType(
+        $classListMetrics = $this->metricsController->getListMetricsByCollectionType(
             MetricCollectionTypeEnum::ClassCollection
         );
 
-        $functionListMetrics = $this->repository->getListMetricsByCollectionType(
+        $functionListMetrics = $this->metricsController->getListMetricsByCollectionType(
             MetricCollectionTypeEnum::FunctionCollection
         );
 

@@ -78,7 +78,7 @@ class LcomVisitor implements NodeVisitor, VisitorInterface
                     $lcom += $this->traverseNodes($graphNode);
                 }
 
-                $this->repository->saveMetricValue(
+                $this->metricsController->setMetricValue(
                     MetricCollectionTypeEnum::ClassCollection,
                     [
                         'path' => $this->path,

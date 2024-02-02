@@ -28,11 +28,12 @@
         <td class="border border-slate-500 text-left px-2 py-0.5 filter-name" data-filter="{{ class.get('singleName') }}" data-sort="{{ class.get('singleName') }}">
           <div class="flex gap-4 justify-between items-start">
             <a href="{% if isSubdir %}../{% endif %}classes/{{ class.getIdentifier }}.html" class="group block flex-1">
-              {% if class.anonymous.getValue() %}
+              {% if class.get('anonymous').getValue() %}
                 <span class="text-white/40 group-hover:text-white">{{ class.get('filePath') }}</span><br>
                 <span class="font-semibold inline-block group-hover:text-cyan-400" title="{{ class.getName() }}">{{ class.getName() }}</span>
               {% else %}
-                {% if class.get('namespace') %}<span class="text-white/40 group-hover:text-white">{{ class.get('namespace') }}</span><br>{% endif %}
+                {% if class.get('namespace').getValue() %}<span class="text-white/40 group-hover:text-white">{{ class.get('namespace') }}</span><br>{% endif %}
+                {% if not class.get('namespace').getValue() %}<span class="text-white/40 group-hover:text-white">{{ class.getPath() }}</span><br>{% endif %}
                 <span class="font-semibold inline-block group-hover:text-cyan-400" title="{{ class.getName() }}">{{ class.get('singleName') }}</span>
               {% endif %}
             </a>

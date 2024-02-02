@@ -7,7 +7,6 @@ namespace PhpCodeArch\Calculators;
 use PhpCodeArch\Application\CliOutput;
 use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\Model\MetricsContainer;
-use PhpCodeArch\Repository\RepositoryInterface;
 
 readonly class CalculatorService
 {
@@ -17,9 +16,9 @@ readonly class CalculatorService
          */
         private array             $calculators,
         /**
-         * @var RepositoryInterface
+         * @var MetricsContainer
          */
-        private RepositoryInterface $repository,
+        private MetricsController $metricsController,
         private CliOutput         $output)
     {
     }
@@ -30,9 +29,9 @@ readonly class CalculatorService
 
         $count = 0;
 
-        $metricsCollectionCount = count($this->repository->getAllMetricCollections());
+        $metricsCollectionCount = $this->metricsController->getContainerCount();
 
-        foreach ($this->repository->getAllMetricCollections() as $metric) {
+        foreach ($this->metricsController->getAllCollections() as $metric) {
             $this->output->cls();
             $this->output->outWithMemory(
                 "Running calculator on metric \033[34m" .

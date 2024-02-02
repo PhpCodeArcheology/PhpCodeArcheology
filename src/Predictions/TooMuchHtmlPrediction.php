@@ -8,16 +8,15 @@ use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
 use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
-use PhpCodeArch\Repository\RepositoryInterface;
 
 class TooMuchHtmlPrediction implements PredictionInterface
 {
 
-    public function predict(RepositoryInterface $repository): int
+    public function predict(MetricsController $metricsController): int
     {
         $problemCount = 0;
 
-        foreach ($repository->getAllMetricCollections() as $metric) {
+        foreach ($metricsController->getAllCollections() as $metric) {
             switch (true) {
                 case $metric instanceof FileMetricsCollection:
                 case $metric instanceof ClassMetricsCollection:
@@ -45,8 +44,7 @@ class TooMuchHtmlPrediction implements PredictionInterface
                      */
                     $viewOrDefect = $tooMuchHtml && $tooMuchOutput;
 
-                    $repository->saveMetricValues(
-                        null,
+                    $metricsController->setMetricValuesByIdentifierString(
                         (string) $metric->getIdentifier(),
                         [
                             'predictionTooMuchHtml' => $tooMuchHtml,
