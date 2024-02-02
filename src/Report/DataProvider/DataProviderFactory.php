@@ -7,7 +7,6 @@ namespace PhpCodeArch\Report\DataProvider;
 use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
 use PhpCodeArch\Metrics\Model\MetricValue;
-use PhpCodeArch\Repository\RepositoryInterface;
 
 class DataProviderFactory
 {

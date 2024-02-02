@@ -27,8 +27,6 @@ use PhpCodeArch\Predictions\TooMuchHtmlPrediction;
 use PhpCodeArch\Report\DataProvider\DataProviderFactory;
 use PhpCodeArch\Report\ReportFactory;
 use PhpCodeArch\Report\ReportTypeNotSupported;
-use PhpCodeArch\Repository\MemoryRepository;
-use PhpCodeArch\Repository\RepositoryInterface;
 use PhpParser\NodeTraverser;
 use PhpParser\ParserFactory;
 use Twig\Environment;
@@ -37,7 +35,7 @@ use Twig\Loader\FilesystemLoader;
 
 final readonly class Application
 {
-    const string VERSION = '0.3.0';
+    const VERSION = '0.3.0';
 
     /**
      * @throws ConfigFileExtensionNotSupportedException
@@ -152,7 +150,7 @@ final readonly class Application
     }
 
     /**
-     * @param RepositoryInterface $repository
+     * @param MetricsController $metricsController
      * @param CliOutput $output
      * @return void
      */
@@ -172,7 +170,7 @@ final readonly class Application
     }
 
     /**
-     * @param RepositoryInterface $repository
+     * @param MetricsController $metricsController
      * @param CliOutput $output
      * @return array
      */
@@ -191,7 +189,7 @@ final readonly class Application
     }
 
     /**
-     * @param RepositoryInterface $repository
+     * @param MetricsController $metricsController
      * @param array $problems
      * @return void
      */
