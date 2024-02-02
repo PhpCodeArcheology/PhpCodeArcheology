@@ -88,6 +88,9 @@ class ProjectCalculator implements CalculatorInterface
                 break;
 
             case $metrics instanceof FunctionMetricsCollection:
+                if ($metrics->get('functionType')->getValue() === 'method') {
+                    break;
+                }
                 $this->data['overallMostComplexFunction'][$metrics->getName()] = $cc;
                 $this->maxCCFunction = max($this->maxCCFunction, $cc);
                 $this->sumCCFunction += $cc;
