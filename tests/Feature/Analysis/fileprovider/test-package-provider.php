@@ -20,10 +20,10 @@ return [
                 __DIR__ . '/../testfiles/package-test-6.php' => 'TestFile\SubPackage1',
             ],
             'foundPackages' => [
-                '_global',
-                'TestFile',
-                'TestFile\SubPackage1',
-                'TestFile\SubPackage2',
+                '_global' => '_global',
+                'TestFile' => 'TestFile',
+                'TestFile\SubPackage1' => 'TestFile\SubPackage1',
+                'TestFile\SubPackage2' => 'TestFile\SubPackage2',
             ],
             'packageMetrics' => [
                 '_global' => [

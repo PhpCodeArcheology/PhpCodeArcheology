@@ -14,11 +14,9 @@ use PhpCodeArch\Metrics\Model\Collections\InterfaceNameCollection;
 use PhpCodeArch\Metrics\Model\Collections\PackageNameCollection;
 use PhpCodeArch\Metrics\Model\Collections\TraitNameCollection;
 use PhpCodeArch\Metrics\Model\MetricsContainer;
-use PhpCodeArch\Metrics\Model\MetricType;
 use PhpCodeArch\Metrics\Model\MetricValue;
 
 beforeEach(function() {
-    return;
     $metrics = new MetricsContainer();
 
     $this->metricsController = new MetricsController($metrics);
@@ -35,6 +33,7 @@ beforeEach(function() {
             'data' => [
                 'realClass' => true,
                 'abstract' => false,
+                'interface' => false,
                 'dependencies' => [
                     'ClassB',
                     'ClassC',
@@ -55,6 +54,7 @@ beforeEach(function() {
             'data' => [
                 'realClass' => true,
                 'abstract' => false,
+                'interface' => false,
                 'dependencies' => [
                 ],
                 'interfaces' => [],
@@ -73,6 +73,7 @@ beforeEach(function() {
             'data' => [
                 'realClass' => true,
                 'abstract' => false,
+                'interface' => false,
                 'dependencies' => [
                     'ClassB',
                 ],
@@ -92,6 +93,7 @@ beforeEach(function() {
             'data' => [
                 'realClass' => true,
                 'abstract' => false,
+                'interface' => false,
                 'dependencies' => [
                     'TraitA',
                 ],
@@ -111,6 +113,7 @@ beforeEach(function() {
             'data' => [
                 'realClass' => false,
                 'abstract' => false,
+                'interface' => false,
                 'dependencies' => [
                 ],
                 'interfaces' => [],
@@ -217,7 +220,7 @@ it('calculates dependency counts correctly', function() {
         expect($classMetrics->get('usesInProjectCount')->getValue())->toBe($class['expected']['usesInProjectCount'])
             ->and($classMetrics->get('usedByCount')->getValue())->toBe($class['expected']['usedByCount']);
     });
-})->skip();
+});
 
 
 it('calculates instability correctly', function() {
@@ -226,4 +229,4 @@ it('calculates instability correctly', function() {
 
         expect($classMetrics->get('instability')->getValue())->toBe($class['expected']['instability']);
     });
-})->skip();
+});
