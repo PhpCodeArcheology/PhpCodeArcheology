@@ -62,6 +62,7 @@
       <excludeFolder url="file://$MODULE_DIR$/examples" />
       <excludeFolder url="file://$MODULE_DIR$/node_modules" />
       <excludeFolder url="file://$MODULE_DIR$/tmp" />
+      <excludeFolder url="file://$MODULE_DIR$/tests/Feature/Analysis/fileprovider" />
       <excludeFolder url="file://$MODULE_DIR$/tests/Feature/Analysis/testfiles" />
     </content>
     <orderEntry type="inheritedJdk" />
