@@ -41,6 +41,7 @@
         <td class="border border-slate-500 text-left px-2 py-0.5 filter-name" data-filter="{{ function.getName() }}" data-sort="{{ function.getName() }}">
           <a href="{% if isSubdir %}../{% endif %}{{ folder }}/{{ function.getIdentifier }}.html" class="group block">
             {% if function.get('namespace') %}<span class="text-white/40 group-hover:text-white">{{ function.get('namespace') }}</span><br>{% endif %}
+            {% if not function.get('namespace').getValue() %}<span class="text-white/40 group-hover:text-white">{% set pathToReplace = { (commonPath): '' } %}{{ function.getPath()|replace(pathToReplace) }}</span><br>{% endif %}
             {% if scope %}<span class="text-white/40 group-hover:text-white">{{ scope }}</span><br>{% endif %}
             <span class="font-semibold inline-block group-hover:text-cyan-400" title="{{ function.getName() }}">{% if function.get('singleName') %}{{ function.get('singleName') }}{% else %}{{ function.getName() }}{% endif %}</span>
           </a>

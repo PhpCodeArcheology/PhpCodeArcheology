@@ -6,6 +6,7 @@ namespace PhpCodeArch\Report\DataProvider;
 
 use PhpCodeArch\Application\Application;
 use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 
 trait ReportDataProviderTrait
 {
@@ -15,6 +16,11 @@ trait ReportDataProviderTrait
     {
         $this->templateData['createDate'] = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
         $this->templateData['version'] = Application::VERSION;
+        $this->templateData['commonPath'] = $this->metricsController->getMetricValue(
+            MetricCollectionTypeEnum::ProjectCollection,
+            null,
+            'commonPath'
+        )->getValue();
         $this->gatherData();
     }
 

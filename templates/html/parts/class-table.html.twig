@@ -33,7 +33,7 @@
                 <span class="font-semibold inline-block group-hover:text-cyan-400" title="{{ class.getName() }}">{{ class.getName() }}</span>
               {% else %}
                 {% if class.get('namespace').getValue() %}<span class="text-white/40 group-hover:text-white">{{ class.get('namespace') }}</span><br>{% endif %}
-                {% if not class.get('namespace').getValue() %}<span class="text-white/40 group-hover:text-white">{{ class.getPath() }}</span><br>{% endif %}
+                {% if not class.get('namespace').getValue() %}<span class="text-white/40 group-hover:text-white">{% set pathToReplace = { (commonPath): '' } %}{{ class.getPath()|replace(pathToReplace) }}</span><br>{% endif %}
                 <span class="font-semibold inline-block group-hover:text-cyan-400" title="{{ class.getName() }}">{{ class.get('singleName') }}</span>
               {% endif %}
             </a>
