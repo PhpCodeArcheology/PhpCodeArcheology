@@ -37,17 +37,21 @@
       {% set value = element.getValue()|split(': ') %}
       <span class="flex gap-3 items-center">
         <span>{{ value[1] }}</span>
+        {% if historyDir is not empty %}
         <span class="flex items-center p-1 rounded-md {{ historyColor }}">
           {{ historyDir|raw }}
         </span>
+        {% endif %}
       </span>
       <span class="text-xs font-normal block mt-1">{{ value[0] }}</span>
     {% else %}
       <span class="flex gap-3 items-center">
         <span>{{ element }}</span>
+        {% if historyDir is not empty %}
         <span class="flex items-center p-1 rounded-md {{ historyColor }}">
           {{ historyDir|raw }}
         </span>
+        {% endif %}
       </span>
     {% endif %}
   </div>

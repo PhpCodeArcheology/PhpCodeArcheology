@@ -46,6 +46,8 @@ final readonly class Application
      */
     public function run(array $argv): void
     {
+        ini_set('memory_limit', '512M');
+
         $config = $this->createConfig($argv);
         $fileList = $this->createFileList($config);
 

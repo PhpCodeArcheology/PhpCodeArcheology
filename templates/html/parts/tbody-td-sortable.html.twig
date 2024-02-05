@@ -40,8 +40,10 @@
       title="{% if data.getMaxProblemLevel() > 0 %}{{ data.getProblemMessages()|join(' ') }}{% endif %}">
       {{ data }}
     </span>
+    {% if historyDir is not empty %}
     <span class="flex items-center p-1 rounded-md {{ historyColor }}">
       {{ historyDir|raw }}
     </span>
+    {% endif %}
   </span>
 </td>
