@@ -30,6 +30,7 @@
     </thead>
     <tbody>
     {% for function in functions %}
+      {% set metricCollectionId = function.getIdentifier().__toString() %}
       {% if function.get('functionType').getValue() == 'method' %}
         {% set scope %}
           {% if function.get('public').getValue() %}public{% elseif function.get('protected').getValue() %}protected{% else %}private{% endif %}

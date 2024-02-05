@@ -1,4 +1,5 @@
 {% include('@Parts/header.html.twig') %}
+{% set metricCollectionId = function.getIdentifier().__toString() %}
 
 {% set isMethod = function.get('functionType').getValue() == 'method' %}
 {% set breadCrumbLi = '' %}

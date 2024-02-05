@@ -9,6 +9,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -20,6 +21,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -31,6 +33,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -42,6 +45,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -53,6 +57,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -64,6 +69,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -75,6 +81,7 @@ return [
         'shortName' => 'Methods',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -86,6 +93,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -97,6 +105,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -108,6 +117,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -119,6 +129,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -130,6 +141,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -141,6 +153,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -152,6 +165,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -163,6 +177,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -174,6 +189,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -185,6 +201,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -196,6 +213,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_HIGH,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -207,6 +225,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_STRING,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -218,6 +237,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_STRING,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -229,6 +249,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_STRING,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -240,6 +261,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_STRING,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -251,6 +273,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_FLOAT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -262,6 +285,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_FLOAT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -273,6 +297,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_FLOAT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -284,6 +309,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_FLOAT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -295,6 +321,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_FLOAT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -306,6 +333,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_FLOAT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -317,6 +345,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_FLOAT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -328,6 +357,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -339,6 +369,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -350,6 +381,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -361,6 +393,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -372,6 +405,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_FLOAT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -383,6 +417,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_FLOAT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_HIGH,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -394,6 +429,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_FLOAT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_HIGH,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -405,6 +441,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_FLOAT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -416,6 +453,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_FLOAT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -427,6 +465,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_FLOAT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -438,6 +477,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_FLOAT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -449,6 +489,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_FLOAT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -460,6 +501,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -471,6 +513,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -482,6 +525,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -494,6 +538,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_STRING,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -505,6 +550,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_STRING,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -516,6 +562,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_STRING,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -527,6 +574,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_STRING,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -538,6 +586,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_STRING,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -549,6 +598,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_STRING,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
@@ -560,6 +610,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_STRING,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
@@ -574,6 +625,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_STRING,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
@@ -588,6 +640,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_STRING,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
@@ -601,6 +654,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_STRING,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_IN_DETAILS,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
@@ -614,6 +668,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_ARRAY,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_IN_DETAILS,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::MethodCollection,
@@ -625,6 +680,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_BOOL,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
@@ -636,6 +692,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_BOOL,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
@@ -647,6 +704,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_BOOL,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
@@ -658,6 +716,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_BOOL,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
@@ -669,6 +728,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_BOOL,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
@@ -680,6 +740,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_BOOL,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
@@ -691,6 +752,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_BOOL,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
@@ -702,6 +764,7 @@ return [
         'shortName' => 'Constants',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
@@ -713,6 +776,7 @@ return [
         'shortName' => 'Properties',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
@@ -724,6 +788,7 @@ return [
         'shortName' => 'Methods',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
@@ -735,6 +800,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_IN_DETAILS,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
@@ -746,6 +812,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_IN_DETAILS,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
@@ -757,6 +824,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_IN_DETAILS,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
@@ -769,6 +837,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_BOOL,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::MethodCollection,
@@ -780,6 +849,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_BOOL,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::MethodCollection,
@@ -791,6 +861,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_BOOL,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::MethodCollection,
@@ -802,6 +873,7 @@ return [
         'shortName' => '',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_BOOL,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::MethodCollection,
@@ -815,6 +887,7 @@ return [
         'shortName' => 'LOC',
         'description' => 'Lines of code as is, with comments and empty lines.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_IN_DETAILS,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
@@ -829,6 +902,7 @@ return [
         'shortName' => 'LLOC',
         'description' => 'Lines of code without comments and empty lines.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
@@ -843,6 +917,7 @@ return [
         'shortName' => 'CLOC',
         'description' => 'Lines of code with comments only.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_HIGH,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_IN_DETAILS,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
@@ -857,6 +932,7 @@ return [
         'shortName' => 'HTML LOC',
         'description' => 'Lines of code with comments only.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_IN_DETAILS,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
@@ -871,6 +947,7 @@ return [
         'shortName' => 'OC',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
@@ -885,6 +962,7 @@ return [
         'shortName' => 'Lloc outside',
         'description' => 'Lines of code outside of functions and classes.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_IN_DETAILS,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
@@ -896,6 +974,7 @@ return [
         'shortName' => 'CC',
         'description' => 'McCabe cyclomatic complexity.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'problemData' => [
             [
@@ -916,6 +995,7 @@ return [
         'shortName' => 'Avg.CC/method',
         'description' => 'Average McCabe cyclomatic complexity of methods.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_FLOAT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'problemData' => [
             [
@@ -935,6 +1015,7 @@ return [
         'shortName' => 'Voc',
         'description' => 'Code vocabulary.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_IN_DETAILS,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
@@ -950,6 +1031,7 @@ return [
         'shortName' => 'Len',
         'description' => 'Code length.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_IN_DETAILS,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
@@ -963,6 +1045,7 @@ return [
         'name' => 'Calculated length',
         'shortName' => 'Calc. Len',
         'description' => 'Calculated code length.',
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_FLOAT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_IN_DETAILS,
         'collections' => [
@@ -978,6 +1061,7 @@ return [
         'shortName' => 'Vol',
         'description' => 'Code volume.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_IN_DETAILS,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
@@ -992,6 +1076,7 @@ return [
         'shortName' => 'Difficulty',
         'description' => 'Code difficulty',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_FLOAT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
@@ -1006,6 +1091,7 @@ return [
         'shortName' => 'Effort',
         'description' => 'Effort to understand code.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_FLOAT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
@@ -1020,6 +1106,7 @@ return [
         'shortName' => 'Operators',
         'description' => 'Count of operators in code.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_IN_DETAILS,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
@@ -1034,6 +1121,7 @@ return [
         'shortName' => 'Operands',
         'description' => 'Count of operands in code.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_IN_DETAILS,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
@@ -1048,6 +1136,7 @@ return [
         'shortName' => 'Unique operators',
         'description' => 'Unique operators in code.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_IN_DETAILS,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
@@ -1062,6 +1151,7 @@ return [
         'shortName' => 'Unique operands',
         'description' => 'Unique operands in code.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_IN_DETAILS,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
@@ -1076,6 +1166,7 @@ return [
         'shortName' => 'Compl. dens.',
         'description' => 'Complexity density.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_FLOAT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_IN_DETAILS,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
@@ -1091,6 +1182,7 @@ return [
         'shortName' => 'MI',
         'description' => 'The calculated maintainability index.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_FLOAT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_HIGH,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
@@ -1105,6 +1197,7 @@ return [
         'shortName' => 'MI w/o comments',
         'description' => 'The calculated maintainability index without comments.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_FLOAT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_HIGH,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_IN_DETAILS,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
@@ -1119,6 +1212,7 @@ return [
         'shortName' => 'CW',
         'description' => 'The weight of comments.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_FLOAT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_HIGH,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_IN_DETAILS,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
@@ -1134,6 +1228,7 @@ return [
         'shortName' => 'LCOM',
         'description' => 'LCOM.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
@@ -1146,6 +1241,7 @@ return [
         'shortName' => 'I',
         'description' => 'Instability.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_FLOAT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => [\PhpCodeArch\Metrics\Model\MetricType::SHOW_COUPLING, \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE],
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
@@ -1158,6 +1254,7 @@ return [
         'shortName' => 'A',
         'description' => 'Abstractness.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_FLOAT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::PackageCollection,
@@ -1169,6 +1266,7 @@ return [
         'shortName' => 'Dist',
         'description' => 'Distance.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_FLOAT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::PackageCollection,
@@ -1181,6 +1279,7 @@ return [
         'shortName' => 'Efferent coupling',
         'description' => 'Classes used.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_COUNT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_COUPLING,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
@@ -1195,6 +1294,7 @@ return [
         'shortName' => 'Efferent coupling',
         'description' => 'Uses count.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::PackageCollection,
@@ -1206,6 +1306,7 @@ return [
         'shortName' => 'Afferent coupling',
         'description' => 'Used by.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_COUNT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_COUPLING,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
@@ -1220,6 +1321,7 @@ return [
         'shortName' => 'Afferent coupling',
         'description' => 'Used by count.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_EVERYWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::PackageCollection,
@@ -1231,6 +1333,7 @@ return [
         'shortName' => 'Used classes in project',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_ARRAY,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::PackageCollection,
@@ -1242,6 +1345,7 @@ return [
         'shortName' => 'Used classes in project',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::PackageCollection,
@@ -1252,7 +1356,8 @@ return [
         'name' => 'Efferent coupling',
         'shortName' => 'Efferent coupling',
         'description' => 'Uses count für instability calculation.',
-        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_ARRAY,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::PackageCollection,
@@ -1264,6 +1369,7 @@ return [
         'shortName' => 'Efferent coupling',
         'description' => 'Uses count für instability calculation.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::PackageCollection,
@@ -1275,6 +1381,7 @@ return [
         'shortName' => 'UfoC',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
@@ -1286,6 +1393,7 @@ return [
         'shortName' => 'UfoC',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
@@ -1297,6 +1405,7 @@ return [
         'shortName' => 'UfoC',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
@@ -1308,6 +1417,7 @@ return [
         'shortName' => 'UfoC',
         'description' => '',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
@@ -1321,6 +1431,7 @@ return [
         'shortName' => 'Superglobals',
         'description' => 'Count of superglobals used.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_COUNT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
@@ -1335,6 +1446,7 @@ return [
         'shortName' => 'Variables',
         'description' => 'Count of variables uses.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_COUNT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
@@ -1349,6 +1461,7 @@ return [
         'shortName' => 'Constants used',
         'description' => 'Constants used in code.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_COUNT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
@@ -1363,6 +1476,7 @@ return [
         'shortName' => 'Superglob. count',
         'description' => 'Count of superglobals.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_IN_DETAILS,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
@@ -1377,6 +1491,7 @@ return [
         'shortName' => 'Dist. superglob. count',
         'description' => 'Distinct superglobals used.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_IN_DETAILS,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
@@ -1391,6 +1506,7 @@ return [
         'shortName' => 'Variables count',
         'description' => 'Count of variables.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_IN_DETAILS,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
@@ -1405,6 +1521,7 @@ return [
         'shortName' => 'Distinct variables used',
         'description' => 'Distinct variables used.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_IN_DETAILS,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
@@ -1419,6 +1536,7 @@ return [
         'shortName' => 'Constants count',
         'description' => 'Constants used in code.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_IN_DETAILS,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
@@ -1433,6 +1551,7 @@ return [
         'shortName' => 'Distinct constants count',
         'description' => 'Distinct constants count.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_INT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_IN_DETAILS,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
@@ -1447,6 +1566,7 @@ return [
         'shortName' => 'Superglobal score',
         'description' => 'Superglobal score.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_FLOAT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_IN_DETAILS,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
@@ -1462,6 +1582,7 @@ return [
         'shortName' => '',
         'description' => '.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_BOOL,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
@@ -1476,6 +1597,7 @@ return [
         'shortName' => '',
         'description' => '.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_BOOL,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
@@ -1490,6 +1612,7 @@ return [
         'shortName' => '',
         'description' => '.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_FLOAT,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
@@ -1504,6 +1627,7 @@ return [
         'shortName' => '',
         'description' => '.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_BOOL,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
@@ -1518,6 +1642,7 @@ return [
         'shortName' => '',
         'description' => '.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_BOOL,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
@@ -1532,6 +1657,7 @@ return [
         'shortName' => '',
         'description' => '.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_BOOL,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
@@ -1546,6 +1672,7 @@ return [
         'shortName' => '',
         'description' => '.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_BOOL,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
@@ -1560,6 +1687,7 @@ return [
         'shortName' => '',
         'description' => '.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_BOOL,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_IRRELEVANT,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
@@ -1574,6 +1702,7 @@ return [
         'shortName' => '',
         'description' => '.',
         'valueType' => \PhpCodeArch\Metrics\Model\MetricType::VALUE_PERCENTAGE,
+        'better' => \PhpCodeArch\Metrics\Model\MetricType::BETTER_LOW,
         'visibility' => \PhpCodeArch\Metrics\Model\MetricType::SHOW_NOWHERE,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,

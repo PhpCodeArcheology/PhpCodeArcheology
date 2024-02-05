@@ -15,6 +15,9 @@ class MetricValue
 
     private readonly MetricType $type;
 
+    private object $delta;
+    private bool $hasDelta = false;
+
     private function __construct(
         private readonly mixed $value,
         private readonly string $metricTypeKey)
@@ -105,5 +108,21 @@ class MetricValue
     public function hasProblems(): bool
     {
         return count($this->problems) > 0;
+    }
+
+    public function getDelta(): object
+    {
+        return $this->delta;
+    }
+
+    public function setDelta(object $delta): void
+    {
+        $this->delta = $delta;
+        $this->hasDelta = true;
+    }
+
+    public function getHasDelta(): bool
+    {
+        return $this->hasDelta;
     }
 }

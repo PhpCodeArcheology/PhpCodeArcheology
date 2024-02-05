@@ -13,12 +13,17 @@ class MetricType
     const VALUE_PERCENTAGE = 4;
     const VALUE_COUNT = 5;
     const VALUE_BOOL = 6;
+    const VALUE_STORAGE = 7;
 
     const SHOW_IN_DETAILS = 0;
     const SHOW_IN_LIST = 1;
     const SHOW_EVERYWHERE = 2;
     const SHOW_NOWHERE = 3;
     const SHOW_COUPLING = 4;
+
+    const BETTER_IRRELEVANT = 0;
+    const BETTER_HIGH = 1;
+    const BETTER_LOW = 2;
 
     /**
      * @param string $key
@@ -33,7 +38,8 @@ class MetricType
         private readonly string $name,
         private readonly string $shortName,
         private readonly ?string $description,
-        private readonly int $valueType,
+        private int $valueType,
+        private readonly int $better,
         private readonly int|array $visibility,
     )
     {
@@ -91,10 +97,11 @@ class MetricType
             'shortName' => $shortName,
             'description' => $description,
             'valueType' => $valueType,
+            'better' => $better,
             'visibility' => $visibility,
         ] = $data;
 
-        return new MetricType($key, $name, $shortName, $description, $valueType, $visibility);
+        return new MetricType($key, $name, $shortName, $description, $valueType, $better, $visibility);
     }
 
     public static function fromKey($key): MetricType
@@ -102,12 +109,13 @@ class MetricType
         $name = $shortName = $description = '';
         $valueType = self::VALUE_FLOAT;
         $visibility = self::SHOW_NOWHERE;
+        $better = self::BETTER_HIGH;
 
-        return new MetricType($key, $name, $shortName, $description, $valueType, $visibility);
+        return new MetricType($key, $name, $shortName, $description, $valueType, $better, $visibility);
     }
 
     /**
-     * @return int
+     * @return int|array
      */
     public function getVisibility(): int|array
     {
@@ -134,4 +142,13 @@ class MetricType
         ];
     }
 
+    public function getBetter(): int
+    {
+        return $this->better;
+    }
+
+    public function setValueType(int $valueType): void
+    {
+        $this->valueType = $valueType;
+    }
 }

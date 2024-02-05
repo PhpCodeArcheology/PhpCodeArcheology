@@ -60,6 +60,7 @@ class MetricsController
         foreach ($metricTypes as $metricTypeArray) {
             if (isset($metricTypeArray['type']) && $metricTypeArray['type'] === 'storage') {
                 $metricType = MetricType::fromKey($metricTypeArray['key']);
+                $metricType->setValueType(MetricType::VALUE_STORAGE);
                 $this->addMetricType($metricType, MetricCollectionTypeEnum::ProjectCollection);
                 continue;
             }

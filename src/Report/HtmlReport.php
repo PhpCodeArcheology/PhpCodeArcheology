@@ -6,6 +6,7 @@ namespace PhpCodeArch\Report;
 
 use PhpCodeArch\Application\CliOutput;
 use PhpCodeArch\Application\Config;
+use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Report\DataProvider\DataProviderFactory;
 use PhpCodeArch\Report\Helper\FileCopier;
 use Twig\Environment;
@@ -19,6 +20,7 @@ class HtmlReport implements ReportInterface
     use ReportTrait;
 
     private string $assetDir;
+    private object $history;
 
     public function __construct(
         private readonly Config             $config,
@@ -44,6 +46,11 @@ class HtmlReport implements ReportInterface
     public function generate(): void
     {
         $this->clearReportDir();
+
+        if (file_exists($this->outputDir . 'history.json')) {
+            $jsonData = file_get_contents($this->outputDir . 'history.json');
+            $this->history = json_decode($jsonData);
+        }
 
         mkdir(directory: $this->outputDir . 'assets', recursive: true);
         mkdir($this->outputDir . 'files');

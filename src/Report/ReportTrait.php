@@ -27,6 +27,10 @@ trait ReportTrait
 
         $files = glob($dir . '*', GLOB_MARK);
         foreach ($files as $file) {
+            if (str_ends_with($file, 'history.json')) {
+                continue;
+            }
+
             if (is_dir($file)) {
                 $this->deleteDirContents($file);
                 rmdir($file);
@@ -43,6 +47,9 @@ trait ReportTrait
      */
     protected function renderTemplate(string $template, array $data, string $outputFile): void
     {
+        $data['hasHistory'] = !empty($this->history);
+        $data['history'] = !empty($this->history) ? $this->history : [];
+
         $templateWrapper = $this->twig->load($template);
         ob_start();
         echo $templateWrapper->render($data);

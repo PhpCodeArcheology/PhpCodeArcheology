@@ -4,15 +4,51 @@
 {% elseif element.getMaxProblemLevel() == 3 %}
   {% set color = "bg-red-900" %}
 {% endif %}
+
+{% set historyDir = '' %}
+{% set historyColor = 'bg-cyan-900' %}
+
+{% if hasHistory and element.getHasDelta() %}
+  {% set better = element.getDelta().isBetter %}
+  {% set direction = element.getDelta().direction %}
+
+  {% if better is same as(true) %}
+    {% set historyColor = 'bg-green-900' %}
+  {% endif %}
+
+  {% if better is same as(false) %}
+    {% set historyColor = 'bg-red-900' %}
+  {% endif %}
+
+  {% if direction == 'sideways' %}
+    {% set historyDir = '<svg width="14" height="14" viewBox="0 0 22 20" fill="none" xmlns="http://www.w3.org/2000/svg"><use href="#right"/></svg>' %}
+  {% elseif direction == 'down' %}
+    {% set historyDir = '<svg width="14" height="14" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg"><use href="#down"/></svg>' %}
+  {% else %}
+    {% set historyDir = '<svg width="14" height="14" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg"><use href="#up"/></svg>' %}
+  {% endif %}
+{% endif %}
+
 <div class="{% if element.getMaxProblemLevel() > 0 %}{{ color }}{% else %}bg-cyan-950/50{% endif %} rounded-lg border-t-4 border-cyan-600 p-3 transition-transform hover:scale-110 hover:shadow-black hover:shadow-2xl"
      title="{% if element.getMaxProblemLevel() > 0 %}{{ element.getProblemMessages()|join(' ') }}{% endif %}">
   <div class="text-lg text-cyan-200">{{ element.getMetricType().getName() }}</div>
   <div class="text-3xl font-bold">
     {% if ': ' in element.getValue() %}
       {% set value = element.getValue()|split(': ') %}
-      {{ value[1] }}<br><span class="text-xs font-normal inline-block">{{ value[0] }}</span>
+      <span class="flex gap-3 items-center">
+        <span>{{ value[1] }}</span>
+        <span class="flex items-center p-1 rounded-md {{ historyColor }}">
+          {{ historyDir|raw }}
+        </span>
+      </span>
+      <span class="text-xs font-normal block mt-1">{{ value[0] }}</span>
     {% else %}
-      {{ element }}
+      <span class="flex gap-3 items-center">
+        <span>{{ element }}</span>
+        <span class="flex items-center p-1 rounded-md {{ historyColor }}">
+          {{ historyDir|raw }}
+        </span>
+      </span>
     {% endif %}
   </div>
 </div>

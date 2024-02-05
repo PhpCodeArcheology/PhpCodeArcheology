@@ -4,10 +4,44 @@
 {% elseif data.getMaxProblemLevel() == 3 %}
   {% set color = "bg-red-900" %}
 {% endif %}
+
+{% set historyDir = '' %}
+{% set historyColor = 'bg-cyan-900' %}
+
+{% if hasHistory and data.getHasDelta() %}
+  {% set historyCollection = attribute(history.data, metricCollectionId) %}
+  {% set historyValue = attribute(historyCollection, data.getMetricTypeKey()) %}
+  {% set currentValue = data.getValue() %}
+
+  {% set better = data.getDelta().isBetter %}
+  {% set direction = data.getDelta().direction %}
+
+  {% if better is same as(true) %}
+    {% set historyColor = 'bg-green-900' %}
+  {% endif %}
+
+  {% if better is same as(false) %}
+    {% set historyColor = 'bg-red-900' %}
+  {% endif %}
+
+  {% if direction == 'sideways' %}
+    {% set historyDir = '<svg width="14" height="14" viewBox="0 0 22 20" fill="none" xmlns="http://www.w3.org/2000/svg"><use href="#right"/></svg>' %}
+  {% elseif direction == 'down' %}
+    {% set historyDir = '<svg width="14" height="14" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg"><use href="#down"/></svg>' %}
+  {% else %}
+    {% set historyDir = '<svg width="14" height="14" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg"><use href="#up"/></svg>' %}
+  {% endif %}
+{% endif %}
+
 <td class="border border-slate-500 text-right px-2 py-0.5" data-sort="{{ data.getSortValue() }}">
-  <span
-    class="inline-block px-1.5 py-0.5 {% if data.getMaxProblemLevel() > 0 %}rounded-md cursor-help {{ color }}{% endif %}"
-    title="{% if data.getMaxProblemLevel() > 0 %}{{ data.getProblemMessages()|join(' ') }}{% endif %}">
-    {{ data }}
+  <span class="flex justify-end gap-2 items-center">
+    <span
+      class="px-1.5 py-0.5 {% if data.getMaxProblemLevel() > 0 %}rounded-md cursor-help {{ color }}{% endif %}"
+      title="{% if data.getMaxProblemLevel() > 0 %}{{ data.getProblemMessages()|join(' ') }}{% endif %}">
+      {{ data }}
+    </span>
+    <span class="flex items-center p-1 rounded-md {{ historyColor }}">
+      {{ historyDir|raw }}
+    </span>
   </span>
 </td>

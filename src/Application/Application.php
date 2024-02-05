@@ -16,7 +16,9 @@ use PhpCodeArch\Calculators\ProjectCalculator;
 use PhpCodeArch\Calculators\VariablesCalculator;
 use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
+use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
 use PhpCodeArch\Metrics\Model\MetricsContainer;
+use PhpCodeArch\Metrics\Model\MetricType;
 use PhpCodeArch\Predictions\GodClassPrediction;
 use PhpCodeArch\Predictions\PredictionInterface;
 use PhpCodeArch\Predictions\PredictionService;
@@ -65,6 +67,8 @@ final readonly class Application
 
         $dataProviderFactory = new DataProviderFactory($metricsController);
 
+        $this->setHistoryDeltas($metricsController, $config);
+
         $report = ReportFactory::create(
             $config,
             $dataProviderFactory,
@@ -73,6 +77,8 @@ final readonly class Application
             $output
         );
         $report->generate();
+
+        $this->generateHistory($metricsController, $config);
     }
 
     /**
@@ -204,5 +210,150 @@ final readonly class Application
                 'overallErrorCount' => $problems[PredictionInterface::ERROR],
             ]
         );
+    }
+
+    private function generateHistory(MetricsController $metricsController, Config $config): void
+    {
+        $outputDir = $config->get('reportDir') . DIRECTORY_SEPARATOR;
+
+        $metricHistory = [
+            'date' => (new \DateTimeImmutable())->format('Y-m-d-H-i-s'),
+            'data' => [],
+        ];
+
+        foreach ($this->getHistoryData($metricsController) as $historyData) {
+            if (!isset($metricHistory['data'][$historyData['collectionKey']])) {
+                $metricHistory['data'][$historyData['collectionKey']] = [];
+            }
+            $metricHistory['data'][$historyData['collectionKey']][$historyData['key']] = $historyData['value'];
+        }
+
+        file_put_contents($outputDir . 'history.json', json_encode($metricHistory));
+    }
+
+    private function getHistoryData(MetricsController $metricsController): \Generator
+    {
+        foreach ($metricsController->getAllCollections() as $metricCollectionKey => $metricCollection) {
+            foreach ($this->getMetricValues($metricCollection) as $metricValue) {
+                if ($metricValue->getMetricType()->getVisibility() === MetricType::SHOW_NOWHERE) {
+                    continue;
+                }
+
+                yield [
+                    'collectionKey' => $metricCollectionKey,
+                    'key' => $metricValue->getMetricTypeKey(),
+                    'value' => $metricValue->getValue(),
+                ];
+            }
+        }
+    }
+
+    private function getMetricValues(MetricsCollectionInterface $metricCollection): \Generator
+    {
+        foreach ($metricCollection->getAll() as $metricValue) {
+            yield $metricValue;
+        }
+    }
+
+    private function setHistoryDeltas(MetricsController $metricsController, Config $config): void
+    {
+        $outputDir = $config->get('reportDir') . DIRECTORY_SEPARATOR;
+        $historyFile = $outputDir . 'history.json';
+
+        if (!file_exists($historyFile)) {
+            return;
+        }
+
+        $historyValueTypes = [
+            MetricType::VALUE_INT,
+            //MetricType::VALUE_COUNT,
+            MetricType::VALUE_FLOAT,
+            MetricType::VALUE_PERCENTAGE,
+        ];
+
+        foreach ($this->getHistoryDataFromFile($historyFile) as $historyData) {
+            foreach ($historyData['data'] as $key => $historyValue) {
+                $metricValue = $metricsController->getMetricValueByIdentifierString(
+                    $historyData['key'],
+                    $key
+                );
+
+                $metricType = $metricValue->getMetricType();
+                $valueType = $metricType->getValueType();
+
+                if ($metricType->getVisibility() === MetricType::SHOW_NOWHERE) {
+                    continue;
+                }
+
+                $containsColon = is_string($metricValue->getValue())&& str_contains($metricValue->getValue(), ': ');
+                $skip = ! in_array($valueType, $historyValueTypes);
+                $skip = $skip && !$containsColon;
+
+                if ($skip) {
+                    continue;
+                }
+
+                $better = $metricType->getBetter();
+
+                $historyValue = $historyValue ?? 0;
+
+                $deltaObject = new Class {
+                    public int|float $delta = 0;
+                    public string $direction = '';
+                    public null|bool $isBetter = null;
+                };
+
+                $currentValue = $metricValue->getValue();
+                if ($containsColon) {
+                    $currentValue = (int) explode(': ', $currentValue)[1];
+                    $historyValue = (int) explode(': ', $historyValue)[1];
+                }
+
+                $delta = $currentValue - $historyValue;
+
+                $direction = 'sideways';
+                $isBetter = null;
+                switch (true) {
+                    case $better === MetricType::BETTER_LOW && $delta < 0:
+                        $direction = 'down';
+                        $isBetter = true;
+                        break;
+
+                    case $better === MetricType::BETTER_LOW && $delta > 0:
+                        $direction = 'up';
+                        $isBetter = false;
+                        break;
+
+                    case $better === MetricType::BETTER_HIGH && $delta > 0:
+                        $direction = 'up';
+                        $isBetter = true;
+                        break;
+
+                    case $better === MetricType::BETTER_HIGH && $delta < 0:
+                        $direction = 'down';
+                        $isBetter = false;
+                        break;
+                }
+
+                $deltaObject->delta = $delta;
+                $deltaObject->isBetter = $isBetter;
+                $deltaObject->direction = $direction;
+
+                $metricValue->setDelta($deltaObject);
+            }
+        }
+    }
+
+    private function getHistoryDataFromFile($file): \Generator
+    {
+        $jsonData = file_get_contents($file);
+        $history = json_decode($jsonData);
+
+        foreach ($history->data as $key => $historyData) {
+            yield [
+                'key' => $key,
+                'data' => $historyData,
+            ];
+        }
     }
 }

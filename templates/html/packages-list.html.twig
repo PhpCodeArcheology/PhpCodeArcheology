@@ -33,6 +33,7 @@
       </thead>
       <tbody>
         {% for package in packages %}
+          {% set metricCollectionId = package.getIdentifier().__toString() %}
         <tr class="even:bg-cyan-950/45 odd:bg-cyan-950/85 transition-colors hover:bg-cyan-800">
           <td class="border border-slate-500 text-left px-2 py-0.5" data-sort="{{ package.getName() }}">
             <span class="font-semibold inline-block">{{ package.getName() }}</span>
