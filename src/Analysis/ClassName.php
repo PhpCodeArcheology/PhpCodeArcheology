@@ -27,7 +27,10 @@ class ClassName
      */
     public static function ofNode(Node $node): ClassName
     {
-        $name = $node->namespacedName ?? 'anonymous@' . spl_object_hash($node);
+        $attributes = $node->getAttributes();
+        $anonymousIdentifier = sprintf('%s-%s', $attributes['startLine'], $attributes['startTokenPos']);
+
+        $name = $node->namespacedName ?? 'anonymous@' . hash('crc32', $anonymousIdentifier);;
 
         return new self((string) $name);
     }

@@ -69,11 +69,12 @@ final readonly class Application
 
         $dataProviderFactory = new DataProviderFactory($metricsController);
 
-        $this->setHistoryDeltas($metricsController, $config);
+        $historyDate = $this->setHistoryDeltas($metricsController, $config);
 
         $report = ReportFactory::create(
             $config,
             $dataProviderFactory,
+            $historyDate,
             $twigLoader,
             $twig,
             $output
@@ -257,13 +258,13 @@ final readonly class Application
         }
     }
 
-    private function setHistoryDeltas(MetricsController $metricsController, Config $config): void
+    private function setHistoryDeltas(MetricsController $metricsController, Config $config): false|\DateTimeImmutable
     {
         $outputDir = $config->get('reportDir') . DIRECTORY_SEPARATOR;
         $historyFile = $outputDir . 'history.json';
 
         if (!file_exists($historyFile)) {
-            return;
+            return false;
         }
 
         $historyValueTypes = [
@@ -273,6 +274,10 @@ final readonly class Application
             MetricType::VALUE_PERCENTAGE,
         ];
 
+        $historyFileData = json_decode(file_get_contents($historyFile));
+        $historyDate = \DateTimeImmutable::createFromFormat('Y-m-d-H-i-s', $historyFileData->date);
+        unset($historyFileData);
+
         foreach ($this->getHistoryDataFromFile($historyFile) as $historyData) {
             foreach ($historyData['data'] as $key => $historyValue) {
                 $metricValue = $metricsController->getMetricValueByIdentifierString(
@@ -280,10 +285,14 @@ final readonly class Application
                     $key
                 );
 
+                if (!$metricValue) {
+                    continue;
+                }
+
                 $metricType = $metricValue->getMetricType();
                 $valueType = $metricType->getValueType();
 
-                if ($metricType->getVisibility() === MetricType::SHOW_NOWHERE) {
+                if ($metricType->getVisibility() === MetricType::SHOW_NOWHERE || $metricType->getValueType() === MetricType::VALUE_STORAGE) {
                     continue;
                 }
 
@@ -344,6 +353,8 @@ final readonly class Application
                 $metricValue->setDelta($deltaObject);
             }
         }
+
+        return $historyDate;
     }
 
     private function getHistoryDataFromFile($file): \Generator

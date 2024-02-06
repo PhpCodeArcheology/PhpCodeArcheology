@@ -38,7 +38,10 @@
       <span class="flex gap-3 items-center">
         <span>{{ value[1] }}</span>
         {% if historyDir is not empty %}
-        <span class="flex items-center p-1 rounded-md {{ historyColor }}">
+          {% set historyValue = value[1] - element.getDelta().delta %}
+          <span
+            class="flex items-center p-1 rounded-md {{ historyColor }}"
+            title="History value from {{ historyDate.format('Y-m-d, H:i') }}: {{ historyValue }}">
           {{ historyDir|raw }}
         </span>
         {% endif %}
@@ -48,7 +51,10 @@
       <span class="flex gap-3 items-center">
         <span>{{ element }}</span>
         {% if historyDir is not empty %}
-        <span class="flex items-center p-1 rounded-md {{ historyColor }}">
+          {% set historyValue = element.getValue() - element.getDelta().delta %}
+          <span
+            class="flex items-center p-1 rounded-md {{ historyColor }}"
+            title="History value from {{ historyDate.format('Y-m-d, H:i') }}: {{ historyValue }}">
           {{ historyDir|raw }}
         </span>
         {% endif %}

@@ -9,10 +9,6 @@
 {% set historyColor = 'bg-cyan-900' %}
 
 {% if hasHistory and data.getHasDelta() %}
-  {% set historyCollection = attribute(history.data, metricCollectionId) %}
-  {% set historyValue = attribute(historyCollection, data.getMetricTypeKey()) %}
-  {% set currentValue = data.getValue() %}
-
   {% set better = data.getDelta().isBetter %}
   {% set direction = data.getDelta().direction %}
 
@@ -41,7 +37,10 @@
       {{ data }}
     </span>
     {% if historyDir is not empty %}
-    <span class="flex items-center p-1 rounded-md {{ historyColor }}">
+      {% set historyValue = data.getValue() - data.getDelta().delta %}
+    <span
+      class="flex items-center p-1 rounded-md {{ historyColor }} cursor-help"
+      title="History value from {{ historyDate.format('Y-m-d, H:i') }}: {{ historyValue }}">
       {{ historyDir|raw }}
     </span>
     {% endif %}

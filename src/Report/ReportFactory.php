@@ -20,6 +20,7 @@ class ReportFactory
     public static function create(
         Config              $config,
         DataProviderFactory   $reportDataFactory,
+        false|\DateTimeImmutable $historyDate,
         FilesystemLoader    $twigLoader,
         Environment         $twig,
         CliOutput           $output
@@ -28,8 +29,8 @@ class ReportFactory
         $type = strtolower($config->get('reportType') ?? 'markdown');
 
         return match ($type) {
-            'markdown' => new MarkdownReport($config, $reportDataFactory, $twigLoader, $twig, $output),
-            'html' => new HtmlReport($config, $reportDataFactory, $twigLoader, $twig, $output),
+            'markdown' => new MarkdownReport($config, $reportDataFactory, $historyDate, $twigLoader, $twig, $output),
+            'html' => new HtmlReport($config, $reportDataFactory, $historyDate, $twigLoader, $twig, $output),
             default => throw new ReportTypeNotSupported("Report type $type not supported."),
         };
     }

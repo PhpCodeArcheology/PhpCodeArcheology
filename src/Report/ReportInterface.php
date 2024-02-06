@@ -15,6 +15,7 @@ interface ReportInterface
     public function __construct(
         Config              $config,
         DataProviderFactory  $reportDataFactory,
+        false|\DateTimeImmutable $historyDate,
         FilesystemLoader    $twigLoader,
         Environment         $twig,
         CliOutput           $output);

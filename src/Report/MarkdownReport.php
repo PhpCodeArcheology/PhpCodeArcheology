@@ -13,9 +13,9 @@ use Twig\Loader\FilesystemLoader;
 
 class MarkdownReport extends HtmlReport
 {
-    public function __construct(Config $config, DataProviderFactory $dataProviderFactory, FilesystemLoader $twigLoader, Environment $twig, CliOutput $output)
+    public function __construct(Config $config, DataProviderFactory $dataProviderFactory, false|\DateTimeImmutable $historyDate, FilesystemLoader $twigLoader, Environment $twig, CliOutput $output)
     {
-        parent::__construct($config, $dataProviderFactory, $twigLoader, $twig, $output);
+        parent::__construct($config, $dataProviderFactory, $historyDate, $twigLoader, $twig, $output);
 
         $this->templateDir = realpath(__DIR__ . '/../../templates/markdown') . DIRECTORY_SEPARATOR;
         $this->twigLoader->setPaths($this->templateDir);

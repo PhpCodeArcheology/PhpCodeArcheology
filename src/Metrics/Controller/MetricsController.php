@@ -362,6 +362,10 @@ class MetricsController
 
     public function getMetricValueByIdentifierString(string $identifierString, string $key): ?MetricValue
     {
+        if (!$this->metricsContainer->has($identifierString)) {
+            return null;
+        }
+
         return $this->metricsContainer->get($identifierString)->get($key);
     }
 

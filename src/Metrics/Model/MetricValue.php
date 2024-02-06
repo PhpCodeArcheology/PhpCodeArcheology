@@ -13,7 +13,7 @@ class MetricValue
      */
     private array $problems = [];
 
-    private readonly MetricType $type;
+    private MetricType $type;
 
     private object $delta;
     private bool $hasDelta = false;

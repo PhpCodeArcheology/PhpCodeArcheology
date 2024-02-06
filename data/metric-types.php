@@ -1756,5 +1756,4 @@ return [
     ['key' => 'overallClassMetricsCollectionAvgEffort', 'type' => 'storage',],
     ['key' => 'overallClassMetricsCollectionAvgLcom', 'type' => 'storage',],
     ['key' => 'overallClassMetricsCollectionAvgInstability', 'type' => 'storage',],
-
 ];

@@ -47,10 +47,11 @@ trait ReportTrait
      */
     protected function renderTemplate(string $template, array $data, string $outputFile): void
     {
-        $data['hasHistory'] = !empty($this->history);
-        $data['history'] = !empty($this->history) ? $this->history : [];
-
         $templateWrapper = $this->twig->load($template);
+
+        $data['hasHistory'] = $this->historyDate !== false;
+        $data['historyDate'] = $this->historyDate;
+
         ob_start();
         echo $templateWrapper->render($data);
         file_put_contents($this->outputDir . $outputFile, ob_get_clean());
