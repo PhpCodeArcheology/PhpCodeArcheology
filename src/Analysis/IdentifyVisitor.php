@@ -94,6 +94,15 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface
                 $key
             );
         }
+
+        $this->metricsController->setMetricValues(
+            MetricCollectionTypeEnum::ProjectCollection,
+            null,
+            [
+                'overallInterfaces' => 0,
+                'overallAbstractClasses' => 0,
+            ]
+        );
     }
 
     /**
