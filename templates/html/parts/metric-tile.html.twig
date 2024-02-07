@@ -53,7 +53,7 @@
         {% if historyDir is not empty %}
           {% set historyValue = element.getValue() - element.getDelta().delta %}
           <span
-            class="flex items-center p-1 rounded-md {{ historyColor }}"
+            class="flex items-center p-1 rounded-md {{ historyColor }} cursor-help"
             title="History value from {{ historyDate.format('Y-m-d, H:i') }}: {{ historyValue }}">
           {{ historyDir|raw }}
         </span>
