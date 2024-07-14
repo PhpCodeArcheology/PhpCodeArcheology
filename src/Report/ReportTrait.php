@@ -31,6 +31,8 @@ trait ReportTrait
                 continue;
             }
 
+            continue;
+
             if (is_dir($file)) {
                 $this->deleteDirContents($file);
                 rmdir($file);
