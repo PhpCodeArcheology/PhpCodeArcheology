@@ -3,6 +3,21 @@
 
 use PhpCodeArch\Application\Application;
 
-require __DIR__ . '/../vendor/autoload.php';
+function includeFileIfExists($path) {
+  if (!is_file($path)) {
+    return false;
+  }
+
+  return include $path;
+}
+
+if (
+  (!$loader = includeFileIfExists(__DIR__.'/../vendor/autoload.php'))
+  && (!$loader = includeFileIfExists(__DIR__.'/../../../autoload.php'))
+) {
+  die(
+    'Composer autoload not found.'.PHP_EOL
+  );
+};
 
 (new Application())->run($argv);

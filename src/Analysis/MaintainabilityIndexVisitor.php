@@ -154,8 +154,8 @@ class MaintainabilityIndexVisitor implements NodeVisitor, VisitorInterface
 
     private function calculateIndex(MetricsCollectionInterface $metric): array
     {
-        $volume = $metric->get('volume')->getValue();
-        $cc = $metric->get('cc')->getValue();
+        $volume = $metric->get('volume')?->getValue() ?? 0;
+        $cc = $metric->get('cc')?->getValue() ?? 0;
 
         $loc = $metric->get('loc')?->getValue() ?? 0;
         $cloc = $metric->get('cloc')?->getValue() ?? 0;
