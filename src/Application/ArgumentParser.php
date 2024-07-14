@@ -57,7 +57,7 @@ final class ArgumentParser
         }
 
         if (empty($argv)) {
-            $config->set('files', [getcwd()]);
+            $config->set('files', [getcwd() . '/src']);
             return $config;
         }
 
