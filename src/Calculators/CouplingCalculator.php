@@ -131,9 +131,9 @@ class CouplingCalculator implements CalculatorInterface
             $this->instability += $instability;
         }
 
-        $avgUsesCount = $this->usesCount / count($this->classes);
-        $avgUsedByCount = $this->usedByCount / count($this->classes);
-        $avgInstability = $this->instability / count($this->classes);
+        $avgUsesCount = count($this->classes) > 0 ? $this->usesCount / count($this->classes) : 0;
+        $avgUsedByCount = count($this->classes) > 0 ? $this->usedByCount / count($this->classes) : 0;
+        $avgInstability = count($this->classes) > 0 ? $this->instability / count($this->classes) : 0;
 
         $abstractClassesCount = array_reduce($this->abstractClasses, function($count, $packageClasses) {
             return $count + count($packageClasses);
@@ -143,7 +143,7 @@ class CouplingCalculator implements CalculatorInterface
             return $count + count($packageClasses);
         }, 0);
 
-        $overallAbstractness = $abstractClassesCount / ($abstractClassesCount + $concreteClassesCount);
+        $overallAbstractness = ($abstractClassesCount + $concreteClassesCount) > 0 ? $abstractClassesCount / ($abstractClassesCount + $concreteClassesCount) : 0;
         $overallDistanceFromMainline = $overallAbstractness + $avgInstability - 1;
 
         $this->metricsController->setMetricValues(
