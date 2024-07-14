@@ -46,7 +46,7 @@
     "nikic/php-parser": "^v5.1",
     "php": ">=8.2.0",
     "symfony/yaml": "^7.1",
-    "composer-plugin-api": "*"
+    "composer-plugin-api": "^2.7"
   },
   "bin": [
     "bin/phpcodearcheology"

@@ -18,6 +18,7 @@ class ComposerEventSubscriber implements EventSubscriberInterface
 
     public static function onPostInstall(Event $event): void
     {
+        echo "Calling..." . PHP_EOL;
         self::copyConfigFile();
     }
 
