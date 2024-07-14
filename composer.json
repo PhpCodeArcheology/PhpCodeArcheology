@@ -50,7 +50,7 @@
   ],
   "scripts": {
     "post-install-cmd": [
-      "bin/copy-config-file"
+      "php bin/copy-config-file"
     ]
   }
 }

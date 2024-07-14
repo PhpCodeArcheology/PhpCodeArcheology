@@ -2,5 +2,13 @@
 <?php
 
 $composerJsonPath = getenv('COMPOSER');
+$baseDir = dirname($composerJsonPath);
 
-copy(__DIR__ . '/../php-codearch-config-sample.yaml', $composerJsonPath . '/php-codearch-config.yaml');
+$source = __DIR__ . '/../php-codearch-config-sample.yaml';
+$dest = $baseDir . '/php-codearch-config.yaml';
+
+if (copy($source, $dest)) {
+  echo "Config file created: $dest" . PHP_EOL;
+} else {
+  echo "Error creating config file: $dest" . PHP_EOL;
+}
