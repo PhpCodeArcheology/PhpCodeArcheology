@@ -1,0 +1,6 @@
+#!/usr/bin/env php
+<?php
+
+$composerJsonPath = getenv('COMPOSER');
+
+copy(__DIR__ . '/../php-codearch-config-sample.yaml', $composerJsonPath . '/php-codearch-config.yaml');

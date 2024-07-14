@@ -47,5 +47,10 @@
   },
   "bin": [
     "bin/phpcodearcheology"
-  ]
+  ],
+  "scripts": {
+    "post-install-cmd": [
+      "bin/copy-config-file"
+    ]
+  }
 }
