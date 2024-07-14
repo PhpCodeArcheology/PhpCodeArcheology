@@ -33,24 +33,25 @@
   "require-dev": {
     "pestphp/pest": "^2.34",
     "twig/twig": "^3.10",
-    "mockery/mockery": "^1.6"
+    "mockery/mockery": "^1.6",
+    "composer/composer": "^2.7"
   },
   "config": {
     "allow-plugins": {
+      "composer/composer": true,
       "pestphp/pest-plugin": true
     }
   },
   "require": {
     "nikic/php-parser": "^v5.1",
     "php": ">=8.2.0",
-    "symfony/yaml": "^7.1"
+    "symfony/yaml": "^7.1",
+    "composer-plugin-api": "*"
   },
   "bin": [
     "bin/phpcodearcheology"
   ],
-  "scripts": {
-    "post-install-cmd": [
-      "php bin/copy-config-file"
-    ]
+  "extra": {
+    "class": "PhpCodeArch\\ComposerEventSubscriber"
   }
 }
