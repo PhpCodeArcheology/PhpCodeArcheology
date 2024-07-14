@@ -41,7 +41,7 @@
     }
   },
   "require": {
-    "nikic/php-parser": "^v5.0.2",
+    "nikic/php-parser": "^v5.1",
     "php": ">=8.2.0",
     "symfony/yaml": "^7.1"
   },
