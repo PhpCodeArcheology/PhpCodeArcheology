@@ -24,8 +24,7 @@ readonly class ConfigFileFinder
             return false;
         }
 
-        $files = $this->config->get('files');
-        $path = reset($files);
+        $path = $this->config->get('runningDir');
 
         $configFile = sprintf(
             '%s%s%s.*',
