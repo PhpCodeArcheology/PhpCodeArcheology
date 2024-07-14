@@ -72,14 +72,6 @@
       <path value="$PROJECT_DIR$/vendor/hamcrest/hamcrest-php" />
       <path value="$PROJECT_DIR$/vendor/mockery/mockery" />
       <path value="$PROJECT_DIR$/vendor/symfony/deprecation-contracts" />
-      <path value="$PROJECT_DIR$/vendor/symfony/polyfill-php73" />
-      <path value="$PROJECT_DIR$/vendor/symfony/filesystem" />
-      <path value="$PROJECT_DIR$/vendor/symfony/polyfill-php81" />
-      <path value="$PROJECT_DIR$/vendor/react/promise" />
-      <path value="$PROJECT_DIR$/vendor/seld/jsonlint" />
-      <path value="$PROJECT_DIR$/vendor/seld/signal-handler" />
-      <path value="$PROJECT_DIR$/vendor/seld/phar-utils" />
-      <path value="$PROJECT_DIR$/vendor/justinrainbow/json-schema" />
     </include_path>
   </component>
   <component name="PhpProjectSharedConfiguration" php_language_level="8.2">
