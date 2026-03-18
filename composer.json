@@ -40,10 +40,10 @@
     }
   },
   "require": {
-    "nikic/php-parser": "^v5.7",
-    "php": ">=8.5.0",
-    "symfony/yaml": "^8.0",
-    "twig/twig": "^3.23"
+    "nikic/php-parser": "^5.0",
+    "php": ">=8.2",
+    "symfony/yaml": "^6.4 || ^7.0 || ^8.0",
+    "twig/twig": "^3.0"
   },
   "bin": [
     "bin/phpcodearcheology"

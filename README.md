@@ -17,7 +17,7 @@
 
 ## Prerequisites
 
-- PHP 8.2 or higher
+- PHP 8.2 or higher (works on 8.2, 8.3, 8.4, 8.5)
 - Composer
 
 ## Installation
