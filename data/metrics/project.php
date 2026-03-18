@@ -364,18 +364,6 @@ return [
         ],
     ],
     [
-        'key' => 'overallAvgCCFile',
-        'name' => 'Avg. cyclomatic complexity of files',
-        'shortName' => '',
-        'description' => 'Average cyclomatic complexity per file',
-        'valueType' => \PhpCodeArch\Metrics\Model\Enums\MetricValueType::Float,
-        'better' => \PhpCodeArch\Metrics\Model\Enums\BetterDirection::Low,
-        'visibility' => \PhpCodeArch\Metrics\Model\Enums\MetricVisibility::ShowEverywhere,
-        'collections' => [
-            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
-        ],
-    ],
-    [
         'key' => 'overallMaxCCFile',
         'name' => 'Max cyclomatic complexity of files',
         'shortName' => '',
