@@ -1,18 +1,18 @@
-{% include('parts/header.html.twig') %}
+{% include('parts/header.md.twig') %}
 
-<div class="mt-6 lg:w-5/6">
-  <div class="mb-7 text-sm">
-    <ul class="flex gap-1">
-      <li class="flex after:content-['⮁'] gap-1">
-        <a href="index.html" class="text-cyan-500">Home</a>
-      </li>
-      <li>Classes</li>
-    </ul>
-  </div>
+[Home](index.html) / Classes
 
-  <h1 class="mb-6 text-3xl font-semibold font-display">Classes</h1>
+# Classes
 
-  {% include('parts/class-table.html.twig') %}
-</div>
+| Name |{% for header in tableHeaders %} {{ header.shortName }} |{% endfor %}
 
-{% include('parts/footer.html.twig') %}
+|---|{% for header in tableHeaders %}---|{% endfor %}
+
+{% for class in classes %}
+{% set classKey = class.getIdentifier().__toString() %}
+{% set classLabel = class.getName() %}
+| [{{ classLabel|length > 50 ? '...' ~ classLabel[-47:] : classLabel }}](classes/{{ classKey }}.html) |{% for metricKey in listMetricKeys %}{% set data = class.get(metricKey) %} {{ data }} |{% endfor %}
+
+{% endfor %}
+
+{% include('parts/footer.md.twig') %}

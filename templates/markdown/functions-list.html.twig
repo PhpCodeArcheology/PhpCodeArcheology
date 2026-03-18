@@ -1,20 +1,23 @@
-{% include('parts/header.html.twig') %}
+{% include('parts/header.md.twig') %}
 
-<div class="mt-6 lg:w-5/6">
-  <div class="mb-7 text-sm">
-    <ul class="flex gap-1">
-      <li class="flex after:content-['⮁'] gap-1">
-        <a href="index.html" class="text-cyan-500">Home</a>
-      </li>
-      <li>Functions</li>
-    </ul>
-  </div>
+[Home](index.html) / Functions
 
-  <h1 class="mb-6 text-3xl font-semibold font-display">Functions</h1>
+# Functions
 
-  {% set tableName = 'Functions' %}
-  {% set folder = 'functions' %}
-  {% include('parts/function-table.html.twig') %}
-</div>
+{% set tableName = 'Functions' %}
+{% set folder = 'functions' %}
+{% set tableHeaders = functionTableHeaders %}
 
-{% include('parts/footer.html.twig') %}
+| Name | Params |{% for header in functionTableHeaders %} {{ header.shortName }} |{% endfor %}
+
+|---|---|{% for header in functionTableHeaders %}---|{% endfor %}
+
+{% for function in functions %}
+{% set metricCollectionId = function.getIdentifier().__toString() %}
+{% set parameters = function.getCollection('parameters').getAsArray() %}
+{% set funcName = function.get('singleName').getValue() ? function.get('singleName') : function.getName() %}
+| [{{ funcName|length > 50 ? '...' ~ funcName[-47:] : funcName }}](functions/{{ function.getIdentifier() }}.html) | {{ parameters|length }} |{% for metricKey in listMetricKeys %}{% set data = function.get(metricKey) %} {{ data }} |{% endfor %}
+
+{% endfor %}
+
+{% include('parts/footer.md.twig') %}

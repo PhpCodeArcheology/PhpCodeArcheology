@@ -1,57 +1,69 @@
-{% include('parts/header.html.twig') %}
+{% include('parts/header.md.twig') %}
+{% set metricCollectionId = file.getIdentifier().__toString() %}
 
-<div class="mt-6 lg:w-5/6">
-  <div class="mb-7 text-sm">
-    <ul class="flex gap-1">
-      <li class="flex after:content-['⮁'] gap-1">
-        <a href="../index.html" class="text-cyan-500">Home</a>
-      </li>
-      <li class="flex after:content-['⮁'] gap-1">
-        <a href="../files.html" class="text-cyan-500">Files</a>
-      </li>
-      <li>{{ file.fileName }}</li>
-    </ul>
-  </div>
+[Home](../index.html) / [Files](../files.html) / {{ file.get('fileName') }}
 
-  <h1 class="mb-3 text-lg font-semibold font-display">File metrics for:</h1>
-  <h2 class="mb-6 text-3xl"><span class="text-white/40">{{ file.dirName }}/</span><span class="font-semibold inline-block" title="{{ file.dirName }}/{{ file.fileName }}">{{ file.fileName }}</span></h2>
+# File metrics for:
 
-  {% if file.errors|length > 0 %}
-    <div class="my-8 bg-red-950 rounded-lg border-t-4 border-red-600 text-white w-fit p-3">
-      <h3 class="text-xl font-medium">Parse error{% if file.errors|length > 1 %}s{% endif %}</h3>
-      <ul class="mb-4 list-disc pl-3">
-        {% for error in file.errors %}
-          <li class="mt-1">{{ error }}</li>
-        {% endfor %}
-      </ul>
-      <p class="italic text-xs">Parse errors prevent the file from being parsed. Because of this, no data is available.<br>Please fix the errors and run the analysis again.</p>
-    </div>
-    {% include('parts/divider.html.twig') %}
-  {% else %}
+## {{ file.get('dirName') }}/{{ file.get('fileName') }}
 
-    <div class="my-8 grid sm:grid-cols-3 gap-3">
-      {% for element in file.detailData %}
-        {% include('parts/metric-tile.html.twig') %}
-      {% endfor %}
-    </div>
+{% set errors = file.getCollection('errors').getAsArray() %}
+{% if errors|length > 0 %}
+### Parse error{{ errors|length > 1 ? 's' : '' }}
 
-    {% if file.functions %}
-      {% set folder = 'functions' %}
-      {% set tableName = 'Functions' %}
-      {% set functions = file.functions %}
-      {% set tableHeaders = file.functionTableHeaders %}
-      {% include('parts/divider.html.twig') %}
-      {% include('parts/function-table.html.twig') %}
-    {% endif %}
+{% for error in errors %}
+- {{ error }}
+{% endfor %}
 
-    {% if file.classes %}
-      {% set classes = file.classes %}
-      {% set tableHeaders = file.classTableHeaders %}
-      {% include('parts/divider.html.twig') %}
-      {% include('parts/class-table.html.twig') %}
-    {% endif %}
+*Parse errors prevent the file from being parsed. Because of this, no data is available. Please fix the errors and run the analysis again.*
 
-  {% endif %}
-</div>
+---
+{% else %}
 
-{% include('parts/footer.html.twig') %}
+### Detail Metrics
+
+{% for metricKey in detailMetricKeys %}
+{% set element = file.get(metricKey) %}
+{% include('parts/metric-tile.md.twig') %}
+{% endfor %}
+
+{% set functions = fileFunctions[file.getIdentifier.__toString] %}
+{% if functions %}
+---
+
+### Functions
+
+| Name | Params |{% for header in functionTableHeaders %} {{ header.shortName }} |{% endfor %}
+
+|---|---|{% for header in functionTableHeaders %}---|{% endfor %}
+
+{% for function in functions %}
+{% set metricCollectionId = function.getIdentifier().__toString() %}
+{% set parameters = function.getCollection('parameters').getAsArray() %}
+{% set funcName = function.get('singleName').getValue() ? function.get('singleName') : function.getName() %}
+| [{{ funcName|length > 50 ? '...' ~ funcName[-47:] : funcName }}](../functions/{{ function.getIdentifier() }}.html) | {{ parameters|length }} |{% for metricKey in functionListMetricKeys %}{% set data = function.get(metricKey) %} {{ data }} |{% endfor %}
+
+{% endfor %}
+{% endif %}
+
+{% set classes = fileClasses[file.getIdentifier.__toString] %}
+{% if classes %}
+---
+
+### Classes
+
+| Name |{% for header in classTableHeaders %} {{ header.shortName }} |{% endfor %}
+
+|---|{% for header in classTableHeaders %}---|{% endfor %}
+
+{% for class in classes %}
+{% set metricCollectionId = class.getIdentifier().__toString() %}
+{% set className = class.getName() %}
+| [{{ className|length > 50 ? '...' ~ className[-47:] : className }}](../classes/{{ class.getIdentifier() }}.html) |{% for metricKey in classListMetricKeys %}{% set data = class.get(metricKey) %} {{ data }} |{% endfor %}
+
+{% endfor %}
+{% endif %}
+
+{% endif %}
+
+{% include('parts/footer.md.twig') %}
