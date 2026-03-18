@@ -12,6 +12,11 @@
     <li class="flex after:content-['⮁'] gap-1">
       <a href="../classes-list.html" class="text-cyan-500">Classes</a>
     </li>
+    {% if function.get('classInfo').getValue()['namespace'] is defined and function.get('classInfo').getValue()['namespace'] %}
+    <li class="flex after:content-['⮁'] gap-1">
+      <span class="text-white/50">{{ function.get('classInfo').getValue()['namespace'] }}</span>
+    </li>
+    {% endif %}
   {% endset %}
 {% endif %}
 {% set h1Title = isMethod ? 'Method' : 'Function' %}
