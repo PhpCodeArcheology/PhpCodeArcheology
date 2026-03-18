@@ -27,8 +27,10 @@ class HistoryDataProvider implements ReportDataProviderInterface
             'datasets' => [
                 'avgCC' => [],
                 'avgMI' => [],
+                'healthScore' => [],
                 'errors' => [],
                 'warnings' => [],
+                'techDebt' => [],
                 'classes' => [],
                 'loc' => [],
             ],
@@ -40,8 +42,10 @@ class HistoryDataProvider implements ReportDataProviderInterface
 
             $trendData['datasets']['avgCC'][] = $projectData->overallAvgCC ?? 0;
             $trendData['datasets']['avgMI'][] = $projectData->overallAvgMI ?? 0;
+            $trendData['datasets']['healthScore'][] = $projectData->healthScore ?? 0;
             $trendData['datasets']['errors'][] = $projectData->overallErrorCount ?? 0;
             $trendData['datasets']['warnings'][] = $projectData->overallWarningCount ?? 0;
+            $trendData['datasets']['techDebt'][] = $projectData->overallTechnicalDebtScore ?? 0;
             $trendData['datasets']['classes'][] = $projectData->overallClasses ?? 0;
             $trendData['datasets']['loc'][] = $projectData->overallLoc ?? 0;
         }

@@ -240,9 +240,13 @@
   <div class="grid-dashboard" style="margin-bottom: 1.5rem;">
     {% if hasMultipleRuns %}
     <div class="dash-panel span-2">
-      <div class="dash-panel-label">Trend ({{ runCount }} runs)</div>
-      <div class="chart-container">
-        <canvas id="trendChart"></canvas>
+      <div class="dash-panel-label">Quality Trend ({{ runCount }} runs)</div>
+      <div class="chart-container" style="height: 220px;">
+        <canvas id="qualityChart"></canvas>
+      </div>
+      <div class="dash-panel-label" style="margin-top: 1.25rem;">Problems Trend</div>
+      <div class="chart-container" style="height: 220px;">
+        <canvas id="problemsChart"></canvas>
       </div>
     </div>
     {% endif %}
@@ -357,56 +361,109 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   {% if hasMultipleRuns %}
-  // Trend Chart
   const trendData = {{ trendData|raw }};
-  new Chart(document.getElementById('trendChart'), {
+  const chartDefaults = {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { intersect: false, mode: 'index' },
+    plugins: { legend: { position: 'top', labels: { boxWidth: 12, padding: 12, font: { size: 11 } } } },
+  };
+  const lineDefaults = { tension: 0.3, pointRadius: 2, borderWidth: 2, fill: true };
+
+  // Quality Trend: Health Score + Avg CC + Avg MI
+  new Chart(document.getElementById('qualityChart'), {
     type: 'line',
     data: {
       labels: trendData.labels,
       datasets: [
         {
+          label: 'Health Score',
+          data: trendData.datasets.healthScore,
+          borderColor: '#10b981',
+          backgroundColor: 'rgba(16, 185, 129, 0.08)',
+          yAxisID: 'y',
+          ...lineDefaults,
+        },
+        {
           label: 'Avg CC',
           data: trendData.datasets.avgCC,
           borderColor: '#f59e0b',
-          backgroundColor: 'rgba(245, 158, 11, 0.1)',
-          fill: true,
-          tension: 0.3,
-          pointRadius: 3,
-          borderWidth: 2,
-          yAxisID: 'y',
+          backgroundColor: 'rgba(245, 158, 11, 0.05)',
+          yAxisID: 'y1',
+          ...lineDefaults,
         },
         {
           label: 'Avg MI',
           data: trendData.datasets.avgMI,
           borderColor: cyan500,
-          backgroundColor: 'rgba(6, 182, 212, 0.1)',
-          fill: true,
-          tension: 0.3,
-          pointRadius: 3,
-          borderWidth: 2,
-          yAxisID: 'y1',
+          backgroundColor: 'rgba(6, 182, 212, 0.05)',
+          yAxisID: 'y',
+          ...lineDefaults,
         }
       ]
     },
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      interaction: { intersect: false, mode: 'index' },
-      plugins: {
-        legend: { position: 'top', labels: { boxWidth: 12, padding: 16 } }
-      },
+      ...chartDefaults,
       scales: {
-        x: { grid: { color: gridColor } },
+        x: { grid: { color: gridColor }, ticks: { font: { size: 10 } } },
         y: {
-          type: 'linear',
-          position: 'left',
-          title: { display: true, text: 'Cyclomatic Complexity', color: '#f59e0b' },
+          type: 'linear', position: 'left',
+          title: { display: true, text: 'Score / MI', color: '#10b981', font: { size: 10 } },
           grid: { color: gridColor },
         },
         y1: {
-          type: 'linear',
-          position: 'right',
-          title: { display: true, text: 'Maintainability Index', color: cyan500 },
+          type: 'linear', position: 'right',
+          title: { display: true, text: 'Avg CC', color: '#f59e0b', font: { size: 10 } },
+          grid: { drawOnChartArea: false },
+        }
+      }
+    }
+  });
+
+  // Problems Trend: Errors + Warnings + Tech Debt
+  new Chart(document.getElementById('problemsChart'), {
+    type: 'line',
+    data: {
+      labels: trendData.labels,
+      datasets: [
+        {
+          label: 'Errors',
+          data: trendData.datasets.errors,
+          borderColor: '#ef4444',
+          backgroundColor: 'rgba(239, 68, 68, 0.08)',
+          yAxisID: 'y',
+          ...lineDefaults,
+        },
+        {
+          label: 'Warnings',
+          data: trendData.datasets.warnings,
+          borderColor: '#f59e0b',
+          backgroundColor: 'rgba(245, 158, 11, 0.05)',
+          yAxisID: 'y',
+          ...lineDefaults,
+        },
+        {
+          label: 'Tech Debt',
+          data: trendData.datasets.techDebt,
+          borderColor: '#a855f7',
+          backgroundColor: 'rgba(168, 85, 247, 0.05)',
+          yAxisID: 'y1',
+          ...lineDefaults,
+        }
+      ]
+    },
+    options: {
+      ...chartDefaults,
+      scales: {
+        x: { grid: { color: gridColor }, ticks: { font: { size: 10 } } },
+        y: {
+          type: 'linear', position: 'left',
+          title: { display: true, text: 'Count', color: '#ef4444', font: { size: 10 } },
+          grid: { color: gridColor },
+        },
+        y1: {
+          type: 'linear', position: 'right',
+          title: { display: true, text: 'Debt Score', color: '#a855f7', font: { size: 10 } },
           grid: { drawOnChartArea: false },
         }
       }
