@@ -30,12 +30,19 @@
 {% endif %}
 
 {% set metricDescription = element.getMetricType().getDescription() %}
-<div class="{% if element.getMaxProblemLevel() > 0 %}{{ color }}{% else %}bg-cyan-950/50{% endif %} rounded-lg border-t-4 border-cyan-600 p-3 transition-transform hover:scale-110 hover:shadow-black hover:shadow-2xl{% if metricDescription %} cursor-help{% endif %}"
-     title="{% if element.getMaxProblemLevel() > 0 %}{{ element.getProblemMessages()|join(' ') }}{% elseif metricDescription %}{{ metricDescription }}{% endif %}">
+{% set tooltipText = '' %}
+{% if element.getMaxProblemLevel() > 0 %}
+  {% set tooltipText = element.getProblemMessages()|join(' ') %}
+{% elseif metricDescription %}
+  {% set tooltipText = metricDescription %}
+{% endif %}
+
+<div class="{% if element.getMaxProblemLevel() > 0 %}{{ color }}{% else %}bg-cyan-950/50{% endif %} rounded-lg border-t-4 border-cyan-600 p-3 transition-transform hover:scale-110 hover:shadow-black hover:shadow-2xl{% if tooltipText %} cursor-help{% endif %}"
+     {% if tooltipText %}data-tooltip="{{ tooltipText }}"{% endif %}>
   <div class="text-lg text-cyan-200">
     {{ element.getMetricType().getName() }}
     {% if metricDescription %}
-      <span style="opacity: 0.4; font-size: 0.7rem; vertical-align: super;" title="{{ metricDescription }}">&#9432;</span>
+      <span style="opacity: 0.35; font-size: 0.65rem; vertical-align: super;">&#9432;</span>
     {% endif %}
   </div>
   <div class="text-3xl font-bold">
@@ -47,9 +54,9 @@
           {% set historyValue = value[1] - element.getDelta().delta %}
           <span
             class="flex items-center p-1 rounded-md {{ historyColor }}"
-            title="History value from {{ historyDate.format('Y-m-d, H:i') }}: {{ historyValue }}">
+            data-tooltip="Previous: {{ historyValue }} ({{ historyDate.format('Y-m-d') }})">
           {{ historyDir|raw }}
-        </span>
+          </span>
         {% endif %}
       </span>
       <span class="text-xs font-normal block mt-1">{{ value[0] }}</span>
@@ -60,9 +67,9 @@
           {% set historyValue = element.getValue() - element.getDelta().delta %}
           <span
             class="flex items-center p-1 rounded-md {{ historyColor }} cursor-help"
-            title="History value from {{ historyDate.format('Y-m-d, H:i') }}: {{ historyValue }}">
+            data-tooltip="Previous: {{ historyValue }} ({{ historyDate.format('Y-m-d') }})">
           {{ historyDir|raw }}
-        </span>
+          </span>
         {% endif %}
       </span>
     {% endif %}
