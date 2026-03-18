@@ -1,0 +1,159 @@
+{% include('@Parts/header.html.twig') %}
+
+<div class="mt-6 lg:w-5/6">
+  <div class="mb-7 text-sm">
+    <ul class="flex gap-1">
+      <li class="flex after:content-['⮁'] gap-1">
+        <a href="index.html" class="text-cyan-500">Home</a>
+      </li>
+      <li>Git Analysis</li>
+    </ul>
+  </div>
+
+  <h1 class="mb-6 text-3xl font-semibold font-display">Git Analysis</h1>
+
+  {# Summary Cards #}
+  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
+    <div class="rounded-xl border border-cyan-800 bg-cyan-950/45 p-4 text-center">
+      <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Total Commits</div>
+      <div style="font-family: 'Oswald', sans-serif; font-size: 2.5rem; font-weight: 500;">{{ gitTotalCommits }}</div>
+      <div style="font-size: 0.7rem; color: rgba(255,255,255,0.4);">since {{ gitAnalysisPeriod }}</div>
+    </div>
+    <div class="rounded-xl border border-cyan-800 bg-cyan-950/45 p-4 text-center">
+      <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Active Authors</div>
+      <div style="font-family: 'Oswald', sans-serif; font-size: 2.5rem; font-weight: 500;">{{ gitActiveAuthors }}</div>
+    </div>
+    <div class="rounded-xl border border-cyan-800 bg-cyan-950/45 p-4 text-center">
+      <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Files Analyzed</div>
+      <div style="font-family: 'Oswald', sans-serif; font-size: 2.5rem; font-weight: 500;">{{ hotspots|length }}</div>
+    </div>
+  </div>
+
+  {# Churn vs Complexity Bubble Chart #}
+  <div class="rounded-xl border border-cyan-800 bg-cyan-950/45 p-4 mb-6">
+    <h3 style="color: rgba(6,182,212,0.7); font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; font-family: 'Oswald', sans-serif; margin-bottom: 0.75rem;">Hotspot Map: Churn vs Complexity</h3>
+    <div style="position: relative; height: 400px;">
+      <canvas id="hotspotChart"></canvas>
+    </div>
+    <div style="text-align: center; margin-top: 0.5rem; font-size: 0.7rem; color: rgba(255,255,255,0.4);">
+      X = Change Frequency &middot; Y = Cyclomatic Complexity &middot; Size = Lines of Code
+    </div>
+  </div>
+
+  {# Top Hotspots Table #}
+  <div class="rounded-xl border border-cyan-800 bg-cyan-950/45 p-4 mb-6">
+    <h3 style="color: rgba(6,182,212,0.7); font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; font-family: 'Oswald', sans-serif; margin-bottom: 0.75rem;">Top Hotspots</h3>
+
+    <div class="filters mb-4 flex justify-end">
+      <div>
+        <input type="text" name="filter" class="namefilter text-black rounded px-2 py-0.5" placeholder="Search ...">
+        <button class="button-reset">Reset</button>
+      </div>
+    </div>
+
+    <div class="relative overflow-x-auto">
+      <table class="sortable asc w-full border-collapse border border-slate-500 text-sm rounded-xl" data-currentsort="0:asc:string">
+        <thead class="bg-cyan-950/25">
+          <tr>
+            <th class="border border-slate-500 text-left px-2 py-0.5 cursor-pointer" data-sortable="string">
+              <span class="label-box flex justify-between items-center gap-1"><span class="label-name">File</span><span class="sort-icon transition-all opacity-0"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M12.53 16.28a.75.75 0 0 1-1.06 0l-7.5-7.5a.75.75 0 0 1 1.06-1.06L12 14.69l6.97-6.97a.75.75 0 1 1 1.06 1.06l-7.5 7.5Z" clip-rule="evenodd" /></svg></span></span>
+            </th>
+            <th class="border border-slate-500 text-left px-2 py-0.5 cursor-pointer" data-sortable="int">
+              <span class="label-box flex justify-between items-center gap-1"><span class="label-name">Churn</span><span class="sort-icon transition-all opacity-0"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M12.53 16.28a.75.75 0 0 1-1.06 0l-7.5-7.5a.75.75 0 0 1 1.06-1.06L12 14.69l6.97-6.97a.75.75 0 1 1 1.06 1.06l-7.5 7.5Z" clip-rule="evenodd" /></svg></span></span>
+            </th>
+            <th class="border border-slate-500 text-left px-2 py-0.5 cursor-pointer" data-sortable="int">
+              <span class="label-box flex justify-between items-center gap-1"><span class="label-name">CC</span><span class="sort-icon transition-all opacity-0"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M12.53 16.28a.75.75 0 0 1-1.06 0l-7.5-7.5a.75.75 0 0 1 1.06-1.06L12 14.69l6.97-6.97a.75.75 0 1 1 1.06 1.06l-7.5 7.5Z" clip-rule="evenodd" /></svg></span></span>
+            </th>
+            <th class="border border-slate-500 text-left px-2 py-0.5 cursor-pointer" data-sortable="int">
+              <span class="label-box flex justify-between items-center gap-1"><span class="label-name">LOC</span><span class="sort-icon transition-all opacity-0"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M12.53 16.28a.75.75 0 0 1-1.06 0l-7.5-7.5a.75.75 0 0 1 1.06-1.06L12 14.69l6.97-6.97a.75.75 0 1 1 1.06 1.06l-7.5 7.5Z" clip-rule="evenodd" /></svg></span></span>
+            </th>
+            <th class="border border-slate-500 text-left px-2 py-0.5 cursor-pointer" data-sortable="int">
+              <span class="label-box flex justify-between items-center gap-1"><span class="label-name">Authors</span><span class="sort-icon transition-all opacity-0"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M12.53 16.28a.75.75 0 0 1-1.06 0l-7.5-7.5a.75.75 0 0 1 1.06-1.06L12 14.69l6.97-6.97a.75.75 0 1 1 1.06 1.06l-7.5 7.5Z" clip-rule="evenodd" /></svg></span></span>
+            </th>
+            <th class="border border-slate-500 text-left px-2 py-0.5 cursor-pointer" data-sortable="int">
+              <span class="label-box flex justify-between items-center gap-1"><span class="label-name">Age (days)</span><span class="sort-icon transition-all opacity-0"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M12.53 16.28a.75.75 0 0 1-1.06 0l-7.5-7.5a.75.75 0 0 1 1.06-1.06L12 14.69l6.97-6.97a.75.75 0 1 1 1.06 1.06l-7.5 7.5Z" clip-rule="evenodd" /></svg></span></span>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for file in hotspots %}
+          <tr class="even:bg-cyan-950/45 odd:bg-cyan-950/85 transition-colors hover:bg-cyan-800">
+            <td class="border border-slate-500 text-left px-2 py-0.5 filter-name" data-filter="{{ file.name }}" data-sort="{{ file.dir }}/{{ file.name }}">
+              <a href="files/{{ file.id }}.html">
+                <span class="text-white/40">{{ file.dir }}/</span><br>
+                <span class="font-semibold">{{ file.name }}</span>
+              </a>
+            </td>
+            <td class="border border-slate-500 text-right px-2 py-0.5 {% if file.churn >= 10 %}bg-yellow-900{% endif %}" data-sort="{{ file.churn }}">{{ file.churn }}</td>
+            <td class="border border-slate-500 text-right px-2 py-0.5 {% if file.cc >= 15 %}bg-red-900{% endif %}" data-sort="{{ file.cc }}">{{ file.cc }}</td>
+            <td class="border border-slate-500 text-right px-2 py-0.5" data-sort="{{ file.loc }}">{{ file.loc }}</td>
+            <td class="border border-slate-500 text-right px-2 py-0.5" data-sort="{{ file.authors }}">{{ file.authors }}</td>
+            <td class="border border-slate-500 text-right px-2 py-0.5" data-sort="{{ file.ageDays }}">{{ file.ageDays }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+  const gridColor = isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.03)';
+  Chart.defaults.color = isLight ? '#475569' : 'rgba(255,255,255,0.5)';
+  Chart.defaults.borderColor = isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.05)';
+  Chart.defaults.font.family = "'Source Sans 3', sans-serif";
+
+  const data = [
+    {% for file in hotspots %}
+    { x: {{ file.churn }}, y: {{ file.cc }}, r: Math.max(3, Math.min(25, Math.sqrt({{ file.loc }}) * 0.6)), label: '{{ file.name|e('js') }}', loc: {{ file.loc }}, link: 'files/{{ file.id }}.html' },
+    {% endfor %}
+  ];
+
+  new Chart(document.getElementById('hotspotChart'), {
+    type: 'bubble',
+    data: {
+      datasets: [{
+        label: 'Files',
+        data: data,
+        backgroundColor: data.map(d => {
+          if (d.x >= 10 && d.y >= 15) return 'rgba(239, 68, 68, 0.6)';
+          if (d.x >= 5 || d.y >= 10) return 'rgba(234, 179, 8, 0.5)';
+          return 'rgba(6, 182, 212, 0.5)';
+        }),
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              const d = ctx.raw;
+              return d.label + ' — Churn: ' + d.x + ', CC: ' + d.y + ', LOC: ' + d.loc;
+            }
+          }
+        }
+      },
+      scales: {
+        x: { title: { display: true, text: 'Change Frequency' }, grid: { color: gridColor }, beginAtZero: true, ticks: { precision: 0 } },
+        y: { title: { display: true, text: 'Cyclomatic Complexity' }, grid: { color: gridColor }, beginAtZero: true, ticks: { precision: 0 } }
+      },
+      onClick: function(e, elements) {
+        if (elements.length > 0) {
+          const d = data[elements[0].index];
+          if (d.link) window.location.href = d.link;
+        }
+      },
+      onHover: function(e, elements) {
+        e.native.target.style.cursor = elements.length > 0 ? 'pointer' : 'default';
+      }
+    }
+  });
+});
+</script>
+
+{% include('@Parts/footer.html.twig') %}

@@ -83,6 +83,11 @@ class DataProviderFactory
         return new ProblemDataProvider($this->metricsController);
     }
 
+    public function getGitDataProvider(): GitDataProvider
+    {
+        return new GitDataProvider($this->metricsController);
+    }
+
     public function getHistoryDataProvider(string $historyFile): HistoryDataProvider
     {
         $provider = new HistoryDataProvider($this->metricsController);

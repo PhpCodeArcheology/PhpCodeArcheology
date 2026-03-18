@@ -55,5 +55,9 @@ class ConfigFileParserJson implements ConfigFileParserInterface
 
             $config->set('reportDir', realpath($reportDir));
         }
+
+        if (isset($data['git'])) {
+            $config->set('git', $data['git']);
+        }
     }
 }

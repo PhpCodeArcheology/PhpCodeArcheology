@@ -72,6 +72,7 @@ class HtmlReport implements ReportInterface
             [$this, 'generatePackagesPage'],
             [$this, 'generateFunctionPage'],
             [$this, 'generateProblemsPage'],
+            [$this, 'generateGitPage'],
         ];
 
         $count = 0;
@@ -264,5 +265,13 @@ class HtmlReport implements ReportInterface
 
         $data['currentPage'] = 'function-problems.html';
         $this->renderTemplate('function-problems.html.twig', $data, 'function-problems.html');
+    }
+
+    protected function generateGitPage(): void
+    {
+        $data = $this->dataProviderFactory->getGitDataProvider()->getTemplateData();
+        $data['pageTitle'] = 'Git Analysis';
+        $data['currentPage'] = 'git.html';
+        $this->renderTemplate('git.html.twig', $data, 'git.html');
     }
 }

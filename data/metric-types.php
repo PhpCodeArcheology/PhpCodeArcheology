@@ -9,4 +9,5 @@ return array_merge(
     require __DIR__ . '/metrics/method.php',
     require __DIR__ . '/metrics/function.php',
     require __DIR__ . '/metrics/package.php',
+    require __DIR__ . '/metrics/git.php',
 );

@@ -1,0 +1,125 @@
+<?php
+
+declare(strict_types=1);
+
+namespace PhpCodeArch\Git;
+
+use PhpCodeArch\Application\CliOutput;
+use PhpCodeArch\Application\Config;
+use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
+
+class GitAnalyzer
+{
+    private GitLogParser $parser;
+    private string $since;
+
+    public function __construct(
+        private readonly Config $config,
+        private readonly MetricsController $metricsController,
+        private readonly CliOutput $output,
+    ) {
+        $projectRoot = $this->config->get('runningDir') ?? getcwd();
+        $this->parser = new GitLogParser($projectRoot);
+
+        $gitConfig = $this->config->get('git') ?? [];
+        $this->since = $gitConfig['since'] ?? '6 months ago';
+    }
+
+    public function analyze(): void
+    {
+        if (!$this->parser->isGitRepository()) {
+            $this->output->outNl("\033[33mNo Git repository detected — skipping Git analysis.\033[0m");
+            $this->setDefaults();
+            return;
+        }
+
+        $this->output->cls();
+        $this->output->outWithMemory('Running Git analysis...');
+
+        $changes = $this->parser->getFileChanges($this->since);
+
+        // Project-level metrics
+        $this->metricsController->setMetricValues(
+            MetricCollectionTypeEnum::ProjectCollection,
+            null,
+            [
+                'gitTotalCommits' => $changes['totalCommits'],
+                'gitActiveAuthors' => count($changes['authors']),
+                'gitAnalysisPeriod' => $this->since,
+            ]
+        );
+
+        // File-level metrics
+        $analyzedFiles = [];
+        foreach ($this->config->get('files') as $dir) {
+            // Collect all files that were analyzed
+        }
+
+        $now = time();
+
+        foreach ($this->metricsController->getAllCollections() as $collection) {
+            if (!$collection instanceof \PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection) {
+                continue;
+            }
+
+            $filePath = $collection->get('filePath')?->getValue();
+            if ($filePath === null) {
+                continue;
+            }
+
+            $fileData = $changes['files'][$filePath] ?? null;
+
+            if ($fileData !== null) {
+                $authors = array_keys($fileData['authors']);
+                $lastModified = $fileData['lastModified'];
+                $ageDays = $lastModified > 0 ? (int) round(($now - $lastModified) / 86400) : 0;
+
+                $this->metricsController->setMetricValuesByIdentifierString(
+                    (string) $collection->getIdentifier(),
+                    [
+                        'gitChurnCount' => $fileData['commits'],
+                        'gitLastModified' => $lastModified > 0 ? date('Y-m-d', $lastModified) : '',
+                        'gitCodeAgeDays' => $ageDays,
+                        'gitAuthorCount' => count($authors),
+                        'gitAuthors' => $authors,
+                    ]
+                );
+            } else {
+                // File wasn't changed in the timeframe — get last modified from git
+                $lastModified = $this->parser->getFileLastModified($filePath);
+                $ageDays = $lastModified !== null ? (int) round(($now - $lastModified) / 86400) : 0;
+
+                $this->metricsController->setMetricValuesByIdentifierString(
+                    (string) $collection->getIdentifier(),
+                    [
+                        'gitChurnCount' => 0,
+                        'gitLastModified' => $lastModified !== null ? date('Y-m-d', $lastModified) : '',
+                        'gitCodeAgeDays' => $ageDays,
+                        'gitAuthorCount' => 0,
+                        'gitAuthors' => [],
+                    ]
+                );
+            }
+        }
+
+        $this->output->outNl();
+        $this->output->outNl(
+            "Git analysis: \033[32m" . $changes['totalCommits'] . "\033[0m commits by \033[32m" .
+            count($changes['authors']) . "\033[0m authors (since " . $this->since . ")."
+        );
+    }
+
+    private function setDefaults(): void
+    {
+        $this->metricsController->setMetricValues(
+            MetricCollectionTypeEnum::ProjectCollection,
+            null,
+            [
+                'gitTotalCommits' => 0,
+                'gitActiveAuthors' => 0,
+                'gitAnalysisPeriod' => 'N/A',
+            ]
+        );
+    }
+}

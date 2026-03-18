@@ -34,6 +34,7 @@ use PhpCodeArch\Predictions\GodClassPrediction;
 use PhpCodeArch\Predictions\PredictionInterface;
 use PhpCodeArch\Predictions\PredictionService;
 use PhpCodeArch\Predictions\DeadCodePrediction;
+use PhpCodeArch\Predictions\HotspotPrediction;
 use PhpCodeArch\Predictions\DeepInheritancePrediction;
 use PhpCodeArch\Predictions\DependencyCyclePrediction;
 use PhpCodeArch\Predictions\LowTypeCoveragePrediction;
@@ -74,6 +75,12 @@ final readonly class Application
 
         $metricsController = $this->createMetricController($config);
         $this->createAndRunAnalyzer($config, $metricsController, $fileList, $output);
+
+        $gitConfig = $config->get('git') ?? ['enable' => true];
+        if ($gitConfig['enable'] ?? true) {
+            $gitAnalyzer = new \PhpCodeArch\Git\GitAnalyzer($config, $metricsController, $output);
+            $gitAnalyzer->analyze();
+        }
 
         $this->runCalculators($metricsController, $output);
 
@@ -226,6 +233,7 @@ final readonly class Application
             new DeadCodePrediction(),
             new SecuritySmellPrediction(),
             new SolidViolationPrediction(),
+            new HotspotPrediction(),
         ], $metricsController, $output);
         $predictions->predict();
 
