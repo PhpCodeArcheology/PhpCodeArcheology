@@ -81,30 +81,19 @@ final readonly class Application
 
         $memoryLimit = $config->get('memoryLimit') ?? '1G';
         ini_set('memory_limit', $memoryLimit);
-        $fileList = $this->createFileList($config);
 
-        $metricsController = $this->createMetricController($config);
-        $this->createAndRunAnalyzer($config, $metricsController, $fileList, $output);
-
-        // Quick mode: reduced calculators, no predictions, no report
+        // Quick mode: reduced analysis, no report
         if ($config->get('quickMode')) {
+            $fileList = $this->createFileList($config);
+            $metricsController = $this->createMetricController($config);
+            $this->createAndRunAnalyzer($config, $metricsController, $fileList, $output);
             $this->runQuickCalculators($metricsController, $output);
             $quickOutput = new QuickOutput($metricsController, $output, $formatter);
             $quickOutput->render();
             return 0;
         }
 
-        $gitConfig = $config->get('git') ?? ['enable' => true];
-        if ($gitConfig['enable'] ?? true) {
-            $gitAnalyzer = new \PhpCodeArch\Git\GitAnalyzer($config, $metricsController, $output);
-            $gitAnalyzer->analyze();
-        }
-
-        $this->runCalculators($metricsController, $output);
-
-        $problems = $this->runPredictors($metricsController, $output);
-        $this->setProblems($metricsController, $problems);
-        $this->calculateTechnicalDebt($metricsController);
+        [$metricsController, $problems] = $this->runAnalysis($config, $output);
 
         $twigLoader = new FilesystemLoader();
         $twig = new Environment($twigLoader, options: [
@@ -555,8 +544,35 @@ final readonly class Application
     {
         return match ($command) {
             'init' => (new Command\InitCommand())->execute($config, $output, $formatter),
+            'compare' => (new Command\CompareCommand())->execute($config, $output, $formatter),
+            'baseline' => (new Command\BaselineCommand($this))->execute($config, $output, $formatter),
             default => throw new ParamException("Unknown command: $command"),
         };
+    }
+
+    /**
+     * Run full analysis pipeline: parse → git → calculators → predictors → debt.
+     * @return array{MetricsController, array} [$metricsController, $problems]
+     */
+    public function runAnalysis(Config $config, CliOutput $output): array
+    {
+        $fileList = $this->createFileList($config);
+        $metricsController = $this->createMetricController($config);
+        $this->createAndRunAnalyzer($config, $metricsController, $fileList, $output);
+
+        $gitConfig = $config->get('git') ?? ['enable' => true];
+        if ($gitConfig['enable'] ?? true) {
+            $gitAnalyzer = new \PhpCodeArch\Git\GitAnalyzer($config, $metricsController, $output);
+            $gitAnalyzer->analyze();
+        }
+
+        $this->runCalculators($metricsController, $output);
+
+        $problems = $this->runPredictors($metricsController, $output);
+        $this->setProblems($metricsController, $problems);
+        $this->calculateTechnicalDebt($metricsController);
+
+        return [$metricsController, $problems];
     }
 
     private function runQuickCalculators(MetricsController $metricsController, CliOutput $output): void

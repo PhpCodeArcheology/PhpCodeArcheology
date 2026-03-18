@@ -26,6 +26,10 @@ final class ArgumentParser
             if (!str_starts_with($firstArg, '-') && in_array($firstArg, $commands, true)) {
                 $config->set('command', $firstArg);
                 unset($argv[$firstKey]);
+
+                // Store remaining positional args as commandArgs (won't be overwritten by config file)
+                $commandArgs = array_values(array_filter($argv, fn($v) => !str_starts_with($v, '-')));
+                $config->set('commandArgs', $commandArgs);
             }
         }
 
