@@ -1,19 +1,29 @@
 # PhpCodeArcheology
 
-**PhpCodeArcheology** analyses your PHP project and generates a comprehensive report with detailed metrics on files, classes, methods, and functions. It detects code smells, identifies hotspots, and tracks quality over time — giving you the insights you need to improve and maintain your codebase.
+[![Packagist Version](https://img.shields.io/packagist/v/php-code-archeology/php-code-archeology)](https://packagist.org/packages/php-code-archeology/php-code-archeology)
+[![PHP Version](https://img.shields.io/packagist/php-v/php-code-archeology/php-code-archeology)](https://packagist.org/packages/php-code-archeology/php-code-archeology)
+[![License](https://img.shields.io/packagist/l/php-code-archeology/php-code-archeology)](https://packagist.org/packages/php-code-archeology/php-code-archeology)
+[![Tests](https://img.shields.io/github/actions/workflow/status/marcuskober/PhpCodeArcheology/tests.yml?label=tests)](https://github.com/marcuskober/PhpCodeArcheology/actions)
+
+**PhpCodeArcheology** is a PHP static analysis tool that measures code quality through 60+ metrics including cyclomatic complexity, maintainability index, coupling, and cohesion. It generates comprehensive reports for files, classes, methods, and functions — detecting code smells, identifying hotspots via git churn analysis, and tracking quality trends over time.
+
+Unlike PHPStan or Psalm (which focus on type safety and bug detection), PhpCodeArcheology focuses on **architecture and maintainability** — giving you the insights you need to understand and improve your codebase structure. Think of it as an alternative to PHPMetrics with deeper git integration, baseline management, and AI-ready output.
+
+![PhpCodeArcheology Dashboard](docs/screenshot-dashboard.png)
 
 ## Features
 
-- **60+ metrics** per file, class, and function (CC, MI, LCOM, Halstead, coupling, and more)
-- **Problem detection** with 13 built-in rules (God Class, too complex, dead code, security smells, ...)
-- **Git integration** — churn analysis, hotspot detection, author tracking
-- **Multiple report formats** — HTML, Markdown, JSON, SARIF, AI summary
-- **Health Score** — single 0-100 score with A-F grading for your project
-- **Technical Debt Score** — weighted problem score normalised per 100 LLOC
-- **History tracking** — trend charts across multiple runs
-- **Baseline management** — track only new problems, ignore existing ones
-- **CI/CD ready** — exit codes, SARIF for GitHub Code Scanning, JSON for tooling
-- **Quick mode** — fast terminal output without report generation
+- **60+ code quality metrics** per file, class, and function — cyclomatic complexity, cognitive complexity, maintainability index, LCOM, Halstead metrics, coupling, instability, and more
+- **Problem detection** with 13 built-in rules — God Class, too complex, dead code, security smells, SOLID violations, deep inheritance, low type coverage
+- **Git integration** — churn analysis, hotspot detection (high churn + high complexity), author tracking
+- **Multiple report formats** — interactive HTML, Markdown, JSON, SARIF (GitHub Code Scanning), AI summary
+- **Health Score** — single 0-100 score with A-F grading for your entire project
+- **Technical Debt Score** — weighted problem score normalised per 100 logical lines of code
+- **History tracking** — trend charts across multiple analysis runs
+- **Baseline management** — track only new problems, ignore existing ones (ideal for legacy projects)
+- **CI/CD ready** — configurable exit codes, SARIF for GitHub Code Scanning, JSON for custom tooling
+- **Quick mode** — fast terminal-only output without report generation
+- **CLAUDE.md generation** — auto-generated project overview for AI coding assistants
 
 ## Prerequisites
 
@@ -174,7 +184,9 @@ All threshold values shown above are the defaults. You only need to specify valu
 | **Technical Debt Score** | Weighted problem points per 100 logical lines of code. |
 | **Health Score** | Overall project quality grade from A (excellent) to F (critical). |
 
-The HTML report includes a full **Metric Glossary** with descriptions, thresholds, and severity levels.
+For detailed descriptions, formulas, thresholds, and interpretation guidelines, see the **[Metric Reference](docs/metrics.md)**.
+
+The HTML report also includes a full **Metric Glossary** with descriptions, thresholds, and severity levels.
 
 ## Author
 

@@ -7,20 +7,11 @@ namespace PhpCodeArch\Application\Command;
 use PhpCodeArch\Application\CliFormatter;
 use PhpCodeArch\Application\CliOutput;
 use PhpCodeArch\Application\Config;
+use PhpCodeArch\Application\Service\ReportComparator;
 use PhpCodeArch\Application\TerminalTable;
 
 class CompareCommand
 {
-    private const LOWER_IS_BETTER = [
-        'overallErrorCount', 'overallWarningCount', 'overallInformationCount',
-        'overallAvgCC', 'overallMaxCC', 'overallTechnicalDebtScore',
-        'overallDuplicationRate', 'overallHtmlLoc',
-    ];
-
-    private const HIGHER_IS_BETTER = [
-        'overallAvgMI', 'healthScore', 'overallCommentWeight',
-    ];
-
     public function execute(Config $config, CliOutput $output, CliFormatter $formatter): int
     {
         $args = $config->get('commandArgs') ?? [];
@@ -51,69 +42,22 @@ class CompareCommand
         $output->outNl($formatter->dim("Before: $fileBefore"));
         $output->outNl($formatter->dim("After:  $fileAfter"));
 
-        $this->compareMetrics($before, $after, $output, $formatter);
-        $this->compareProblemCounts($before, $after, $output, $formatter);
-        $this->compareProblems($before, $after, $output, $formatter);
+        $comparator = new ReportComparator();
+
+        $this->renderMetrics($comparator->compareMetrics($before, $after), $output, $formatter);
+        $this->renderProblemCounts($comparator->compareProblemCounts($before, $after), $output, $formatter);
+        $this->renderProblems($comparator->compareProblems($before, $after), $output, $formatter);
 
         return 0;
     }
 
-    private function compareMetrics(array $before, array $after, CliOutput $output, CliFormatter $formatter): void
+    private function renderMetrics(array $rows, CliOutput $output, CliFormatter $formatter): void
     {
-        $metricsBefore = $before['project']['metrics'] ?? [];
-        $metricsAfter = $after['project']['metrics'] ?? [];
-
-        $allKeys = array_unique(array_merge(array_keys($metricsBefore), array_keys($metricsAfter)));
-
         $table = new TerminalTable($output, $formatter);
         $table->setHeaders(['Metric', 'Before', 'After', 'Delta']);
 
-        $table->setColumnFormatter(3, function ($val, $padded) use ($formatter) {
-            if (!is_numeric($val)) {
-                return $formatter->dim($padded);
-            }
-            if ($val > 0) {
-                return $formatter->error('+' . $padded);
-            }
-            if ($val < 0) {
-                return $formatter->success($padded);
-            }
-            return $formatter->dim($padded);
-        });
-
-        $interestingKeys = [
-            'healthScore', 'overallFiles', 'overallClasses', 'overallLoc', 'overallLloc',
-            'overallAvgCC', 'overallAvgMI', 'overallMaxCC',
-            'overallErrorCount', 'overallWarningCount', 'overallInformationCount',
-            'overallTechnicalDebtScore', 'overallDuplicationRate',
-        ];
-
-        foreach ($interestingKeys as $key) {
-            if (!isset($metricsBefore[$key]) && !isset($metricsAfter[$key])) {
-                continue;
-            }
-
-            $name = $metricsAfter[$key]['name'] ?? $metricsBefore[$key]['name'] ?? $key;
-            $valBefore = $metricsBefore[$key]['value'] ?? 0;
-            $valAfter = $metricsAfter[$key]['value'] ?? 0;
-
-            if (!is_numeric($valBefore) || !is_numeric($valAfter)) {
-                $table->addRow([$name, (string) $valBefore, (string) $valAfter, '-']);
-                continue;
-            }
-
-            $delta = round($valAfter - $valBefore, 2);
-            $deltaStr = $delta > 0 ? '+' . $delta : (string) $delta;
-
-            // Adjust sign for "lower is better" metrics
-            if (in_array($key, self::LOWER_IS_BETTER, true)) {
-                $adjustedDelta = -$delta; // Negative delta is good
-            } elseif (in_array($key, self::HIGHER_IS_BETTER, true)) {
-                $adjustedDelta = $delta; // Positive delta is good
-            } else {
-                $adjustedDelta = 0; // Neutral
-            }
-
+        foreach ($rows as $row) {
+            $adjustedDelta = $row['adjustedDelta'];
             $table->setColumnFormatter(3, function ($val, $padded) use ($formatter, $adjustedDelta) {
                 if ($adjustedDelta > 0) {
                     return $formatter->success($padded);
@@ -124,7 +68,7 @@ class CompareCommand
                 return $formatter->dim($padded);
             });
 
-            $table->addRow([$name, (string) $valBefore, (string) $valAfter, $deltaStr]);
+            $table->addRow([$row['name'], $row['before'], $row['after'], $row['delta']]);
         }
 
         $output->outNl();
@@ -132,52 +76,24 @@ class CompareCommand
         $table->render();
     }
 
-    private function compareProblemCounts(array $before, array $after, CliOutput $output, CliFormatter $formatter): void
+    private function renderProblemCounts(array $rows, CliOutput $output, CliFormatter $formatter): void
     {
-        $countBefore = $this->countByLevel($before['problems'] ?? []);
-        $countAfter = $this->countByLevel($after['problems'] ?? []);
-
         $table = new TerminalTable($output, $formatter);
         $table->setHeaders(['Level', 'Before', 'After', 'Delta']);
 
-        foreach (['error', 'warning', 'info'] as $level) {
-            $b = $countBefore[$level] ?? 0;
-            $a = $countAfter[$level] ?? 0;
-            $delta = $a - $b;
-            $deltaStr = $delta > 0 ? '+' . $delta : (string) $delta;
-            $table->addRow([ucfirst($level), $b, $a, $deltaStr]);
+        foreach ($rows as $row) {
+            $table->addRow([$row['level'], $row['before'], $row['after'], $row['delta']]);
         }
-
-        $totalBefore = array_sum($countBefore);
-        $totalAfter = array_sum($countAfter);
-        $totalDelta = $totalAfter - $totalBefore;
-        $table->addRow(['Total', $totalBefore, $totalAfter, $totalDelta > 0 ? '+' . $totalDelta : (string) $totalDelta]);
 
         $output->outNl();
         $output->outNl($formatter->bold('  Problems'));
         $table->render();
     }
 
-    private function compareProblems(array $before, array $after, CliOutput $output, CliFormatter $formatter): void
+    private function renderProblems(array $result, CliOutput $output, CliFormatter $formatter): void
     {
-        $signaturesBefore = $this->problemSignatures($before['problems'] ?? []);
-        $signaturesAfter = $this->problemSignatures($after['problems'] ?? []);
-
-        $newProblems = [];
-        foreach ($after['problems'] ?? [] as $problem) {
-            $sig = $this->signature($problem);
-            if (!isset($signaturesBefore[$sig])) {
-                $newProblems[] = $problem;
-            }
-        }
-
-        $resolvedProblems = [];
-        foreach ($before['problems'] ?? [] as $problem) {
-            $sig = $this->signature($problem);
-            if (!isset($signaturesAfter[$sig])) {
-                $resolvedProblems[] = $problem;
-            }
-        }
+        $newProblems = $result['new'];
+        $resolvedProblems = $result['resolved'];
 
         if (!empty($newProblems)) {
             $output->outNl();
@@ -209,29 +125,5 @@ class CompareCommand
         }
 
         $output->outNl();
-    }
-
-    private function countByLevel(array $problems): array
-    {
-        $counts = ['error' => 0, 'warning' => 0, 'info' => 0];
-        foreach ($problems as $p) {
-            $level = $p['level'] ?? 'info';
-            $counts[$level] = ($counts[$level] ?? 0) + 1;
-        }
-        return $counts;
-    }
-
-    private function problemSignatures(array $problems): array
-    {
-        $sigs = [];
-        foreach ($problems as $p) {
-            $sigs[$this->signature($p)] = true;
-        }
-        return $sigs;
-    }
-
-    private function signature(array $problem): string
-    {
-        return ($problem['entityId'] ?? '') . '|' . ($problem['message'] ?? '') . '|' . ($problem['level'] ?? '');
     }
 }
