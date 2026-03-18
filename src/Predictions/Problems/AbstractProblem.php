@@ -23,4 +23,14 @@ abstract readonly class AbstractProblem implements ProblemInterface
     {
         return $this->message;
     }
+
+    public function getRecommendation(): string
+    {
+        return '';
+    }
+
+    public function getConfidence(): float
+    {
+        return 1.0;
+    }
 }

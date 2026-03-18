@@ -15,4 +15,9 @@ readonly class TooComplexProblem extends AbstractProblem
     {
         return 'Too complex code';
     }
+
+    public function getRecommendation(): string
+    {
+        return 'Extract Method to reduce complexity. Break conditional logic into smaller, named methods.';
+    }
 }

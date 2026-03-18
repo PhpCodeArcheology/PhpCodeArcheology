@@ -10,4 +10,6 @@ interface ProblemInterface
 
     public function getProblemLevel(): int;
     public function getMessage(): string;
+    public function getRecommendation(): string;
+    public function getConfidence(): float;
 }

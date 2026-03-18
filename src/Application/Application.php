@@ -9,7 +9,10 @@ use PhpCodeArch\Application\ConfigFile\Exceptions\ConfigFileExtensionNotSupporte
 use PhpCodeArch\Application\ConfigFile\Exceptions\MultipleConfigFilesException;
 use PhpCodeArch\Calculators\CalculatorService;
 use PhpCodeArch\Calculators\CouplingCalculator;
+use PhpCodeArch\Calculators\CodeDuplicationCalculator;
 use PhpCodeArch\Calculators\DependencyCycleCalculator;
+use PhpCodeArch\Calculators\LayerViolationCalculator;
+use PhpCodeArch\Calculators\PackageCohesionCalculator;
 use PhpCodeArch\Calculators\SolidViolationCalculator;
 use PhpCodeArch\Calculators\FileCalculator;
 use PhpCodeArch\Calculators\HealthScoreCalculator;
@@ -192,6 +195,9 @@ final readonly class Application
             new InheritanceDepthCalculator($metricsController),
             new DependencyCycleCalculator($metricsController),
             new SolidViolationCalculator($metricsController),
+            new LayerViolationCalculator($metricsController),
+            new PackageCohesionCalculator($metricsController),
+            new CodeDuplicationCalculator($metricsController),
             new ProjectCalculator($metricsController),
             new LimitsAndAveragesCalculator($metricsController),
             new HealthScoreCalculator($metricsController),

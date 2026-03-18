@@ -15,4 +15,9 @@ readonly class DeadCodeProblem extends AbstractProblem
     {
         return 'Dead code';
     }
+
+    public function getRecommendation(): string
+    {
+        return 'Remove unused private methods to reduce maintenance burden.';
+    }
 }

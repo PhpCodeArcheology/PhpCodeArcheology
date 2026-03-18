@@ -15,4 +15,9 @@ readonly class SolidViolationProblem extends AbstractProblem
     {
         return 'SOLID violation';
     }
+
+    public function getRecommendation(): string
+    {
+        return 'SRP: Split class responsibilities. ISP: Break large interfaces into smaller ones. DIP: Depend on abstractions.';
+    }
 }

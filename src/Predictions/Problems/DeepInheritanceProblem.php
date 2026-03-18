@@ -15,4 +15,9 @@ readonly class DeepInheritanceProblem extends AbstractProblem
     {
         return 'Deep inheritance hierarchy';
     }
+
+    public function getRecommendation(): string
+    {
+        return 'Prefer composition over inheritance. Extract shared behavior into traits or services.';
+    }
 }

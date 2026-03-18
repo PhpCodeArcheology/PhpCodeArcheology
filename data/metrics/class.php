@@ -339,6 +339,30 @@ return [
         ],
     ],
     [
+        'key' => 'layerViolationCount',
+        'name' => 'Layer violations',
+        'shortName' => 'Layer Viol.',
+        'description' => 'Number of architectural layer violations (e.g. Repository depending on Controller).',
+        'valueType' => \PhpCodeArch\Metrics\Model\Enums\MetricValueType::Int,
+        'better' => \PhpCodeArch\Metrics\Model\Enums\BetterDirection::Low,
+        'visibility' => \PhpCodeArch\Metrics\Model\Enums\MetricVisibility::ShowEverywhere,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
+        ],
+    ],
+    [
+        'key' => 'layerViolations',
+        'name' => 'Layer violation details',
+        'shortName' => '',
+        'description' => 'Details of architectural layer violations.',
+        'valueType' => \PhpCodeArch\Metrics\Model\Enums\MetricValueType::Array,
+        'better' => \PhpCodeArch\Metrics\Model\Enums\BetterDirection::Irrelevant,
+        'visibility' => \PhpCodeArch\Metrics\Model\Enums\MetricVisibility::ShowDetails,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
+        ],
+    ],
+    [
         'key' => 'solidViolationCount',
         'name' => 'SOLID violations',
         'shortName' => 'SOLID',

@@ -15,4 +15,9 @@ readonly class SecuritySmellProblem extends AbstractProblem
     {
         return 'Security smell';
     }
+
+    public function getRecommendation(): string
+    {
+        return 'Replace dangerous functions with safe alternatives. Use parameterized queries instead of string concatenation.';
+    }
 }

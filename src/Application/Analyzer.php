@@ -8,6 +8,7 @@ use PhpCodeArch\Analysis\CognitiveComplexityVisitor;
 use PhpCodeArch\Analysis\CyclomaticComplexityVisitor;
 use PhpCodeArch\Analysis\DeadCodeVisitor;
 use PhpCodeArch\Analysis\DocumentationCoverageVisitor;
+use PhpCodeArch\Analysis\RuntimeComplexityVisitor;
 use PhpCodeArch\Analysis\SecuritySmellVisitor;
 use PhpCodeArch\Analysis\TypeCoverageVisitor;
 use PhpCodeArch\Analysis\DependencyVisitor;
@@ -73,6 +74,7 @@ readonly class Analyzer
             DocumentationCoverageVisitor::class,
             DeadCodeVisitor::class,
             SecuritySmellVisitor::class,
+            RuntimeComplexityVisitor::class,
             PackageVisitor::class,
         ];
     }

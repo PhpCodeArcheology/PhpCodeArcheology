@@ -672,6 +672,21 @@ return [
     ['key' => 'overallClassMetricsCollectionAvgLcom', 'type' => 'storage',],
     ['key' => 'overallClassMetricsCollectionAvgInstability', 'type' => 'storage',],
 
+    // Code duplication
+    [
+        'key' => 'overallDuplicationRate',
+        'name' => 'Duplication rate',
+        'shortName' => 'Dupl.',
+        'description' => 'Overall code duplication rate across all files.',
+        'valueType' => \PhpCodeArch\Metrics\Model\Enums\MetricValueType::Percentage,
+        'better' => \PhpCodeArch\Metrics\Model\Enums\BetterDirection::Low,
+        'visibility' => \PhpCodeArch\Metrics\Model\Enums\MetricVisibility::ShowEverywhere,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
+        ],
+    ],
+    ['key' => 'overallDuplicatedLines', 'type' => 'storage'],
+
     // Technical debt
     [
         'key' => 'overallTechnicalDebtScore',

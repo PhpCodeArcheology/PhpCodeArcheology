@@ -15,4 +15,9 @@ readonly class TooManyParametersProblem extends AbstractProblem
     {
         return 'Too many parameters';
     }
+
+    public function getRecommendation(): string
+    {
+        return 'Consider using a parameter object or builder pattern.';
+    }
 }

@@ -15,4 +15,9 @@ readonly class TooDependentProblem extends AbstractProblem
     {
         return 'Too dependent';
     }
+
+    public function getRecommendation(): string
+    {
+        return 'Introduce interfaces to reduce coupling. Consider dependency injection.';
+    }
 }

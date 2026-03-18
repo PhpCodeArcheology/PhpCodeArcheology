@@ -4,6 +4,18 @@ declare(strict_types=1);
 
 return [
     [
+        'key' => 'packageCohesion',
+        'name' => 'Relational Cohesion',
+        'shortName' => 'H',
+        'description' => 'Relational cohesion H = (R+1)/N where R = internal relationships, N = types in package.',
+        'valueType' => \PhpCodeArch\Metrics\Model\Enums\MetricValueType::Float,
+        'better' => \PhpCodeArch\Metrics\Model\Enums\BetterDirection::High,
+        'visibility' => \PhpCodeArch\Metrics\Model\Enums\MetricVisibility::ShowEverywhere,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::PackageCollection,
+        ],
+    ],
+    [
         'key' => 'abstractness',
         'name' => 'Abstractness',
         'shortName' => 'A',

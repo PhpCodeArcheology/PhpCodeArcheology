@@ -15,4 +15,9 @@ readonly class LowTypeCoverageProblem extends AbstractProblem
     {
         return 'Low type coverage';
     }
+
+    public function getRecommendation(): string
+    {
+        return 'Add type declarations to parameters, return types, and properties.';
+    }
 }

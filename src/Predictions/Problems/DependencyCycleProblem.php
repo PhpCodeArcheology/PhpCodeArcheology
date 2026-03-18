@@ -15,4 +15,9 @@ readonly class DependencyCycleProblem extends AbstractProblem
     {
         return 'Circular dependency';
     }
+
+    public function getRecommendation(): string
+    {
+        return 'Break the cycle by introducing an interface or restructuring dependencies.';
+    }
 }

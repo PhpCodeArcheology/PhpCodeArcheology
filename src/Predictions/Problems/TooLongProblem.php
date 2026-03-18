@@ -15,4 +15,9 @@ readonly class TooLongProblem extends AbstractProblem
     {
         return 'Too long';
     }
+
+    public function getRecommendation(): string
+    {
+        return 'Extract Method or split into smaller units. Each method should do one thing.';
+    }
 }
