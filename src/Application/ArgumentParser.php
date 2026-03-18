@@ -18,6 +18,17 @@ final class ArgumentParser
             array_shift($argv);
         }
 
+        // Detect subcommand (first non-flag argument)
+        $commands = ['init', 'compare', 'baseline'];
+        if (!empty($argv)) {
+            $firstKey = array_key_first($argv);
+            $firstArg = $argv[$firstKey];
+            if (!str_starts_with($firstArg, '-') && in_array($firstArg, $commands, true)) {
+                $config->set('command', $firstArg);
+                unset($argv[$firstKey]);
+            }
+        }
+
         foreach ($argv as $key => $value) {
             if (preg_match('#--([\w\-]+)=(.*)#', $value, $matches)) {
                 [, $param, $value] = $matches;

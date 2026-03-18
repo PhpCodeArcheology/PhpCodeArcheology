@@ -67,15 +67,21 @@ final readonly class Application
     {
         $config = $this->createConfig($argv);
 
-        $memoryLimit = $config->get('memoryLimit') ?? '1G';
-        ini_set('memory_limit', $memoryLimit);
-        $fileList = $this->createFileList($config);
-
         $formatter = new CliFormatter(
             $config->get('noColor') ? false : null
         );
         $output = new CliOutput();
         $output->setFormatter($formatter);
+
+        // Dispatch subcommand before analysis
+        $command = $config->get('command');
+        if ($command !== null) {
+            return $this->dispatchCommand($command, $config, $output, $formatter);
+        }
+
+        $memoryLimit = $config->get('memoryLimit') ?? '1G';
+        ini_set('memory_limit', $memoryLimit);
+        $fileList = $this->createFileList($config);
 
         $metricsController = $this->createMetricController($config);
         $this->createAndRunAnalyzer($config, $metricsController, $fileList, $output);
@@ -161,11 +167,14 @@ final readonly class Application
             $config->set('packageSize', 2);
         }
 
-        try {
-            $config->validate();
-        } catch (ConfigException $e) {
-            echo PHP_EOL . "Error: {$e->getMessage()}";
-            exit(1);
+        // Skip validation for subcommands (they don't need files)
+        if (!$config->get('command')) {
+            try {
+                $config->validate();
+            } catch (ConfigException $e) {
+                echo PHP_EOL . "Error: {$e->getMessage()}";
+                exit(1);
+            }
         }
 
         return $config;
@@ -540,6 +549,14 @@ final readonly class Application
             return null;
         }
         return end($lines);
+    }
+
+    private function dispatchCommand(string $command, Config $config, CliOutput $output, CliFormatter $formatter): int
+    {
+        return match ($command) {
+            'init' => (new Command\InitCommand())->execute($config, $output, $formatter),
+            default => throw new ParamException("Unknown command: $command"),
+        };
     }
 
     private function runQuickCalculators(MetricsController $metricsController, CliOutput $output): void

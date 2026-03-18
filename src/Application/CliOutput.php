@@ -40,6 +40,16 @@ class CliOutput
         return $this;
     }
 
+    public function prompt(string $question, string $default = ''): string
+    {
+        $defaultHint = $default !== '' ? " [$default]" : '';
+        $this->out($question . $defaultHint . ': ');
+
+        $input = trim((string) fgets(STDIN));
+
+        return $input !== '' ? $input : $default;
+    }
+
     public function outWithMemory(string $string): static
     {
         $memory = (string) memory_get_usage();
