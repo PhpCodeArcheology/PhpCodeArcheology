@@ -247,7 +247,7 @@
     </div>
     {% endif %}
 
-    <div class="dash-panel {% if not hasMultipleRuns %}span-2{% endif %}" style="{% if not hasMultipleRuns %}grid-column: span 4;{% endif %}">
+    <div class="dash-panel span-2" style="{% if not hasMultipleRuns %}grid-column: span 4;{% endif %}">
       <div class="dash-panel-label">Top Problems</div>
       {% if classProblems|length == 0 and fileProblems|length == 0 and functionProblems|length == 0 %}
         <div style="text-align: center; padding: 2rem; color: rgba(255,255,255,0.3);">
@@ -255,8 +255,8 @@
           <div>No problems detected</div>
         </div>
       {% else %}
-        <div style="max-height: 220px; overflow-y: auto;">
-          {% for entityKey, problemEntry in classProblems|slice(0, 5) %}
+        <div style="overflow-y: auto;">
+          {% for entityKey, problemEntry in classProblems|slice(0, 8) %}
             <div class="problem-row">
               <span class="problem-badge badge-error">!</span>
               <span style="flex: 1; color: rgba(255,255,255,0.8);">
@@ -267,7 +267,7 @@
               <span style="color: rgba(255,255,255,0.4); font-size: 0.75rem;">{{ problemEntry.problems|length }} issue{{ problemEntry.problems|length > 1 ? 's' : '' }}</span>
             </div>
           {% endfor %}
-          {% for entityKey, problemEntry in fileProblems|slice(0, 3) %}
+          {% for entityKey, problemEntry in fileProblems|slice(0, 5) %}
             <div class="problem-row">
               <span class="problem-badge badge-warning">!</span>
               <span style="flex: 1; color: rgba(255,255,255,0.8);">
