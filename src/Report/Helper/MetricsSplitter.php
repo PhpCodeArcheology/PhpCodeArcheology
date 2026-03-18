@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Report\Helper;
 
+use PhpCodeArch\Application\CliFormatter;
 use PhpCodeArch\Application\CliOutput;
+use PhpCodeArch\Application\ProgressBar;
 use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
@@ -34,17 +36,12 @@ readonly class MetricsSplitter
         $functionCollection = new ReportDataCollection();
         $packageCollection = new ReportDataCollection();
 
-        $count = 0;
-        $countSum = number_format(count($this->metricsController->getAllCollections()));
-        foreach ($this->metricsController->getAllCollections() as $metric) {
-            $this->output->cls();
-            $this->output->outWithMemory(
-                "Splitting metric \033[34m" .
-                number_format($count + 1) .
-                "\033[0m of \033[32m$countSum\033[0m..."
-            );
+        $formatter = $this->output->getFormatter() ?? new CliFormatter();
+        $allCollections = $this->metricsController->getAllCollections();
+        $progressBar = new ProgressBar($this->output, $formatter, count($allCollections), 'Splitting');
 
-            ++ $count;
+        foreach ($allCollections as $metric) {
+            $progressBar->advance();
 
             switch (true) {
                 case $metric instanceof PackageMetricsCollection:
@@ -84,19 +81,12 @@ readonly class MetricsSplitter
             }
         }
 
-        $this->output->outNl();
+        $progressBar->finish();
 
-        $count = 0;
-        $countSum = number_format(count($fileCollection));
+        $fileProgressBar = new ProgressBar($this->output, $formatter, count($fileCollection), 'Setting up files');
+
         foreach ($fileCollection as &$data) {
-            $this->output->cls();
-            $this->output->outWithMemory(
-                "Setting up file \033[34m" .
-                number_format($count + 1) .
-                "\033[0m of \033[32m$countSum\033[0m..."
-            );
-
-            ++ $count;
+            $fileProgressBar->advance();
 
             $path = $data['name'];
 
@@ -112,7 +102,7 @@ readonly class MetricsSplitter
             $data['functions'] = $functionsInFile;
         }
 
-        $this->output->outNl();
+        $fileProgressBar->finish();
 
         $this->dataContainer->set('files', $fileCollection);
         $this->dataContainer->set('classes', $classCollection);

@@ -58,6 +58,14 @@ final class ArgumentParser
                         $config->set('generateClaudeMd', true);
                         break;
 
+                    case 'no-color':
+                        $config->set('noColor', true);
+                        break;
+
+                    case 'quick':
+                        $config->set('quickMode', true);
+                        break;
+
                     default:
                         throw new ParamException('CLI parameter "' . $param . '" does not exist.');
                 }

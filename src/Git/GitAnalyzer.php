@@ -29,7 +29,8 @@ class GitAnalyzer
     public function analyze(): void
     {
         if (!$this->parser->isGitRepository()) {
-            $this->output->outNl("\033[33mNo Git repository detected — skipping Git analysis.\033[0m");
+            $formatter = $this->output->getFormatter() ?? new \PhpCodeArch\Application\CliFormatter();
+            $this->output->outNl($formatter->warning('No Git repository detected — skipping Git analysis.'));
             $this->setDefaults();
             return;
         }
@@ -103,10 +104,11 @@ class GitAnalyzer
             }
         }
 
+        $formatter = $this->output->getFormatter() ?? new \PhpCodeArch\Application\CliFormatter();
         $this->output->outNl();
         $this->output->outNl(
-            "Git analysis: \033[32m" . $changes['totalCommits'] . "\033[0m commits by \033[32m" .
-            count($changes['authors']) . "\033[0m authors (since " . $this->since . ")."
+            'Git analysis: ' . $formatter->success((string) $changes['totalCommits']) . ' commits by ' .
+            $formatter->success((string) count($changes['authors'])) . ' authors (since ' . $this->since . ').'
         );
     }
 

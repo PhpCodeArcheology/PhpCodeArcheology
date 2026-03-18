@@ -71,10 +71,22 @@ final readonly class Application
         ini_set('memory_limit', $memoryLimit);
         $fileList = $this->createFileList($config);
 
+        $formatter = new CliFormatter(
+            $config->get('noColor') ? false : null
+        );
         $output = new CliOutput();
+        $output->setFormatter($formatter);
 
         $metricsController = $this->createMetricController($config);
         $this->createAndRunAnalyzer($config, $metricsController, $fileList, $output);
+
+        // Quick mode: reduced calculators, no predictions, no report
+        if ($config->get('quickMode')) {
+            $this->runQuickCalculators($metricsController, $output);
+            $quickOutput = new QuickOutput($metricsController, $output, $formatter);
+            $quickOutput->render();
+            return 0;
+        }
 
         $gitConfig = $config->get('git') ?? ['enable' => true];
         if ($gitConfig['enable'] ?? true) {
@@ -113,6 +125,8 @@ final readonly class Application
         if ($config->get('generateClaudeMd')) {
             $this->generateClaudeMd($config, $dataProviderFactory, $output);
         }
+
+        $this->printSummary($metricsController, $config, $problems, $output, $formatter);
 
         return $this->determineExitCode($config, $problems);
     }
@@ -528,6 +542,78 @@ final readonly class Application
         return end($lines);
     }
 
+    private function runQuickCalculators(MetricsController $metricsController, CliOutput $output): void
+    {
+        $calculatorService = new CalculatorService([
+            new MaintainabilityIndexCalculator($metricsController),
+            new FileCalculator($metricsController),
+            new ProjectCalculator($metricsController),
+            new LimitsAndAveragesCalculator($metricsController),
+        ], $metricsController, $output);
+
+        $calculatorService->run();
+    }
+
+    private function printSummary(MetricsController $metricsController, Config $config, array $problems, CliOutput $output, CliFormatter $formatter): void
+    {
+        $get = fn(string $key) => $metricsController->getMetricValue(
+            MetricCollectionTypeEnum::ProjectCollection, null, $key
+        )?->getValue() ?? 0;
+
+        $files = number_format((int) $get('overallFiles'));
+        $classes = number_format((int) $get('overallClasses'));
+        $lloc = number_format((int) $get('overallLloc'));
+        $avgCC = round((float) $get('overallAvgCC'), 2);
+        $avgMI = round((float) $get('overallAvgMI'), 1);
+        $healthScore = round((float) $get('healthScore'), 1);
+        $grade = $get('healthScoreGrade') ?: '?';
+
+        $errors = $problems[PredictionInterface::ERROR] ?? 0;
+        $warnings = $problems[PredictionInterface::WARNING] ?? 0;
+        $infos = $problems[PredictionInterface::INFO] ?? 0;
+
+        $line = str_repeat("\u{2550}", 50);
+
+        $errStr = $errors > 0 ? $formatter->error(number_format($errors)) : $formatter->success('0');
+        $warnStr = $warnings > 0 ? $formatter->warning(number_format($warnings)) : $formatter->success('0');
+        $infoStr = number_format($infos);
+
+        $reportDir = $config->get('reportDir') ?? '';
+        $reportType = $config->get('reportType') ?? 'html';
+        $reportFile = match ($reportType) {
+            'html' => $reportDir . '/index.html',
+            'json' => $reportDir . '/report.json',
+            'sarif' => $reportDir . '/report.sarif.json',
+            'ai-summary' => $reportDir . '/ai-summary.md',
+            'markdown' => $reportDir . '/index.md',
+            default => $reportDir,
+        };
+
+        $output->outNl($line);
+        $output->outNl(sprintf(
+            ' Files: %s  |  Classes: %s  |  LLOC: %s',
+            $formatter->info($files),
+            $formatter->info($classes),
+            $formatter->info($lloc),
+        ));
+        $output->outNl(sprintf(
+            ' Avg CC: %s  |  Avg MI: %s  |  Health: %s (%s)',
+            $formatter->info((string) $avgCC),
+            $formatter->info((string) $avgMI),
+            $formatter->bold($grade),
+            $formatter->info((string) $healthScore),
+        ));
+        $output->outNl(sprintf(
+            ' Errors: %s  |  Warnings: %s  |  Info: %s',
+            $errStr,
+            $warnStr,
+            $infoStr,
+        ));
+        $output->outNl(' Report: ' . $formatter->dim($reportFile));
+        $output->outNl($line);
+        $output->outNl();
+    }
+
     private function generateClaudeMd(Config $config, DataProviderFactory $dataProviderFactory, CliOutput $output): void
     {
         $output->outWithMemory('Generating CLAUDE.md...');
@@ -653,7 +739,8 @@ final readonly class Application
         $claudeMdPath = ($config->get('runningDir') ?? getcwd()) . DIRECTORY_SEPARATOR . 'CLAUDE.md';
         file_put_contents($claudeMdPath, implode("\n", $lines));
 
-        $output->outNl("\033[32mCLAUDE.md generated at " . $claudeMdPath . "\033[0m");
+        $formatter = $output->getFormatter() ?? new CliFormatter();
+        $output->outNl($formatter->success('CLAUDE.md generated at ' . $claudeMdPath));
     }
 
     private function determineExitCode(Config $config, array $problems): int

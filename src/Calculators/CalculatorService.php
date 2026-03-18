@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Calculators;
 
+use PhpCodeArch\Application\CliFormatter;
 use PhpCodeArch\Application\CliOutput;
+use PhpCodeArch\Application\ProgressBar;
 use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\Model\MetricsContainer;
 
@@ -27,19 +29,12 @@ readonly class CalculatorService
     {
         $this->maybeCallMethod('beforeTraverse');
 
-        $count = 0;
-
+        $formatter = $this->output->getFormatter() ?? new CliFormatter();
         $metricsCollectionCount = $this->metricsController->getContainerCount();
+        $progressBar = new ProgressBar($this->output, $formatter, $metricsCollectionCount, 'Calculating');
 
         foreach ($this->metricsController->getAllCollections() as $metric) {
-            $this->output->cls();
-            $this->output->outWithMemory(
-                "Running calculator on metric \033[34m" .
-                number_format($count + 1) .
-                "\033[0m of \033[32m$metricsCollectionCount\033[0m..."
-            );
-
-            ++ $count;
+            $progressBar->advance();
 
             foreach ($this->calculators as $calculator) {
                 $calculator->calculate($metric);
@@ -48,7 +43,7 @@ readonly class CalculatorService
 
         $this->maybeCallMethod('afterTraverse');
 
-        $this->output->outNl();
+        $progressBar->finish();
     }
 
     private function maybeCallMethod(string $method): void

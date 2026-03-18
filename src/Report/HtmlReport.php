@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Report;
 
+use PhpCodeArch\Application\CliFormatter;
 use PhpCodeArch\Application\CliOutput;
 use PhpCodeArch\Application\Config;
+use PhpCodeArch\Application\ProgressBar;
 use PhpCodeArch\Report\DataProvider\DataProviderFactory;
 use PhpCodeArch\Report\Helper\FileCopier;
 use Twig\Environment;
@@ -75,22 +77,16 @@ class HtmlReport implements ReportInterface
             [$this, 'generateGitPage'],
         ];
 
-        $count = 0;
-        $countSum = count($createMethods);
+        $formatter = $this->output->getFormatter() ?? new CliFormatter();
+        $progressBar = new ProgressBar($this->output, $formatter, count($createMethods), 'Generating report');
+
         foreach ($createMethods as $method) {
-            $this->output->cls();
-            $this->output->outWithMemory(
-                "Creating report part \033[34m" .
-                number_format($count + 1) .
-                "\033[0m of \033[32m$countSum\033[0m..."
-            );
-
-            ++ $count;
-
+            $progressBar->advance();
             call_user_func($method);
         }
 
-        $this->output->outNl("\033[32m"."Report ready.\033[0m");
+        $progressBar->finish();
+        $this->output->outNl($formatter->success('Report ready.'));
         $this->output->outNl();
     }
 

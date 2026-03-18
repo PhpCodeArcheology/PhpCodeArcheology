@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Predictions;
 
+use PhpCodeArch\Application\CliFormatter;
 use PhpCodeArch\Application\CliOutput;
+use PhpCodeArch\Application\ProgressBar;
 use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\Model\MetricsContainer;
 
@@ -33,24 +35,18 @@ class PredictionService
 
     public function predict(): void
     {
-        $count = 0;
-        $predCount = number_format(count($this->predictions));
-        foreach ($this->predictions as $prediction) {
-            $this->output->cls();
-            $this->output->outWithMemory(
-                "Running prediction \033[34m" .
-                number_format($count + 1) .
-                "\033[0m of \033[32m$predCount\033[0m..."
-            );
+        $formatter = $this->output->getFormatter() ?? new CliFormatter();
+        $progressBar = new ProgressBar($this->output, $formatter, count($this->predictions), 'Predicting');
 
-            ++ $count;
+        foreach ($this->predictions as $prediction) {
+            $progressBar->advance();
 
             $this->problemCount[$prediction->getLevel()] += $prediction->predict(
                 $this->metricsController
             );
         }
 
-        $this->output->outNl();
+        $progressBar->finish();
     }
 
     public function getProblemCount(): array

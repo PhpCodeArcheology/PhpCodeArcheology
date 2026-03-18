@@ -57,7 +57,8 @@ class JsonReport implements ReportInterface
         $json = json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         file_put_contents($this->outputDir . 'report.json', $json);
 
-        $this->output->outNl("\033[32mJSON report written to report.json\033[0m");
+        $formatter = $this->output->getFormatter() ?? new \PhpCodeArch\Application\CliFormatter();
+        $this->output->outNl($formatter->success('JSON report written to report.json'));
         $this->output->outNl();
     }
 

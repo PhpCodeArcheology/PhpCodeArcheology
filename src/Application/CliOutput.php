@@ -6,6 +6,18 @@ namespace PhpCodeArch\Application;
 
 class CliOutput
 {
+    private ?CliFormatter $formatter = null;
+
+    public function setFormatter(CliFormatter $formatter): void
+    {
+        $this->formatter = $formatter;
+    }
+
+    public function getFormatter(): ?CliFormatter
+    {
+        return $this->formatter;
+    }
+
     public function out(string $message): static
     {
         file_put_contents('php://stdout', $message);

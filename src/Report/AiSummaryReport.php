@@ -51,7 +51,8 @@ class AiSummaryReport implements ReportInterface
         $content = implode("\n", $lines);
         file_put_contents($this->outputDir . 'ai-summary.md', $content);
 
-        $this->output->outNl("\033[32mAI summary written to ai-summary.md\033[0m");
+        $formatter = $this->output->getFormatter() ?? new \PhpCodeArch\Application\CliFormatter();
+        $this->output->outNl($formatter->success('AI summary written to ai-summary.md'));
         $this->output->outNl();
     }
 

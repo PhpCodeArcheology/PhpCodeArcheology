@@ -142,7 +142,8 @@ class SarifReport implements ReportInterface
         $json = json_encode($sarif, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         file_put_contents($this->outputDir . 'report.sarif.json', $json);
 
-        $this->output->outNl("\033[32mSARIF report written to report.sarif.json\033[0m");
+        $formatter = $this->output->getFormatter() ?? new \PhpCodeArch\Application\CliFormatter();
+        $this->output->outNl($formatter->success('SARIF report written to report.sarif.json'));
         $this->output->outNl();
     }
 

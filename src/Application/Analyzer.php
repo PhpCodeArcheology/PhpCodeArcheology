@@ -61,6 +61,15 @@ readonly class Analyzer
      */
     private function getVisitorClassList(): array
     {
+        if ($this->config->get('quickMode')) {
+            return [
+                IdentifyVisitor::class,
+                LocVisitor::class,
+                CyclomaticComplexityVisitor::class,
+                CognitiveComplexityVisitor::class,
+            ];
+        }
+
         return [
             IdentifyVisitor::class,
             TypeCoverageVisitor::class,
@@ -111,10 +120,13 @@ readonly class Analyzer
         $fileCount = count($fileList->getFiles());
         $projectFileErrors = 0;
 
+        $formatter = $this->output->getFormatter() ?? new CliFormatter();
+        $progressBar = new ProgressBar($this->output, $formatter, $fileCount, 'Analysing');
+
         $fileNameCollection = new FileNameCollection();
 
         foreach ($fileList->getFiles() as $count => $file) {
-            $this->progressOutput($count, $fileCount, $projectFileErrors);
+            $progressBar->advance();
 
             foreach ($visitorObjects as $visitor) {
                 $visitor->setPath($file);
@@ -179,31 +191,19 @@ readonly class Analyzer
             'files'
         );
 
-        $this->output->outNl();
+        $progressBar->finish();
 
         if ($projectFileErrors > 0) {
             $this->output->outNl(
-                "\033[33mWarning: $projectFileErrors file(s) had errors and were skipped.\033[0m"
+                $formatter->warning("Warning: $projectFileErrors file(s) had errors and were skipped.")
             );
         }
 
         $this->output->outNl(
-            "Analysed \033[32m" . ($fileCount - $projectFileErrors) . "\033[0m of \033[32m$fileCount\033[0m files successfully."
+            'Analysed ' . $formatter->success((string) ($fileCount - $projectFileErrors)) .
+            ' of ' . $formatter->success((string) $fileCount) . ' files successfully.'
         );
 
         return $projectFileErrors;
-    }
-
-    private function progressOutput(int $count, int $fileCount, int $projectFileErrors): void
-    {
-        $this->output->cls();
-        $this->output->outWithMemory(
-            "Analysing file \033[34m" .
-            number_format($count + 1) .
-            "\033[0m of \033[32m$fileCount\033[0m... (" .
-            ($projectFileErrors > 0 ? "\033[31m" : '') .
-            $projectFileErrors .
-            " errors\033[0m)"
-        );
     }
 }
