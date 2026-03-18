@@ -1,11 +1,34 @@
 {% include('parts/header.md.twig') %}
 
-# Project metrics
+# Project Metrics
 
-This is an overview of the project metrics as a whole. This list gives you a quick glimpse on what is going on in your project.
+This is an overview of the project metrics as a whole.
 
 {% for element in elements %}
   {% include('parts/metric-tile.md.twig') %}
 {% endfor %}
+
+## Problems Summary
+
+{% if fileProblems|length > 0 or classProblems|length > 0 or functionProblems|length > 0 %}
+| Category | Count |
+|----------|-------|
+| File problems | {{ fileProblems|length }} |
+| Class problems | {{ classProblems|length }} |
+| Function problems | {{ functionProblems|length }} |
+
+### Top Problems
+
+{% for entityKey, problemEntry in classProblems|slice(0, 5) %}
+- **{{ problemEntry.data.getName() }}** — {{ problemEntry.problems|length }} issue{{ problemEntry.problems|length > 1 ? 's' : '' }}
+{% endfor %}
+{% for entityKey, problemEntry in fileProblems|slice(0, 5) %}
+- **{{ problemEntry.data.getName() }}** — {{ problemEntry.problems|length }} issue{{ problemEntry.problems|length > 1 ? 's' : '' }}
+{% endfor %}
+
+[View all problems](problems.md)
+{% else %}
+No problems detected.
+{% endif %}
 
 {% include('parts/footer.md.twig') %}

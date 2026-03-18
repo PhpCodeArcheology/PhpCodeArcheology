@@ -1,0 +1,38 @@
+{% include('parts/header.md.twig') %}
+
+# Metric Glossary
+
+{% for category, metrics in glossary %}
+## {{ category|capitalize }} Metrics
+
+| Name | Key | Description | Better |
+|------|-----|-------------|--------|
+{% for metric in metrics %}
+| {{ metric.name }} | `{{ metric.key }}` | {{ metric.description ?: '—' }} | {{ metric.better }} |
+{% endfor %}
+
+{% endfor %}
+
+## Problem Detection Thresholds
+
+| Rule | Applies To | Threshold | Severity |
+|------|-----------|-----------|----------|
+| Too Long | File/Class/Function/Method | File >400, Class >300, Function >40, Method >30 LLOC | Warning |
+| Too Complex (CC) | File/Class/Function | CC >10 (small), >20 (large) | Error |
+| Cognitive Complexity | Method | >15 per method | Error |
+| Difficulty | File/Class/Function | >20 | Error |
+| Effort | File/Class/Function | >30% above average | Error |
+| Maintainability Index | File/Class/Function | <20% below average (30% if typed) | Error |
+| LCOM | Class | >30% above average | Error |
+| God Class | Class | Suspect index >=3 | Error |
+| Too Dependent | Function/Class | Function >10, Class >20 deps | Info |
+| Low Type Coverage | Class | <40% (Error), <60% (Warning) | Error/Warning |
+| Deep Inheritance | Class | DIT >=4 (W), >=6 (E) | Warning/Error |
+| Dependency Cycle | Class | Any cycle | Error |
+| Too Many Parameters | Function/Method | >4 (W), >7 (E) | Warning/Error |
+| Dead Code | Class | Any unused private method | Info |
+| Security Smell | File/Class/Function | Dangerous functions | Error/Warning |
+| SOLID Violation | Class | Any SRP/ISP violation | Warning |
+| Hotspot | File | Churn >=10 AND CC >=15 | Warning |
+
+{% include('parts/footer.md.twig') %}

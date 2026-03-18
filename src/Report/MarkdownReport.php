@@ -19,6 +19,11 @@ class MarkdownReport extends HtmlReport
 
         $this->templateDir = realpath(__DIR__ . '/../../templates/markdown') . DIRECTORY_SEPARATOR;
         $this->twigLoader->setPaths($this->templateDir);
+
+        // Register markdown parts directory (fallback for templates using @Parts)
+        if (is_dir($this->templateDir . 'parts')) {
+            $this->twigLoader->addPath($this->templateDir . 'parts', 'Parts');
+        }
     }
 
     public function generate(): void
@@ -35,11 +40,14 @@ class MarkdownReport extends HtmlReport
 
     protected function renderTemplate(string $template, array $data, string $outputFile): void
     {
-        $template = str_replace('.html.twig', '.md.twig', $template);
+        $mdTemplate = str_replace('.html.twig', '.md.twig', $template);
         $outputFile = str_replace('.html', '.md', $outputFile);
         $data['currentPage'] = str_replace('.html', '.md', $data['currentPage']);
 
-        $templateWrapper = $this->twig->load($template);
+        // Prefer .md.twig, fall back to .html.twig (markdown dir uses mixed naming)
+        $templateFile = file_exists($this->templateDir . $mdTemplate) ? $mdTemplate : $template;
+
+        $templateWrapper = $this->twig->load($templateFile);
         ob_start();
         echo $templateWrapper->render($data);
         file_put_contents($this->outputDir . $outputFile, ob_get_clean());

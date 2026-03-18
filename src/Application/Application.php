@@ -351,6 +351,24 @@ final readonly class Application
             }
         }
 
+        // Skip writing if data hasn't changed since last run
+        $currentDataHash = md5(json_encode($metricHistory['data']));
+        $lastLine = $this->getLastLineOfFile($historyFile);
+        if ($lastLine !== null) {
+            $lastEntry = json_decode($lastLine, true);
+            if ($lastEntry !== null && isset($lastEntry['data'])) {
+                $lastDataHash = md5(json_encode($lastEntry['data']));
+                if ($currentDataHash === $lastDataHash) {
+                    // Data unchanged — update timestamp of last entry instead of appending
+                    $lastEntry['date'] = $metricHistory['date'];
+                    $lines = @file($historyFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [];
+                    $lines[count($lines) - 1] = json_encode($lastEntry);
+                    file_put_contents($historyFile, implode("\n", $lines) . "\n");
+                    return;
+                }
+            }
+        }
+
         // Append current run as new line
         file_put_contents($historyFile, json_encode($metricHistory) . "\n", FILE_APPEND);
     }

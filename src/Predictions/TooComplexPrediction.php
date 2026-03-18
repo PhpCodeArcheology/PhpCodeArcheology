@@ -250,11 +250,22 @@ class TooComplexPrediction implements PredictionInterface
             sprintf('overall%sAvgMaintainabilityIndex', $className)
         )->getValue();
 
+        // Dynamic MI threshold: be more lenient for well-typed code
+        // (high type coverage compensates for fewer comments in MI formula)
+        $typeCoverage = $metricsController->getMetricValueByIdentifierString(
+            $identifierString, 'typeCoverage'
+        )?->getValue() ?? null;
+
+        $miTolerance = 0.2; // default: 20% below average
+        if ($typeCoverage !== null && $typeCoverage > 80) {
+            $miTolerance = 0.3; // 30% below average for well-typed code
+        }
+
         $problemCount += $this->check(
             'maintainabilityIndex',
             $values['maintainabilityIndex'],
-            function($value) use ($avgMi) {
-                $min = $avgMi - $avgMi * 0.2;
+            function($value) use ($avgMi, $miTolerance) {
+                $min = $avgMi - $avgMi * $miTolerance;
 
                 return $value < $min;
             },
@@ -262,7 +273,7 @@ class TooComplexPrediction implements PredictionInterface
             $identifierString,
             TooComplexProblem::class,
             $this->getLevel(),
-            'Maintainability index is more than 20% below average MI (' . number_format($avgMi) . ').'
+            'Maintainability index is more than ' . ($miTolerance * 100) . '% below average MI (' . number_format($avgMi) . ').'
         );
 
         return $problemCount;

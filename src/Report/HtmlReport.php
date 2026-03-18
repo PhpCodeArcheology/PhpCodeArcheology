@@ -75,6 +75,7 @@ class HtmlReport implements ReportInterface
             [$this, 'generateFunctionPage'],
             [$this, 'generateProblemsPage'],
             [$this, 'generateGitPage'],
+            [$this, 'generateGlossaryPage'],
         ];
 
         $formatter = $this->output->getFormatter() ?? new CliFormatter();
@@ -269,5 +270,40 @@ class HtmlReport implements ReportInterface
         $data['pageTitle'] = 'Git Analysis';
         $data['currentPage'] = 'git.html';
         $this->renderTemplate('git.html.twig', $data, 'git.html');
+    }
+
+    protected function generateGlossaryPage(): void
+    {
+        $data = $this->dataProviderFactory->getProjectDataProvider()->getTemplateData();
+
+        // Build glossary from metric data files
+        $glossary = [];
+        $metricFiles = glob(realpath(__DIR__ . '/../../data/metrics') . '/*.php');
+        foreach ($metricFiles as $file) {
+            $metrics = require $file;
+            $category = basename($file, '.php');
+
+            foreach ($metrics as $metric) {
+                if (!isset($metric['name']) || ($metric['type'] ?? '') === 'storage') {
+                    continue;
+                }
+                if (($metric['visibility'] ?? null) === \PhpCodeArch\Metrics\Model\Enums\MetricVisibility::ShowNowhere) {
+                    continue;
+                }
+
+                $glossary[$category][] = [
+                    'key' => $metric['key'],
+                    'name' => $metric['name'],
+                    'description' => $metric['description'] ?? '',
+                    'valueType' => ($metric['valueType'] ?? null)?->name ?? 'Unknown',
+                    'better' => ($metric['better'] ?? null)?->name ?? 'Irrelevant',
+                ];
+            }
+        }
+
+        $data['glossary'] = $glossary;
+        $data['pageTitle'] = 'Metric Glossary';
+        $data['currentPage'] = 'glossary.html';
+        $this->renderTemplate('glossary.html.twig', $data, 'glossary.html');
     }
 }

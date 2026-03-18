@@ -1,0 +1,19 @@
+{% include('parts/header.md.twig') %}
+
+# Git Analysis
+
+- **Total Commits:** {{ gitTotalCommits }} (since {{ gitAnalysisPeriod }})
+- **Active Authors:** {{ gitActiveAuthors }}
+- **Files Analyzed:** {{ hotspots|length }}
+
+## Top Hotspots
+
+Files with high change frequency combined with high complexity are maintenance risks.
+
+| File | Churn | CC | LOC | Authors | Age (days) |
+|------|-------|----|-----|---------|------------|
+{% for hotspot in hotspots|slice(0, 30) %}
+| {{ hotspot.name }} | {{ hotspot.churn }} | {{ hotspot.cc }} | {{ hotspot.loc }} | {{ hotspot.authors }} | {{ hotspot.ageDays }} |
+{% endfor %}
+
+{% include('parts/footer.md.twig') %}

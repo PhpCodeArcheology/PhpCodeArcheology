@@ -1,0 +1,82 @@
+{% include('parts/header.html.twig') %}
+
+<div class="max-w-6xl mx-auto px-4">
+  <h1 class="text-3xl font-bold mb-6">Metric Glossary</h1>
+  <p class="text-gray-400 mb-8">Reference for all metrics collected by PhpCodeArcheology. The "Better" column indicates the preferred direction for each metric.</p>
+
+  {% for category, metrics in glossary %}
+  <div class="mb-10">
+    <h2 class="text-xl font-semibold mb-4 text-cyan-400 capitalize">{{ category }} Metrics</h2>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-cyan-900">
+            <th class="text-left py-2 px-3 text-cyan-300">Name</th>
+            <th class="text-left py-2 px-3 text-cyan-300">Key</th>
+            <th class="text-left py-2 px-3 text-cyan-300">Description</th>
+            <th class="text-left py-2 px-3 text-cyan-300">Type</th>
+            <th class="text-left py-2 px-3 text-cyan-300">Better</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for metric in metrics %}
+          <tr class="border-b border-cyan-950 hover:bg-cyan-950/30">
+            <td class="py-2 px-3 font-medium">{{ metric.name }}</td>
+            <td class="py-2 px-3 text-gray-500 font-mono text-xs">{{ metric.key }}</td>
+            <td class="py-2 px-3 text-gray-400">{{ metric.description ?: '—' }}</td>
+            <td class="py-2 px-3 text-gray-500">{{ metric.valueType }}</td>
+            <td class="py-2 px-3">
+              {% if metric.better == 'Low' %}
+                <span class="text-green-400" title="Lower values are better">&darr; Low</span>
+              {% elseif metric.better == 'High' %}
+                <span class="text-green-400" title="Higher values are better">&uarr; High</span>
+              {% else %}
+                <span class="text-gray-600">—</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endfor %}
+
+  <div class="mb-10">
+    <h2 class="text-xl font-semibold mb-4 text-cyan-400">Problem Detection Thresholds</h2>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-cyan-900">
+            <th class="text-left py-2 px-3 text-cyan-300">Rule</th>
+            <th class="text-left py-2 px-3 text-cyan-300">Applies To</th>
+            <th class="text-left py-2 px-3 text-cyan-300">Threshold</th>
+            <th class="text-left py-2 px-3 text-cyan-300">Severity</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-b border-cyan-950"><td class="py-2 px-3">Too Long</td><td class="py-2 px-3 text-gray-400">File/Class/Function/Method</td><td class="py-2 px-3 text-gray-400">File &gt;400, Class &gt;300, Function &gt;40, Method &gt;30 LLOC</td><td class="py-2 px-3 text-yellow-400">Warning</td></tr>
+          <tr class="border-b border-cyan-950"><td class="py-2 px-3">Too Complex (CC)</td><td class="py-2 px-3 text-gray-400">File/Class/Function</td><td class="py-2 px-3 text-gray-400">CC &gt;10 (small), &gt;20 (large code)</td><td class="py-2 px-3 text-red-400">Error</td></tr>
+          <tr class="border-b border-cyan-950"><td class="py-2 px-3">Cognitive Complexity</td><td class="py-2 px-3 text-gray-400">Method</td><td class="py-2 px-3 text-gray-400">&gt;15 per method</td><td class="py-2 px-3 text-red-400">Error</td></tr>
+          <tr class="border-b border-cyan-950"><td class="py-2 px-3">Difficulty</td><td class="py-2 px-3 text-gray-400">File/Class/Function</td><td class="py-2 px-3 text-gray-400">&gt;20</td><td class="py-2 px-3 text-red-400">Error</td></tr>
+          <tr class="border-b border-cyan-950"><td class="py-2 px-3">Effort</td><td class="py-2 px-3 text-gray-400">File/Class/Function</td><td class="py-2 px-3 text-gray-400">&gt;30% above project average</td><td class="py-2 px-3 text-red-400">Error</td></tr>
+          <tr class="border-b border-cyan-950"><td class="py-2 px-3">Maintainability Index</td><td class="py-2 px-3 text-gray-400">File/Class/Function</td><td class="py-2 px-3 text-gray-400">&lt;20% below average (30% if type coverage &gt;80%)</td><td class="py-2 px-3 text-red-400">Error</td></tr>
+          <tr class="border-b border-cyan-950"><td class="py-2 px-3">LCOM</td><td class="py-2 px-3 text-gray-400">Class</td><td class="py-2 px-3 text-gray-400">&gt;30% above project average</td><td class="py-2 px-3 text-red-400">Error</td></tr>
+          <tr class="border-b border-cyan-950"><td class="py-2 px-3">God Class</td><td class="py-2 px-3 text-gray-400">Class</td><td class="py-2 px-3 text-gray-400">Suspect index &ge;3 (public methods, coupling, LCOM, long methods)</td><td class="py-2 px-3 text-red-400">Error</td></tr>
+          <tr class="border-b border-cyan-950"><td class="py-2 px-3">Too Dependent</td><td class="py-2 px-3 text-gray-400">Function/Class</td><td class="py-2 px-3 text-gray-400">Function &gt;10, Class &gt;20 dependencies</td><td class="py-2 px-3 text-blue-400">Info</td></tr>
+          <tr class="border-b border-cyan-950"><td class="py-2 px-3">Too Much HTML</td><td class="py-2 px-3 text-gray-400">File/Class/Function</td><td class="py-2 px-3 text-gray-400">File &gt;25%, Class/Function &gt;10% HTML</td><td class="py-2 px-3 text-yellow-400">Warning</td></tr>
+          <tr class="border-b border-cyan-950"><td class="py-2 px-3">Low Type Coverage</td><td class="py-2 px-3 text-gray-400">Class</td><td class="py-2 px-3 text-gray-400">&lt;40% (Error), &lt;60% (Warning)</td><td class="py-2 px-3 text-red-400">Error/Warning</td></tr>
+          <tr class="border-b border-cyan-950"><td class="py-2 px-3">Deep Inheritance</td><td class="py-2 px-3 text-gray-400">Class</td><td class="py-2 px-3 text-gray-400">DIT &ge;4 (Warning), &ge;6 (Error)</td><td class="py-2 px-3 text-yellow-400">Warning/Error</td></tr>
+          <tr class="border-b border-cyan-950"><td class="py-2 px-3">Dependency Cycle</td><td class="py-2 px-3 text-gray-400">Class</td><td class="py-2 px-3 text-gray-400">Any circular dependency detected</td><td class="py-2 px-3 text-red-400">Error</td></tr>
+          <tr class="border-b border-cyan-950"><td class="py-2 px-3">Too Many Parameters</td><td class="py-2 px-3 text-gray-400">Function/Method</td><td class="py-2 px-3 text-gray-400">&gt;4 (Warning), &gt;7 (Error)</td><td class="py-2 px-3 text-yellow-400">Warning/Error</td></tr>
+          <tr class="border-b border-cyan-950"><td class="py-2 px-3">Dead Code</td><td class="py-2 px-3 text-gray-400">Class</td><td class="py-2 px-3 text-gray-400">Any unused private method</td><td class="py-2 px-3 text-blue-400">Info</td></tr>
+          <tr class="border-b border-cyan-950"><td class="py-2 px-3">Security Smell</td><td class="py-2 px-3 text-gray-400">File/Class/Function</td><td class="py-2 px-3 text-gray-400">eval(), exec(), system(), shell_exec(), etc.</td><td class="py-2 px-3 text-red-400">Error/Warning</td></tr>
+          <tr class="border-b border-cyan-950"><td class="py-2 px-3">SOLID Violation</td><td class="py-2 px-3 text-gray-400">Class</td><td class="py-2 px-3 text-gray-400">Any SRP/ISP violation detected</td><td class="py-2 px-3 text-yellow-400">Warning</td></tr>
+          <tr class="border-b border-cyan-950"><td class="py-2 px-3">Hotspot</td><td class="py-2 px-3 text-gray-400">File</td><td class="py-2 px-3 text-gray-400">Git churn &ge;10 AND CC &ge;15</td><td class="py-2 px-3 text-yellow-400">Warning</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% include('parts/footer.html.twig') %}

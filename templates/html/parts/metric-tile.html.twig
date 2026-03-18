@@ -29,9 +29,15 @@
   {% endif %}
 {% endif %}
 
-<div class="{% if element.getMaxProblemLevel() > 0 %}{{ color }}{% else %}bg-cyan-950/50{% endif %} rounded-lg border-t-4 border-cyan-600 p-3 transition-transform hover:scale-110 hover:shadow-black hover:shadow-2xl"
-     title="{% if element.getMaxProblemLevel() > 0 %}{{ element.getProblemMessages()|join(' ') }}{% endif %}">
-  <div class="text-lg text-cyan-200">{{ element.getMetricType().getName() }}</div>
+{% set metricDescription = element.getMetricType().getDescription() %}
+<div class="{% if element.getMaxProblemLevel() > 0 %}{{ color }}{% else %}bg-cyan-950/50{% endif %} rounded-lg border-t-4 border-cyan-600 p-3 transition-transform hover:scale-110 hover:shadow-black hover:shadow-2xl{% if metricDescription %} cursor-help{% endif %}"
+     title="{% if element.getMaxProblemLevel() > 0 %}{{ element.getProblemMessages()|join(' ') }}{% elseif metricDescription %}{{ metricDescription }}{% endif %}">
+  <div class="text-lg text-cyan-200">
+    {{ element.getMetricType().getName() }}
+    {% if metricDescription %}
+      <span style="opacity: 0.4; font-size: 0.7rem; vertical-align: super;" title="{{ metricDescription }}">&#9432;</span>
+    {% endif %}
+  </div>
   <div class="text-3xl font-bold">
     {% if ': ' in element.getValue() %}
       {% set value = element.getValue()|split(': ') %}
