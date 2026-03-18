@@ -40,21 +40,27 @@
       || container.parentElement.querySelector('table.sortable');
     if (!table) return;
 
-    const tbody = table.querySelector('tbody');
-    if (!tbody) return;
+    // NOTE: sortable.min.js replaces <tbody> on every sort (cloneNode + replaceChild),
+    // so we must NEVER cache the tbody reference. Always re-query via table.querySelector('tbody').
 
     const nameFilter = container.querySelector('.namefilter');
-    const resetButton = nameFilter ? nameFilter.nextElementSibling : null;
+    const resetButton = container.querySelector('.button-reset');
 
     // Compute problem level per row from CSS classes
-    tbody.querySelectorAll('tr').forEach(tr => {
-      let maxLevel = 0;
-      tr.querySelectorAll('span').forEach(span => {
-        if (span.classList.contains('bg-red-900')) maxLevel = Math.max(maxLevel, 3);
-        else if (span.classList.contains('bg-yellow-900')) maxLevel = Math.max(maxLevel, 2);
+    function tagProblemLevels() {
+      const tbody = table.querySelector('tbody');
+      if (!tbody) return;
+      tbody.querySelectorAll('tr').forEach(tr => {
+        if (tr.dataset.problemLevel !== undefined) return; // already tagged
+        let maxLevel = 0;
+        tr.querySelectorAll('span').forEach(span => {
+          if (span.classList.contains('bg-red-900')) maxLevel = Math.max(maxLevel, 3);
+          else if (span.classList.contains('bg-yellow-900')) maxLevel = Math.max(maxLevel, 2);
+        });
+        tr.dataset.problemLevel = maxLevel;
       });
-      tr.dataset.problemLevel = maxLevel;
-    });
+    }
+    tagProblemLevels();
 
     // Create problem level dropdown
     const select = document.createElement('select');
@@ -76,8 +82,12 @@
     filterDiv.prepend(select);
     filterDiv.appendChild(csvBtn);
 
-    // Combined filter function
+    // Combined filter function — re-queries tbody every time
     const applyFilters = () => {
+      tagProblemLevels(); // re-tag after sort replaces tbody
+      const tbody = table.querySelector('tbody');
+      if (!tbody) return;
+
       const level = select.value;
       const searchText = nameFilter ? nameFilter.value.toUpperCase() : '';
 
@@ -120,8 +130,11 @@
       });
     }
 
-    // CSV Export
+    // CSV Export — also re-queries tbody
     csvBtn.addEventListener('click', () => {
+      const tbody = table.querySelector('tbody');
+      if (!tbody) return;
+
       const headers = [];
       table.querySelectorAll('thead th').forEach(th => {
         const label = th.querySelector('.label-name');

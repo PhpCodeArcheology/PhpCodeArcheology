@@ -1,47 +1,22 @@
 {% include('@Parts/header.html.twig') %}
 
-<script src="../assets/js/svg-pan-zoom.min.js"></script>
-<script src="../assets/js/mermaid.min.js"></script>
-<script>
-  mermaid.initialize({ startOnLoad: false, maxTextSize: 500000, class: {useMaxWidth: false}});
-
-  (async function () {
-  const drawDiagram = async function () {
-    const element = document.querySelector('#graphDiv');
-
-    const graphDefinition = `
-  classDiagram
-      {% for class in classes %}{% for name in usedClassesOfClass[class.getIdentifier().__toString()] %}
-        {{ class.get('singleName') }} --|> {{ name }}
-      {% endfor %}{% endfor %}
-      {% for namespace,singleClassNames in namespaces %}
-        namespace {{ namespace }} {
-        {% for singleClassName in singleClassNames %}
-          class {{ singleClassName }}
-        {% endfor %}
-        }
-      {% endfor %}
-        `;
-
-    const { svg } = await mermaid.render('classDiagramm', graphDefinition);
-
-    element.innerHTML = svg.replace(/[ ]*max-width:[ 0-9\.]*px;/i , '');
-
-    document.getElementById('classDiagramm').classList.add('h-[50vh]', 'border', 'border-cyan-500', 'rounded-xl');
-
-    const panZoomTiger = svgPanZoom('#classDiagramm', {
-      zoomEnabled: true,
-      controlIconsEnabled: false,
-      fit: true,
-      center: true,
-      maxZoom: 50,
-    });
-
-    //panZoomTiger.zoom(10);
-  };
-  await drawDiagram();
-  })();
-</script>
+<style>
+  .dep-matrix { border-collapse: collapse; font-size: 0.6rem; }
+  .dep-matrix th, .dep-matrix td { width: 1.1rem; height: 1.1rem; text-align: center; border: 1px solid rgba(255,255,255,0.05); }
+  .dep-matrix th { font-weight: normal; color: rgba(255,255,255,0.5); overflow: hidden; text-overflow: ellipsis; }
+  .dep-matrix th.row-header { text-align: right; padding-right: 0.5rem; white-space: nowrap; max-width: 12rem; width: auto; }
+  .dep-matrix td.dep-cell { cursor: pointer; transition: opacity 0.15s; }
+  .dep-matrix td.dep-cell:hover { opacity: 0.8; }
+  .dep-matrix td.dep-yes { background: rgba(6,182,212,0.5); }
+  .dep-matrix td.dep-cycle { background: rgba(239,68,68,0.6); }
+  .dep-matrix td.dep-self { background: rgba(255,255,255,0.03); }
+  .dep-matrix th.col-header { writing-mode: vertical-lr; transform: rotate(180deg); padding: 0.5rem 0.15rem; white-space: nowrap; max-height: 10rem; }
+  [data-theme="light"] .dep-matrix th, [data-theme="light"] .dep-matrix td { border-color: #e2e8f0; }
+  [data-theme="light"] .dep-matrix th { color: #475569; }
+  [data-theme="light"] .dep-matrix td.dep-yes { background: rgba(14,116,144,0.35); }
+  [data-theme="light"] .dep-matrix td.dep-cycle { background: rgba(239,68,68,0.35); }
+  [data-theme="light"] .dep-matrix td.dep-self { background: rgba(0,0,0,0.03); }
+</style>
 
 <div class="mt-6 lg:w-5/6">
   <div class="mb-7 text-sm">
@@ -53,16 +28,174 @@
     </ul>
   </div>
 
-  <h1 class="mb-6 text-3xl font-semibold font-display">Classes chart</h1>
+  <h1 class="mb-6 text-3xl font-semibold font-display">Classes Overview</h1>
 
-  <div id="graphDiv" class="cursor-move">
-    <div class="text-green-500 font-semibold">Please wait, chart is being generated.</div>
+  {# --- Bubble Chart: Complexity vs Coupling --- #}
+  <div class="rounded-xl border border-cyan-800 bg-cyan-950/45 p-4 mb-6">
+    <h3 style="color: rgba(6,182,212,0.7); font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; font-family: 'Oswald', sans-serif; margin-bottom: 0.75rem;">Complexity vs Coupling</h3>
+    <div style="position: relative; height: 400px;">
+      <canvas id="bubbleChart"></canvas>
+    </div>
+    <div style="text-align: center; margin-top: 0.5rem; font-size: 0.7rem; color: rgba(255,255,255,0.4);">
+      X = Efferent Coupling (uses) &middot; Y = Cyclomatic Complexity &middot; Size = Lines of Code
+    </div>
   </div>
 
-  <div class="mt-6">
-    Use mouse wheel to scroll and navigate with the left mouse button pushed.
-  </div>
+  {# --- Dependency Matrix --- #}
+  <div class="rounded-xl border border-cyan-800 bg-cyan-950/45 p-4 mb-6">
+    <h3 style="color: rgba(6,182,212,0.7); font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; font-family: 'Oswald', sans-serif; margin-bottom: 0.75rem;">
+      Dependency Matrix
+      <span style="font-weight: normal; font-family: 'Source Sans 3', sans-serif; text-transform: none; letter-spacing: 0; color: rgba(255,255,255,0.4); font-size: 0.7rem;">
+        &mdash; rows use columns &middot; <span style="color: rgb(6,182,212);">&#9632;</span> dependency &middot; <span style="color: #ef4444;">&#9632;</span> cycle
+      </span>
+    </h3>
 
+    {% set classNames = [] %}
+    {% set classIds = [] %}
+    {% for class in classes %}
+      {% set classNames = classNames|merge([class.get('singleName').getValue()]) %}
+      {% set classIds = classIds|merge([class.getIdentifier().__toString()]) %}
+    {% endfor %}
+
+    {% if classNames|length <= 200 %}
+    <div class="relative overflow-x-auto">
+      <table class="dep-matrix">
+        <thead>
+          <tr>
+            <th></th>
+            {% for name in classNames %}
+            <th class="col-header" title="{{ name }}">{{ name|length > 20 ? name[:18] ~ '..' : name }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for rowClass in classes %}
+            {% set rowId = rowClass.getIdentifier().__toString() %}
+            {% set rowUses = usedClassesOfClass[rowId]|default([]) %}
+            {% set rowCycleClasses = rowClass.get('dependencyCycleClasses').getValue()|default([]) %}
+            <tr>
+              <th class="row-header" title="{{ rowClass.getName() }}">
+                <a href="classes/{{ rowId }}.html" style="color: rgb(6,182,212); text-decoration: none;">
+                  {{ rowClass.get('singleName') }}
+                </a>
+              </th>
+              {% for colClass in classes %}
+                {% set colName = colClass.get('singleName').getValue() %}
+                {% set isSelf = rowClass.getIdentifier().__toString() == colClass.getIdentifier().__toString() %}
+                {% set isUsed = colName in rowUses %}
+                {% set isCycle = isUsed and colClass.getName() in rowCycleClasses %}
+                <td class="dep-cell {% if isSelf %}dep-self{% elseif isCycle %}dep-cycle{% elseif isUsed %}dep-yes{% endif %}"
+                    title="{% if isUsed %}{{ rowClass.get('singleName') }} → {{ colName }}{% if isCycle %} (CYCLE){% endif %}{% endif %}">
+                </td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p style="color: rgba(255,255,255,0.5); text-align: center; padding: 2rem;">
+      Too many classes ({{ classNames|length }}) for matrix view (max 200). Use the class list and detail pages instead.
+    </p>
+    {% endif %}
+  </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+  const gridColor = isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.03)';
+  Chart.defaults.color = isLight ? '#475569' : 'rgba(255,255,255,0.5)';
+  Chart.defaults.borderColor = isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.05)';
+  Chart.defaults.font.family = "'Source Sans 3', sans-serif";
+
+  // Namespace → color mapping
+  const nsColors = [
+    'rgba(6,182,212,0.7)', 'rgba(251,146,60,0.7)', 'rgba(168,85,247,0.7)',
+    'rgba(34,197,94,0.7)', 'rgba(239,68,68,0.7)', 'rgba(234,179,8,0.7)',
+    'rgba(236,72,153,0.7)', 'rgba(59,130,246,0.7)', 'rgba(107,114,128,0.7)',
+  ];
+  const namespaces = {};
+  let nsIndex = 0;
+
+  const bubbleData = [
+    {% for class in classes %}
+    {
+      x: {{ class.get('uses').getValue()|length }},
+      y: {{ class.get('cc').getValue()|default(0) }},
+      r: Math.max(3, Math.min(30, Math.sqrt({{ class.get('loc').getValue()|default(1) }}) * 0.8)),
+      label: '{{ class.get('singleName').getValue()|e('js') }}',
+      ns: '{{ class.get('namespace').getValue()|default('global')|e('js') }}',
+      loc: {{ class.get('loc').getValue()|default(0) }},
+      link: 'classes/{{ class.getIdentifier().__toString() }}.html',
+    },
+    {% endfor %}
+  ];
+
+  // Group by namespace for datasets
+  const byNs = {};
+  bubbleData.forEach(d => {
+    if (!byNs[d.ns]) byNs[d.ns] = [];
+    byNs[d.ns].push(d);
+    if (!namespaces[d.ns]) {
+      namespaces[d.ns] = nsColors[nsIndex % nsColors.length];
+      nsIndex++;
+    }
+  });
+
+  const datasets = Object.entries(byNs).map(([ns, points]) => ({
+    label: ns || 'global',
+    data: points,
+    backgroundColor: namespaces[ns],
+  }));
+
+  const chart = new Chart(document.getElementById('bubbleChart'), {
+    type: 'bubble',
+    data: { datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { boxWidth: 8, padding: 6, font: { size: 9 } }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              const d = ctx.raw;
+              return d.label + ' — CC: ' + d.y + ', Uses: ' + d.x + ', LOC: ' + d.loc;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          title: { display: true, text: 'Efferent Coupling (uses)' },
+          grid: { color: gridColor },
+          beginAtZero: true,
+          ticks: { precision: 0 }
+        },
+        y: {
+          title: { display: true, text: 'Cyclomatic Complexity' },
+          grid: { color: gridColor },
+          beginAtZero: true,
+          ticks: { precision: 0 }
+        }
+      },
+      onClick: function(e, elements) {
+        if (elements.length > 0) {
+          const el = elements[0];
+          const d = datasets[el.datasetIndex].data[el.index];
+          if (d.link) window.location.href = d.link;
+        }
+      },
+      onHover: function(e, elements) {
+        e.native.target.style.cursor = elements.length > 0 ? 'pointer' : 'default';
+      }
+    }
+  });
+});
+</script>
 
 {% include('@Parts/footer.html.twig') %}
