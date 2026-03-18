@@ -671,4 +671,30 @@ return [
     ['key' => 'overallClassMetricsCollectionAvgEffort', 'type' => 'storage',],
     ['key' => 'overallClassMetricsCollectionAvgLcom', 'type' => 'storage',],
     ['key' => 'overallClassMetricsCollectionAvgInstability', 'type' => 'storage',],
+
+    // Dependency cycles
+    [
+        'key' => 'overallDependencyCycles',
+        'name' => 'Dependency cycles',
+        'shortName' => 'Cycles',
+        'description' => 'Number of circular dependency cycles detected.',
+        'valueType' => \PhpCodeArch\Metrics\Model\Enums\MetricValueType::Int,
+        'better' => \PhpCodeArch\Metrics\Model\Enums\BetterDirection::Low,
+        'visibility' => \PhpCodeArch\Metrics\Model\Enums\MetricVisibility::ShowEverywhere,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
+        ],
+    ],
+    [
+        'key' => 'overallClassesInCycles',
+        'name' => 'Classes in cycles',
+        'shortName' => 'In Cycles',
+        'description' => 'Number of classes involved in circular dependencies.',
+        'valueType' => \PhpCodeArch\Metrics\Model\Enums\MetricValueType::Int,
+        'better' => \PhpCodeArch\Metrics\Model\Enums\BetterDirection::Low,
+        'visibility' => \PhpCodeArch\Metrics\Model\Enums\MetricVisibility::ShowEverywhere,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
+        ],
+    ],
 ];

@@ -9,8 +9,10 @@ use PhpCodeArch\Application\ConfigFile\Exceptions\ConfigFileExtensionNotSupporte
 use PhpCodeArch\Application\ConfigFile\Exceptions\MultipleConfigFilesException;
 use PhpCodeArch\Calculators\CalculatorService;
 use PhpCodeArch\Calculators\CouplingCalculator;
+use PhpCodeArch\Calculators\DependencyCycleCalculator;
 use PhpCodeArch\Calculators\FileCalculator;
 use PhpCodeArch\Calculators\HealthScoreCalculator;
+use PhpCodeArch\Calculators\InheritanceDepthCalculator;
 use PhpCodeArch\Calculators\MaintainabilityIndexCalculator;
 use PhpCodeArch\Calculators\Helpers\PackageInstabilityAbstractnessCalculator;
 use PhpCodeArch\Calculators\LimitsAndAveragesCalculator;
@@ -27,6 +29,9 @@ use PhpCodeArch\Metrics\Model\MetricType;
 use PhpCodeArch\Predictions\GodClassPrediction;
 use PhpCodeArch\Predictions\PredictionInterface;
 use PhpCodeArch\Predictions\PredictionService;
+use PhpCodeArch\Predictions\DeepInheritancePrediction;
+use PhpCodeArch\Predictions\DependencyCyclePrediction;
+use PhpCodeArch\Predictions\LowTypeCoveragePrediction;
 use PhpCodeArch\Predictions\TooComplexPrediction;
 use PhpCodeArch\Predictions\TooDependentPrediction;
 use PhpCodeArch\Predictions\TooLongPrediction;
@@ -178,6 +183,8 @@ final readonly class Application
             new FileCalculator($metricsController),
             new VariablesCalculator($metricsController),
             new CouplingCalculator($metricsController, $packageIACalculator),
+            new InheritanceDepthCalculator($metricsController),
+            new DependencyCycleCalculator($metricsController),
             new ProjectCalculator($metricsController),
             new LimitsAndAveragesCalculator($metricsController),
             new HealthScoreCalculator($metricsController),
@@ -199,6 +206,9 @@ final readonly class Application
             new TooComplexPrediction(),
             new TooDependentPrediction(),
             new TooMuchHtmlPrediction(),
+            new LowTypeCoveragePrediction(),
+            new DeepInheritancePrediction(),
+            new DependencyCyclePrediction(),
         ], $metricsController, $output);
         $predictions->predict();
 

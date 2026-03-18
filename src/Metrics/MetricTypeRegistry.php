@@ -84,7 +84,10 @@ class MetricTypeRegistry
 
     public function applyTypeToValue(MetricValue $metricValue): void
     {
-        $metricType = $this->metricTypeMap[$metricValue->getMetricTypeKey()];
+        $metricType = $this->metricTypeMap[$metricValue->getMetricTypeKey()] ?? null;
+        if ($metricType === null) {
+            throw new \RuntimeException('Unknown metric type key: ' . $metricValue->getMetricTypeKey());
+        }
         $metricValue->setMetricType($metricType);
     }
 }

@@ -52,6 +52,33 @@ class TooComplexPrediction implements PredictionInterface
                     }
 
                     $avgMethodCc = count($methodCollection) > 0 ? $methodCc / count($methodCollection) : 0;
+
+                    // Cognitive complexity per method
+                    $methodCogC = 0;
+                    foreach ($methodCollection as $methodKey => $methodName) {
+                        $cogCValue = $metricsController->getMetricValueByIdentifierString(
+                            $methodKey,
+                            'cognitiveComplexity'
+                        )?->getValue() ?? 0;
+
+                        $methodCogC += $cogCValue;
+
+                        // Flag methods with high cognitive complexity
+                        if ($cogCValue > 15) {
+                            ++$problemCount;
+                            $problem = TooComplexProblem::ofProblemLevelAndMessage(
+                                problemLevel: $this->getLevel(),
+                                message: 'Cognitive complexity is too high.'
+                            );
+                            $metricsController->setProblemByIdentifierString(
+                                identifierString: $methodKey,
+                                key: 'cognitiveComplexity',
+                                problem: $problem
+                            );
+                        }
+                    }
+                    $avgMethodCogC = count($methodCollection) > 0 ? $methodCogC / count($methodCollection) : 0;
+
                     $classTooComplex = $avgMethodCc > 10;
 
                     if ($classTooComplex) {
@@ -73,6 +100,7 @@ class TooComplexPrediction implements PredictionInterface
                         (string) $metric->getIdentifier(),
                         [
                             'avgMethodCc' => $avgMethodCc,
+                            'avgMethodCogC' => $avgMethodCogC,
                             'predictionTooComplex' => $classTooComplex,
                         ],
                     );

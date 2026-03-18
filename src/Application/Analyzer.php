@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Application;
 
+use PhpCodeArch\Analysis\CognitiveComplexityVisitor;
 use PhpCodeArch\Analysis\CyclomaticComplexityVisitor;
+use PhpCodeArch\Analysis\TypeCoverageVisitor;
 use PhpCodeArch\Analysis\DependencyVisitor;
 use PhpCodeArch\Analysis\GlobalsVisitor;
 use PhpCodeArch\Analysis\HalsteadMetricsVisitor;
@@ -57,9 +59,11 @@ readonly class Analyzer
     {
         return [
             IdentifyVisitor::class,
+            TypeCoverageVisitor::class,
             LocVisitor::class,
             GlobalsVisitor::class,
             CyclomaticComplexityVisitor::class,
+            CognitiveComplexityVisitor::class,
             DependencyVisitor::class,
             HalsteadMetricsVisitor::class,
             LcomVisitor::class,
