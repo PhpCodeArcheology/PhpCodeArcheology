@@ -1,23 +1,419 @@
 {% include('@Parts/header.html.twig') %}
-{% set metricCollectionId = 'ProjectCollection' %}
+
+<style>
+  .dash-panel {
+    background: rgba(8, 51, 68, 0.35);
+    border: 1px solid rgba(6, 182, 212, 0.15);
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .dash-panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgb(6 182 212 / 0.6), transparent);
+  }
+  .dash-panel-label {
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgb(6 182 212 / 0.6);
+    margin-bottom: 0.75rem;
+  }
+  .score-ring {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    margin: 0 auto;
+  }
+  .score-value {
+    position: absolute;
+    left: 0; right: 0;
+    bottom: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .score-number {
+    font-family: 'Oswald', sans-serif;
+    font-size: 3.5rem;
+    font-weight: 500;
+    line-height: 1;
+  }
+  .score-grade {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1rem;
+    letter-spacing: 0.2em;
+    opacity: 0.5;
+    margin-top: 0.25rem;
+  }
+  .stat-card {
+    background: rgba(8, 51, 68, 0.25);
+    border: 1px solid rgba(6, 182, 212, 0.1);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    transition: border-color 0.2s;
+  }
+  .stat-card:hover {
+    border-color: rgba(6, 182, 212, 0.35);
+  }
+  .stat-label {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 0.25rem;
+  }
+  .stat-value {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.75rem;
+    font-weight: 500;
+    line-height: 1.2;
+  }
+  .stat-delta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.7rem;
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.25rem;
+    margin-top: 0.35rem;
+  }
+  .delta-better { background: rgba(20, 83, 45, 0.7); color: #86efac; }
+  .delta-worse { background: rgba(127, 29, 29, 0.7); color: #fca5a5; }
+  .delta-neutral { background: rgba(22, 78, 99, 0.5); color: #a5f3fc; }
+  .problem-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-size: 0.875rem;
+  }
+  .problem-row:last-child { border-bottom: none; }
+  .problem-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.65rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .badge-error { background: rgba(220, 38, 38, 0.3); color: #fca5a5; border: 1px solid rgba(220,38,38,0.4); }
+  .badge-warning { background: rgba(202, 138, 4, 0.2); color: #fde68a; border: 1px solid rgba(202,138,4,0.3); }
+  .badge-info { background: rgba(37, 99, 235, 0.2); color: #93c5fd; border: 1px solid rgba(37,99,235,0.3); }
+  .chart-container { position: relative; height: 220px; }
+  .grid-dashboard {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  @media (min-width: 768px) {
+    .grid-dashboard { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (min-width: 1200px) {
+    .grid-dashboard { grid-template-columns: repeat(4, 1fr); }
+    .grid-dashboard .span-2 { grid-column: span 2; }
+  }
+</style>
 
 <div class="mt-6 lg:w-5/6">
   <div class="mb-7 text-sm">
     <ul class="flex gap-1">
-      <li>Home</li>
+      <li>Dashboard</li>
     </ul>
   </div>
 
-  <h1 class="mb-6 text-3xl font-semibold font-display">Project metrics</h1>
+  {# --- Extract key metrics from elements --- #}
+  {% set healthScore = 0 %}
+  {% set healthGrade = '-' %}
+  {% set totalLoc = 0 %}
+  {% set totalClasses = 0 %}
+  {% set avgCC = 0 %}
+  {% set avgMI = 0 %}
+  {% set errorCount = 0 %}
+  {% set warningCount = 0 %}
+  {% set infoCount = 0 %}
+  {% set totalFiles = 0 %}
+  {% set totalFunctions = 0 %}
+  {% set totalMethods = 0 %}
 
-  <p>This is an overview of the project metrics as a whole. This list gives you a quick glimpse on
-  what is going on in your project.</p>
+  {% for element in elements %}
+    {% set key = element.getMetricTypeKey() %}
+    {% if key == 'healthScore' %}{% set healthScore = element.getValue() %}{% endif %}
+    {% if key == 'healthScoreGrade' %}{% set healthGrade = element.getValue() %}{% endif %}
+    {% if key == 'overallLoc' %}{% set totalLoc = element.getValue() %}{% endif %}
+    {% if key == 'overallClasses' %}{% set totalClasses = element.getValue() %}{% endif %}
+    {% if key == 'overallAvgCC' %}{% set avgCC = element.getValue() %}{% endif %}
+    {% if key == 'overallAvgMI' %}{% set avgMI = element.getValue() %}{% endif %}
+    {% if key == 'overallErrorCount' %}{% set errorCount = element.getValue() %}{% endif %}
+    {% if key == 'overallWarningCount' %}{% set warningCount = element.getValue() %}{% endif %}
+    {% if key == 'overallInformationCount' %}{% set infoCount = element.getValue() %}{% endif %}
+    {% if key == 'overallFiles' %}{% set totalFiles = element.getValue() %}{% endif %}
+    {% if key == 'overallFunctions' %}{% set totalFunctions = element.getValue() %}{% endif %}
+    {% if key == 'overallMethodsCount' %}{% set totalMethods = element.getValue() %}{% endif %}
+  {% endfor %}
 
-  <div class="my-8 grid sm:grid-cols-3 gap-3">
-    {% for element in elements %}
-      {% include('@Parts/metric-tile.html.twig') %}
-    {% endfor %}
+  {# --- Hero: Health Score + Stats Row --- #}
+  <div class="grid-dashboard" style="margin-bottom: 1.5rem;">
+
+    {# Health Score Gauge #}
+    <div class="dash-panel" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+      <div class="dash-panel-label" style="text-align: center;">Project Health</div>
+      <div class="score-ring">
+        <canvas id="healthGauge" width="200" height="200"></canvas>
+        <div class="score-value">
+          <div class="score-number" style="color: {% if healthScore >= 80 %}#86efac{% elseif healthScore >= 50 %}#fde68a{% else %}#fca5a5{% endif %}">
+            {{ healthScore|round }}
+          </div>
+          <div class="score-grade">Grade {{ healthGrade }}</div>
+        </div>
+      </div>
+    </div>
+
+    {# Key Stats #}
+    <div class="dash-panel">
+      <div class="dash-panel-label">Codebase</div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+        <div class="stat-card">
+          <div class="stat-label">Lines of Code</div>
+          <div class="stat-value">{{ totalLoc|number_format }}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Files</div>
+          <div class="stat-value">{{ totalFiles|number_format }}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Classes</div>
+          <div class="stat-value">{{ totalClasses|number_format }}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Methods</div>
+          <div class="stat-value">{{ totalMethods|number_format }}</div>
+        </div>
+        <div class="stat-card" style="grid-column: span 2;">
+          <div class="stat-label">Functions</div>
+          <div class="stat-value">{{ totalFunctions|number_format }}</div>
+        </div>
+      </div>
+    </div>
+
+    {# Complexity #}
+    <div class="dash-panel">
+      <div class="dash-panel-label">Complexity</div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+        <div class="stat-card">
+          <div class="stat-label">Avg Cyclomatic</div>
+          <div class="stat-value" style="color: {% if avgCC <= 5 %}#86efac{% elseif avgCC <= 10 %}#fde68a{% else %}#fca5a5{% endif %}">
+            {{ avgCC|number_format(1) }}
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Avg Maintainability</div>
+          <div class="stat-value" style="color: {% if avgMI >= 80 %}#86efac{% elseif avgMI >= 50 %}#fde68a{% else %}#fca5a5{% endif %}">
+            {{ avgMI|number_format(1) }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# Problems Summary #}
+    <div class="dash-panel">
+      <div class="dash-panel-label">Problems</div>
+      <div class="chart-container" style="height: 180px;">
+        <canvas id="problemsChart"></canvas>
+      </div>
+      <div style="display: flex; justify-content: center; gap: 1.5rem; margin-top: 0.5rem; font-size: 0.75rem; color: rgba(255,255,255,0.5);">
+        <span><span style="display: inline-block; width: 8px; height: 8px; border-radius: 2px; background: #ef4444; margin-right: 4px;"></span>{{ errorCount }} Errors</span>
+        <span><span style="display: inline-block; width: 8px; height: 8px; border-radius: 2px; background: #eab308; margin-right: 4px;"></span>{{ warningCount }} Warnings</span>
+        <span><span style="display: inline-block; width: 8px; height: 8px; border-radius: 2px; background: #3b82f6; margin-right: 4px;"></span>{{ infoCount }} Info</span>
+      </div>
+    </div>
+  </div>
+
+  {# --- Trend Chart + Top Problems --- #}
+  <div class="grid-dashboard" style="margin-bottom: 1.5rem;">
+    {% if hasMultipleRuns %}
+    <div class="dash-panel span-2">
+      <div class="dash-panel-label">Trend ({{ runCount }} runs)</div>
+      <div class="chart-container">
+        <canvas id="trendChart"></canvas>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="dash-panel {% if not hasMultipleRuns %}span-2{% endif %}" style="{% if not hasMultipleRuns %}grid-column: span 4;{% endif %}">
+      <div class="dash-panel-label">Top Problems</div>
+      {% if classProblems|length == 0 and fileProblems|length == 0 and functionProblems|length == 0 %}
+        <div style="text-align: center; padding: 2rem; color: rgba(255,255,255,0.3);">
+          <div style="font-size: 2rem; margin-bottom: 0.5rem;">&#10003;</div>
+          <div>No problems detected</div>
+        </div>
+      {% else %}
+        <div style="max-height: 220px; overflow-y: auto;">
+          {% for entityKey, problemEntry in classProblems|slice(0, 5) %}
+            <div class="problem-row">
+              <span class="problem-badge badge-error">!</span>
+              <span style="flex: 1; color: rgba(255,255,255,0.8);">
+                <a href="classes/{{ entityKey }}.html" style="color: rgb(6 182 212); text-decoration: none;">
+                  {{ problemEntry.data.getName() }}
+                </a>
+              </span>
+              <span style="color: rgba(255,255,255,0.4); font-size: 0.75rem;">{{ problemEntry.problems|length }} issue{{ problemEntry.problems|length > 1 ? 's' : '' }}</span>
+            </div>
+          {% endfor %}
+          {% for entityKey, problemEntry in fileProblems|slice(0, 3) %}
+            <div class="problem-row">
+              <span class="problem-badge badge-warning">!</span>
+              <span style="flex: 1; color: rgba(255,255,255,0.8);">
+                <a href="files/{{ entityKey }}.html" style="color: rgb(6 182 212); text-decoration: none;">
+                  {{ problemEntry.data.getName() }}
+                </a>
+              </span>
+              <span style="color: rgba(255,255,255,0.4); font-size: 0.75rem;">{{ problemEntry.problems|length }} issue{{ problemEntry.problems|length > 1 ? 's' : '' }}</span>
+            </div>
+          {% endfor %}
+        </div>
+        <div style="margin-top: 0.75rem;">
+          <a href="problems.html" style="color: rgb(6 182 212); font-size: 0.8rem; text-decoration: none;">View all problems &rarr;</a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {# --- All Metrics Grid --- #}
+  <div class="dash-panel" style="margin-bottom: 1.5rem;">
+    <div class="dash-panel-label">All Project Metrics</div>
+    <div class="my-8 grid sm:grid-cols-3 gap-3">
+      {% for element in elements %}
+        {% include('@Parts/metric-tile.html.twig') %}
+      {% endfor %}
+    </div>
   </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+  const cyan500 = 'rgb(6, 182, 212)';
+  const cyan800 = 'rgb(21, 94, 117)';
+  const zinc700 = 'rgb(63, 63, 70)';
+
+  const gridColor = isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.03)';
+  Chart.defaults.color = isLight ? '#475569' : 'rgba(255,255,255,0.5)';
+  Chart.defaults.borderColor = isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.05)';
+  Chart.defaults.font.family = "'Source Sans 3', sans-serif";
+
+  // Health Score Gauge
+  const score = {{ healthScore|round }};
+  const gaugeColor = score >= 80 ? '#86efac' : (score >= 50 ? '#fde68a' : '#fca5a5');
+  new Chart(document.getElementById('healthGauge'), {
+    type: 'doughnut',
+    data: {
+      datasets: [{
+        data: [score, 100 - score],
+        backgroundColor: [gaugeColor, isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.04)'],
+        borderWidth: 0,
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      cutout: '78%',
+      rotation: -90,
+      circumference: 180,
+      responsive: false,
+      plugins: { legend: { display: false }, tooltip: { enabled: false } },
+      layout: { padding: { bottom: -40 } }
+    }
+  });
+
+  // Problems Bar Chart
+  new Chart(document.getElementById('problemsChart'), {
+    type: 'bar',
+    data: {
+      labels: ['Errors', 'Warnings', 'Info'],
+      datasets: [{
+        data: [{{ errorCount }}, {{ warningCount }}, {{ infoCount }}],
+        backgroundColor: ['rgba(239, 68, 68, 0.7)', 'rgba(234, 179, 8, 0.6)', 'rgba(59, 130, 235, 0.5)'],
+        borderRadius: 4,
+        barThickness: 28,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: gridColor }, ticks: { precision: 0 } },
+        y: { grid: { display: false } }
+      }
+    }
+  });
+
+  {% if hasMultipleRuns %}
+  // Trend Chart
+  const trendData = {{ trendData|raw }};
+  new Chart(document.getElementById('trendChart'), {
+    type: 'line',
+    data: {
+      labels: trendData.labels,
+      datasets: [
+        {
+          label: 'Avg CC',
+          data: trendData.datasets.avgCC,
+          borderColor: '#f59e0b',
+          backgroundColor: 'rgba(245, 158, 11, 0.1)',
+          fill: true,
+          tension: 0.3,
+          pointRadius: 3,
+          borderWidth: 2,
+          yAxisID: 'y',
+        },
+        {
+          label: 'Avg MI',
+          data: trendData.datasets.avgMI,
+          borderColor: cyan500,
+          backgroundColor: 'rgba(6, 182, 212, 0.1)',
+          fill: true,
+          tension: 0.3,
+          pointRadius: 3,
+          borderWidth: 2,
+          yAxisID: 'y1',
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { intersect: false, mode: 'index' },
+      plugins: {
+        legend: { position: 'top', labels: { boxWidth: 12, padding: 16 } }
+      },
+      scales: {
+        x: { grid: { color: gridColor } },
+        y: {
+          type: 'linear',
+          position: 'left',
+          title: { display: true, text: 'Cyclomatic Complexity', color: '#f59e0b' },
+          grid: { color: gridColor },
+        },
+        y1: {
+          type: 'linear',
+          position: 'right',
+          title: { display: true, text: 'Maintainability Index', color: cyan500 },
+          grid: { drawOnChartArea: false },
+        }
+      }
+    }
+  });
+  {% endif %}
+});
+</script>
 
 {% include('@Parts/footer.html.twig') %}

@@ -12,8 +12,8 @@
 
   <h1 class="mb-6 text-3xl font-semibold font-display">Packages</h1>
 
-  <div class="w-full">
-    <div id="ai-chart" class="w-full h-[50vh]"></div>
+  <div style="position: relative; height: 50vh; max-height: 500px; background: rgba(8,51,68,0.2); border-radius: 0.75rem; padding: 1rem; border: 1px solid rgba(6,182,212,0.1);">
+    <canvas id="ai-chart"></canvas>
   </div>
 
   <div class="relative overflow-x-auto">
@@ -51,90 +51,106 @@
 </div>
 
 <script>
-  aiChart = document.getElementById('ai-chart');
+document.addEventListener('DOMContentLoaded', function() {
+  const ctx = document.getElementById('ai-chart');
+  const xData = {{ aiChart.x|raw }};
+  const yData = {{ aiChart.y|raw }};
+  const labels = {{ aiChart.count|raw }};
 
-  const trace1 = {
-    x: {{ aiChart.x|raw }},
-    y: {{ aiChart.y|raw }},
-    text: {{ aiChart.count|raw }},
-    mode: 'markers',
-    type: 'scatter',
-    name: 'Package',
-    marker: {
-      opacity: 0.5,
-      size: 15,
-    },
-  };
+  // Zone background plugin
+  const zonePlugin = {
+    id: 'zones',
+    beforeDraw(chart) {
+      const { ctx, chartArea: {left, right, top, bottom, width, height} } = chart;
+      const xScale = chart.scales.x;
+      const yScale = chart.scales.y;
 
-  const trace2 = {
-    x: [0, 1],
-    y: [1, 0],
-    mode: 'lines',
-    name: 'Baseline',
-    type: 'scatter',
-    line: {
-      color: 'rgb(180, 0, 0)',
-      dash: 'dot',
-      width: 1.
+      function drawZone(path, color) {
+        ctx.save();
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        const points = path.map(p => [xScale.getPixelForValue(p[0]), yScale.getPixelForValue(p[1])]);
+        ctx.moveTo(points[0][0], points[0][1]);
+        for (let i = 1; i < points.length; i++) ctx.lineTo(points[i][0], points[i][1]);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // Green: main sequence band
+      drawZone([[0,0.75],[0,1],[0.25,1],[1,0.25],[1,0],[0.75,0]], 'rgba(34,197,94,0.08)');
+      // Yellow: caution zones
+      drawZone([[0,0.4],[0,0.75],[0.75,0],[0.4,0]], 'rgba(234,179,8,0.06)');
+      drawZone([[0.25,1],[0.6,1],[1,0.6],[1,0.25]], 'rgba(234,179,8,0.06)');
+      // Red: danger zones
+      drawZone([[0,0],[0,0.4],[0.4,0]], 'rgba(239,68,68,0.08)');
+      drawZone([[0.6,1],[1,1],[1,0.6]], 'rgba(239,68,68,0.08)');
+
+      // Baseline diagonal
+      ctx.save();
+      ctx.strokeStyle = 'rgba(239,68,68,0.4)';
+      ctx.setLineDash([6, 4]);
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(xScale.getPixelForValue(0), yScale.getPixelForValue(1));
+      ctx.lineTo(xScale.getPixelForValue(1), yScale.getPixelForValue(0));
+      ctx.stroke();
+      ctx.restore();
+
+      // Zone labels
+      ctx.save();
+      ctx.font = "11px 'Source Sans 3', sans-serif";
+      ctx.fillStyle = 'rgba(255,255,255,0.2)';
+      ctx.fillText('Zone of Pain', xScale.getPixelForValue(0.02), yScale.getPixelForValue(0.05));
+      ctx.fillText('Zone of Uselessness', xScale.getPixelForValue(0.6), yScale.getPixelForValue(0.97));
+      ctx.fillStyle = 'rgba(255,255,255,0.15)';
+      ctx.fillText('Main Sequence', xScale.getPixelForValue(0.35), yScale.getPixelForValue(0.72));
+      ctx.restore();
     }
   };
 
-  const layout = {
-    xaxis: {
-      title: 'Instability',
+  new Chart(ctx, {
+    type: 'scatter',
+    data: {
+      datasets: [{
+        label: 'Packages',
+        data: xData.map((x, i) => ({x: x, y: yData[i]})),
+        backgroundColor: 'rgba(6, 182, 212, 0.6)',
+        borderColor: 'rgba(6, 182, 212, 0.8)',
+        pointRadius: 8,
+        pointHoverRadius: 12,
+      }]
     },
-    yaxis: {
-      title: 'Abstractness',
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              const idx = ctx.dataIndex;
+              return (labels[idx] || '') + ' (I=' + ctx.parsed.x.toFixed(2) + ', A=' + ctx.parsed.y.toFixed(2) + ')';
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          min: 0, max: 1,
+          title: { display: true, text: 'Instability', color: 'rgba(255,255,255,0.5)' },
+          grid: { color: 'rgba(255,255,255,0.05)' }
+        },
+        y: {
+          min: 0, max: 1,
+          title: { display: true, text: 'Abstractness', color: 'rgba(255,255,255,0.5)' },
+          grid: { color: 'rgba(255,255,255,0.05)' }
+        }
+      }
     },
-    title: 'Instability-Abstractness Chart',
-    shapes: [
-      {
-        type: 'path',
-        path: 'M 0 0 L 0 0.4 L 0.4 0 Z',
-        fillcolor: 'rgba(120, 0, 0, 0.2)',
-        line: {
-          color: 'transparent',
-        }
-      },
-      {
-        type: 'path',
-        path: 'M 0.6 1 L 1 1 L 1 0.6 Z',
-        fillcolor: 'rgba(120, 0, 0, 0.2)',
-        line: {
-          color: 'transparent',
-        }
-      },
-      {
-        type: 'path',
-        path: 'M 0 0.4 L 0 0.75 L 0.75 0 L 0.4 0 Z',
-        fillcolor: 'rgba(164, 124, 3, 0.2)',
-        line: {
-          color: 'transparent',
-        }
-      },
-      {
-        type: 'path',
-        path: 'M 0.25 1 L 0.6 1 L 1 0.6 L 1 0.25 Z',
-        fillcolor: 'rgba(164, 124, 3, 0.2)',
-        line: {
-          color: 'transparent',
-        }
-      },
-      {
-        type: 'path',
-        path: 'M 0 0.75 L 0 1 L 0.25 1 L 1 0.25 L 1 0 L 0.75 0 Z',
-        fillcolor: 'rgba(0, 120, 0, 0.2)',
-        line: {
-          color: 'transparent',
-        }
-      },
-    ],
-  };
-
-  const data = [trace1, trace2];
-
-
-  Plotly.newPlot(aiChart, data, layout);
+    plugins: [zonePlugin]
+  });
+});
 </script>
 
 {% include('@Parts/footer.html.twig') %}

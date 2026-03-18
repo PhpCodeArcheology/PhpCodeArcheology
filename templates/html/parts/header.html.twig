@@ -7,9 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="{% if isSubdir %}../{% endif %}assets/css/output.css" rel="stylesheet">
 
-  {% if usesCharts %}
-  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js" charset="utf-8"></script>
-  {% endif %}
+  <script src="{% if isSubdir %}../{% endif %}assets/js/chart.umd.min.js"></script>
 
   <style>
     .title-state {
@@ -48,11 +46,57 @@
     </defs>
   </svg>
 <header class="sticky top-0 z-40 w-full backdrop-blur-sm bg-black/45">
-  <div class="py-4 px-4 font-medium text-lg text-pink-600">
-    PhpCodeArcheology
-    <span class="text-xs text-white/30">v{{ version }}</span>
+  <div class="py-4 px-4 font-medium text-lg text-pink-600 flex items-center justify-between">
+    <div>
+      PhpCodeArcheology
+      <span class="text-xs text-white/30">v{{ version }}</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <button id="themeToggle" class="p-2 text-white/60 hover:text-white" aria-label="Toggle theme" title="Toggle light/dark theme">
+        <svg id="themeIconSun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+        <svg id="themeIconMoon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </button>
+      <button id="navToggle" class="lg:hidden p-2 text-white/60 hover:text-white" aria-label="Toggle navigation">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="3" y1="6" x2="21" y2="6"/>
+          <line x1="3" y1="12" x2="21" y2="12"/>
+          <line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+    </div>
   </div>
 </header>
+<script>
+  document.getElementById('navToggle')?.addEventListener('click', function() {
+    const nav = document.getElementById('mainNav');
+    if (nav) nav.classList.toggle('hidden');
+  });
+
+  // Theme toggle
+  (function() {
+    const saved = localStorage.getItem('pca-theme');
+    if (saved) document.documentElement.setAttribute('data-theme', saved);
+
+    function updateIcons() {
+      const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+      document.getElementById('themeIconSun').style.display = isLight ? 'none' : 'block';
+      document.getElementById('themeIconMoon').style.display = isLight ? 'block' : 'none';
+    }
+    updateIcons();
+
+    document.getElementById('themeToggle')?.addEventListener('click', function() {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('pca-theme', next);
+      updateIcons();
+    });
+  })();
+</script>
 
 <main class="w-full" role="main">
   <div class="max-w-[90vw] px-4 mx-auto lg:flex">

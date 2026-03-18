@@ -2,6 +2,336 @@
 @tailwind components;
 @tailwind utilities;
 
+/* --- Light Theme Overrides --- */
+
+/* Base: body background & text */
+[data-theme="light"].bg-zinc-900,
+[data-theme="light"] .bg-zinc-900 {
+  background-color: #f1f5f9 !important;
+}
+
+[data-theme="light"].text-white,
+[data-theme="light"] .text-white {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .bg-body-pattern {
+  background-image: none !important;
+}
+
+/* Header */
+[data-theme="light"] .bg-black\/45 {
+  background-color: rgba(255, 255, 255, 0.92) !important;
+  border-bottom: 1px solid #cbd5e1;
+  backdrop-filter: blur(8px);
+}
+
+/* All white-opacity text → dark readable text */
+[data-theme="light"] .text-white\/30 { color: #94a3b8 !important; }
+[data-theme="light"] .text-white\/40 { color: #64748b !important; }
+[data-theme="light"] .text-white\/50 { color: #475569 !important; }
+[data-theme="light"] .text-white\/60 { color: #475569 !important; }
+[data-theme="light"] .text-white\/70 { color: #334155 !important; }
+[data-theme="light"] .text-white\/80 { color: #1e293b !important; }
+
+/* Panels & Cards — white with subtle border */
+[data-theme="light"] .bg-cyan-950\/45,
+[data-theme="light"] .bg-cyan-950\/85,
+[data-theme="light"] .bg-cyan-950\/55,
+[data-theme="light"] .bg-cyan-950\/25 {
+  background-color: #ffffff !important;
+}
+
+[data-theme="light"] .border-cyan-800,
+[data-theme="light"] .border-cyan-900 {
+  border-color: #cbd5e1 !important;
+}
+
+[data-theme="light"] .border-slate-500 {
+  border-color: #e2e8f0 !important;
+}
+
+[data-theme="light"] .border-white\/15 {
+  border-color: #e2e8f0 !important;
+}
+
+/* Dashboard panels */
+[data-theme="light"] .dash-panel {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+[data-theme="light"] .dash-panel::before {
+  background: linear-gradient(90deg, transparent, rgba(14, 116, 144, 0.3), transparent) !important;
+}
+
+[data-theme="light"] .dash-panel-label {
+  color: #0e7490 !important;
+}
+
+[data-theme="light"] .stat-card {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+[data-theme="light"] .stat-label {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .stat-value {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .score-grade {
+  color: #64748b !important;
+  opacity: 1 !important;
+}
+
+/* Override ALL inline rgba(255,255,255,...) colors in dashboard */
+[data-theme="light"] .dash-panel [style*="color: rgba(255,255,255"] {
+  color: #475569 !important;
+}
+
+[data-theme="light"] .dash-panel [style*="color: rgba(255, 255, 255"] {
+  color: #475569 !important;
+}
+
+/* Problem badges */
+[data-theme="light"] .problem-row {
+  border-color: #e2e8f0 !important;
+}
+
+[data-theme="light"] .badge-error {
+  background: #fee2e2 !important;
+  color: #dc2626 !important;
+  border-color: #fca5a5 !important;
+}
+
+[data-theme="light"] .badge-warning {
+  background: #fef3c7 !important;
+  color: #d97706 !important;
+  border-color: #fde68a !important;
+}
+
+[data-theme="light"] .badge-info {
+  background: #dbeafe !important;
+  color: #2563eb !important;
+  border-color: #93c5fd !important;
+}
+
+/* Delta badges */
+[data-theme="light"] .delta-better {
+  background: #dcfce7 !important;
+  color: #166534 !important;
+}
+
+[data-theme="light"] .delta-worse {
+  background: #fee2e2 !important;
+  color: #991b1b !important;
+}
+
+[data-theme="light"] .delta-neutral {
+  background: #e0f2fe !important;
+  color: #0c4a6e !important;
+}
+
+/* Links */
+[data-theme="light"] .text-cyan-500 {
+  color: #0e7490 !important;
+}
+
+[data-theme="light"] a[style*="color: rgb(6"] {
+  color: #0e7490 !important;
+}
+
+/* Navigation */
+[data-theme="light"] .text-pink-600 {
+  color: #db2777 !important;
+}
+
+[data-theme="light"] .text-gray-400 {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .hover\:text-gray-200:hover {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .hover\:bg-cyan-800 {
+  background-color: #e0f2fe !important;
+}
+
+/* Table row hover */
+[data-theme="light"] tr.even\:bg-cyan-950\/45:nth-child(even) {
+  background-color: #f8fafc !important;
+}
+
+[data-theme="light"] tr.odd\:bg-cyan-950\/85:nth-child(odd) {
+  background-color: #ffffff !important;
+}
+
+[data-theme="light"] tr:hover {
+  background-color: #e0f2fe !important;
+}
+
+/* Metric tiles — override inline bg/border */
+[data-theme="light"] .rounded-xl[style*="border-color"] {
+  border-color: #cbd5e1 !important;
+}
+
+/* Problem level pill colors */
+[data-theme="light"] .bg-blue-900 {
+  background-color: #dbeafe !important;
+  color: #1e40af !important;
+}
+
+[data-theme="light"] .bg-yellow-900 {
+  background-color: #fef9c3 !important;
+  color: #854d0e !important;
+}
+
+[data-theme="light"] .bg-red-900 {
+  background-color: #fee2e2 !important;
+  color: #991b1b !important;
+}
+
+[data-theme="light"] .bg-green-900 {
+  background-color: #dcfce7 !important;
+  color: #166534 !important;
+}
+
+[data-theme="light"] .bg-amber-900 {
+  background-color: #fef3c7 !important;
+  color: #92400e !important;
+}
+
+[data-theme="light"] .bg-purple-900 {
+  background-color: #f3e8ff !important;
+  color: #6b21a8 !important;
+}
+
+[data-theme="light"] .bg-emerald-900 {
+  background-color: #d1fae5 !important;
+  color: #065f46 !important;
+}
+
+[data-theme="light"] .bg-fuchsia-900 {
+  background-color: #fae8ff !important;
+  color: #86198f !important;
+}
+
+[data-theme="light"] .bg-gray-800 {
+  background-color: #e2e8f0 !important;
+  color: #334155 !important;
+}
+
+[data-theme="light"] .bg-cyan-900 {
+  background-color: #e0f2fe !important;
+  color: #0c4a6e !important;
+}
+
+/* Pagination controls */
+[data-theme="light"] .pagination-controls button {
+  background: #f1f5f9 !important;
+  color: #334155 !important;
+  border-color: #cbd5e1 !important;
+}
+
+/* Footer */
+[data-theme="light"] .border-white\/5 {
+  border-color: #e2e8f0 !important;
+}
+
+/* Metric tiles */
+[data-theme="light"] .bg-cyan-950\/50 {
+  background-color: #ffffff !important;
+}
+
+[data-theme="light"] .text-cyan-200 {
+  color: #0e7490 !important;
+}
+
+[data-theme="light"] .border-cyan-600 {
+  border-color: #0891b2 !important;
+}
+
+[data-theme="light"] .hover\:shadow-black:hover {
+  --tw-shadow-color: rgba(0,0,0,0.1) !important;
+}
+
+/* Single-class chart labels */
+[data-theme="light"] .dash-panel h3[style*="color: rgba(6,182,212"] {
+  color: #0e7490 !important;
+}
+
+/* Inline style overrides for dashboard */
+[data-theme="light"] [style*="color: rgba(255,255,255,0.5)"],
+[data-theme="light"] [style*="color: rgba(255, 255, 255, 0.5)"] {
+  color: #64748b !important;
+}
+
+[data-theme="light"] [style*="color: rgba(255,255,255,0.4)"],
+[data-theme="light"] [style*="color: rgba(255, 255, 255, 0.4)"] {
+  color: #64748b !important;
+}
+
+[data-theme="light"] [style*="color: rgba(255,255,255,0.3)"],
+[data-theme="light"] [style*="color: rgba(255, 255, 255, 0.3)"] {
+  color: #94a3b8 !important;
+}
+
+[data-theme="light"] [style*="color: rgba(255,255,255,0.8)"],
+[data-theme="light"] [style*="color: rgba(255, 255, 255, 0.8)"] {
+  color: #1e293b !important;
+}
+
+/* Dashboard inline background overrides */
+[data-theme="light"] [style*="background: rgba(8, 51, 68"] {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+[data-theme="light"] [style*="background: rgba(22, 78, 99"] {
+  background: #e0f2fe !important;
+}
+
+[data-theme="light"] [style*="border-bottom: 1px solid rgba(255,255,255,0.05)"],
+[data-theme="light"] [style*="border-bottom: 1px solid rgba(255, 255, 255, 0.05)"] {
+  border-color: #e2e8f0 !important;
+}
+
+/* Nav border */
+[data-theme="light"] .border-transparent {
+  border-color: transparent !important;
+}
+
+[data-theme="light"] .hover\:border-gray-200:hover {
+  border-color: #0891b2 !important;
+}
+
+/* Sortable table header bg */
+[data-theme="light"] thead.bg-cyan-950\/25 {
+  background-color: #f1f5f9 !important;
+}
+
+/* Mermaid class diagram */
+[data-theme="light"] .title-state {
+  fill: #f1f5f9 !important;
+}
+
+[data-theme="light"] .nodeLabel {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .relation {
+  stroke: #0891b2 !important;
+}
+
+[data-theme="light"] #classDiagramm .edgeLabel .label span {
+  color: #334155 !important;
+}
+
 /* oswald-regular - latin */
 @font-face {
   font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
@@ -54,8 +384,4 @@
   font-style: normal;
   font-weight: 700;
   src: url('../fonts/source-sans-3-v15-latin-700.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
-}
-
-.js-plotly-plot .plotly .modebar svg {
-  display: inline;
 }

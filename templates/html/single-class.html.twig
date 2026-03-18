@@ -139,6 +139,148 @@
   </div>
 
   {% set classMethods = methods[class.getIdentifier().__toString()] %}
+
+  {# --- Visual Charts: Heatmap + Radar --- #}
+  {% if classMethods|length > 0 %}
+  <div style="display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+      {# Method Complexity Heatmap #}
+      <div class="rounded-xl border border-cyan-800 bg-cyan-950/45 p-4">
+        <h3 class="mb-3 text-lg font-semibold font-display" style="color: rgba(6,182,212,0.7); font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; font-family: 'Oswald', sans-serif;">Method Complexity</h3>
+        <div style="position: relative; height: 250px;">
+          <canvas id="methodHeatmap"></canvas>
+        </div>
+      </div>
+
+      {# Class Profile Radar #}
+      <div class="rounded-xl border border-cyan-800 bg-cyan-950/45 p-4">
+        <h3 class="mb-3 text-lg font-semibold font-display" style="color: rgba(6,182,212,0.7); font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; font-family: 'Oswald', sans-serif;">Class Profile</h3>
+        <div style="position: relative; height: 250px;">
+          <canvas id="classRadar"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+    const gridColor = isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.03)';
+    Chart.defaults.color = isLight ? '#475569' : 'rgba(255,255,255,0.5)';
+    Chart.defaults.borderColor = isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.05)';
+    Chart.defaults.font.family = "'Source Sans 3', sans-serif";
+
+    // --- Method Complexity Heatmap (Bar Chart) ---
+    const methodNames = [
+      {% for method in classMethods %}'{{ method.get('singleName').getValue()|default(method.getName())|e('js') }}'{% if not loop.last %},{% endif %}{% endfor %}
+    ];
+    const methodCC = [
+      {% for method in classMethods %}{{ method.get('cc').getValue()|default(0) }}{% if not loop.last %},{% endif %}{% endfor %}
+    ];
+    const methodLOC = [
+      {% for method in classMethods %}{{ method.get('loc').getValue()|default(0) }}{% if not loop.last %},{% endif %}{% endfor %}
+    ];
+
+    const ccColors = methodCC.map(cc => {
+      if (cc <= 5) return 'rgba(134, 239, 172, 0.8)';
+      if (cc <= 10) return 'rgba(253, 230, 138, 0.8)';
+      if (cc <= 20) return 'rgba(253, 186, 116, 0.8)';
+      return 'rgba(252, 165, 165, 0.8)';
+    });
+
+    new Chart(document.getElementById('methodHeatmap'), {
+      type: 'bar',
+      data: {
+        labels: methodNames,
+        datasets: [{
+          label: 'Cyclomatic Complexity',
+          data: methodCC,
+          backgroundColor: ccColors,
+          borderRadius: 3,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              afterLabel: function(ctx) {
+                return 'LOC: ' + methodLOC[ctx.dataIndex];
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { color: gridColor },
+            ticks: { maxRotation: 45, font: { size: 10 } }
+          },
+          y: {
+            grid: { color: gridColor },
+            title: { display: true, text: 'CC', color: '#fde68a' },
+            beginAtZero: true,
+            ticks: { precision: 0 }
+          }
+        }
+      }
+    });
+
+    // --- Class Profile Radar ---
+    {% set classCC = class.get('cc').getValue()|default(0) %}
+    {% set classLCOM = class.get('lcom').getValue()|default(0) %}
+    {% set classLOC = class.get('loc').getValue()|default(0) %}
+    {% set classUses = class.get('uses').getValue()|length %}
+    {% set classUsedBy = class.get('usedBy').getValue()|length %}
+
+    const radarValues = [{{ classCC }}, {{ classLCOM }}, {{ classLOC }}, {{ classUses }}, {{ classUsedBy }}];
+    const radarMax = Math.max(...radarValues, 1);
+    const radarNormalized = radarValues.map(v => Math.round((v / radarMax) * 100));
+
+    new Chart(document.getElementById('classRadar'), {
+      type: 'radar',
+      data: {
+        labels: ['CC', 'LCOM', 'LOC', 'Uses', 'Used By'],
+        datasets: [{
+          label: '{{ class.get('singleName').getValue()|e('js') }}',
+          data: radarNormalized,
+          borderColor: 'rgb(6, 182, 212)',
+          backgroundColor: 'rgba(6, 182, 212, 0.15)',
+          borderWidth: 2,
+          pointBackgroundColor: 'rgb(6, 182, 212)',
+          pointRadius: 4,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function(ctx) {
+                return ctx.label + ': ' + radarValues[ctx.dataIndex];
+              }
+            }
+          }
+        },
+        scales: {
+          r: {
+            beginAtZero: true,
+            max: 100,
+            ticks: { display: false },
+            grid: { color: isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.08)' },
+            angleLines: { color: isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.08)' },
+            pointLabels: { color: isLight ? '#334155' : 'rgba(255,255,255,0.7)', font: { size: 12 } }
+          }
+        }
+      }
+    });
+  });
+  </script>
+  {% endif %}
+
   {% if classMethods|length > 0 %}
     {% set folder = 'methods' %}
     {% set tableName = 'Methods' %}
@@ -159,11 +301,12 @@
   </div>
 </div>
 
-<script src="https://bumbu.me/svg-pan-zoom/dist/svg-pan-zoom.js"></script>
-<script type="module">
-  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+<script src="../assets/js/svg-pan-zoom.min.js"></script>
+<script src="../assets/js/mermaid.min.js"></script>
+<script>
   mermaid.initialize({ startOnLoad: false, maxTextSize: 500000, class: {useMaxWidth: false}});
 
+  (async function () {
   const drawDiagram = async function () {
     const element = document.querySelector('#graphDiv');
 
@@ -205,6 +348,7 @@
     //panZoomTiger.zoom(10);
   };
   await drawDiagram();
+  })();
 </script>
 
 {% include('@Parts/footer.html.twig') %}
