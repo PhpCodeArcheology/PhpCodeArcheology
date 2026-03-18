@@ -80,7 +80,16 @@ class LocVisitor implements NodeVisitor, VisitorInterface
     public function beforeTraverse(array $nodes): void
     {
         $this->insideLloc = 0;
+        $this->insideFunctionLloc = 0;
+        $this->insideMethodLloc = 0;
         $this->fileHtmlLoc = 0;
+        $this->functionNodes = [];
+        $this->classHtmlLoc = [];
+        $this->functionHtmlLoc = [];
+        $this->methodHtmlLoc = [];
+        $this->currentFunctionName = [];
+        $this->currentClassName = [];
+        $this->currentMethodName = [];
 
         $loc = 0;
         $cloc = 0;

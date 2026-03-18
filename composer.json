@@ -31,7 +31,7 @@
     "issues": "https://github.com/PhpMetrics/PhpMetrics/issues"
   },
   "require-dev": {
-    "pestphp/pest": "^2.34",
+    "pestphp/pest": "^3.0",
     "mockery/mockery": "^1.6"
   },
   "config": {
@@ -40,10 +40,10 @@
     }
   },
   "require": {
-    "nikic/php-parser": "^v5.1",
-    "php": ">=8.2.0",
-    "symfony/yaml": "^7.1",
-    "twig/twig": "^3.10"
+    "nikic/php-parser": "^v5.7",
+    "php": ">=8.5.0",
+    "symfony/yaml": "^8.0",
+    "twig/twig": "^3.23"
   },
   "bin": [
     "bin/phpcodearcheology"

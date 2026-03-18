@@ -8,7 +8,7 @@ use PhpCodeArch\Analysis\CyclomaticComplexityVisitor;
 use PhpCodeArch\Analysis\HalsteadMetricsVisitor;
 use PhpCodeArch\Analysis\IdentifyVisitor;
 use PhpCodeArch\Analysis\LocVisitor;
-use PhpCodeArch\Analysis\MaintainabilityIndexVisitor;
+use PhpCodeArch\Calculators\MaintainabilityIndexCalculator;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
 use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
@@ -25,7 +25,6 @@ function getMaintainabilityVisitors(): array
         LocVisitor::class,
         CyclomaticComplexityVisitor::class,
         HalsteadMetricsVisitor::class,
-        MaintainabilityIndexVisitor::class,
     ];
 }
 
@@ -40,6 +39,14 @@ function getHalstead(MetricsCollectionInterface $metric): array
 
 it('calculates maintainability index correctly', function($testFile, $expects) {
     $metricsController = getMetricsForVisitors($testFile, getMaintainabilityVisitors());
+
+    // Run MI as a calculator (post-processing step) since it depends on
+    // data from other visitors and NodeTraverser calls leaveNode/afterTraverse
+    // in reverse order.
+    $miCalculator = new MaintainabilityIndexCalculator($metricsController);
+    foreach ($metricsController->getAllCollections() as $metric) {
+        $miCalculator->calculate($metric);
+    }
 
     foreach ($metricsController->getAllCollections() as $metric) {
         switch (true) {

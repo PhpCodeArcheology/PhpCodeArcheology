@@ -11,7 +11,6 @@ use PhpCodeArch\Analysis\HalsteadMetricsVisitor;
 use PhpCodeArch\Analysis\IdentifyVisitor;
 use PhpCodeArch\Analysis\LcomVisitor;
 use PhpCodeArch\Analysis\LocVisitor;
-use PhpCodeArch\Analysis\MaintainabilityIndexVisitor;
 use PhpCodeArch\Analysis\PackageVisitor;
 use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
@@ -63,7 +62,6 @@ readonly class Analyzer
             CyclomaticComplexityVisitor::class,
             DependencyVisitor::class,
             HalsteadMetricsVisitor::class,
-            MaintainabilityIndexVisitor::class,
             LcomVisitor::class,
             PackageVisitor::class,
         ];
@@ -110,11 +108,7 @@ readonly class Analyzer
                 $visitor->setPath($file);
             }
 
-            $phpCode = file_get_contents($file);
-            $encoding = mb_detect_encoding($phpCode);
-            if ($encoding !== 'UFT-8') {
-                $phpCode = mb_convert_encoding($phpCode, 'UTF-8');
-            }
+            $phpCode = @file_get_contents($file);
 
             $fileErrorCollection = new ErrorCollection();
 
@@ -132,20 +126,38 @@ readonly class Analyzer
                 'errors'
             );
 
+            if ($phpCode === false) {
+                $fileErrorCollection->set("Could not read file: $file");
+                ++$projectFileErrors;
+                continue;
+            }
+
+            $encoding = mb_detect_encoding($phpCode, 'UTF-8, ISO-8859-1, Windows-1252', true);
+            if ($encoding !== false && $encoding !== 'UTF-8') {
+                $phpCode = mb_convert_encoding($phpCode, 'UTF-8', $encoding);
+            }
+
             $ast = null;
 
             try {
                 $ast = $this->parser->parse($phpCode);
             } catch (Error $e) {
                 $fileErrorCollection->set($e->getMessage());
-                ++ $projectFileErrors;
+                ++$projectFileErrors;
             }
+
+            unset($phpCode);
 
             if (! $ast) {
                 continue;
             }
 
             $this->traverser->traverse($ast);
+            unset($ast);
+
+            if ($count % 100 === 0) {
+                gc_collect_cycles();
+            }
         }
 
         $this->metricsController->setCollection(
@@ -156,6 +168,16 @@ readonly class Analyzer
         );
 
         $this->output->outNl();
+
+        if ($projectFileErrors > 0) {
+            $this->output->outNl(
+                "\033[33mWarning: $projectFileErrors file(s) had errors and were skipped.\033[0m"
+            );
+        }
+
+        $this->output->outNl(
+            "Analysed \033[32m" . ($fileCount - $projectFileErrors) . "\033[0m of \033[32m$fileCount\033[0m files successfully."
+        );
 
         return $projectFileErrors;
     }

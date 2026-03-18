@@ -11,7 +11,9 @@ use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 use PhpCodeArch\Metrics\Model\MetricsContainer;
 use PhpParser\Node\Expr\New_;
 use PhpParser\Node\Expr\StaticCall;
+use PhpParser\Node\Name;
 use PhpParser\Node\Name\FullyQualified;
+use PhpParser\Node\Identifier;
 use PhpParser\Node\Param;
 use PhpParser\Node\Stmt\Class_;
 use PhpParser\Node\Stmt\Function_;
@@ -31,11 +33,10 @@ beforeEach(function() {
 });
 
 it('only counts unique dependencies for file metrics', function() {
-    $newExpression = Mockery::mock(New_::class);
-    $newExpression->class = 'TestClass';
+    $className = new FullyQualified('TestClass');
 
-    $staticCall = Mockery::mock(StaticCall::class);
-    $staticCall->class = 'TestClass';
+    $newExpression = new New_($className);
+    $staticCall = new StaticCall($className, 'method');
 
     $this->visitor->leaveNode($newExpression);
     $this->visitor->leaveNode($newExpression);
@@ -58,14 +59,12 @@ it('only counts unique dependencies for class metrics', function() {
         ['path' => '', 'name' => 'ParentClass']
     );
 
-    $classNode = Mockery::mock(Class_::class);
-    $classNode->namespacedName = 'ParentClass';
+    $classNode = new Class_('ParentClass', [], ['startLine' => 1, 'endLine' => 10, 'startTokenPos' => 0, 'endTokenPos' => 10]);
+    $classNode->namespacedName = new Name('ParentClass');
 
-    $newExpression = Mockery::mock(New_::class);
-    $newExpression->class = 'TestClass';
-
-    $staticCall = Mockery::mock(StaticCall::class);
-    $staticCall->class = 'TestClass';
+    $className = new FullyQualified('TestClass');
+    $newExpression = new New_($className);
+    $staticCall = new StaticCall($className, 'method');
 
     $this->visitor->enterNode($classNode);
     $this->visitor->leaveNode($newExpression);
@@ -90,16 +89,12 @@ it('only counts unique dependencies for function metrics', function() {
         ['path' => '', 'name' => 'TestFunction']
     );
 
-    $functionNode = Mockery::mock(Function_::class);
-    $functionNode->namespacedName = 'TestFunction';
-    $functionNode->shouldReceive('getParams')
-        ->andReturn([]);
+    $functionNode = new Function_('TestFunction');
+    $functionNode->namespacedName = new Name('TestFunction');
 
-    $newExpression = Mockery::mock(New_::class);
-    $newExpression->class = 'TestClass';
-
-    $staticCall = Mockery::mock(StaticCall::class);
-    $staticCall->class = 'TestClass';
+    $className = new FullyQualified('TestClass');
+    $newExpression = new New_($className);
+    $staticCall = new StaticCall($className, 'method');
 
     $this->visitor->enterNode($functionNode);
     $this->visitor->leaveNode($newExpression);
@@ -124,13 +119,10 @@ it('sets traits correctly and counts only unique ones', function() {
         ['path' => '', 'name' => 'ParentClass']
     );
 
-    $classNode = Mockery::mock(Class_::class);
-    $classNode->namespacedName = 'ParentClass';
+    $classNode = new Class_('ParentClass', [], ['startLine' => 1, 'endLine' => 10, 'startTokenPos' => 0, 'endTokenPos' => 10]);
+    $classNode->namespacedName = new Name('ParentClass');
 
-    $trait = Mockery::mock(TraitUse::class);
-
-    // A real trait and a wrong trait
-    $trait->traits = ['TestClass', false, 'TestClass'];
+    $trait = new TraitUse([new Name('TestClass'), new Name('TestClass')]);
 
     $this->visitor->enterNode($classNode);
     $this->visitor->leaveNode($trait);
@@ -153,14 +145,11 @@ it("doesn't count self and parent", function() {
         ['path' => '', 'name' => 'ParentClass']
     );
 
-    $classNode = Mockery::mock(Class_::class);
-    $classNode->namespacedName = 'ParentClass';
+    $classNode = new Class_('ParentClass', [], ['startLine' => 1, 'endLine' => 10, 'startTokenPos' => 0, 'endTokenPos' => 10]);
+    $classNode->namespacedName = new Name('ParentClass');
 
-    $selfExpression = Mockery::mock(New_::class);
-    $selfExpression->class = 'self';
-
-    $parentExpression = Mockery::mock(New_::class);
-    $parentExpression->class = 'parent';
+    $selfExpression = new New_(new Name('self'));
+    $parentExpression = new New_(new Name('parent'));
 
     $this->visitor->enterNode($classNode);
     $this->visitor->leaveNode($selfExpression);
@@ -183,23 +172,14 @@ it('handles function parameters with correct parameter type', function() {
         ['path' => '', 'name' => 'TestFunction']
     );
 
-    $functionNode = Mockery::mock(Function_::class);
-    $functionNode->namespacedName = 'TestFunction';
-
-    $parameterWithoutType = Mockery::mock(Param::class);
-    $parameterWithWrongType = Mockery::mock(Param::class);
-    $parameterWithWrongType->type = 'int';
-    $correctParameter = Mockery::mock(Param::class);
-    $correctParameter->type = Mockery::mock(FullyQualified::class);
-    $correctParameter->type->shouldReceive('__toString')
-        ->andReturn('TestClass');
-
-    $functionNode->shouldReceive('getParams')
-        ->andReturn([
-            $parameterWithoutType,
-            $parameterWithWrongType,
-            $correctParameter,
-        ]);
+    $functionNode = new Function_('TestFunction', [
+        'params' => [
+            new Param(new \PhpParser\Node\Expr\Variable('a')),
+            new Param(new \PhpParser\Node\Expr\Variable('b'), null, new Identifier('int')),
+            new Param(new \PhpParser\Node\Expr\Variable('c'), null, new FullyQualified('TestClass')),
+        ],
+    ]);
+    $functionNode->namespacedName = new Name('TestFunction');
 
     $this->visitor->enterNode($functionNode);
     $this->visitor->leaveNode($functionNode);
@@ -221,15 +201,10 @@ it('handles function return value with correct return type', function() {
         ['path' => '', 'name' => 'TestFunction']
     );
 
-    $functionNode = Mockery::mock(Function_::class);
-    $functionNode->namespacedName = 'TestFunction';
-
-    $functionNode->shouldReceive('getParams')
-        ->andReturn([]);
-
-    $functionNode->returnType = Mockery::mock(FullyQualified::class);
-    $functionNode->returnType->shouldReceive('__toString')
-        ->andReturn('TestClass');
+    $functionNode = new Function_('TestFunction', [
+        'returnType' => new FullyQualified('TestClass'),
+    ]);
+    $functionNode->namespacedName = new Name('TestFunction');
 
     $this->visitor->enterNode($functionNode);
     $this->visitor->leaveNode($functionNode);

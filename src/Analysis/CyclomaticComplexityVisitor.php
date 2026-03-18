@@ -36,12 +36,12 @@ class CyclomaticComplexityVisitor implements NodeVisitor, VisitorInterface
     /**
      * @var string[]
      */
-    public array $currentClassName = [];
+    private array $currentClassName = [];
 
     /**
      * @var string[]
      */
-    public array $currentFunctionName = [];
+    private array $currentFunctionName = [];
 
     /**
      * @var int
@@ -65,6 +65,10 @@ class CyclomaticComplexityVisitor implements NodeVisitor, VisitorInterface
     public function beforeTraverse(array $nodes): void
     {
         $this->fileCc = 1;
+        $this->classCc = [];
+        $this->functionCc = [];
+        $this->currentClassName = [];
+        $this->currentFunctionName = [];
     }
 
     /**

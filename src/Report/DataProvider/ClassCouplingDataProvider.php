@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace PhpCodeArch\Report\DataProvider;
 
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
-use PhpCodeArch\Metrics\Model\MetricType;
+use PhpCodeArch\Metrics\Model\Enums\MetricVisibility;
 
 class ClassCouplingDataProvider implements ReportDataProviderInterface
 {
@@ -26,7 +26,7 @@ class ClassCouplingDataProvider implements ReportDataProviderInterface
 
         $metrics = $this->metricsController->getMetricsByCollectionTypeAndVisibility(
             MetricCollectionTypeEnum::ClassCollection,
-            MetricType::SHOW_COUPLING,
+            MetricVisibility::ShowCoupling,
             false
         );
 

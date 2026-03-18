@@ -66,14 +66,11 @@ class HtmlReport implements ReportInterface
         $createMethods = [
             [$this, 'generateIndexPage'],
             [$this, 'generateFilePage'],
-            [$this, 'generateFilesPages'],
             [$this, 'generateClassPage'],
-            [$this, 'generateClassesPages'],
             [$this, 'generateClassCouplingPage'],
             [$this, 'generateClassChartPage'],
             [$this, 'generatePackagesPage'],
             [$this, 'generateFunctionPage'],
-            [$this, 'generateFunctionsPages'],
             [$this, 'generateProblemsPage'],
         ];
 
@@ -124,113 +121,103 @@ class HtmlReport implements ReportInterface
     {
         $templateData = $this->dataProviderFactory->getProjectDataProvider();
         $data = $templateData->getTemplateData();
-        $data['pageTitle'] = 'Project metrics';
+
+        // Add problem data for dashboard
+        $problemData = $this->dataProviderFactory->getProblemDataProvider()->getTemplateData();
+        $data['fileProblems'] = $problemData['fileProblems'] ?? [];
+        $data['classProblems'] = $problemData['classProblems'] ?? [];
+        $data['functionProblems'] = $problemData['functionProblems'] ?? [];
+
+        // Add trend data from history
+        $historyFile = $this->config->get('reportDir') . DIRECTORY_SEPARATOR . 'history.jsonl';
+        $historyData = $this->dataProviderFactory->getHistoryDataProvider($historyFile)->getTemplateData();
+        $data['trendData'] = $historyData['trendData'] ?? '{}';
+        $data['hasMultipleRuns'] = $historyData['hasMultipleRuns'] ?? false;
+        $data['runCount'] = $historyData['runCount'] ?? 0;
+
+        $data['pageTitle'] = 'Dashboard';
         $data['currentPage'] = 'index.html';
 
         $this->renderTemplate('index.html.twig', $data, 'index.html');
     }
 
-    /**
-     * @throws SyntaxError
-     * @throws RuntimeError
-     * @throws LoaderError
-     */
     protected function generateFilePage(): void
     {
-        $templateData = $this->dataProviderFactory->getFilesDataProvider();
-        $data = $templateData->getTemplateData();
+        $data = $this->dataProviderFactory->getFilesDataProvider()->getTemplateData();
+
         $data['pageTitle'] = 'Project metrics';
         $data['currentPage'] = 'files.html';
         $this->renderTemplate('files.html.twig', $data, 'files.html');
-    }
 
-    protected function generateFilesPages(): void
-    {
-        $templateData = $this->dataProviderFactory->getFilesDataProvider();
-        $data = $templateData->getTemplateData();
+        $files = $data['files'];
+        unset($data['files']);
 
-        foreach ($data['files'] as $fileKey => $fileData) {
+        foreach ($files as $fileKey => $fileData) {
             $outputFile = 'files/' . $fileKey . '.html';
 
             $templateData = $data;
-            unset($templateData['files']);
-
             $templateData['file'] = $fileData;
-
             $templateData['pageTitle'] = 'File metrics';
             $templateData['currentPage'] = $outputFile;
             $templateData['isSubdir'] = true;
 
             $this->renderTemplate('single-file.html.twig', $templateData, $outputFile);
         }
-
+        unset($data, $files);
     }
 
-    protected function generateClassesPages(): void
+    protected function generateClassPage(): void
     {
-        $templateData = $this->dataProviderFactory->getClassDataProvider();
-        $data = $templateData->getTemplateData();
+        $data = $this->dataProviderFactory->getClassDataProvider()->getTemplateData();
 
-        foreach ($data['classes'] as $classKey => $classData) {
+        $data['pageTitle'] = 'Class metrics';
+        $data['currentPage'] = 'classes-list.html';
+        $this->renderTemplate('classes.html.twig', $data, 'classes-list.html');
+
+        $classes = $data['classes'];
+        unset($data['classes']);
+
+        foreach ($classes as $classKey => $classData) {
             $outputFile = 'classes/' . $classKey . '.html';
 
             $templateData = $data;
-            unset($templateData['classes']);
-
             $templateData['class'] = $classData;
-
             $templateData['pageTitle'] = 'Class metrics';
             $templateData['currentPage'] = $outputFile;
             $templateData['isSubdir'] = true;
 
             $this->renderTemplate('single-class.html.twig', $templateData, $outputFile);
         }
-    }
-
-    protected function generateClassPage(): void
-    {
-        $templateData = $this->dataProviderFactory->getClassDataProvider();
-        $data = $templateData->getTemplateData();
-        $data['pageTitle'] = 'Class metrics';
-        $data['currentPage'] = 'classes-list.html';
-        $this->renderTemplate('classes.html.twig', $data, 'classes-list.html');
+        unset($data, $classes);
     }
 
     protected function generateFunctionPage(): void
     {
-        $templateData = $this->dataProviderFactory->getFunctionDataProvider();
-        $data = $templateData->getTemplateData();
+        $data = $this->dataProviderFactory->getFunctionDataProvider()->getTemplateData();
+
         $data['pageTitle'] = 'Function metrics';
         $data['currentPage'] = 'functions-list.html';
         $this->renderTemplate('functions-list.html.twig', $data, 'functions-list.html');
-    }
 
-    protected function generateFunctionsPages(): void
-    {
-        $templateData = $this->dataProviderFactory->getFunctionDataProvider();
-        $data = $templateData->getTemplateData();
+        $functions = $data['functions'];
+        $methods = $data['methods'];
+        unset($data['functions'], $data['methods']);
 
-        foreach ($data['functions'] as $functionData) {
+        foreach ($functions as $functionData) {
             $templateData = $data;
-            unset($templateData['functions']);
-            unset($templateData['methods']);
-
             $templateData['isMethod'] = false;
             $templateData['function'] = $functionData;
-
             $this->createFunctionFile($templateData, 'functions');
         }
+        unset($functions);
 
-        foreach ($data['methods'] as $functionData) {
+        foreach ($methods as $functionData) {
             $templateData = $data;
-            unset($templateData['functions']);
-            unset($templateData['methods']);
-
             $templateData['isMethod'] = true;
             $templateData['function'] = $functionData;
-
             $this->createFunctionFile($templateData, 'methods');
         }
+        unset($data, $methods);
     }
 
     protected function generatePackagesPage(): void
@@ -239,7 +226,6 @@ class HtmlReport implements ReportInterface
         $data = $templateData->getTemplateData();
         $data['pageTitle'] = 'Project metrics';
         $data['currentPage'] = 'packages-list.html';
-        $data['usesCharts'] = true;
         $this->renderTemplate('packages-list.html.twig', $data, 'packages-list.html');
     }
 

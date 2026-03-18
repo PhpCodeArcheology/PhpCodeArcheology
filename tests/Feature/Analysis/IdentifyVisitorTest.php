@@ -113,12 +113,12 @@ it('detects methods correctly', function($testFile, $expected) {
 
     $methods = array_values($methods);
 
-    expect($projectMetrics->get('overAllMethodsCount')->getValue())->toBe($expected['methodCount'])
+    expect($projectMetrics->get('overallMethodsCount')->getValue())->toBe($expected['methodCount'])
         ->and(count($methods))->toBe($expected['methodCount'])
         ->and($methods)->toBe($expected['methodNames'])
-        ->and($projectMetrics->get('overAllPublicMethodsCount')->getValue())->toBe($expected['publicMethods'])
-        ->and($projectMetrics->get('overAllPrivateMethodsCount')->getValue())->toBe($expected['privateMethods'])
-        ->and($projectMetrics->get('overAllStaticMethodsCount')->getValue())->toBe($expected['staticMethods'])
+        ->and($projectMetrics->get('overallPublicMethodsCount')->getValue())->toBe($expected['publicMethods'])
+        ->and($projectMetrics->get('overallPrivateMethodsCount')->getValue())->toBe($expected['privateMethods'])
+        ->and($projectMetrics->get('overallStaticMethodsCount')->getValue())->toBe($expected['staticMethods'])
         ->and(count($classes))->toBe($expected['classCount']);
 
     if (isset($expected['methodCountAnonymousClass'])) {

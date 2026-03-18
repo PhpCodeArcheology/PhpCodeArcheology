@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Metrics\Model;
 
+use PhpCodeArch\Metrics\Model\Enums\MetricValueType;
 use PhpCodeArch\Predictions\Problems\ProblemInterface;
 
 class MetricValue
@@ -32,10 +33,10 @@ class MetricValue
     public function getValueFormatted(): mixed
     {
         return match ($this->type->getValueType()) {
-            MetricType::VALUE_ARRAY => implode(', ', $this->value),
-            MetricType::VALUE_COUNT => count($this->value),
-            MetricType::VALUE_FLOAT => round($this->value, 2),
-            MetricType::VALUE_PERCENTAGE => number_format($this->value, 2) . '%',
+            MetricValueType::Array => implode(', ', $this->value),
+            MetricValueType::Count => count($this->value),
+            MetricValueType::Float => round($this->value, 2),
+            MetricValueType::Percentage => number_format($this->value, 2) . '%',
             default => $this->value,
         };
     }
@@ -48,21 +49,23 @@ class MetricValue
     public function getSortValue(): mixed
     {
         return match($this->type->getValueType()) {
-            MetricType::VALUE_INT, MetricType::VALUE_FLOAT, MetricType::VALUE_PERCENTAGE => $this->value,
-            MetricType::VALUE_STRING => strval($this->value),
-            MetricType::VALUE_ARRAY, MetricType::VALUE_COUNT => count($this->value),
+            MetricValueType::Int, MetricValueType::Float, MetricValueType::Percentage => $this->value,
+            MetricValueType::String => strval($this->value),
+            MetricValueType::Array, MetricValueType::Count => count($this->value),
+            default => $this->value,
         };
     }
 
     public function __toString(): string
     {
         return match($this->type->getValueType()) {
-            MetricType::VALUE_INT => number_format($this->value, 0),
-            MetricType::VALUE_FLOAT => number_format($this->value, 2),
-            MetricType::VALUE_STRING => strval($this->value),
-            MetricType::VALUE_ARRAY => implode(', ', $this->value),
-            MetricType::VALUE_PERCENTAGE => number_format($this->value, 2) . '%',
-            MetricType::VALUE_COUNT => strval(count($this->value)),
+            MetricValueType::Int => number_format($this->value, 0),
+            MetricValueType::Float => number_format($this->value, 2),
+            MetricValueType::String => strval($this->value),
+            MetricValueType::Array => implode(', ', $this->value),
+            MetricValueType::Percentage => number_format($this->value, 2) . '%',
+            MetricValueType::Count => strval(count($this->value)),
+            default => strval($this->value),
         };
     }
 

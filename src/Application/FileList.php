@@ -23,10 +23,19 @@ final class FileList
         foreach ($this->config->get('files') as $file) {
             $file = realpath($file);
 
+            if ($file === false) {
+                continue;
+            }
+
             if (is_dir($file)) {
                 $file = rtrim($file, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
-                $dir = new \RecursiveDirectoryIterator($file);
-                $iterator = new \RecursiveIteratorIterator($dir);
+
+                try {
+                    $dir = new \RecursiveDirectoryIterator($file);
+                    $iterator = new \RecursiveIteratorIterator($dir);
+                } catch (\UnexpectedValueException $e) {
+                    continue;
+                }
 
                 $extensions = $this->config->get('extensions') ?? ['php'];
                 $extensionPattern = array_map(function($extension) {

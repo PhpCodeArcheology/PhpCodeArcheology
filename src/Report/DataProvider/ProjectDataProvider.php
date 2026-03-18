@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace PhpCodeArch\Report\DataProvider;
 
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
-use PhpCodeArch\Metrics\Model\MetricType;
+use PhpCodeArch\Metrics\Model\Enums\MetricVisibility;
 
 class ProjectDataProvider implements ReportDataProviderInterface
 {
@@ -20,7 +20,7 @@ class ProjectDataProvider implements ReportDataProviderInterface
 
         $metricTypes = $this->metricsController->getMetricsByCollectionTypeAndVisibility(
             MetricCollectionTypeEnum::ProjectCollection,
-            MetricType::SHOW_EVERYWHERE
+            MetricVisibility::ShowEverywhere
         );
 
         $data = [];

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Metrics\Identity;
 
-class ProjectIdentifier implements IdentifierInterface
+readonly class ProjectIdentifier implements IdentifierInterface
 {
     private string $identifier;
 

@@ -4,91 +4,48 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Metrics\Model;
 
+use PhpCodeArch\Metrics\Model\Enums\BetterDirection;
+use PhpCodeArch\Metrics\Model\Enums\MetricValueType;
+use PhpCodeArch\Metrics\Model\Enums\MetricVisibility;
+
 class MetricType
 {
-    const VALUE_INT = 0;
-    const VALUE_FLOAT = 1;
-    const VALUE_STRING = 2;
-    const VALUE_ARRAY = 3;
-    const VALUE_PERCENTAGE = 4;
-    const VALUE_COUNT = 5;
-    const VALUE_BOOL = 6;
-    const VALUE_STORAGE = 7;
-
-    const SHOW_IN_DETAILS = 0;
-    const SHOW_IN_LIST = 1;
-    const SHOW_EVERYWHERE = 2;
-    const SHOW_NOWHERE = 3;
-    const SHOW_COUPLING = 4;
-
-    const BETTER_IRRELEVANT = 0;
-    const BETTER_HIGH = 1;
-    const BETTER_LOW = 2;
-
-    /**
-     * @param string $key
-     * @param string $name
-     * @param string $shortName
-     * @param string|null $description
-     * @param int $valueType
-     * @param int|array $visibility
-     */
     private function __construct(
         private readonly string $key,
         private readonly string $name,
         private readonly string $shortName,
         private readonly ?string $description,
-        private int $valueType,
-        private readonly int $better,
-        private readonly int|array $visibility,
-    )
-    {
+        private MetricValueType $valueType,
+        private readonly BetterDirection $better,
+        private readonly MetricVisibility|array $visibility,
+    ) {
     }
 
-    /**
-     * @return string
-     */
     public function getKey(): string
     {
         return $this->key;
     }
 
-    /**
-     * @return string
-     */
     public function getName(): string
     {
         return $this->name;
     }
 
-    /**
-     * @return string
-     */
     public function getShortName(): string
     {
         return $this->shortName;
     }
 
-    /**
-     * @return string|null
-     */
     public function getDescription(): ?string
     {
         return $this->description;
     }
 
-    /**
-     * @return int
-     */
-    public function getValueType(): int
+    public function getValueType(): MetricValueType
     {
         return $this->valueType;
     }
 
-    /**
-     * @param array $data
-     * @return MetricType
-     */
     public static function fromArray(array $data): MetricType
     {
         [
@@ -101,23 +58,31 @@ class MetricType
             'visibility' => $visibility,
         ] = $data;
 
-        return new MetricType($key, $name, $shortName, $description, $valueType, $better, $visibility);
+        return new MetricType(
+            key: $key,
+            name: $name,
+            shortName: $shortName,
+            description: $description,
+            valueType: $valueType,
+            better: $better,
+            visibility: $visibility,
+        );
     }
 
     public static function fromKey($key): MetricType
     {
-        $name = $shortName = $description = '';
-        $valueType = self::VALUE_FLOAT;
-        $visibility = self::SHOW_NOWHERE;
-        $better = self::BETTER_HIGH;
-
-        return new MetricType($key, $name, $shortName, $description, $valueType, $better, $visibility);
+        return new MetricType(
+            $key,
+            '',
+            '',
+            '',
+            MetricValueType::Float,
+            BetterDirection::High,
+            MetricVisibility::ShowNowhere,
+        );
     }
 
-    /**
-     * @return int|array
-     */
-    public function getVisibility(): int|array
+    public function getVisibility(): MetricVisibility|array
     {
         return $this->visibility;
     }
@@ -125,12 +90,12 @@ class MetricType
     public function __toArray(): array
     {
         $types = [
-            self::VALUE_INT => 'int',
-            self::VALUE_FLOAT => 'float',
-            self::VALUE_ARRAY => 'string',
-            self::VALUE_STRING => 'string',
-            self::VALUE_PERCENTAGE => 'string',
-            self::VALUE_COUNT => 'int',
+            MetricValueType::Int->value => 'int',
+            MetricValueType::Float->value => 'float',
+            MetricValueType::Array->value => 'string',
+            MetricValueType::String->value => 'string',
+            MetricValueType::Percentage->value => 'string',
+            MetricValueType::Count->value => 'int',
         ];
 
         return [
@@ -138,16 +103,16 @@ class MetricType
             'name' => $this->name,
             'shortName' => $this->shortName,
             'description' => $this->description,
-            'valueType' => $types[$this->valueType],
+            'valueType' => $types[$this->valueType->value] ?? 'mixed',
         ];
     }
 
-    public function getBetter(): int
+    public function getBetter(): BetterDirection
     {
         return $this->better;
     }
 
-    public function setValueType(int $valueType): void
+    public function setValueType(MetricValueType $valueType): void
     {
         $this->valueType = $valueType;
     }

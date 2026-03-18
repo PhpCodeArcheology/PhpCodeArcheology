@@ -83,6 +83,13 @@ class DataProviderFactory
         return new ProblemDataProvider($this->metricsController);
     }
 
+    public function getHistoryDataProvider(string $historyFile): HistoryDataProvider
+    {
+        $provider = new HistoryDataProvider($this->metricsController);
+        $provider->setHistoryFile($historyFile);
+        return $provider;
+    }
+
     private function predictProgrammingParadigm(): void
     {
         $classCount = $this->data['OverallClasses'];

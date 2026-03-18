@@ -66,8 +66,17 @@ class GlobalsVisitor implements NodeVisitor, VisitorInterface
     public function beforeTraverse(array $nodes): void
     {
         $this->superglobals = self::GLOBALS;
+        $this->superglobalsFunction = [];
+        $this->superglobalsClass = [];
         $this->variableMap = [];
+        $this->functionVariableMap = [];
+        $this->classVariableMap = [];
+        $this->constantMap = [];
+        $this->functionConstantMap = [];
+        $this->classConstantMap = [];
         $this->currentClassName = [];
+        $this->currentFunctionName = [];
+        $this->currentMethodName = [];
     }
 
     /**

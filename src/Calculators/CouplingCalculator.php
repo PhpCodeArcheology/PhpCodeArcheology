@@ -8,10 +8,6 @@ use PhpCodeArch\Calculators\Helpers\PackageInstabilityAbstractnessCalculator;
 use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
-use PhpCodeArch\Metrics\Model\Collections\ClassNameCollection;
-use PhpCodeArch\Metrics\Model\Collections\EnumNameCollection;
-use PhpCodeArch\Metrics\Model\Collections\InterfaceNameCollection;
-use PhpCodeArch\Metrics\Model\Collections\TraitNameCollection;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
 use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
 use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
@@ -20,15 +16,7 @@ class CouplingCalculator implements CalculatorInterface
 {
     use CalculatorTrait;
 
-    private ClassNameCollection $classes;
-
-    private InterfaceNameCollection $interfaces;
-
-    private ClassNameCollection $extends;
-
-    private TraitNameCollection $traits;
-
-    private EnumNameCollection $enums;
+    private array $collectionMap = [];
 
     private int $usedByCount = 0;
 
@@ -56,7 +44,7 @@ class CouplingCalculator implements CalculatorInterface
         ];
 
         foreach ($collections as $collectionKey) {
-            $this->$collectionKey = $this->metricsController->getCollection(
+            $this->collectionMap[$collectionKey] = $this->metricsController->getCollection(
                 MetricCollectionTypeEnum::ProjectCollection,
                 null,
                 $collectionKey
@@ -79,7 +67,7 @@ class CouplingCalculator implements CalculatorInterface
                 break;
 
             case $metrics instanceof ClassMetricsCollection:
-                $metricValues = $this->handeClass($identifierString, $name);
+                $metricValues = $this->handleClass($identifierString, $name);
                 break;
 
             case $metrics instanceof FunctionMetricsCollection:
@@ -101,7 +89,7 @@ class CouplingCalculator implements CalculatorInterface
     {
         $this->packageCalculator->afterTraverse();
 
-        foreach ($this->classes as $classId => $className) {
+        foreach ($this->collectionMap['classes'] as $classId => $className) {
             $metricValues = $this->metricsController->getMetricValuesByIdentifierString(
                 $classId,
                 [
@@ -131,9 +119,9 @@ class CouplingCalculator implements CalculatorInterface
             $this->instability += $instability;
         }
 
-        $avgUsesCount = count($this->classes) > 0 ? $this->usesCount / count($this->classes) : 0;
-        $avgUsedByCount = count($this->classes) > 0 ? $this->usedByCount / count($this->classes) : 0;
-        $avgInstability = count($this->classes) > 0 ? $this->instability / count($this->classes) : 0;
+        $avgUsesCount = count($this->collectionMap['classes']) > 0 ? $this->usesCount / count($this->collectionMap['classes']) : 0;
+        $avgUsedByCount = count($this->collectionMap['classes']) > 0 ? $this->usedByCount / count($this->collectionMap['classes']) : 0;
+        $avgInstability = count($this->collectionMap['classes']) > 0 ? $this->instability / count($this->collectionMap['classes']) : 0;
 
         $abstractClassesCount = array_reduce($this->abstractClasses, function($count, $packageClasses) {
             return $count + count($packageClasses);
@@ -159,7 +147,7 @@ class CouplingCalculator implements CalculatorInterface
         );
     }
 
-    private function handeClass(string $identifierString, string $className): array
+    private function handleClass(string $identifierString, string $className): array
     {
         $metricValues = $this->metricsController->getMetricValuesByIdentifierString(
             $identifierString,
@@ -200,10 +188,10 @@ class CouplingCalculator implements CalculatorInterface
             $metricValues['uses'][] = $dependency;
 
             $checkArray = array_merge(
-                $this->classes->getAsArray(),
-                $this->interfaces->getAsArray(),
-                $this->traits->getAsArray(),
-                $this->enums->getAsArray()
+                $this->collectionMap['classes']->getAsArray(),
+                $this->collectionMap['interfaces']->getAsArray(),
+                $this->collectionMap['traits']->getAsArray(),
+                $this->collectionMap['enums']->getAsArray()
             );
 
             $isTrait = true;
@@ -213,7 +201,7 @@ class CouplingCalculator implements CalculatorInterface
                 ++ $metricValues['usesInProjectCount'];
                 $metricValues['usesInProject'][] = $dependency;
 
-                if (! in_array($dependency, $this->traits->getAsArray())) {
+                if (! in_array($dependency, $this->collectionMap['traits']->getAsArray())) {
                     $isTrait = false;
                     ++ $metricValues['usesForInstabilityCount'];
                 }
@@ -280,7 +268,7 @@ class CouplingCalculator implements CalculatorInterface
             'dependencies'
         ) ?? [];
 
-        $classList = $this->classes->getAsArray();
+        $classList = $this->collectionMap['classes']->getAsArray();
 
         foreach ($dependencyCollection as $dependency) {
             $classKey = array_search($dependency, $classList);

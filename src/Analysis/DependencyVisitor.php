@@ -431,6 +431,17 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface
      * @param array $nodes
      * @return void
      */
-    public function beforeTraverse(array $nodes)
-    {}
+    public function beforeTraverse(array $nodes): void
+    {
+        $this->currentClassName = [];
+        $this->currentClassMetrics = [];
+        $this->classDependencies = [];
+        $this->classUses = [];
+        $this->classTraits = [];
+        $this->functionDependencies = [];
+        $this->methodDependencies = [];
+        $this->outsideDependencies = [];
+        $this->insideFunction = false;
+        $this->insideMethod = false;
+    }
 }

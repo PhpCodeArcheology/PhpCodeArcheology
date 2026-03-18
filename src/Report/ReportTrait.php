@@ -27,7 +27,7 @@ trait ReportTrait
 
         $files = glob($dir . '*', GLOB_MARK);
         foreach ($files as $file) {
-            if (str_ends_with($file, 'history.json')) {
+            if (str_ends_with($file, 'history.json') || str_ends_with($file, 'history.jsonl')) {
                 continue;
             }
 

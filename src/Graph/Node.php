@@ -43,10 +43,10 @@ class Node
     {
         $adjacents = [];
         foreach ($this->edges as $edge) {
-            if ($edge->getFrom()->getKey() != $this->getKey()) {
+            if ($edge->getFrom()->getKey() !== $this->getKey()) {
                 $adjacents[$edge->getFrom()->getKey()] = $edge->getFrom();
             }
-            if ($edge->getTo()->getKey() != $this->getKey()) {
+            if ($edge->getTo()->getKey() !== $this->getKey()) {
                 $adjacents[$edge->getTo()->getKey()] = $edge->getTo();
             }
         }

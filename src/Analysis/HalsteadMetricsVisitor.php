@@ -39,9 +39,16 @@ class HalsteadMetricsVisitor implements NodeVisitor, VisitorInterface
     /**
      * @inheritDoc
      */
-    public function beforeTraverse(array $nodes)
+    public function beforeTraverse(array $nodes): void
     {
-        // TODO: Implement beforeTraverse() method.
+        $this->operators = [];
+        $this->operands = [];
+        $this->classOperators = [];
+        $this->classOperands = [];
+        $this->functionOperators = [];
+        $this->functionOperands = [];
+        $this->currentClassName = [];
+        $this->currentFunctionName = [];
     }
 
     /**

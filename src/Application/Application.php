@@ -10,12 +10,17 @@ use PhpCodeArch\Application\ConfigFile\Exceptions\MultipleConfigFilesException;
 use PhpCodeArch\Calculators\CalculatorService;
 use PhpCodeArch\Calculators\CouplingCalculator;
 use PhpCodeArch\Calculators\FileCalculator;
+use PhpCodeArch\Calculators\HealthScoreCalculator;
+use PhpCodeArch\Calculators\MaintainabilityIndexCalculator;
 use PhpCodeArch\Calculators\Helpers\PackageInstabilityAbstractnessCalculator;
 use PhpCodeArch\Calculators\LimitsAndAveragesCalculator;
 use PhpCodeArch\Calculators\ProjectCalculator;
 use PhpCodeArch\Calculators\VariablesCalculator;
 use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
+use PhpCodeArch\Metrics\Model\Enums\BetterDirection;
+use PhpCodeArch\Metrics\Model\Enums\MetricValueType;
+use PhpCodeArch\Metrics\Model\Enums\MetricVisibility;
 use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
 use PhpCodeArch\Metrics\Model\MetricsContainer;
 use PhpCodeArch\Metrics\Model\MetricType;
@@ -46,9 +51,10 @@ final readonly class Application
      */
     public function run(array $argv): void
     {
-        ini_set('memory_limit', '512M');
-
         $config = $this->createConfig($argv);
+
+        $memoryLimit = $config->get('memoryLimit') ?? '1G';
+        ini_set('memory_limit', $memoryLimit);
         $fileList = $this->createFileList($config);
 
         $output = new CliOutput();
@@ -94,7 +100,7 @@ final readonly class Application
             $config = (new ArgumentParser())->parse($argv);
         } catch (ParamException $e) {
             echo PHP_EOL . "Error: {$e->getMessage()}";
-            exit;
+            exit(1);
         }
 
         $config->set('runningDir', getcwd());
@@ -118,7 +124,7 @@ final readonly class Application
             $config->validate();
         } catch (ConfigException $e) {
             echo PHP_EOL . "Error: {$e->getMessage()}";
-            exit;
+            exit(1);
         }
 
         return $config;
@@ -168,11 +174,13 @@ final readonly class Application
         $packageIACalculator = new PackageInstabilityAbstractnessCalculator($metricsController);
 
         $calculatorService = new CalculatorService([
+            new MaintainabilityIndexCalculator($metricsController),
             new FileCalculator($metricsController),
             new VariablesCalculator($metricsController),
             new CouplingCalculator($metricsController, $packageIACalculator),
             new ProjectCalculator($metricsController),
             new LimitsAndAveragesCalculator($metricsController),
+            new HealthScoreCalculator($metricsController),
         ], $metricsController, $output);
 
         $calculatorService->run();
@@ -218,6 +226,7 @@ final readonly class Application
     private function generateHistory(MetricsController $metricsController, Config $config): void
     {
         $outputDir = $config->get('reportDir') . DIRECTORY_SEPARATOR;
+        $historyFile = $outputDir . 'history.jsonl';
 
         $metricHistory = [
             'date' => (new \DateTimeImmutable())->format('Y-m-d-H-i-s'),
@@ -231,14 +240,25 @@ final readonly class Application
             $metricHistory['data'][$historyData['collectionKey']][$historyData['key']] = $historyData['value'];
         }
 
-        file_put_contents($outputDir . 'history.json', json_encode($metricHistory));
+        // Migrate old history.json → first line of history.jsonl
+        $oldHistoryFile = $outputDir . 'history.json';
+        if (file_exists($oldHistoryFile) && !file_exists($historyFile)) {
+            $oldData = @file_get_contents($oldHistoryFile);
+            if ($oldData !== false) {
+                file_put_contents($historyFile, trim($oldData) . "\n");
+                @unlink($oldHistoryFile);
+            }
+        }
+
+        // Append current run as new line
+        file_put_contents($historyFile, json_encode($metricHistory) . "\n", FILE_APPEND);
     }
 
     private function getHistoryData(MetricsController $metricsController): \Generator
     {
         foreach ($metricsController->getAllCollections() as $metricCollectionKey => $metricCollection) {
             foreach ($this->getMetricValues($metricCollection) as $metricValue) {
-                if ($metricValue->getMetricType()->getVisibility() === MetricType::SHOW_NOWHERE) {
+                if ($metricValue->getMetricType()->getVisibility() === MetricVisibility::ShowNowhere) {
                     continue;
                 }
 
@@ -261,24 +281,49 @@ final readonly class Application
     private function setHistoryDeltas(MetricsController $metricsController, Config $config): false|\DateTimeImmutable
     {
         $outputDir = $config->get('reportDir') . DIRECTORY_SEPARATOR;
-        $historyFile = $outputDir . 'history.json';
 
+        // Support both JSONL (new) and JSON (legacy)
+        $historyFile = $outputDir . 'history.jsonl';
+        $isJsonl = true;
         if (!file_exists($historyFile)) {
-            return false;
+            $historyFile = $outputDir . 'history.json';
+            $isJsonl = false;
+            if (!file_exists($historyFile)) {
+                return false;
+            }
         }
 
         $historyValueTypes = [
-            MetricType::VALUE_INT,
-            //MetricType::VALUE_COUNT,
-            MetricType::VALUE_FLOAT,
-            MetricType::VALUE_PERCENTAGE,
+            MetricValueType::Int,
+            //MetricValueType::Count,
+            MetricValueType::Float,
+            MetricValueType::Percentage,
         ];
 
-        $historyFileData = json_decode(file_get_contents($historyFile));
+        // Read last entry (last line for JSONL, whole file for JSON)
+        if ($isJsonl) {
+            $lastLine = $this->getLastLineOfFile($historyFile);
+            if ($lastLine === null) {
+                return false;
+            }
+            $historyFileData = json_decode($lastLine);
+        } else {
+            $rawData = @file_get_contents($historyFile);
+            if ($rawData === false) {
+                return false;
+            }
+            $historyFileData = json_decode($rawData);
+            unset($rawData);
+        }
+
+        if ($historyFileData === null || !isset($historyFileData->date)) {
+            return false;
+        }
+
         $historyDate = \DateTimeImmutable::createFromFormat('Y-m-d-H-i-s', $historyFileData->date);
         unset($historyFileData);
 
-        foreach ($this->getHistoryDataFromFile($historyFile) as $historyData) {
+        foreach ($this->getHistoryDataFromFile($historyFile, $isJsonl) as $historyData) {
             foreach ($historyData['data'] as $key => $historyValue) {
                 $metricValue = $metricsController->getMetricValueByIdentifierString(
                     $historyData['key'],
@@ -292,7 +337,7 @@ final readonly class Application
                 $metricType = $metricValue->getMetricType();
                 $valueType = $metricType->getValueType();
 
-                if ($metricType->getVisibility() === MetricType::SHOW_NOWHERE || $metricType->getValueType() === MetricType::VALUE_STORAGE) {
+                if ($metricType->getVisibility() === MetricVisibility::ShowNowhere || $metricType->getValueType() === MetricValueType::Storage) {
                     continue;
                 }
 
@@ -325,22 +370,22 @@ final readonly class Application
                 $direction = 'sideways';
                 $isBetter = null;
                 switch (true) {
-                    case $better === MetricType::BETTER_LOW && $delta < 0:
+                    case $better === BetterDirection::Low && $delta < 0:
                         $direction = 'down';
                         $isBetter = true;
                         break;
 
-                    case $better === MetricType::BETTER_LOW && $delta > 0:
+                    case $better === BetterDirection::Low && $delta > 0:
                         $direction = 'up';
                         $isBetter = false;
                         break;
 
-                    case $better === MetricType::BETTER_HIGH && $delta > 0:
+                    case $better === BetterDirection::High && $delta > 0:
                         $direction = 'up';
                         $isBetter = true;
                         break;
 
-                    case $better === MetricType::BETTER_HIGH && $delta < 0:
+                    case $better === BetterDirection::High && $delta < 0:
                         $direction = 'down';
                         $isBetter = false;
                         break;
@@ -357,10 +402,25 @@ final readonly class Application
         return $historyDate;
     }
 
-    private function getHistoryDataFromFile($file): \Generator
+    private function getHistoryDataFromFile(string $file, bool $isJsonl = false): \Generator
     {
-        $jsonData = file_get_contents($file);
-        $history = json_decode($jsonData);
+        if ($isJsonl) {
+            $lastLine = $this->getLastLineOfFile($file);
+            if ($lastLine === null) {
+                return;
+            }
+            $history = json_decode($lastLine);
+        } else {
+            $jsonData = @file_get_contents($file);
+            if ($jsonData === false) {
+                return;
+            }
+            $history = json_decode($jsonData);
+        }
+
+        if ($history === null || !isset($history->data)) {
+            return;
+        }
 
         foreach ($history->data as $key => $historyData) {
             yield [
@@ -368,5 +428,14 @@ final readonly class Application
                 'data' => $historyData,
             ];
         }
+    }
+
+    private function getLastLineOfFile(string $file): ?string
+    {
+        $lines = @file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        if ($lines === false || empty($lines)) {
+            return null;
+        }
+        return end($lines);
     }
 }
