@@ -34,7 +34,7 @@
       </tr>
       </thead>
       <tbody>
-      {% for function in functionProblems %}
+      {% for entityKey, function in functionProblems %}
         {% set folder = function.data.get('functionType').getValue() == 'method' ? 'methods' : 'functions' %}
         {% if function.data.get('functionType').getValue() == 'method' %}
           {% set scope %}
@@ -50,7 +50,7 @@
                 {% if function.data.get('namespace') %}<span class="text-white/40">{{ function.data.get('namespace') }}</span><br>{% endif %}
                 {% if function.data.get('classInfo') %}<span class="text-white/40">{{ function.data.get('classInfo').getValue().name }}</span><br>{% endif %}
                 {% if scope %}<span class="text-white/40">{{ scope }}</span> {% endif %}
-                <a href="{% if isSubdir %}../{% endif %}{{ folder }}/{{ function.data.getIdentifier() }}.html" class="font-semibold inline-block" title="{{ function.data.getName() }}">{% if function.data.get('singleName') %}{{ function.data.get('singleName') }}{% else %}{{ function.data.getName() }}{% endif %}</a>
+                <a href="{{ folder }}/{{ entityKey }}.html" class="font-semibold inline-block" title="{{ function.data.getName() }}">{% if function.data.get('singleName') %}{{ function.data.get('singleName') }}{% else %}{{ function.data.getName() }}{% endif %}</a>
               </div>
               {% if function.data.get('functionType').getValue() == 'method' %}
                 <div class="rounded px-2 py-0.5 bg-emerald-800 mt-0.5">Method</div>

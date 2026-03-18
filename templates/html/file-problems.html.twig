@@ -34,10 +34,10 @@
         </tr>
       </thead>
       <tbody>
-      {% for file in fileProblems %}
+      {% for entityKey, file in fileProblems %}
         <tr class="even:bg-cyan-950/45 odd:bg-cyan-950/85 transition-colors hover:bg-cyan-800">
           <td class="border border-slate-500 text-left px-2 py-0.5 filter-name" data-filter="{{ file.data.get('fileName') }}" data-sort="{{ file.data.get('dirName') }}/{{ file.data.get('fileName') }}">
-            <a href="files/{{ file.getIdentifier }}.html" class="block w-full">
+            <a href="files/{{ entityKey }}.html" class="block w-full">
               <span class="text-white/40">{{ file.data.get('dirName') }}/</span><br>
               <span class="font-semibold inline-block" title="{{ file.data.get('dirName') }}/{{ file.data.get('fileName') }}">{{ file.data.get('fileName') }}</span>
             </a>

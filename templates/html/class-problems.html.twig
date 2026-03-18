@@ -34,17 +34,17 @@
       </tr>
       </thead>
       <tbody>
-      {% for class in classProblems %}
+      {% for entityKey, class in classProblems %}
         <tr class="even:bg-cyan-950/45 odd:bg-cyan-950/85 transition-colors hover:bg-cyan-800">
           <td class="border border-slate-500 text-left px-2 py-0.5 filter-name" data-filter="{{ class.data.get('singleName') }}" data-sort="{{ class.data.get('singleName') }}">
             <div class="flex gap-4 justify-between items-start">
               <div>
                 {% if class.data.get('anonymous').getValue() %}
-                  <span class="text-white/40">{{ class.getPath() }}</span><br>
-                  <a href="{% if isSubdir %}../{% endif %}classes/{{ class.getIdentifier() }}.html" class="font-semibold inline-block" title="{{ class.data.getName() }}">{{ class.data.getName() }}</a>
+                  <span class="text-white/40">{{ class.data.getPath() }}</span><br>
+                  <a href="classes/{{ entityKey }}.html" class="font-semibold inline-block" title="{{ class.data.getName() }}">{{ class.data.getName() }}</a>
                 {% else %}
                   {% if class.data.get('namespace') %}<span class="text-white/40">{{ class.data.get('namespace') }}</span><br>{% endif %}
-                  <a href="{% if isSubdir %}../{% endif %}classes/{{ class.getIdentifier() }}.html" class="font-semibold inline-block" title="{{ class.data.getName() }}">{{ class.data.get('singleName') }}</a>
+                  <a href="classes/{{ entityKey }}.html" class="font-semibold inline-block" title="{{ class.data.getName() }}">{{ class.data.get('singleName') }}</a>
                 {% endif %}
               </div>
               {% if class.data.get('interface').getValue() %}

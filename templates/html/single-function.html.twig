@@ -24,7 +24,7 @@
 {% set functionName = isMethod ? function.getName() : function.get('singleName') %}
 {% set divider = isMethod ? ' ' : '/' %}
 {% set breadCrumbMiddle = isMethod ? function.get('classInfo').getValue()['singleName'] : 'Functions' %}
-{% set breadCrumbLink = isMethod ? 'classes/' ~ function.detailData[0].rawValue.id : 'functions-list' %}
+{% set breadCrumbLink = isMethod ? 'classes/' ~ function.get('classInfo').getValue()['id'] : 'functions-list' %}
 
 <div class="mt-6 lg:w-5/6">
   <div class="mb-7 text-sm">
