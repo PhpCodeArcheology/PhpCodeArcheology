@@ -10,6 +10,7 @@ use PhpCodeArch\Application\ConfigFile\Exceptions\MultipleConfigFilesException;
 use PhpCodeArch\Calculators\CalculatorService;
 use PhpCodeArch\Calculators\CouplingCalculator;
 use PhpCodeArch\Calculators\DependencyCycleCalculator;
+use PhpCodeArch\Calculators\SolidViolationCalculator;
 use PhpCodeArch\Calculators\FileCalculator;
 use PhpCodeArch\Calculators\HealthScoreCalculator;
 use PhpCodeArch\Calculators\InheritanceDepthCalculator;
@@ -33,6 +34,8 @@ use PhpCodeArch\Predictions\DeadCodePrediction;
 use PhpCodeArch\Predictions\DeepInheritancePrediction;
 use PhpCodeArch\Predictions\DependencyCyclePrediction;
 use PhpCodeArch\Predictions\LowTypeCoveragePrediction;
+use PhpCodeArch\Predictions\SecuritySmellPrediction;
+use PhpCodeArch\Predictions\SolidViolationPrediction;
 use PhpCodeArch\Predictions\TooManyParametersPrediction;
 use PhpCodeArch\Predictions\TooComplexPrediction;
 use PhpCodeArch\Predictions\TooDependentPrediction;
@@ -73,6 +76,7 @@ final readonly class Application
 
         $problems = $this->runPredictors($metricsController, $output);
         $this->setProblems($metricsController, $problems);
+        $this->calculateTechnicalDebt($metricsController);
 
         $twigLoader = new FilesystemLoader();
         $twig = new Environment($twigLoader, options: [
@@ -187,6 +191,7 @@ final readonly class Application
             new CouplingCalculator($metricsController, $packageIACalculator),
             new InheritanceDepthCalculator($metricsController),
             new DependencyCycleCalculator($metricsController),
+            new SolidViolationCalculator($metricsController),
             new ProjectCalculator($metricsController),
             new LimitsAndAveragesCalculator($metricsController),
             new HealthScoreCalculator($metricsController),
@@ -213,6 +218,8 @@ final readonly class Application
             new DependencyCyclePrediction(),
             new TooManyParametersPrediction(),
             new DeadCodePrediction(),
+            new SecuritySmellPrediction(),
+            new SolidViolationPrediction(),
         ], $metricsController, $output);
         $predictions->predict();
 
@@ -234,6 +241,54 @@ final readonly class Application
                 'overallWarningCount' => $problems[PredictionInterface::WARNING],
                 'overallErrorCount' => $problems[PredictionInterface::ERROR],
             ]
+        );
+    }
+
+    private function calculateTechnicalDebt(MetricsController $metricsController): void
+    {
+        $totalDebt = 0;
+        $totalLloc = 0;
+
+        foreach ($metricsController->getAllCollections() as $metric) {
+            if (!$metric instanceof \PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection
+                && !$metric instanceof \PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection) {
+                continue;
+            }
+
+            $lloc = $metric->get('lloc')?->getValue() ?? 0;
+            $debtPoints = 0;
+
+            // Sum weighted problem scores from all metric values
+            foreach ($metric->getAll() as $metricValue) {
+                foreach ($metricValue->getProblems() as $problem) {
+                    $debtPoints += match ($problem->getProblemLevel()) {
+                        PredictionInterface::ERROR => 3,
+                        PredictionInterface::WARNING => 1,
+                        PredictionInterface::INFO => 0.5,
+                        default => 0,
+                    };
+                }
+            }
+
+            $debtPerHundredLines = $lloc > 0 ? round($debtPoints / $lloc * 100, 2) : 0;
+
+            $metricsController->setMetricValueByIdentifierString(
+                (string) $metric->getIdentifier(),
+                'technicalDebtScore',
+                $debtPerHundredLines
+            );
+
+            $totalDebt += $debtPoints;
+            if ($metric instanceof \PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection) {
+                $totalLloc += $lloc;
+            }
+        }
+
+        $overallDebt = $totalLloc > 0 ? round($totalDebt / $totalLloc * 100, 2) : 0;
+        $metricsController->setMetricValues(
+            MetricCollectionTypeEnum::ProjectCollection,
+            null,
+            ['overallTechnicalDebtScore' => $overallDebt]
         );
     }
 

@@ -672,6 +672,20 @@ return [
     ['key' => 'overallClassMetricsCollectionAvgLcom', 'type' => 'storage',],
     ['key' => 'overallClassMetricsCollectionAvgInstability', 'type' => 'storage',],
 
+    // Technical debt
+    [
+        'key' => 'overallTechnicalDebtScore',
+        'name' => 'Technical debt score',
+        'shortName' => 'Debt',
+        'description' => 'Overall weighted problem score per 100 logical lines of code.',
+        'valueType' => \PhpCodeArch\Metrics\Model\Enums\MetricValueType::Float,
+        'better' => \PhpCodeArch\Metrics\Model\Enums\BetterDirection::Low,
+        'visibility' => \PhpCodeArch\Metrics\Model\Enums\MetricVisibility::ShowEverywhere,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
+        ],
+    ],
+
     // Dependency cycles
     [
         'key' => 'overallDependencyCycles',

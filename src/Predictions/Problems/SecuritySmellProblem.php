@@ -1,0 +1,18 @@
+<?php
+
+declare(strict_types=1);
+
+namespace PhpCodeArch\Predictions\Problems;
+
+readonly class SecuritySmellProblem extends AbstractProblem
+{
+    static function ofProblemLevelAndMessage(int $problemLevel, string $message): SecuritySmellProblem
+    {
+        return new SecuritySmellProblem($problemLevel, $message);
+    }
+
+    public function getName(): string
+    {
+        return 'Security smell';
+    }
+}
