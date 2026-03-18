@@ -6,6 +6,8 @@ namespace PhpCodeArch\Application;
 
 use PhpCodeArch\Analysis\CognitiveComplexityVisitor;
 use PhpCodeArch\Analysis\CyclomaticComplexityVisitor;
+use PhpCodeArch\Analysis\DeadCodeVisitor;
+use PhpCodeArch\Analysis\DocumentationCoverageVisitor;
 use PhpCodeArch\Analysis\TypeCoverageVisitor;
 use PhpCodeArch\Analysis\DependencyVisitor;
 use PhpCodeArch\Analysis\GlobalsVisitor;
@@ -67,6 +69,8 @@ readonly class Analyzer
             DependencyVisitor::class,
             HalsteadMetricsVisitor::class,
             LcomVisitor::class,
+            DocumentationCoverageVisitor::class,
+            DeadCodeVisitor::class,
             PackageVisitor::class,
         ];
     }

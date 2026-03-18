@@ -29,9 +29,11 @@ use PhpCodeArch\Metrics\Model\MetricType;
 use PhpCodeArch\Predictions\GodClassPrediction;
 use PhpCodeArch\Predictions\PredictionInterface;
 use PhpCodeArch\Predictions\PredictionService;
+use PhpCodeArch\Predictions\DeadCodePrediction;
 use PhpCodeArch\Predictions\DeepInheritancePrediction;
 use PhpCodeArch\Predictions\DependencyCyclePrediction;
 use PhpCodeArch\Predictions\LowTypeCoveragePrediction;
+use PhpCodeArch\Predictions\TooManyParametersPrediction;
 use PhpCodeArch\Predictions\TooComplexPrediction;
 use PhpCodeArch\Predictions\TooDependentPrediction;
 use PhpCodeArch\Predictions\TooLongPrediction;
@@ -209,6 +211,8 @@ final readonly class Application
             new LowTypeCoveragePrediction(),
             new DeepInheritancePrediction(),
             new DependencyCyclePrediction(),
+            new TooManyParametersPrediction(),
+            new DeadCodePrediction(),
         ], $metricsController, $output);
         $predictions->predict();
 

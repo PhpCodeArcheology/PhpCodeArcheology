@@ -338,4 +338,28 @@ return [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
         ],
     ],
+    [
+        'key' => 'unusedPrivateMethodCount',
+        'name' => 'Unused private methods',
+        'shortName' => 'Dead Code',
+        'description' => 'Number of private methods that are never called within the class.',
+        'valueType' => \PhpCodeArch\Metrics\Model\Enums\MetricValueType::Int,
+        'better' => \PhpCodeArch\Metrics\Model\Enums\BetterDirection::Low,
+        'visibility' => \PhpCodeArch\Metrics\Model\Enums\MetricVisibility::ShowEverywhere,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
+        ],
+    ],
+    [
+        'key' => 'unusedPrivateMethods',
+        'name' => 'Unused private method names',
+        'shortName' => '',
+        'description' => 'Names of private methods that are never called within the class.',
+        'valueType' => \PhpCodeArch\Metrics\Model\Enums\MetricValueType::Array,
+        'better' => \PhpCodeArch\Metrics\Model\Enums\BetterDirection::Irrelevant,
+        'visibility' => \PhpCodeArch\Metrics\Model\Enums\MetricVisibility::ShowDetails,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
+        ],
+    ],
 ];

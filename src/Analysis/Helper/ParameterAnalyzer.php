@@ -48,7 +48,16 @@ class ParameterAnalyzer
             ];
         }
 
+        $totalParams = 0;
+        $optionalParams = 0;
+        $nullableParams = 0;
+
         foreach ($node->getParams() as $parameter) {
+            // Skip promoted properties — counted as properties, not parameters
+            if ($parameter->flags > 0 && $node instanceof Node\Stmt\ClassMethod) {
+                continue;
+            }
+
             $type = null;
 
             if ($parameter->type !== null) {
@@ -59,6 +68,14 @@ class ParameterAnalyzer
 
             if ($type === null && isset($paramDetails[$name])) {
                 $type = $paramDetails[$name]['type'];
+            }
+
+            $totalParams++;
+            if ($parameter->default !== null) {
+                $optionalParams++;
+            }
+            if ($parameter->type instanceof Node\NullableType) {
+                $nullableParams++;
             }
 
             $parameterCollection->set([
@@ -75,6 +92,16 @@ class ParameterAnalyzer
             $identifierData,
             $parameterCollection,
             'parameters'
+        );
+
+        $this->metricsController->setMetricValues(
+            $metricsType,
+            $identifierData,
+            [
+                'parameterCount' => $totalParams,
+                'optionalParameterCount' => $optionalParams,
+                'nullableParameterCount' => $nullableParams,
+            ]
         );
     }
 
