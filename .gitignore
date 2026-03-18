@@ -2,6 +2,8 @@
 /report/
 /tmp/
 /vendor/
+/tasks/
 .DS_Store
 debug.txt
 php-codearch-config.yaml
+.claude/settings.local.json
