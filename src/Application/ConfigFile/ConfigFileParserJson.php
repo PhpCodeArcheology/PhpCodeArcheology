@@ -40,7 +40,8 @@ class ConfigFileParserJson implements ConfigFileParserInterface
             $config->set('packageSize', $data['packageSize']);
         }
 
-        if (isset($data['reportType'])) {
+        // CLI flags take precedence over config file
+        if (isset($data['reportType']) && !$config->has('reportType')) {
             $config->set('reportType', $data['reportType']);
         }
 
@@ -58,6 +59,10 @@ class ConfigFileParserJson implements ConfigFileParserInterface
 
         if (isset($data['git'])) {
             $config->set('git', $data['git']);
+        }
+
+        if (isset($data['qualityGate'])) {
+            $config->set('qualityGate', $data['qualityGate']);
         }
     }
 }

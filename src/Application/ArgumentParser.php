@@ -36,6 +36,10 @@ final class ArgumentParser
                         $config->set('reportDir', realpath($value));
                         break;
 
+                    case 'fail-on':
+                        $config->set('failOn', $value);
+                        break;
+
                     default:
                         throw new ParamException('CLI parameter "' . $param . '" does not exist.');
                 }
@@ -50,9 +54,15 @@ final class ArgumentParser
                         echo PHP_EOL . "PhpCodeArcheology v" . Application::VERSION;
                         exit;
 
+                    case 'generate-claude-md':
+                        $config->set('generateClaudeMd', true);
+                        break;
+
                     default:
                         throw new ParamException('CLI parameter "' . $param . '" does not exist.');
                 }
+
+                unset($argv[$key]);
             }
         }
 

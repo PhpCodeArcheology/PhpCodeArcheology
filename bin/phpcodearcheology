@@ -20,4 +20,5 @@ if (
   );
 };
 
-(new Application())->run($argv);
+$exitCode = (new Application())->run($argv);
+exit($exitCode);

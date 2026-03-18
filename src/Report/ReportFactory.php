@@ -31,6 +31,9 @@ class ReportFactory
         return match ($type) {
             'markdown' => new MarkdownReport($config, $reportDataFactory, $historyDate, $twigLoader, $twig, $output),
             'html' => new HtmlReport($config, $reportDataFactory, $historyDate, $twigLoader, $twig, $output),
+            'json' => new JsonReport($config, $reportDataFactory, $historyDate, $twigLoader, $twig, $output),
+            'sarif' => new SarifReport($config, $reportDataFactory, $historyDate, $twigLoader, $twig, $output),
+            'ai-summary' => new AiSummaryReport($config, $reportDataFactory, $historyDate, $twigLoader, $twig, $output),
             default => throw new ReportTypeNotSupported("Report type $type not supported."),
         };
     }
