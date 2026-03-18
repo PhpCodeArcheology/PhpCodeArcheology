@@ -32,7 +32,7 @@ class HtmlReport implements ReportInterface
     {
         $this->outputDir = $config->get('reportDir') . DIRECTORY_SEPARATOR;
 
-        $this->templateDir = realpath(__DIR__ . '/../../templates/html') . DIRECTORY_SEPARATOR;
+        $this->templateDir = dirname(__DIR__, 2) . '/templates/html' . DIRECTORY_SEPARATOR;
         $this->assetDir = $this->templateDir . 'assets';
 
         if (! is_dir($this->outputDir)) {
@@ -278,7 +278,7 @@ class HtmlReport implements ReportInterface
 
         // Build glossary from metric data files
         $glossary = [];
-        $metricFiles = glob(realpath(__DIR__ . '/../../data/metrics') . '/*.php');
+        $metricFiles = glob(dirname(__DIR__, 2) . '/data/metrics/*.php');
         foreach ($metricFiles as $file) {
             $metrics = require $file;
             $category = basename($file, '.php');

@@ -17,7 +17,7 @@ class MarkdownReport extends HtmlReport
     {
         parent::__construct($config, $dataProviderFactory, $historyDate, $twigLoader, $twig, $output);
 
-        $this->templateDir = realpath(__DIR__ . '/../../templates/markdown') . DIRECTORY_SEPARATOR;
+        $this->templateDir = dirname(__DIR__, 2) . '/templates/markdown' . DIRECTORY_SEPARATOR;
         $this->twigLoader->setPaths($this->templateDir);
 
         // Register markdown parts directory (fallback for templates using @Parts)

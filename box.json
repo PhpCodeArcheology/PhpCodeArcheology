@@ -1,0 +1,28 @@
+{
+    "main": "bin/phpcodearcheology",
+    "output": "build/phpcodearcheology.phar",
+    "directories": [
+        "src",
+        "data",
+        "templates"
+    ],
+    "finder": [
+        {
+            "in": ["vendor"],
+            "name": "*.php",
+            "exclude": [
+                "tests",
+                "test",
+                "Tests",
+                "Test",
+                "docs",
+                "doc"
+            ]
+        }
+    ],
+    "compression": "GZ",
+    "compactors": [
+        "KevinGH\\Box\\Compactor\\Php"
+    ],
+    "chmod": "0755"
+}
