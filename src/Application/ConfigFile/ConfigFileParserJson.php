@@ -64,5 +64,9 @@ class ConfigFileParserJson implements ConfigFileParserInterface
         if (isset($data['qualityGate'])) {
             $config->set('qualityGate', $data['qualityGate']);
         }
+
+        if (isset($data['thresholds'])) {
+            $config->set('thresholds', $data['thresholds']);
+        }
     }
 }

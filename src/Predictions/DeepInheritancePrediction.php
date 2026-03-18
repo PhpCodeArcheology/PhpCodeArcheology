@@ -4,12 +4,20 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Predictions;
 
+use PhpCodeArch\Application\Config;
 use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Predictions\Problems\DeepInheritanceProblem;
 
 class DeepInheritancePrediction implements PredictionInterface
 {
+    use PredictionTrait;
+
+    public function __construct(?Config $config = null)
+    {
+        $this->config = $config;
+    }
+
     public function predict(MetricsController $metricsController): int
     {
         $problemCount = 0;
@@ -21,10 +29,10 @@ class DeepInheritancePrediction implements PredictionInterface
 
             $dit = $metric->get('dit')?->getValue() ?? 0;
 
-            if ($dit >= 4) {
+            if ($dit >= $this->threshold('deepInheritance.warning', 4)) {
                 ++$problemCount;
 
-                $level = $dit >= 6 ? PredictionInterface::ERROR : PredictionInterface::WARNING;
+                $level = $dit >= $this->threshold('deepInheritance.error', 6) ? PredictionInterface::ERROR : PredictionInterface::WARNING;
 
                 $problem = DeepInheritanceProblem::ofProblemLevelAndMessage(
                     problemLevel: $level,

@@ -236,22 +236,22 @@ final readonly class Application
      * @param CliOutput $output
      * @return array
      */
-    private function runPredictors(MetricsController $metricsController, CliOutput $output): array
+    private function runPredictors(MetricsController $metricsController, CliOutput $output, ?Config $config = null): array
     {
         $predictions = new PredictionService([
-            new TooLongPrediction(),
+            new TooLongPrediction($config),
             new GodClassPrediction(),
-            new TooComplexPrediction(),
-            new TooDependentPrediction(),
-            new TooMuchHtmlPrediction(),
-            new LowTypeCoveragePrediction(),
-            new DeepInheritancePrediction(),
+            new TooComplexPrediction($config),
+            new TooDependentPrediction($config),
+            new TooMuchHtmlPrediction($config),
+            new LowTypeCoveragePrediction($config),
+            new DeepInheritancePrediction($config),
             new DependencyCyclePrediction(),
-            new TooManyParametersPrediction(),
+            new TooManyParametersPrediction($config),
             new DeadCodePrediction(),
             new SecuritySmellPrediction(),
             new SolidViolationPrediction(),
-            new HotspotPrediction(),
+            new HotspotPrediction($config),
         ], $metricsController, $output);
         $predictions->predict();
 
@@ -586,7 +586,7 @@ final readonly class Application
 
         $this->runCalculators($metricsController, $output);
 
-        $problems = $this->runPredictors($metricsController, $output);
+        $problems = $this->runPredictors($metricsController, $output, $config);
         $this->setProblems($metricsController, $problems);
         $this->calculateTechnicalDebt($metricsController);
 

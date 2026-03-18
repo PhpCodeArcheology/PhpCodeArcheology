@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Predictions;
 
+use PhpCodeArch\Application\Config;
 use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
@@ -23,6 +24,11 @@ use PhpCodeArch\Predictions\Problems\TooComplexProblem;
 class TooComplexPrediction implements PredictionInterface
 {
     use PredictionTrait;
+
+    public function __construct(?Config $config = null)
+    {
+        $this->config = $config;
+    }
 
     public function predict(MetricsController $metricsController): int
     {
@@ -64,7 +70,7 @@ class TooComplexPrediction implements PredictionInterface
                         $methodCogC += $cogCValue;
 
                         // Flag methods with high cognitive complexity
-                        if ($cogCValue > 15) {
+                        if ($cogCValue > $this->threshold('tooComplex.cognitiveComplexity', 15)) {
                             ++$problemCount;
                             $problem = TooComplexProblem::ofProblemLevelAndMessage(
                                 problemLevel: $this->getLevel(),
@@ -79,7 +85,7 @@ class TooComplexPrediction implements PredictionInterface
                     }
                     $avgMethodCogC = count($methodCollection) > 0 ? $methodCogC / count($methodCollection) : 0;
 
-                    $classTooComplex = $avgMethodCc > 10;
+                    $classTooComplex = $avgMethodCc > $this->threshold('tooComplex.avgMethodCc', 10);
 
                     if ($classTooComplex) {
                         ++ $problemCount;
@@ -105,7 +111,7 @@ class TooComplexPrediction implements PredictionInterface
                         ],
                     );
 
-                    if ($avgMethodCc > 10) {
+                    if ($avgMethodCc > $this->threshold('tooComplex.avgMethodCc', 10)) {
                         $problem = TooComplexProblem::ofProblemLevelAndMessage(
                             problemLevel: $this->getLevel(),
                             message: 'Avg. method complexity is too high.'
@@ -200,7 +206,9 @@ class TooComplexPrediction implements PredictionInterface
             'cc',
             $values['cc'],
             function($value) use ($values) {
-                $maxComplexity = $values['lloc'] > 20 ? 20 : 10;
+                $maxComplexity = $values['lloc'] > 20
+                    ? $this->threshold('tooComplex.ccLargeCode', 20)
+                    : $this->threshold('tooComplex.cc', 10);
                 return $value > $maxComplexity;
             },
             $metricsController,
@@ -214,7 +222,7 @@ class TooComplexPrediction implements PredictionInterface
             'difficulty',
             $values['difficulty'],
             function($value) {
-                return $value > 20;
+                return $value > $this->threshold('tooComplex.difficulty', 20);
             },
             $metricsController,
             $identifierString,

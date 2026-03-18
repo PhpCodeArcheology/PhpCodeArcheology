@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Predictions;
 
+use PhpCodeArch\Application\Config;
 use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
 use PhpCodeArch\Metrics\Model\MethodMetrics\MethodMetricsCollection;
@@ -11,6 +12,13 @@ use PhpCodeArch\Predictions\Problems\TooManyParametersProblem;
 
 class TooManyParametersPrediction implements PredictionInterface
 {
+    use PredictionTrait;
+
+    public function __construct(?Config $config = null)
+    {
+        $this->config = $config;
+    }
+
     public function predict(MetricsController $metricsController): int
     {
         $problemCount = 0;
@@ -22,10 +30,10 @@ class TooManyParametersPrediction implements PredictionInterface
 
             $paramCount = $metric->get('parameterCount')?->getValue() ?? 0;
 
-            if ($paramCount > 4) {
+            if ($paramCount > $this->threshold('tooManyParameters.warning', 4)) {
                 ++$problemCount;
 
-                $level = $paramCount > 7 ? PredictionInterface::ERROR : PredictionInterface::WARNING;
+                $level = $paramCount > $this->threshold('tooManyParameters.error', 7) ? PredictionInterface::ERROR : PredictionInterface::WARNING;
 
                 $problem = TooManyParametersProblem::ofProblemLevelAndMessage(
                     problemLevel: $level,

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Predictions;
 
+use PhpCodeArch\Application\Config;
 use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
@@ -14,6 +15,13 @@ use PhpCodeArch\Predictions\Problems\TooLongProblem;
 
 class TooLongPrediction implements PredictionInterface
 {
+    use PredictionTrait;
+
+    public function __construct(?Config $config = null)
+    {
+        $this->config = $config;
+    }
+
     public function predict(MetricsController $metricsController): int
     {
         $problemCount = 0;
@@ -26,9 +34,9 @@ class TooLongPrediction implements PredictionInterface
             }
 
             $maxLloc = match(true) {
-                $metric instanceof FileMetricsCollection => 400,
-                $metric instanceof ClassMetricsCollection => 300,
-                $metric instanceof FunctionMetricsCollection => 40,
+                $metric instanceof FileMetricsCollection => $this->threshold('tooLong.file', 400),
+                $metric instanceof ClassMetricsCollection => $this->threshold('tooLong.class', 300),
+                $metric instanceof FunctionMetricsCollection => $this->threshold('tooLong.function', 40),
             };
 
             $lloc = $metric->get('lloc')?->getValue() ?? 0;
@@ -70,7 +78,7 @@ class TooLongPrediction implements PredictionInterface
                     'lloc'
                 );
 
-                $isTooLong = $lloc->getValue() > 30;
+                $isTooLong = $lloc->getValue() > $this->threshold('tooLong.method', 30);
 
                 $metricsController->setMetricValueByIdentifierString(
                     $methodIdString,

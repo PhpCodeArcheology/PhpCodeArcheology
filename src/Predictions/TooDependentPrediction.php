@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Predictions;
 
+use PhpCodeArch\Application\Config;
 use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
@@ -11,6 +12,12 @@ use PhpCodeArch\Predictions\Problems\TooDependentProblem;
 
 class TooDependentPrediction implements PredictionInterface
 {
+    use PredictionTrait;
+
+    public function __construct(?Config $config = null)
+    {
+        $this->config = $config;
+    }
 
     public function predict(MetricsController $metricsController): int
     {
@@ -20,7 +27,9 @@ class TooDependentPrediction implements PredictionInterface
             switch (true) {
                 case $metric instanceof ClassMetricsCollection:
                 case $metric instanceof FunctionMetricsCollection:
-                    $maxDependency = $metric instanceof FunctionMetricsCollection ? 10 : 20;
+                    $maxDependency = $metric instanceof FunctionMetricsCollection
+                        ? $this->threshold('tooDependent.function', 10)
+                        : $this->threshold('tooDependent.class', 20);
 
                     $tooDependent = ($metric->get('usesCount')?->getValue() ?? 0) > $maxDependency;
 

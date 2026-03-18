@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Predictions;
 
+use PhpCodeArch\Application\Config;
 use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
@@ -11,6 +12,12 @@ use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
 
 class TooMuchHtmlPrediction implements PredictionInterface
 {
+    use PredictionTrait;
+
+    public function __construct(?Config $config = null)
+    {
+        $this->config = $config;
+    }
 
     public function predict(MetricsController $metricsController): int
     {
@@ -21,8 +28,12 @@ class TooMuchHtmlPrediction implements PredictionInterface
                 case $metric instanceof FileMetricsCollection:
                 case $metric instanceof ClassMetricsCollection:
                 case $metric instanceof FunctionMetricsCollection:
-                    $maxPercentage = $metric instanceof FileMetricsCollection ? 25 : 10;
-                    $maxOutput = $metric instanceof FileMetricsCollection ? 10 : 4;
+                    $maxPercentage = $metric instanceof FileMetricsCollection
+                        ? $this->threshold('tooMuchHtml.filePercent', 25)
+                        : $this->threshold('tooMuchHtml.classPercent', 10);
+                    $maxOutput = $metric instanceof FileMetricsCollection
+                        ? $this->threshold('tooMuchHtml.fileOutput', 10)
+                        : $this->threshold('tooMuchHtml.classOutput', 4);
 
                     $lloc = $metric->get('lloc')?->getValue() ?? 0;
                     $htmlLoc = $metric->get('htmlLoc')?->getValue() ?? 0;
