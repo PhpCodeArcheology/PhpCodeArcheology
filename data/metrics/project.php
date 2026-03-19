@@ -764,4 +764,42 @@ return [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
         ],
     ],
+
+    // Refactoring Priority
+    [
+        'key' => 'overallAvgRefactoringPriority',
+        'name' => 'Avg. refactoring priority',
+        'shortName' => 'Avg.Refactor',
+        'description' => 'Average refactoring priority across all concrete/abstract classes. Lower is better.',
+        'valueType' => \PhpCodeArch\Metrics\Model\Enums\MetricValueType::Float,
+        'better' => \PhpCodeArch\Metrics\Model\Enums\BetterDirection::Low,
+        'visibility' => \PhpCodeArch\Metrics\Model\Enums\MetricVisibility::ShowEverywhere,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
+        ],
+    ],
+    [
+        'key' => 'overallMaxRefactoringPriority',
+        'name' => 'Max refactoring priority',
+        'shortName' => 'Max.Refactor',
+        'description' => 'Highest refactoring priority score found in any class.',
+        'valueType' => \PhpCodeArch\Metrics\Model\Enums\MetricValueType::Float,
+        'better' => \PhpCodeArch\Metrics\Model\Enums\BetterDirection::Low,
+        'visibility' => \PhpCodeArch\Metrics\Model\Enums\MetricVisibility::ShowEverywhere,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
+        ],
+    ],
+    [
+        'key' => 'overallClassesNeedingRefactoring',
+        'name' => 'Classes needing refactoring',
+        'shortName' => 'Need Refactor',
+        'description' => 'Number of classes with refactoring priority score above 0.',
+        'valueType' => \PhpCodeArch\Metrics\Model\Enums\MetricValueType::Int,
+        'better' => \PhpCodeArch\Metrics\Model\Enums\BetterDirection::Low,
+        'visibility' => \PhpCodeArch\Metrics\Model\Enums\MetricVisibility::ShowEverywhere,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
+        ],
+    ],
 ];

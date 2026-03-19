@@ -446,4 +446,31 @@ return [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
         ],
     ],
+
+    // Refactoring Priority
+    [
+        'key' => 'refactoringPriority',
+        'name' => 'Refactoring Priority',
+        'shortName' => 'Refactor',
+        'description' => 'Prioritization score (0-100) combining problem severity, complexity, cohesion, structural issues and impact factors like coupling and git churn. Higher means "refactor this sooner".',
+        'valueType' => \PhpCodeArch\Metrics\Model\Enums\MetricValueType::Float,
+        'better' => \PhpCodeArch\Metrics\Model\Enums\BetterDirection::Low,
+        'visibility' => \PhpCodeArch\Metrics\Model\Enums\MetricVisibility::ShowEverywhere,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
+        ],
+    ],
+    [
+        'key' => 'refactoringPriorityRecommendation',
+        'name' => 'Refactoring recommendation',
+        'shortName' => '',
+        'description' => 'Contextual refactoring recommendation based on the dominant quality drivers.',
+        'valueType' => \PhpCodeArch\Metrics\Model\Enums\MetricValueType::String,
+        'better' => \PhpCodeArch\Metrics\Model\Enums\BetterDirection::Irrelevant,
+        'visibility' => \PhpCodeArch\Metrics\Model\Enums\MetricVisibility::ShowDetails,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
+        ],
+    ],
+    ['key' => 'refactoringPriorityDrivers', 'type' => 'storage'],
 ];

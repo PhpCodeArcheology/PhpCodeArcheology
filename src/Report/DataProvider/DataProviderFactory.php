@@ -88,6 +88,11 @@ class DataProviderFactory
         return new GitDataProvider($this->metricsController);
     }
 
+    public function getRefactoringPriorityDataProvider(): RefactoringPriorityDataProvider
+    {
+        return new RefactoringPriorityDataProvider($this->metricsController);
+    }
+
     public function getHistoryDataProvider(string $historyFile): HistoryDataProvider
     {
         $provider = new HistoryDataProvider($this->metricsController);

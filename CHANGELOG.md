@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-03-19
+
+### Added
+- **Refactoring Roadmap.** New per-class Refactoring Priority Score (0-100) combining problem severity, complexity, cohesion, structural issues, and impact factors (coupling, git churn, author count). Classes are ranked by urgency with contextual recommendations explaining *why* and *how* to refactor. Includes:
+  - New report page `refactoring-roadmap.html` with summary cards, score distribution chart, and ranked table with filter
+  - Dashboard widget showing top 5 refactoring priorities
+  - AI Summary section with top 10 priorities and recommendations
+  - Colored driver tags (high complexity, low cohesion, dependency cycle, SOLID violations, etc.)
+  - Zero-floor guarantee: classes with no problems score 0. Interfaces, traits, and enums are skipped.
+  - New project metrics: Avg/Max Refactoring Priority, Classes Needing Refactoring
+
 ## [1.4.1] - 2026-03-19
 
 ### Fixed

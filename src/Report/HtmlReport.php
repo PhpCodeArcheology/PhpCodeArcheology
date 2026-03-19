@@ -74,6 +74,7 @@ class HtmlReport implements ReportInterface
             [$this, 'generatePackagesPage'],
             [$this, 'generateFunctionPage'],
             [$this, 'generateProblemsPage'],
+            [$this, 'generateRefactoringRoadmapPage'],
             [$this, 'generateGitPage'],
             [$this, 'generateGlossaryPage'],
         ];
@@ -125,6 +126,10 @@ class HtmlReport implements ReportInterface
         $data['fileProblems'] = $problemData['fileProblems'] ?? [];
         $data['classProblems'] = $problemData['classProblems'] ?? [];
         $data['functionProblems'] = $problemData['functionProblems'] ?? [];
+
+        // Add refactoring priorities for dashboard
+        $refactoringData = $this->dataProviderFactory->getRefactoringPriorityDataProvider()->getTemplateData();
+        $data['topRefactoringPriorities'] = array_slice($refactoringData['refactoringPriorities'] ?? [], 0, 5);
 
         // Add trend data from history
         $historyFile = $this->config->get('reportDir') . DIRECTORY_SEPARATOR . 'history.jsonl';
@@ -262,6 +267,14 @@ class HtmlReport implements ReportInterface
 
         $data['currentPage'] = 'function-problems.html';
         $this->renderTemplate('function-problems.html.twig', $data, 'function-problems.html');
+    }
+
+    protected function generateRefactoringRoadmapPage(): void
+    {
+        $data = $this->dataProviderFactory->getRefactoringPriorityDataProvider()->getTemplateData();
+        $data['pageTitle'] = 'Refactoring Roadmap';
+        $data['currentPage'] = 'refactoring-roadmap.html';
+        $this->renderTemplate('refactoring-roadmap.html.twig', $data, 'refactoring-roadmap.html');
     }
 
     protected function generateGitPage(): void

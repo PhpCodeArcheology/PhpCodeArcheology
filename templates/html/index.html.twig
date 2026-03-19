@@ -290,6 +290,37 @@
     </div>
   </div>
 
+  {# --- Refactoring Priorities --- #}
+  {% if topRefactoringPriorities|length > 0 %}
+  <div class="dash-panel" style="margin-bottom: 1.5rem;">
+    <div class="dash-panel-label">Top Refactoring Priorities</div>
+    <div style="overflow-y: auto;">
+      {% for entry in topRefactoringPriorities %}
+        <div class="problem-row">
+          <span class="inline-block px-2 py-0.5 rounded text-xs font-bold min-w-[2.5rem] text-center
+            {% if entry.score >= 75 %}bg-red-900/50 text-red-300
+            {% elseif entry.score >= 50 %}bg-orange-900/50 text-orange-300
+            {% elseif entry.score >= 25 %}bg-yellow-900/50 text-yellow-300
+            {% else %}bg-cyan-900/50 text-cyan-300{% endif %}">
+            {{ entry.score|number_format(1) }}
+          </span>
+          <span style="flex: 1; color: rgba(255,255,255,0.8);">
+            <a href="classes/{{ entry.id }}.html" style="color: rgb(6 182 212); text-decoration: none;">
+              {{ entry.name }}
+            </a>
+          </span>
+          <span style="color: rgba(255,255,255,0.4); font-size: 0.7rem; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+            {% for driver in entry.drivers|slice(0, 2) %}{{ driver }}{% if not loop.last %}, {% endif %}{% endfor %}
+          </span>
+        </div>
+      {% endfor %}
+    </div>
+    <div style="margin-top: 0.75rem;">
+      <a href="refactoring-roadmap.html" style="color: rgb(6 182 212); font-size: 0.8rem; text-decoration: none;">View full roadmap &rarr;</a>
+    </div>
+  </div>
+  {% endif %}
+
   {# --- All Metrics Grid --- #}
   <div class="dash-panel" style="margin-bottom: 1.5rem;">
     <div class="dash-panel-label">All Project Metrics</div>

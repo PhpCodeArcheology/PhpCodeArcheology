@@ -19,6 +19,7 @@ use PhpCodeArch\Calculators\PackageCohesionCalculator;
 use PhpCodeArch\Calculators\SolidViolationCalculator;
 use PhpCodeArch\Calculators\FileCalculator;
 use PhpCodeArch\Calculators\HealthScoreCalculator;
+use PhpCodeArch\Calculators\RefactoringPriorityCalculator;
 use PhpCodeArch\Calculators\InheritanceDepthCalculator;
 use PhpCodeArch\Calculators\MaintainabilityIndexCalculator;
 use PhpCodeArch\Calculators\Helpers\PackageInstabilityAbstractnessCalculator;
@@ -319,6 +320,7 @@ final readonly class Application
         $postPredictionService = new CalculatorService([
             new TechnicalDebtCalculator($metricsController),
             new HealthScoreCalculator($metricsController),
+            new RefactoringPriorityCalculator($metricsController),
         ], $metricsController, $output);
         $postPredictionService->run();
 

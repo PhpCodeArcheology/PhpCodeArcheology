@@ -48,6 +48,9 @@ class AiSummaryReport implements ReportInterface
         $lines[] = $this->buildMetricsOverview($projectData);
         $lines[] = $this->buildHotspots($gitData);
 
+        $refactoringData = $this->dataProviderFactory->getRefactoringPriorityDataProvider()->getTemplateData();
+        $lines[] = $this->buildRefactoringPriorities($refactoringData);
+
         $content = implode("\n", $lines);
         file_put_contents($this->outputDir . 'ai-summary.md', $content);
 
@@ -199,6 +202,38 @@ class AiSummaryReport implements ReportInterface
         foreach ($hotspots as $i => $hotspot) {
             $score = $hotspot['churn'] * $hotspot['cc'];
             $lines[] = ($i + 1) . '. ' . $hotspot['name'] . ' (score:' . $score . ' churn:' . $hotspot['churn'] . ' cc:' . $hotspot['cc'] . ' authors:' . $hotspot['authors'] . ')';
+        }
+
+        $lines[] = '';
+        return implode("\n", $lines);
+    }
+
+    private function buildRefactoringPriorities(array $refactoringData): string
+    {
+        $lines = [];
+        $lines[] = '## Refactoring Priorities';
+        $lines[] = '';
+
+        $priorities = array_slice($refactoringData['refactoringPriorities'] ?? [], 0, 10);
+
+        if (empty($priorities)) {
+            $lines[] = 'No refactoring priorities detected. All classes are clean.';
+            $lines[] = '';
+            return implode("\n", $lines);
+        }
+
+        $lines[] = 'Classes ranked by refactoring urgency (score 0-100, higher = more urgent):';
+        $lines[] = '';
+
+        foreach ($priorities as $i => $entry) {
+            $drivers = implode(', ', $entry['drivers'] ?? []);
+            $lines[] = ($i + 1) . '. **' . $entry['fullName'] . '** (score:' . $entry['score'] . ' cc:' . $entry['cc'] . ' lcom:' . $entry['lcom'] . ' lloc:' . $entry['lloc'] . ')';
+            if (!empty($entry['recommendation'])) {
+                $lines[] = '   ' . $entry['recommendation'];
+            }
+            if ($drivers !== '') {
+                $lines[] = '   Drivers: ' . $drivers;
+            }
         }
 
         $lines[] = '';
