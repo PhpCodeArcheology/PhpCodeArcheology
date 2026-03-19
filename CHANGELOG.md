@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2026-03-19
+
+### Fixed
+- **CRITICAL: Running without config file could delete entire filesystem.** `realpath()` returned `false` for non-existent default report directory, which PHP concatenated to `"/"`. The `clearReportDir()` method then recursively deleted from root. Fixed by replacing `realpath()` with direct path + `mkdir()`, and adding safety guards in `ReportTrait` that refuse to delete paths close to filesystem root.
+- `--report-dir` with a non-existent path now fails with a clear error instead of silently resolving to `false`.
+
+### Changed
+- README: clarified that the tool works without a config file and defaults to `tmp/report`.
+
 ## [1.0.0] - 2026-03-18
 
 First stable release.

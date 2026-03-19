@@ -48,7 +48,11 @@ final class ArgumentParser
                         break;
 
                     case 'report-dir':
-                        $config->set('reportDir', realpath($value));
+                        $resolved = realpath($value);
+                        if ($resolved === false) {
+                            throw new ParamException("Report directory '$value' does not exist.");
+                        }
+                        $config->set('reportDir', $resolved);
                         break;
 
                     case 'fail-on':

@@ -44,7 +44,9 @@ Run in your project root:
 ./vendor/bin/phpcodearcheology
 ```
 
-This scans your `src` directory and creates an HTML report in `tmp/report`. Open `tmp/report/index.html` in your browser.
+No config file needed — the tool works out of the box. It scans your `src` directory and creates an HTML report in `tmp/report`. Open `tmp/report/index.html` in your browser.
+
+> **Tip:** Add `tmp/report` to your `.gitignore` to keep generated reports out of version control.
 
 To create a config file interactively:
 

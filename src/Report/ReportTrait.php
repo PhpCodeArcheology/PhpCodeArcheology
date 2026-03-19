@@ -16,6 +16,18 @@ trait ReportTrait
 
     protected function clearReportDir(): void
     {
+        if ($this->outputDir === '' || $this->outputDir === '/' || $this->outputDir === DIRECTORY_SEPARATOR) {
+            throw new \RuntimeException('Refusing to delete root directory. reportDir is not set correctly.');
+        }
+
+        // Safety: reportDir must be at least 3 levels deep (e.g. /a/b/c)
+        $resolved = realpath($this->outputDir);
+        if ($resolved !== false && substr_count(rtrim($resolved, '/'), '/') < 3) {
+            throw new \RuntimeException(
+                "Refusing to delete directory '{$resolved}': path is too close to filesystem root."
+            );
+        }
+
         $this->deleteDirContents($this->outputDir);
     }
 
@@ -23,6 +35,10 @@ trait ReportTrait
     {
         if (!str_ends_with($dir, '/')) {
             $dir .= '/';
+        }
+
+        if ($dir === '/' || $dir === '//') {
+            throw new \RuntimeException('Refusing to delete root directory.');
         }
 
         $files = glob($dir . '*', GLOB_MARK);
