@@ -55,7 +55,7 @@ use Twig\Loader\FilesystemLoader;
 
 final readonly class Application
 {
-    const VERSION = '1.3.0';
+    const VERSION = '1.3.1';
 
     /**
      * @throws ConfigFileExtensionNotSupportedException
@@ -234,7 +234,6 @@ final readonly class Application
             new CodeDuplicationCalculator($metricsController),
             new ProjectCalculator($metricsController),
             new LimitsAndAveragesCalculator($metricsController),
-            new HealthScoreCalculator($metricsController),
         ], $metricsController, $output);
 
         $calculatorService->run();
@@ -316,11 +315,12 @@ final readonly class Application
         $problems = $this->runPredictors($metricsController, $output, $config);
         $this->setProblems($metricsController, $problems);
 
-        // Technical debt must run after predictors (needs problem data)
-        $debtCalculatorService = new CalculatorService([
+        // These calculators must run after predictors (need problem counts)
+        $postPredictionService = new CalculatorService([
             new TechnicalDebtCalculator($metricsController),
+            new HealthScoreCalculator($metricsController),
         ], $metricsController, $output);
-        $debtCalculatorService->run();
+        $postPredictionService->run();
 
         return [$metricsController, $problems];
     }

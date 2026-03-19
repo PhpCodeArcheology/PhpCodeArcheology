@@ -28,7 +28,7 @@
   ],
   "homepage": "https://PhpCodeArcheology.org",
   "support": {
-    "issues": "https://github.com/PhpMetrics/PhpMetrics/issues"
+    "issues": "https://github.com/PhpCodeArcheology/PhpCodeArcheology/issues"
   },
   "require-dev": {
     "pestphp/pest": "^3.0",
