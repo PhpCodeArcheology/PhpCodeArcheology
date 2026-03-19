@@ -72,6 +72,9 @@ trait PredictionTrait
         $implementedInterfaces = $metricsController->getCollectionByIdentifierString($id, 'interfaces');
         if ($implementedInterfaces !== null) {
             foreach ($implementedInterfaces->getAsArray() as $ifaceName) {
+                if (!is_string($ifaceName) || $ifaceName === '') {
+                    continue;
+                }
                 $shortName = substr(strrchr($ifaceName, '\\') ?: $ifaceName, 1) ?: $ifaceName;
                 foreach ($interfacePatterns as $pattern) {
                     if (fnmatch($pattern, $shortName) || fnmatch($pattern, $ifaceName)) {

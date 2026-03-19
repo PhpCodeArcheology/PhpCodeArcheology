@@ -15,10 +15,14 @@ final class FileList
 
     public function fetch(): void
     {
-        $exclude = $this->config->has('exclude') ? $this->config->get('exclude') : [];
-        $exclude = array_map(function($path) {
-            return rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
-        }, $exclude);
+        $excludeRaw = $this->config->has('exclude') ? $this->config->get('exclude') : [];
+        $exclude = [];
+        foreach ($excludeRaw as $path) {
+            $resolved = realpath($path);
+            if ($resolved !== false) {
+                $exclude[] = rtrim($resolved, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+            }
+        }
 
         foreach ($this->config->get('files') as $file) {
             $file = realpath($file);

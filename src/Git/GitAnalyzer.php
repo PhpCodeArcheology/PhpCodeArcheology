@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Git;
 
+use PhpCodeArch\Application\CliFormatter;
 use PhpCodeArch\Application\CliOutput;
 use PhpCodeArch\Application\Config;
+use PhpCodeArch\Application\ProgressBar;
 use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 
@@ -46,7 +48,7 @@ class GitAnalyzer
         }
 
         $this->output->cls();
-        $this->output->outWithMemory('Running Git analysis...');
+        $this->output->outWithMemory('Parsing Git log...');
 
         $changes = $this->parser->getFileChanges($this->since);
 
@@ -61,24 +63,24 @@ class GitAnalyzer
             ]
         );
 
-        // File-level metrics
-        $analyzedFiles = [];
-        foreach ($this->config->get('files') as $dir) {
-            // Collect all files that were analyzed
+        // Count file collections for progress bar
+        $fileCollections = [];
+        foreach ($this->metricsController->getAllCollections() as $collection) {
+            if ($collection instanceof \PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection
+                && $collection->getPath() !== '') {
+                $fileCollections[] = $collection;
+            }
         }
+
+        $formatter = $this->output->getFormatter() ?? new CliFormatter();
+        $progress = new ProgressBar($this->output, $formatter, count($fileCollections), 'Git analysis');
 
         $now = time();
 
-        foreach ($this->metricsController->getAllCollections() as $collection) {
-            if (!$collection instanceof \PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection) {
-                continue;
-            }
+        foreach ($fileCollections as $collection) {
+            $progress->advance();
 
             $filePath = $collection->getPath();
-            if ($filePath === '') {
-                continue;
-            }
-
             $fileData = $changes['files'][$filePath] ?? null;
 
             if ($fileData !== null) {
@@ -114,8 +116,8 @@ class GitAnalyzer
             }
         }
 
-        $formatter = $this->output->getFormatter() ?? new \PhpCodeArch\Application\CliFormatter();
-        $this->output->outNl();
+        $progress->finish();
+
         $this->output->outNl(
             'Git analysis: ' . $formatter->success((string) $changes['totalCommits']) . ' commits by ' .
             $formatter->success((string) count($changes['authors'])) . ' authors (since ' . $this->since . ').'

@@ -84,8 +84,9 @@ class ProgressBar
             return (int) $remaining . 's';
         }
 
-        $minutes = (int) ($remaining / 60);
-        $seconds = (int) ($remaining % 60);
+        $remainingInt = (int) $remaining;
+        $minutes = (int) ($remainingInt / 60);
+        $seconds = $remainingInt % 60;
         return $minutes . 'm ' . $seconds . 's';
     }
 

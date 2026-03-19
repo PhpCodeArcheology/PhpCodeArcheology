@@ -19,7 +19,7 @@ return [
         'key' => 'healthScoreGrade',
         'name' => 'Grade',
         'shortName' => 'Grade',
-        'description' => 'Overall project health grade derived from Health Score: A (≥90 excellent), B (≥80 good), C (≥65 acceptable), D (≥50 poor), F (<50 critical). Based on maintainability, problem density, complexity, coupling, and code structure.',
+        'description' => 'Overall project health grade derived from Health Score: A (≥90 excellent), B (≥80 good), C (≥65 acceptable), D (≥50 poor), F (<50 critical). Based on maintainability, problem density, complexity, coupling, code structure, HTML-in-PHP ratio, encapsulation quality, dependency health, and abstractness.',
         'valueType' => \PhpCodeArch\Metrics\Model\Enums\MetricValueType::String,
         'better' => \PhpCodeArch\Metrics\Model\Enums\BetterDirection::Irrelevant,
         'visibility' => \PhpCodeArch\Metrics\Model\Enums\MetricVisibility::ShowEverywhere,
@@ -709,6 +709,56 @@ return [
         'description' => 'Number of classes involved in circular dependencies.',
         'valueType' => \PhpCodeArch\Metrics\Model\Enums\MetricValueType::Int,
         'better' => \PhpCodeArch\Metrics\Model\Enums\BetterDirection::Low,
+        'visibility' => \PhpCodeArch\Metrics\Model\Enums\MetricVisibility::ShowEverywhere,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
+        ],
+    ],
+
+    // Health Score sub-metrics (computed by HealthScoreCalculator)
+    [
+        'key' => 'overallHtmlRatio',
+        'name' => 'HTML-in-PHP ratio',
+        'shortName' => 'HTML%',
+        'description' => 'Ratio of inline HTML lines to total lines of code. High values indicate legacy mixed-concern files that are hard to test and maintain.',
+        'valueType' => \PhpCodeArch\Metrics\Model\Enums\MetricValueType::Percentage,
+        'better' => \PhpCodeArch\Metrics\Model\Enums\BetterDirection::Low,
+        'visibility' => \PhpCodeArch\Metrics\Model\Enums\MetricVisibility::ShowEverywhere,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
+        ],
+    ],
+    [
+        'key' => 'overallPublicMethodRatio',
+        'name' => 'Public method ratio',
+        'shortName' => 'Public%',
+        'description' => 'Percentage of public methods across all classes. Lower values indicate better encapsulation.',
+        'valueType' => \PhpCodeArch\Metrics\Model\Enums\MetricValueType::Percentage,
+        'better' => \PhpCodeArch\Metrics\Model\Enums\BetterDirection::Low,
+        'visibility' => \PhpCodeArch\Metrics\Model\Enums\MetricVisibility::ShowEverywhere,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
+        ],
+    ],
+    [
+        'key' => 'overallStaticMethodRatio',
+        'name' => 'Static method ratio',
+        'shortName' => 'Static%',
+        'description' => 'Percentage of static methods across all classes. High values indicate procedural style and testability issues.',
+        'valueType' => \PhpCodeArch\Metrics\Model\Enums\MetricValueType::Percentage,
+        'better' => \PhpCodeArch\Metrics\Model\Enums\BetterDirection::Low,
+        'visibility' => \PhpCodeArch\Metrics\Model\Enums\MetricVisibility::ShowEverywhere,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
+        ],
+    ],
+    [
+        'key' => 'overallEncapsulationScore',
+        'name' => 'Encapsulation score',
+        'shortName' => 'Encaps.',
+        'description' => 'Combined score (0-100) measuring method visibility distribution and static method usage. Higher values indicate better encapsulation and testability.',
+        'valueType' => \PhpCodeArch\Metrics\Model\Enums\MetricValueType::Float,
+        'better' => \PhpCodeArch\Metrics\Model\Enums\BetterDirection::High,
         'visibility' => \PhpCodeArch\Metrics\Model\Enums\MetricVisibility::ShowEverywhere,
         'collections' => [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,

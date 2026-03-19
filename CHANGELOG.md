@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-03-19
+
+### Changed
+- **Health Score v2: rebalanced formula with 4 new factors.** The score now evaluates 9 dimensions instead of 5. Legacy codebases with heavy HTML-in-PHP mixing, poor encapsulation, dependency cycles, or low abstractness are no longer rewarded with artificially high scores. Clean, well-structured projects score the same or higher than before.
+  - **Weights rebalanced:** MI 30→15%, Problems 25→10%, CC 20→10%, Coupling 15→10%, Structure 10→5%.
+  - **HTML-in-PHP Ratio (15%):** Cubic decay curve penalizes inline HTML mixing. 0% HTML = no penalty, 59% HTML ≈ 7/100.
+  - **Encapsulation Quality (15%):** Combines non-public method ratio (60%) and static method penalty (40%). Rewards projects with proper visibility modifiers and low static usage.
+  - **Dependency Health (10%):** Penalizes both the breadth of dependency cycles (% of classes affected) and the cycle count itself.
+  - **Abstractness (10%):** Projects with interfaces and abstract classes score higher. Reaches full score at 10% abstractness.
+- **New dashboard metrics:** HTML-in-PHP ratio, Public method ratio, Static method ratio, and Encapsulation score are now displayed as metric tiles.
+
+### Added
+- **Git analysis progress bar.** The file-level git metadata collection now shows a progress bar with ETA, replacing the static "Running Git analysis..." message. Especially useful for large repositories with thousands of files.
+
+### Fixed
+- **`exclude` config option was broken.** Exclude paths were never resolved to absolute paths via `realpath()`, so the negative-lookahead regex never matched. Relative excludes like `../lib/phpword` now work correctly.
+- `PredictionTrait::shouldSkipLcom()` crashed with `strrchr(): Argument #1 must be of type string, null given` when an interface name in the implemented-interfaces list was null.
+- PHP deprecation warning in `ProgressBar::calculateEta()` — implicit float-to-int conversion on modulo operation.
+
 ## [1.3.1] - 2026-03-19
 
 ### Fixed
