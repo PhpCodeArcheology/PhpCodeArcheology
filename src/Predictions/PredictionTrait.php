@@ -6,6 +6,7 @@ namespace PhpCodeArch\Predictions;
 
 use PhpCodeArch\Application\Config;
 use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Predictions\Problems\TooComplexProblem;
 
 trait PredictionTrait
@@ -30,6 +31,57 @@ trait PredictionTrait
                 problem: $problem
             );
         }
+    }
+
+    protected function shouldSkipLcom(MetricsController $metricsController, ClassMetricsCollection $metric): bool
+    {
+        $id = (string) $metric->getIdentifier();
+
+        // Hard rules: types where LCOM is structurally meaningless
+        $isEnum = $metric->get('enum')?->getValue() === true;
+        $isInterface = $metric->get('interface')?->getValue() === true;
+        $isTrait = $metric->get('trait')?->getValue() === true;
+
+        if ($isEnum || $isInterface || $isTrait) {
+            return true;
+        }
+
+        // Classes with 0-1 methods: LCOM is meaningless
+        $methodCollection = $metricsController->getCollectionByIdentifierString($id, 'methods');
+        if ($methodCollection === null || count($methodCollection->getAsArray()) <= 1) {
+            return true;
+        }
+
+        // Pattern-based: class name
+        $className = $metric->getName();
+        $defaultPatterns = ['*Exception', '*Error'];
+        $configPatterns = $this->threshold('lcomExclude.patterns', null);
+        $patterns = is_array($configPatterns) ? $configPatterns : $defaultPatterns;
+
+        foreach ($patterns as $pattern) {
+            if (fnmatch($pattern, $className)) {
+                return true;
+            }
+        }
+
+        // Pattern-based: implemented interfaces
+        $defaultInterfaces = ['EventSubscriberInterface', 'EventListenerInterface', 'ListenerInterface'];
+        $configInterfaces = $this->threshold('lcomExclude.interfaces', null);
+        $interfacePatterns = is_array($configInterfaces) ? $configInterfaces : $defaultInterfaces;
+
+        $implementedInterfaces = $metricsController->getCollectionByIdentifierString($id, 'interfaces');
+        if ($implementedInterfaces !== null) {
+            foreach ($implementedInterfaces->getAsArray() as $ifaceName) {
+                $shortName = substr(strrchr($ifaceName, '\\') ?: $ifaceName, 1) ?: $ifaceName;
+                foreach ($interfacePatterns as $pattern) {
+                    if (fnmatch($pattern, $shortName) || fnmatch($pattern, $ifaceName)) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 
     protected function threshold(string $key, mixed $default): mixed

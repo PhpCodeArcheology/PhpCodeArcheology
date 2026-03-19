@@ -160,7 +160,16 @@ thresholds:
   hotspot:
     minChurn: 10
     minCc: 15
+  lcomExclude:
+    patterns:        # Class name patterns to skip LCOM warnings (fnmatch)
+      - "*Exception"
+      - "*Error"
+    interfaces:      # Implemented interfaces that justify low cohesion
+      - "EventSubscriberInterface"
+      - "EventListenerInterface"
 ```
+
+> **Note:** Enums, interfaces, traits, and classes with 0-1 methods are always excluded from LCOM warnings regardless of configuration.
 
 All threshold values shown above are the defaults. You only need to specify values you want to override.
 

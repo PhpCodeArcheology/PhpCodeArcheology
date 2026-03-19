@@ -4,11 +4,19 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Predictions;
 
+use PhpCodeArch\Application\Config;
 use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 
 class GodClassPrediction implements PredictionInterface
 {
+    use PredictionTrait;
+
+    public function __construct(?Config $config = null)
+    {
+        $this->config = $config;
+    }
+
     public function predict(MetricsController $metricsController): int
     {
         $problemCount = 0;
@@ -42,7 +50,7 @@ class GodClassPrediction implements PredictionInterface
                 ++ $suspectIndex;
             }
 
-            if ($classMetrics->lcom ?? 0 > 1) {
+            if (($classMetrics->lcom ?? 0) > 1 && !$this->shouldSkipLcom($metricsController, $metric)) {
                 ++ $suspectIndex;
             }
 

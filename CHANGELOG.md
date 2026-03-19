@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-03-19
+
+### Added
+- **Class-type-aware LCOM suppression.** Enums, interfaces, traits, and classes with 0-1 methods no longer trigger LCOM warnings (structurally meaningless). Classes matching name patterns (`*Exception`, `*Error`) or implementing handler interfaces (`EventSubscriberInterface`, etc.) are also excluded. Fully configurable via `thresholds.lcomExclude` in YAML config.
+- Markdown metric tiles now render array values correctly (fixes Twig "Array to string conversion" warnings).
+
+### Fixed
+- Markdown `metric-tile.md.twig` used incorrect property accessors on `MetricValue` objects, causing PHP warnings.
+- HTML `metric-tile.html.twig` hardened against array values in the `: ` split check.
+
 ## [1.1.2] - 2026-03-19
 
 ### Fixed

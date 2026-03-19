@@ -1,16 +1,7 @@
-{% set color = "bg-blue-900" %}
-{% if element.problemLevel == 2 %}
-  {% set color = "bg-yellow-900" %}
-{% elseif element.problemLevel == 3 %}
-  {% set color = "bg-red-900" %}
-{% endif %}
+{% if element is null %}{% else %}
+{% set displayValue = '' ~ element %}
+{% set metricName = element.getMetricType().getName() %}
+**{{ metricName }}:** {% if ': ' in displayValue %}{% set parts = displayValue|split(': ') %}{{ parts[1] }} *({{ parts[0] }})*{% else %}{{ displayValue }}{% endif %}
+{% if element.getMaxProblemLevel() > 0 %} — {{ element.getProblemMessages()|join('; ') }}{% endif %}
 
-{{ element.name }}<br>
-{% if ': ' in element.value %}
-{% set value = element.value|split(': ') %}
-**{{ value[1] }}**<br>
-*{{ value[0] }}*
-{% else %}
-**{{ element.value }}**
-{% endif %}<br>
-{% if element.problemLevel > 0 %}{{ element.problemText|join(' ') }}{% endif %}
+{% endif %}

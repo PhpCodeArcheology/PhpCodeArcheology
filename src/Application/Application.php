@@ -55,7 +55,7 @@ use Twig\Loader\FilesystemLoader;
 
 final readonly class Application
 {
-    const VERSION = '1.1.2';
+    const VERSION = '1.2.0';
 
     /**
      * @throws ConfigFileExtensionNotSupportedException
@@ -249,7 +249,7 @@ final readonly class Application
     {
         $predictions = new PredictionService([
             new TooLongPrediction($config),
-            new GodClassPrediction(),
+            new GodClassPrediction($config),
             new TooComplexPrediction($config),
             new TooDependentPrediction($config),
             new TooMuchHtmlPrediction($config),

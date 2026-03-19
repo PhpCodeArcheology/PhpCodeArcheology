@@ -43,7 +43,7 @@ class TooComplexPrediction implements PredictionInterface
                     )->getAsArray();
 
                     $problemCount += $this->handleStandardComplexity($metricsController, (string) $metric->getIdentifier(), get_class($metric));
-                    $problemCount += $this->handleLcom($metricsController, (string) $metric->getIdentifier(), get_class($metric));
+                    $problemCount += $this->handleLcom($metricsController, (string) $metric->getIdentifier(), get_class($metric), $metric);
 
                     $methodCc = 0;
                     foreach ($methodCollection as $methodKey => $methodName) {
@@ -156,8 +156,12 @@ class TooComplexPrediction implements PredictionInterface
         return $values;
     }
 
-    private function handleLcom(MetricsController $metricsController, string $identifierString, string $metricClass): int
+    private function handleLcom(MetricsController $metricsController, string $identifierString, string $metricClass, ?ClassMetricsCollection $classMetric = null): int
     {
+        if ($classMetric !== null && $this->shouldSkipLcom($metricsController, $classMetric)) {
+            return 0;
+        }
+
         $className = basename(str_replace('\\', '/', $metricClass));
         $values = $this->getMetricValues($metricsController, $identifierString, [
             'lcom',
