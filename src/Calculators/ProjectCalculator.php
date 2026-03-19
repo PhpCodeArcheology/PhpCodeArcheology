@@ -172,6 +172,25 @@ class ProjectCalculator implements CalculatorInterface
         $this->data['overallAvgMI'] = $this->getAvgOrZero($this->miSum, $metricValues['overallFiles']);
         $this->data['overallCommentWeight'] = $this->getAvgOrZero($this->commentWeightSum, $this->metricCount);
 
+        // Ensure counter metrics default to 0 (they are only incremented when items exist)
+        $counterDefaults = [
+            'overallFunctionCount',
+            'overallMethodsCount',
+            'overallAbstractClasses',
+            'overallInterfaces',
+            'overallPublicMethodsCount',
+            'overallPrivateMethodsCount',
+            'overallStaticMethodsCount',
+        ];
+        foreach ($counterDefaults as $key) {
+            $existing = $this->metricsController->getMetricValue(
+                MetricCollectionTypeEnum::ProjectCollection, null, $key
+            );
+            if ($existing === null || $existing->getValue() === null) {
+                $this->data[$key] = 0;
+            }
+        }
+
         $this->metricsController->setMetricValues(
             MetricCollectionTypeEnum::ProjectCollection,
             null,

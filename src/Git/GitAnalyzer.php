@@ -74,8 +74,8 @@ class GitAnalyzer
                 continue;
             }
 
-            $filePath = $collection->get('filePath')?->getValue();
-            if ($filePath === null) {
+            $filePath = $collection->getPath();
+            if ($filePath === '') {
                 continue;
             }
 

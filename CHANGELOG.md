@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2026-03-19
+
+### Fixed
+- **Git churn data was never assigned to files.** `GitAnalyzer` used `get('filePath')` which returns `null` for `FileMetricsCollection` (skipped by `FileCalculator`). Changed to `getPath()` which returns the correct absolute path. This means the hotspot chart, churn counts, author counts, and code age now actually work.
+- **Empty metric tiles** for counters like "Function count" when no items exist. All counter metrics now default to 0 instead of remaining `null`.
+- **Hotspot chart** normalized Change Frequency to 0–100% scale and fixed color thresholds.
+- **Tooltips cut off** on dashboard: removed `overflow: hidden` from `.dash-panel`.
+- **Grade metric** now has a full description with thresholds (A≥90, B≥80, C≥65, D≥50, F<50) in tooltip and glossary.
+
 ## [1.1.0] - 2026-03-19
 
 ### Added

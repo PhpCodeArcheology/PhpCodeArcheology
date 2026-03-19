@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   const data = [
     {% for file in hotspots %}
-    { x: {{ file.churn }}, y: {{ file.cc }}, r: Math.max(3, Math.min(25, Math.sqrt({{ file.loc }}) * 0.6)), label: '{{ file.name|e('js') }}', loc: {{ file.loc }}, link: 'files/{{ file.id }}.html' },
+    { x: {{ file.changeFrequency }}, y: {{ file.cc }}, r: Math.max(3, Math.min(25, Math.sqrt({{ file.loc }}) * 0.6)), label: '{{ file.name|e('js') }}', loc: {{ file.loc }}, churn: {{ file.churn }}, link: 'files/{{ file.id }}.html' },
     {% endfor %}
   ];
 
@@ -118,8 +118,8 @@ document.addEventListener('DOMContentLoaded', function() {
         label: 'Files',
         data: data,
         backgroundColor: data.map(d => {
-          if (d.x >= 10 && d.y >= 15) return 'rgba(239, 68, 68, 0.6)';
-          if (d.x >= 5 || d.y >= 10) return 'rgba(234, 179, 8, 0.5)';
+          if (d.x >= 0.5 && d.y >= 15) return 'rgba(239, 68, 68, 0.6)';
+          if (d.x >= 0.3 || d.y >= 10) return 'rgba(234, 179, 8, 0.5)';
           return 'rgba(6, 182, 212, 0.5)';
         }),
       }]
@@ -133,13 +133,13 @@ document.addEventListener('DOMContentLoaded', function() {
           callbacks: {
             label: function(ctx) {
               const d = ctx.raw;
-              return d.label + ' — Churn: ' + d.x + ', CC: ' + d.y + ', LOC: ' + d.loc;
+              return d.label + ' — Churn: ' + d.churn + ', CC: ' + d.y + ', LOC: ' + d.loc;
             }
           }
         }
       },
       scales: {
-        x: { title: { display: true, text: 'Change Frequency' }, grid: { color: gridColor }, beginAtZero: true, ticks: { precision: 0 } },
+        x: { title: { display: true, text: 'Change Frequency' }, grid: { color: gridColor }, min: 0, max: 1, ticks: { callback: v => (v * 100) + '%' } },
         y: { title: { display: true, text: 'Cyclomatic Complexity' }, grid: { color: gridColor }, beginAtZero: true, ticks: { precision: 0 } }
       },
       onClick: function(e, elements) {

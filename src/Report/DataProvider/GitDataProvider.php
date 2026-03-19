@@ -45,6 +45,13 @@ class GitDataProvider implements ReportDataProviderInterface
         // Sort by churn * cc (hotspot score) descending
         usort($hotspots, fn($a, $b) => ($b['churn'] * $b['cc']) - ($a['churn'] * $a['cc']));
 
+        // Normalize churn to 0-1 range for "Change Frequency" axis
+        $maxChurn = max(1, max(array_column($hotspots, 'churn') ?: [0]));
+        foreach ($hotspots as &$hotspot) {
+            $hotspot['changeFrequency'] = round($hotspot['churn'] / $maxChurn, 3);
+        }
+        unset($hotspot);
+
         $this->templateData['hotspots'] = $hotspots;
         $this->templateData['gitTotalCommits'] = $this->metricsController->getMetricValue(
             MetricCollectionTypeEnum::ProjectCollection, null, 'gitTotalCommits'

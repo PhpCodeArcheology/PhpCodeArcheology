@@ -19,7 +19,7 @@ return [
         'key' => 'healthScoreGrade',
         'name' => 'Grade',
         'shortName' => 'Grade',
-        'description' => 'Project health grade (A-F)',
+        'description' => 'Overall project health grade derived from Health Score: A (≥90 excellent), B (≥80 good), C (≥65 acceptable), D (≥50 poor), F (<50 critical). Based on maintainability, problem density, complexity, coupling, and code structure.',
         'valueType' => \PhpCodeArch\Metrics\Model\Enums\MetricValueType::String,
         'better' => \PhpCodeArch\Metrics\Model\Enums\BetterDirection::Irrelevant,
         'visibility' => \PhpCodeArch\Metrics\Model\Enums\MetricVisibility::ShowEverywhere,
