@@ -39,20 +39,20 @@ class HealthScoreCalculator implements CalculatorInterface
         $scores = [];
         $weights = [];
 
-        // 1. Maintainability Index (30%) — higher is better, scale 0-171 → 0-100
+        // 1. Maintainability Index (30%) — realistic scale: MI 40=0, MI 120+=100
         $avgMI = $metrics->get('overallAvgMI')?->getValue() ?? 0;
-        $miScore = min(100, max(0, ($avgMI / 171) * 100));
+        $miScore = min(100, max(0, ($avgMI - 40) * 1.25));
         $scores[] = $miScore;
         $weights[] = 0.30;
 
-        // 2. Problem density (25%) — fewer problems per class is better
+        // 2. Problem density (25%) — logarithmic decay for graceful degradation
         $errors = $metrics->get('overallErrorCount')?->getValue() ?? 0;
         $warnings = $metrics->get('overallWarningCount')?->getValue() ?? 0;
         $classes = $metrics->get('overallClasses')?->getValue() ?? 1;
         $files = $metrics->get('overallFiles')?->getValue() ?? 1;
         $totalEntities = max($classes + $files, 1);
-        $problemDensity = ($errors * 3 + $warnings) / $totalEntities;
-        $problemScore = max(0, 100 - $problemDensity * 20);
+        $problemDensity = ($errors + $warnings) / $totalEntities;
+        $problemScore = max(0, 100 - 30 * log(1 + $problemDensity));
         $scores[] = $problemScore;
         $weights[] = 0.25;
 
@@ -64,9 +64,9 @@ class HealthScoreCalculator implements CalculatorInterface
         $weights[] = 0.20;
 
         // 4. Coupling — Distance from main sequence (15%) — lower is better
-        $avgDistance = $metrics->get('overallDistanceFromMainline')?->getValue() ?? 0;
+        $avgDistance = abs($metrics->get('overallDistanceFromMainline')?->getValue() ?? 0);
         // Distance 0 = perfect, 1 = worst
-        $couplingScore = max(0, (1 - $avgDistance) * 100);
+        $couplingScore = max(0, min(100, (1 - $avgDistance) * 100));
         $scores[] = $couplingScore;
         $weights[] = 0.15;
 

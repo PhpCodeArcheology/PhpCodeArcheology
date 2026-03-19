@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-03-19
+
+### Changed
+- **Health Score formula rebalanced.** MI normalization now uses a realistic scale (MI 40–120 → 0–100) instead of the theoretical 0–171 range. Problem density uses logarithmic decay instead of a linear cliff, so the score degrades gracefully instead of crashing to 0. Error/warning weighting simplified (severity is already handled by the problem system).
+
+### Fixed
+- Coupling score now uses `abs()` for distance from main sequence, preventing negative values from inflating the score beyond 100.
+
 ## [1.2.0] - 2026-03-19
 
 ### Added
