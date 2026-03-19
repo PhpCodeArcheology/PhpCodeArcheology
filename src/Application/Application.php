@@ -55,7 +55,7 @@ use Twig\Loader\FilesystemLoader;
 
 final readonly class Application
 {
-    const VERSION = '1.0.1';
+    const VERSION = '1.1.0';
 
     /**
      * @throws ConfigFileExtensionNotSupportedException
@@ -148,13 +148,18 @@ final readonly class Application
             $config->set('reportType', 'html');
         }
 
-        if (! $config->get('reportDir')) {
+        $reportDir = $config->get('reportDir');
+        if (!$reportDir) {
             $reportDir = $config->get('runningDir') . '/tmp/report';
-            if (!is_dir($reportDir)) {
-                mkdir($reportDir, 0755, true);
-            }
-            $config->set('reportDir', $reportDir);
+        } elseif (!str_starts_with($reportDir, DIRECTORY_SEPARATOR)) {
+            // Resolve relative CLI path against runningDir
+            $reportDir = $config->get('runningDir') . DIRECTORY_SEPARATOR . $reportDir;
         }
+        if (!is_dir($reportDir)) {
+            mkdir($reportDir, 0755, true);
+        }
+        $resolved = realpath($reportDir);
+        $config->set('reportDir', $resolved !== false ? $resolved : $reportDir);
 
         if (! $config->get('packageSize')) {
             $config->set('packageSize', 2);

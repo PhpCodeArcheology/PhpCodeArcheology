@@ -19,11 +19,21 @@ class GitAnalyzer
         private readonly MetricsController $metricsController,
         private readonly CliOutput $output,
     ) {
-        $projectRoot = $this->config->get('runningDir') ?? getcwd();
-        $this->parser = new GitLogParser($projectRoot);
-
         $gitConfig = $this->config->get('git') ?? [];
         $this->since = $gitConfig['since'] ?? '6 months ago';
+
+        $gitRoot = $gitConfig['root'] ?? null;
+        if ($gitRoot !== null) {
+            $resolved = realpath($gitRoot);
+            if ($resolved === false) {
+                throw new \RuntimeException("Git root directory '$gitRoot' does not exist.");
+            }
+            $projectRoot = $resolved;
+        } else {
+            $projectRoot = $this->config->get('runningDir') ?? getcwd();
+        }
+
+        $this->parser = new GitLogParser($projectRoot);
     }
 
     public function analyze(): void

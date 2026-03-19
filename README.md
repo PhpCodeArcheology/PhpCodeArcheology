@@ -68,6 +68,7 @@ To create a config file interactively:
 | `--no-color` | Disable coloured terminal output (also respects `NO_COLOR` env) |
 | `--fail-on=LEVEL` | Exit 1 on `error` or `warning` (for CI pipelines) |
 | `--generate-claude-md` | Generate a `CLAUDE.md` project overview |
+| `--git-root=DIR` | Git repository root (default: current directory) |
 | `--extensions=EXT` | File extensions to analyse (comma-separated, default: `php`) |
 | `--exclude=DIR` | Directories to exclude (comma-separated) |
 | `--version` | Show version |
@@ -121,6 +122,7 @@ reportType: "html"
 git:
   enable: true
   since: "6 months ago"
+  root: "."  # Git repository root (useful for monorepos or subdirectory analysis)
 
 qualityGate:
   maxErrors: 0

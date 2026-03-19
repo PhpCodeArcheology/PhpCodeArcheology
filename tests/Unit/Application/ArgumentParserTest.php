@@ -18,7 +18,7 @@ it('parses --report-type=json', function () {
 it('parses --report-dir=/tmp', function () {
     $config = $this->parser->parse(['--report-dir=/tmp']);
 
-    expect($config->get('reportDir'))->toBe(realpath('/tmp'));
+    expect($config->get('reportDir'))->toBe('/tmp');
 });
 
 it('parses --extensions=php,inc', function () {

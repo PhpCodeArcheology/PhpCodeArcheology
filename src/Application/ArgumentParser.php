@@ -48,11 +48,17 @@ final class ArgumentParser
                         break;
 
                     case 'report-dir':
+                        $config->set('reportDir', $value);
+                        break;
+
+                    case 'git-root':
                         $resolved = realpath($value);
                         if ($resolved === false) {
-                            throw new ParamException("Report directory '$value' does not exist.");
+                            throw new ParamException("Git root directory '$value' does not exist.");
                         }
-                        $config->set('reportDir', $resolved);
+                        $git = $config->get('git') ?? [];
+                        $git['root'] = $resolved;
+                        $config->set('git', $git);
                         break;
 
                     case 'fail-on':

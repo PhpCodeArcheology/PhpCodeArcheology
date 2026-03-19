@@ -46,18 +46,35 @@ class ConfigFileParserJson implements ConfigFileParserInterface
         }
 
         if (isset($data['reportDir'])) {
-            $reportDir = realpath($data['reportDir']);
+            $reportDir = $data['reportDir'];
 
-            if (! $reportDir) {
-                $trimmedPath = trim(trim($data['reportDir']), DIRECTORY_SEPARATOR);
-                $reportDir = realpath($config->get('runningDir')) . DIRECTORY_SEPARATOR . $trimmedPath;
-                mkdir($reportDir, recursive: true);
+            // Resolve relative paths against runningDir
+            if (!str_starts_with($reportDir, DIRECTORY_SEPARATOR)) {
+                $reportDir = $config->get('runningDir') . DIRECTORY_SEPARATOR . $reportDir;
             }
 
-            $config->set('reportDir', realpath($reportDir));
+            if (!is_dir($reportDir)) {
+                mkdir($reportDir, 0755, true);
+            }
+
+            // Use realpath only after the directory exists, with safe fallback
+            $resolved = realpath($reportDir);
+            $config->set('reportDir', $resolved !== false ? $resolved : $reportDir);
         }
 
         if (isset($data['git'])) {
+            if (isset($data['git']['root'])) {
+                $root = $data['git']['root'];
+                $resolved = realpath($root);
+                if ($resolved === false) {
+                    // Try relative to runningDir
+                    $resolved = realpath($config->get('runningDir') . DIRECTORY_SEPARATOR . $root);
+                }
+                if ($resolved !== false) {
+                    $data['git']['root'] = $resolved;
+                }
+                // If still unresolved, keep original — GitAnalyzer will report the error
+            }
             $config->set('git', $data['git']);
         }
 
