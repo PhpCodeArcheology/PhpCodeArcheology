@@ -1,5 +1,7 @@
 {% include('@Parts/header.html.twig') %}
 
+{% set sortArrow %}<span class="sort-icon transition-all opacity-0"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M12.53 16.28a.75.75 0 0 1-1.06 0l-7.5-7.5a.75.75 0 0 1 1.06-1.06L12 14.69l6.97-6.97a.75.75 0 1 1 1.06 1.06l-7.5 7.5Z" clip-rule="evenodd" /></svg></span>{% endset %}
+
 <div class="mt-6 lg:w-5/6">
   <div class="mb-7 text-sm">
     <ul class="flex gap-1">
@@ -36,76 +38,88 @@
   </div>
 
   {# Score Distribution Chart #}
-  <div class="rounded-xl border border-cyan-800 bg-cyan-950/45 p-6 mb-6">
-    <h2 class="font-display text-sm uppercase tracking-wider text-cyan-600/60 mb-4">Score Distribution</h2>
+  <div class="rounded-xl border border-cyan-800 bg-cyan-950/45 p-4 mb-6">
+    <h3 style="color: rgba(6,182,212,0.7); font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; font-family: 'Oswald', sans-serif; margin-bottom: 0.75rem;">Score Distribution</h3>
     <div style="height: 200px; position: relative;">
       <canvas id="distributionChart"></canvas>
     </div>
   </div>
 
-  {# Ranked Table #}
+  {# Priority Ranking Table #}
   {% if refactoringPriorities|length > 0 %}
-  <div class="rounded-xl border border-cyan-800 bg-cyan-950/45 p-6 mb-6">
-    <h2 class="font-display text-sm uppercase tracking-wider text-cyan-600/60 mb-4">Priority Ranking</h2>
+  <div class="rounded-xl border border-cyan-800 bg-cyan-950/45 p-4 mb-6">
+    <h3 style="color: rgba(6,182,212,0.7); font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; font-family: 'Oswald', sans-serif; margin-bottom: 0.75rem;">Priority Ranking</h3>
 
-    <div class="mb-4">
-      <input type="text" id="filterInput" placeholder="Filter classes..."
-        class="w-full px-3 py-2 rounded-lg bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-cyan-500">
+    <div class="filters mb-4 flex justify-end">
+      <div>
+        <input type="text" name="filter" class="namefilter text-black rounded px-2 py-0.5" placeholder="Search class name">
+        <button class="button-reset">Reset</button>
+      </div>
     </div>
 
-    <div class="overflow-x-auto">
-      <table class="w-full text-sm" id="roadmapTable">
-        <thead>
-          <tr class="border-b border-zinc-700 text-left text-zinc-400">
-            <th class="px-3 py-2 w-10">#</th>
-            <th class="px-3 py-2 cursor-pointer hover:text-white" data-sort="text">Class</th>
-            <th class="px-3 py-2 cursor-pointer hover:text-white text-right" data-sort="num">Score</th>
-            <th class="px-3 py-2">Drivers</th>
-            <th class="px-3 py-2 cursor-pointer hover:text-white text-right" data-sort="num">CC</th>
-            <th class="px-3 py-2 cursor-pointer hover:text-white text-right" data-sort="num">LCOM</th>
-            <th class="px-3 py-2 cursor-pointer hover:text-white text-right" data-sort="num">LLOC</th>
-            <th class="px-3 py-2 cursor-pointer hover:text-white text-right" data-sort="num">Dependents</th>
-            <th class="px-3 py-2">Recommendation</th>
+    <div class="relative overflow-x-auto">
+      <table class="sortable desc w-full border-collapse border border-slate-500 text-sm rounded-xl" data-currentsort="1:desc:float">
+        <thead class="bg-cyan-950/25">
+          <tr>
+            <th class="border border-slate-500 text-left px-2 py-0.5 cursor-pointer" data-sortable="string">
+              <span class="label-box flex justify-between items-center gap-1"><span class="label-name">Class</span>{{ sortArrow|raw }}</span>
+            </th>
+            <th class="border border-slate-500 text-left px-2 py-0.5 cursor-pointer" data-sortable="float">
+              <span class="label-box flex justify-between items-center gap-1"><span class="label-name">Score</span>{{ sortArrow|raw }}</span>
+            </th>
+            <th class="border border-slate-500 text-left px-2 py-0.5">
+              <span class="label-name">Drivers</span>
+            </th>
+            <th class="border border-slate-500 text-left px-2 py-0.5 cursor-pointer" data-sortable="int">
+              <span class="label-box flex justify-between items-center gap-1"><span class="label-name">CC</span>{{ sortArrow|raw }}</span>
+            </th>
+            <th class="border border-slate-500 text-left px-2 py-0.5 cursor-pointer" data-sortable="int">
+              <span class="label-box flex justify-between items-center gap-1"><span class="label-name">LCOM</span>{{ sortArrow|raw }}</span>
+            </th>
+            <th class="border border-slate-500 text-left px-2 py-0.5 cursor-pointer" data-sortable="int">
+              <span class="label-box flex justify-between items-center gap-1"><span class="label-name">LLOC</span>{{ sortArrow|raw }}</span>
+            </th>
+            <th class="border border-slate-500 text-left px-2 py-0.5 cursor-pointer" data-sortable="int">
+              <span class="label-box flex justify-between items-center gap-1"><span class="label-name">Deps</span>{{ sortArrow|raw }}</span>
+            </th>
+            <th class="border border-slate-500 text-left px-2 py-0.5">
+              <span class="label-name">Recommendation</span>
+            </th>
           </tr>
         </thead>
         <tbody>
-          {% for i, entry in refactoringPriorities %}
-          <tr class="border-b border-zinc-800/50 hover:bg-cyan-950/30" data-filter="{{ entry.fullName|lower }}">
-            <td class="px-3 py-2 text-zinc-500">{{ i + 1 }}</td>
-            <td class="px-3 py-2">
-              <a href="classes/{{ entry.id }}.html" class="text-cyan-400 hover:text-cyan-300">{{ entry.name }}</a>
-              {% if entry.fullName != entry.name %}
-                <div class="text-xs text-zinc-500">{{ entry.fullName }}</div>
-              {% endif %}
+          {% for entry in refactoringPriorities %}
+          <tr class="even:bg-cyan-950/45 odd:bg-cyan-950/85 transition-colors hover:bg-cyan-800">
+            <td class="border border-slate-500 text-left px-2 py-0.5 filter-name" data-filter="{{ entry.fullName }}" data-sort="{{ entry.fullName }}">
+              <a href="classes/{{ entry.id }}.html" class="group block">
+                {% if entry.fullName != entry.name %}<span class="text-white/40 group-hover:text-white">{{ entry.fullName[:entry.fullName|length - entry.name|length] }}</span>{% endif %}<span class="font-semibold group-hover:text-cyan-400">{{ entry.name }}</span>
+              </a>
             </td>
-            <td class="px-3 py-2 text-right">
-              <span class="inline-block px-2 py-0.5 rounded text-xs font-bold
-                {% if entry.score >= 75 %}bg-red-900/50 text-red-300
-                {% elseif entry.score >= 50 %}bg-orange-900/50 text-orange-300
-                {% elseif entry.score >= 25 %}bg-yellow-900/50 text-yellow-300
-                {% else %}bg-cyan-900/50 text-cyan-300{% endif %}">
+            <td class="border border-slate-500 text-right px-2 py-0.5" data-sort="{{ entry.score }}">
+              <span class="px-1.5 py-0.5 rounded-md
+                {% if entry.score >= 75 %}bg-red-900
+                {% elseif entry.score >= 50 %}bg-orange-900
+                {% elseif entry.score >= 25 %}bg-yellow-900
+                {% else %}bg-cyan-900{% endif %}">
                 {{ entry.score|number_format(1) }}
               </span>
             </td>
-            <td class="px-3 py-2">
-              <div class="flex flex-wrap gap-1">
-                {% for driver in entry.drivers %}
-                  <span class="inline-block px-1.5 py-0.5 rounded text-[0.65rem]
-                    {% if driver == 'high complexity' or driver == 'dependency cycle' %}bg-red-900/40 text-red-300
-                    {% elseif driver == 'low cohesion' or driver == 'SOLID violations' %}bg-orange-900/40 text-orange-300
-                    {% elseif driver == 'many issues' or driver == 'excessive size' %}bg-yellow-900/40 text-yellow-300
-                    {% else %}bg-zinc-700/50 text-zinc-300{% endif %}">
-                    {{ driver }}
-                  </span>
-                {% endfor %}
-              </div>
+            <td class="border border-slate-500 text-left px-2 py-0.5">
+              {% for driver in entry.drivers %}
+                <span class="inline-block px-1.5 py-0.5 rounded text-xs
+                  {% if driver == 'high complexity' or driver == 'dependency cycle' %}bg-red-900/60 text-red-300
+                  {% elseif driver == 'low cohesion' or driver == 'SOLID violations' %}bg-orange-900/60 text-orange-300
+                  {% elseif driver == 'many issues' or driver == 'excessive size' %}bg-yellow-900/60 text-yellow-300
+                  {% elseif driver == 'layer violations' %}bg-purple-900/60 text-purple-300
+                  {% else %}bg-zinc-700/60 text-zinc-300{% endif %}">{{ driver }}</span>
+              {% endfor %}
             </td>
-            <td class="px-3 py-2 text-right {% if entry.cc > 20 %}text-red-400{% elseif entry.cc > 10 %}text-yellow-400{% else %}text-zinc-400{% endif %}">{{ entry.cc }}</td>
-            <td class="px-3 py-2 text-right {% if entry.lcom > 5 %}text-red-400{% elseif entry.lcom > 2 %}text-yellow-400{% else %}text-zinc-400{% endif %}">{{ entry.lcom }}</td>
-            <td class="px-3 py-2 text-right text-zinc-400">{{ entry.lloc }}</td>
-            <td class="px-3 py-2 text-right text-zinc-400">{{ entry.usedFromOutsideCount }}</td>
-            <td class="px-3 py-2 text-zinc-500 text-xs max-w-xs" data-tooltip="{{ entry.recommendation }}">
-              {{ entry.recommendation|length > 80 ? entry.recommendation[:80] ~ '...' : entry.recommendation }}
+            <td class="border border-slate-500 text-right px-2 py-0.5 {% if entry.cc > 20 %}bg-red-900{% elseif entry.cc > 10 %}bg-yellow-900{% endif %}" data-sort="{{ entry.cc }}">{{ entry.cc }}</td>
+            <td class="border border-slate-500 text-right px-2 py-0.5 {% if entry.lcom > 5 %}bg-red-900{% elseif entry.lcom > 2 %}bg-yellow-900{% endif %}" data-sort="{{ entry.lcom }}">{{ entry.lcom }}</td>
+            <td class="border border-slate-500 text-right px-2 py-0.5" data-sort="{{ entry.lloc }}">{{ entry.lloc }}</td>
+            <td class="border border-slate-500 text-right px-2 py-0.5" data-sort="{{ entry.usedFromOutsideCount }}">{{ entry.usedFromOutsideCount }}</td>
+            <td class="border border-slate-500 text-left px-2 py-0.5 text-white/50 text-xs" data-tooltip="{{ entry.recommendation }}">
+              {{ entry.recommendation|length > 100 ? entry.recommendation[:100] ~ '...' : entry.recommendation }}
             </td>
           </tr>
           {% endfor %}
@@ -117,7 +131,7 @@
   <div class="rounded-xl border border-green-800 bg-green-950/30 p-8 text-center mb-6">
     <div style="font-size: 2rem; margin-bottom: 0.5rem;">&#10003;</div>
     <h2 class="text-xl font-semibold text-green-300 mb-2">No refactoring needed</h2>
-    <p class="text-zinc-400">All classes have a clean bill of health. No refactoring priorities detected.</p>
+    <p class="text-zinc-400">All classes have a clean bill of health.</p>
   </div>
   {% endif %}
 </div>
@@ -125,10 +139,11 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+  const gridColor = isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.03)';
   Chart.defaults.color = isLight ? '#475569' : 'rgba(255,255,255,0.5)';
+  Chart.defaults.borderColor = isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.05)';
   Chart.defaults.font.family = "'Source Sans 3', sans-serif";
 
-  // Distribution chart
   const dist = {{ distribution|json_encode|raw }};
   new Chart(document.getElementById('distributionChart'), {
     type: 'bar',
@@ -147,29 +162,11 @@ document.addEventListener('DOMContentLoaded', function() {
       maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: {
-        y: {
-          beginAtZero: true,
-          ticks: { precision: 0 },
-          grid: { color: isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.03)' }
-        },
-        x: {
-          grid: { display: false }
-        }
+        y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: gridColor } },
+        x: { grid: { display: false } }
       }
     }
   });
-
-  // Filter
-  const filterInput = document.getElementById('filterInput');
-  if (filterInput) {
-    filterInput.addEventListener('input', function() {
-      const term = this.value.toLowerCase();
-      document.querySelectorAll('#roadmapTable tbody tr').forEach(function(row) {
-        const text = row.getAttribute('data-filter') || '';
-        row.style.display = text.includes(term) ? '' : 'none';
-      });
-    });
-  }
 });
 </script>
 
