@@ -48,24 +48,42 @@ final class FileList
                 }, $extensions);
 
                 $pattern = sprintf(
-                    '#^%s%s(%s)$#',
+                    '#^%s.+(%s)$#',
                     preg_quote($file, '#'),
-                    ! empty($exclude) ? '((?!' . implode('|', array_map('preg_quote', $exclude)) . ').)+' : '.+',
                     implode('|', $extensionPattern)
                 );
 
                 foreach ($iterator as $currentFile) {
-                    if (! preg_match($pattern, (string) $currentFile)) {
+                    $filePath = (string) $currentFile;
+
+                    if (!preg_match($pattern, $filePath)) {
                         continue;
                     }
 
-                    $this->files[] = (string) $currentFile;
+                    if ($this->isExcluded($filePath, $exclude)) {
+                        continue;
+                    }
+
+                    $this->files[] = $filePath;
                 }
             }
             elseif (is_file($file)) {
-                $this->files[] = $file;
+                if (!$this->isExcluded($file, $exclude)) {
+                    $this->files[] = $file;
+                }
             }
         }
+    }
+
+    private function isExcluded(string $filePath, array $excludePaths): bool
+    {
+        foreach ($excludePaths as $excludePath) {
+            if (str_starts_with($filePath, $excludePath)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

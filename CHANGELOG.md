@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.1] - 2026-03-19
+
+### Fixed
+- **`exclude` config was structurally broken since inception.** The negative-lookahead regex tried to match absolute exclude paths character-by-character inside the file path suffix, which could never work. Replaced the fragile regex approach with a simple `str_starts_with` prefix check. `exclude: ["../lib/phpword"]` now actually excludes files.
+
 ## [1.4.0] - 2026-03-19
 
 ### Changed
