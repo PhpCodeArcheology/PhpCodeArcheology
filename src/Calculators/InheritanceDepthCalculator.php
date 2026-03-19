@@ -77,6 +77,9 @@ class InheritanceDepthCalculator implements CalculatorInterface
 
         // PHP only allows single inheritance, take first
         $parentName = reset($extendsList);
+        if ($parentName === null || $parentName === '') {
+            return;
+        }
         $parentId = $this->nameToId[$parentName] ?? null;
 
         if ($parentId !== null) {
