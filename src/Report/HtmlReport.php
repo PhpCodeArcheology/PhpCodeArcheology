@@ -77,6 +77,7 @@ class HtmlReport implements ReportInterface
             [$this, 'generateProblemsPage'],
             [$this, 'generateRefactoringRoadmapPage'],
             [$this, 'generateGitPage'],
+            [$this, 'generateKnowledgeGraphPage'],
             [$this, 'generateGlossaryPage'],
         ];
 
@@ -138,6 +139,30 @@ class HtmlReport implements ReportInterface
         $data['trendData'] = $historyData['trendData'] ?? '{}';
         $data['hasMultipleRuns'] = $historyData['hasMultipleRuns'] ?? false;
         $data['runCount'] = $historyData['runCount'] ?? 0;
+
+        // Knowledge Graph stats for dashboard widget
+        $graphProvider = $this->dataProviderFactory->getGraphDataProvider();
+        $graphTemplateData = $graphProvider->getTemplateData();
+        $graphData = $graphTemplateData['graphData'] ?? ['nodes' => [], 'edges' => [], 'cycles' => []];
+
+        $data['kgNodeCount'] = count($graphData['nodes']);
+        $data['kgEdgeCount'] = count($graphData['edges']);
+        $data['kgCycleCount'] = count($graphData['cycles']);
+        $data['kgPackageCount'] = count(array_filter($graphData['nodes'], fn(array $n) => $n['type'] === 'package'));
+
+        // Top 5 most-connected classes
+        $classNodes = array_filter($graphData['nodes'], fn(array $n) => $n['type'] === 'class');
+        $classConnections = [];
+        foreach ($classNodes as $node) {
+            $connections = ($node['metrics']['afferentCoupling'] ?? 0) + ($node['metrics']['efferentCoupling'] ?? 0);
+            $classConnections[] = [
+                'id' => str_replace('class:', '', $node['id']),
+                'name' => $node['name'],
+                'connections' => $connections,
+            ];
+        }
+        usort($classConnections, fn($a, $b) => $b['connections'] - $a['connections']);
+        $data['kgTopConnected'] = array_slice($classConnections, 0, 5);
 
         $data['pageTitle'] = 'Dashboard';
         $data['currentPage'] = 'index.html';
@@ -284,6 +309,17 @@ class HtmlReport implements ReportInterface
         $data['pageTitle'] = 'Git Analysis';
         $data['currentPage'] = 'git.html';
         $this->renderTemplate('git.html.twig', $data, 'git.html');
+    }
+
+    protected function generateKnowledgeGraphPage(): void
+    {
+        $graphProvider = $this->dataProviderFactory->getGraphDataProvider();
+        $data = $graphProvider->getTemplateData();
+        $data['graphJson'] = json_encode($data['graphData'] ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        unset($data['graphData']);
+        $data['pageTitle'] = 'Knowledge Graph';
+        $data['currentPage'] = 'knowledge-graph.html';
+        $this->renderTemplate('knowledge-graph.html.twig', $data, 'knowledge-graph.html');
     }
 
     protected function generateGlossaryPage(): void

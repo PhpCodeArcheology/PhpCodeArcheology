@@ -321,6 +321,49 @@
   </div>
   {% endif %}
 
+  {# --- Knowledge Graph Widget --- #}
+  <div class="dash-panel" style="margin-bottom: 1.5rem;">
+    <div class="dash-panel-label">Knowledge Graph</div>
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; margin-bottom: 1rem;">
+      <div class="stat-card">
+        <div class="stat-label">Nodes</div>
+        <div class="stat-value">{{ kgNodeCount }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Edges</div>
+        <div class="stat-value">{{ kgEdgeCount }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Cycles</div>
+        <div class="stat-value" style="color: {% if kgCycleCount > 0 %}#ef4444{% else %}#86efac{% endif %};">{{ kgCycleCount }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Packages</div>
+        <div class="stat-value">{{ kgPackageCount }}</div>
+      </div>
+    </div>
+
+    {% if kgTopConnected|length > 0 %}
+    <div style="font-size: 0.75rem; color: rgba(255,255,255,0.4); margin-bottom: 0.35rem;">Most Connected Classes</div>
+    <div style="overflow-y: auto;">
+      {% for entry in kgTopConnected %}
+      <div class="problem-row">
+        <span style="color: rgba(255,255,255,0.4); font-size: 0.75rem; min-width: 2rem; text-align: right;">{{ entry.connections }}</span>
+        <span style="flex: 1; color: rgba(255,255,255,0.8);">
+          <a href="classes/{{ entry.id }}.html" style="color: rgb(6 182 212); text-decoration: none;">
+            {{ entry.name }}
+          </a>
+        </span>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <div style="margin-top: 0.75rem;">
+      <a href="knowledge-graph.html" style="color: rgb(6 182 212); font-size: 0.8rem; text-decoration: none;">Open Knowledge Graph &rarr;</a>
+    </div>
+  </div>
+
   {# --- All Metrics Grid --- #}
   <div class="dash-panel" style="margin-bottom: 1.5rem;">
     <div class="dash-panel-label">All Project Metrics</div>

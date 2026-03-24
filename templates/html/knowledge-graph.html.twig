@@ -1,0 +1,318 @@
+{% include('@Parts/header.html.twig') %}
+
+<style>
+  #graph-container {
+    position: relative;
+    width: 100%;
+    height: 700px;
+    background: rgba(8,51,68,0.25);
+    border: 1px solid rgba(6,182,212,0.15);
+    border-radius: 0.75rem;
+    overflow: hidden;
+  }
+  .graph-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: rgba(8,51,68,0.35);
+    border: 1px solid rgba(6,182,212,0.15);
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+    font-size: 0.8rem;
+  }
+  .graph-tooltip {
+    position: absolute;
+    background: rgba(8,51,68,0.95);
+    border: 1px solid rgba(6,182,212,0.4);
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    pointer-events: none;
+    z-index: 100;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    display: none;
+    max-width: 280px;
+  }
+  .graph-tooltip-title {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1rem;
+    margin-bottom: 0.4rem;
+  }
+  .graph-tooltip-row {
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.65);
+    margin-bottom: 0.15rem;
+  }
+  .graph-tooltip-warn {
+    font-size: 0.75rem;
+    color: #ef4444;
+    margin-top: 0.4rem;
+    font-weight: 600;
+  }
+  .filter-group {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+  }
+  .filter-group-label {
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.45);
+    white-space: nowrap;
+  }
+  .filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.125rem 0.5rem;
+    border-radius: 9999px;
+    border: 1px solid;
+    cursor: pointer;
+    font-size: 0.75rem;
+    transition: opacity 0.15s;
+    user-select: none;
+  }
+  .filter-chip.inactive {
+    opacity: 0.35;
+  }
+  .filter-chip:hover {
+    opacity: 1 !important;
+  }
+  .graph-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    background: rgba(8,51,68,0.25);
+    border: 1px solid rgba(6,182,212,0.1);
+    border-radius: 0.5rem;
+    margin-top: 1rem;
+    font-size: 0.75rem;
+  }
+  .legend-section {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    align-items: center;
+  }
+  .legend-section-label {
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.35);
+    margin-right: 0.15rem;
+  }
+  .legend-node-item {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .legend-edge-item {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+  .legend-line {
+    width: 20px;
+    height: 2px;
+    flex-shrink: 0;
+  }
+  .legend-hint {
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.3);
+    margin-left: auto;
+    white-space: nowrap;
+  }
+  .cc-slider-label {
+    min-width: 1.5rem;
+    text-align: center;
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.9rem;
+  }
+  .reset-zoom-btn {
+    padding: 0.2rem 0.65rem;
+    border-radius: 0.375rem;
+    border: 1px solid rgba(6,182,212,0.3);
+    background: rgba(6,182,212,0.1);
+    color: rgba(6,182,212,0.9);
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .reset-zoom-btn:hover {
+    background: rgba(6,182,212,0.2);
+    border-color: rgba(6,182,212,0.5);
+  }
+  .problems-only-label {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    cursor: pointer;
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.6);
+  }
+  /* Stats row light-theme tweaks handled via global css overrides */
+  [data-theme=light] #graph-container {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+  }
+  [data-theme=light] .graph-controls {
+    background: #fff;
+    border-color: #e2e8f0;
+    color: #334155;
+  }
+  [data-theme=light] .graph-tooltip {
+    background: rgba(255,255,255,0.97);
+    border-color: #0891b2;
+    color: #0f172a;
+  }
+  [data-theme=light] .graph-tooltip-row {
+    color: #475569;
+  }
+  [data-theme=light] .graph-legend {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+    color: #334155;
+  }
+  [data-theme=light] .filter-group-label {
+    color: #64748b;
+  }
+  [data-theme=light] .legend-section-label {
+    color: #94a3b8;
+  }
+  [data-theme=light] .legend-hint {
+    color: #94a3b8;
+  }
+  [data-theme=light] .problems-only-label {
+    color: #475569;
+  }
+  [data-theme=light] .reset-zoom-btn {
+    border-color: #0891b2;
+    background: #e0f2fe;
+    color: #0e7490;
+  }
+</style>
+
+<div class="mt-6 lg:w-5/6">
+  <div class="mb-7 text-sm">
+    <ul class="flex gap-1">
+      <li class="flex after:content-['⮁'] gap-1">
+        <a href="{% if isSubdir %}../{% endif %}index.html" class="text-cyan-500">Home</a>
+      </li>
+      <li>Knowledge Graph</li>
+    </ul>
+  </div>
+
+  <h1 class="mb-6 text-3xl font-semibold font-display">Knowledge Graph</h1>
+
+  {# Summary Stats #}
+  <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
+    <div class="rounded-xl border border-cyan-800 bg-cyan-950/45 p-4 text-center">
+      <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Nodes</div>
+      <div id="stat-nodes" style="font-family: 'Oswald', sans-serif; font-size: 2.5rem; font-weight: 500;">—</div>
+    </div>
+    <div class="rounded-xl border border-cyan-800 bg-cyan-950/45 p-4 text-center">
+      <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Edges</div>
+      <div id="stat-edges" style="font-family: 'Oswald', sans-serif; font-size: 2.5rem; font-weight: 500;">—</div>
+    </div>
+    <div class="rounded-xl border border-cyan-800 bg-cyan-950/45 p-4 text-center">
+      <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Cycles</div>
+      <div id="stat-cycles" style="font-family: 'Oswald', sans-serif; font-size: 2.5rem; font-weight: 500; color: #ef4444;">—</div>
+    </div>
+    <div class="rounded-xl border border-cyan-800 bg-cyan-950/45 p-4 text-center">
+      <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Packages</div>
+      <div id="stat-packages" style="font-family: 'Oswald', sans-serif; font-size: 2.5rem; font-weight: 500;">—</div>
+    </div>
+  </div>
+
+  {# Filter Controls #}
+  <div class="graph-controls">
+    <div class="filter-group">
+      <span class="filter-group-label">Node-Typen:</span>
+      <span class="filter-chip" data-filter-type="node" data-value="class"    style="color:#06b6d4; border-color:#06b6d4;">class</span>
+      <span class="filter-chip" data-filter-type="node" data-value="interface" style="color:#a855f7; border-color:#a855f7;">interface</span>
+      <span class="filter-chip" data-filter-type="node" data-value="trait"     style="color:#f97316; border-color:#f97316;">trait</span>
+      <span class="filter-chip" data-filter-type="node" data-value="package"   style="color:#22c55e; border-color:#22c55e;">package</span>
+      <span class="filter-chip" data-filter-type="node" data-value="author"    style="color:#ec4899; border-color:#ec4899;">author</span>
+      <span class="filter-chip inactive" data-filter-type="node" data-value="method"   style="color:#94a3b8; border-color:#94a3b8;">method</span>
+      <span class="filter-chip inactive" data-filter-type="node" data-value="function" style="color:#64748b; border-color:#64748b;">function</span>
+    </div>
+
+    <div class="filter-group">
+      <span class="filter-group-label">Edge-Typen:</span>
+      <span class="filter-chip" data-filter-type="edge" data-value="depends_on"  style="color:rgba(255,255,255,0.6); border-color:rgba(255,255,255,0.25);">depends_on</span>
+      <span class="filter-chip" data-filter-type="edge" data-value="extends"     style="color:#3b82f6; border-color:#3b82f6;">extends</span>
+      <span class="filter-chip" data-filter-type="edge" data-value="implements"  style="color:#a855f7; border-color:#a855f7;">implements</span>
+      <span class="filter-chip" data-filter-type="edge" data-value="uses_trait"  style="color:#f97316; border-color:#f97316;">uses_trait</span>
+      <span class="filter-chip" data-filter-type="edge" data-value="cycle_member" style="color:#ef4444; border-color:#ef4444;">cycle_member</span>
+      <span class="filter-chip inactive" data-filter-type="edge" data-value="belongs_to"  style="color:rgba(255,255,255,0.5); border-color:rgba(255,255,255,0.2);">belongs_to</span>
+      <span class="filter-chip inactive" data-filter-type="edge" data-value="authored_by" style="color:#ec4899; border-color:#ec4899;">authored_by</span>
+      <span class="filter-chip inactive" data-filter-type="edge" data-value="declares"    style="color:rgba(255,255,255,0.4); border-color:rgba(255,255,255,0.15);">declares</span>
+    </div>
+
+    <div class="filter-group">
+      <span class="filter-group-label">CC-Filter:</span>
+      <input type="range" id="cc-filter" min="0" max="50" value="0" style="width:90px; cursor:pointer; accent-color:#06b6d4;">
+      <span class="cc-slider-label" id="cc-filter-label">0</span>
+    </div>
+
+    <div class="filter-group">
+      <label class="problems-only-label">
+        <input type="checkbox" id="problems-only" style="accent-color:#ef4444; cursor:pointer;">
+        Nur Probleme
+      </label>
+    </div>
+
+    <div class="filter-group">
+      <button class="reset-zoom-btn" id="reset-zoom">Reset Zoom</button>
+    </div>
+  </div>
+
+  {# Graph SVG Container #}
+  <div id="graph-container">
+    <svg id="knowledge-graph-svg" style="width:100%; height:100%;"></svg>
+    <div class="graph-tooltip" id="graph-tooltip">
+      <div class="graph-tooltip-title" id="tooltip-title"></div>
+      <div id="tooltip-body"></div>
+    </div>
+  </div>
+
+  {# Legend #}
+  <div class="graph-legend">
+    <div class="legend-section">
+      <span class="legend-section-label">Nodes:</span>
+      <div class="legend-node-item"><div class="legend-dot" style="background:#06b6d4;"></div><span>class</span></div>
+      <div class="legend-node-item"><div class="legend-dot" style="background:#a855f7;"></div><span>interface</span></div>
+      <div class="legend-node-item"><div class="legend-dot" style="background:#f97316;"></div><span>trait</span></div>
+      <div class="legend-node-item"><div class="legend-dot" style="background:#22c55e;"></div><span>package</span></div>
+      <div class="legend-node-item"><div class="legend-dot" style="background:#ec4899;"></div><span>author</span></div>
+      <div class="legend-node-item"><div class="legend-dot" style="background:#94a3b8;"></div><span>method</span></div>
+      <div class="legend-node-item"><div class="legend-dot" style="background:#64748b;"></div><span>function</span></div>
+    </div>
+    <div class="legend-section">
+      <span class="legend-section-label">Edges:</span>
+      <div class="legend-edge-item"><div class="legend-line" style="background:rgba(255,255,255,0.4);"></div><span>depends_on</span></div>
+      <div class="legend-edge-item"><div class="legend-line" style="background:#3b82f6; height:2px;"></div><span>extends</span></div>
+      <div class="legend-edge-item"><div class="legend-line" style="background:#a855f7;"></div><span>implements</span></div>
+      <div class="legend-edge-item"><div class="legend-line" style="background:#f97316;"></div><span>uses_trait</span></div>
+      <div class="legend-edge-item"><div class="legend-line" style="background:#ef4444; height:2px;"></div><span>cycle_member</span></div>
+      <div class="legend-edge-item"><div class="legend-line" style="background:rgba(255,255,255,0.2);"></div><span>belongs_to</span></div>
+      <div class="legend-edge-item"><div class="legend-line" style="background:#ec4899; opacity:0.5;"></div><span>authored_by</span></div>
+      <div class="legend-edge-item"><div class="legend-line" style="background:rgba(255,255,255,0.15);"></div><span>declares</span></div>
+    </div>
+    <div class="legend-hint">Node-Größe = CC &nbsp;|&nbsp; Roter Rand = Zyklus &nbsp;|&nbsp; Klick = Detail-Seite</div>
+  </div>
+</div>
+
+<script src="{% if isSubdir %}../{% endif %}assets/js/d3.min.js"></script>
+<script src="{% if isSubdir %}../{% endif %}assets/js/knowledge-graph.js"></script>
+<script>
+  initKnowledgeGraph({{ graphJson|raw }});
+</script>
+
+{% include('@Parts/footer.html.twig') %}
