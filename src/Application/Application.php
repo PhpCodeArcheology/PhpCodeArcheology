@@ -46,6 +46,7 @@ use PhpCodeArch\Predictions\TooDependentPrediction;
 use PhpCodeArch\Predictions\TooLongPrediction;
 use PhpCodeArch\Predictions\TooMuchHtmlPrediction;
 use PhpCodeArch\Report\DataProvider\DataProviderFactory;
+use PhpCodeArch\Mcp\Command\McpCommand;
 use PhpCodeArch\Report\ReportFactory;
 use PhpCodeArch\Report\ReportTypeNotSupported;
 use PhpParser\NodeTraverser;
@@ -56,7 +57,7 @@ use Twig\Loader\FilesystemLoader;
 
 final readonly class Application
 {
-    const VERSION = '1.6.0';
+    const VERSION = '2.0.0';
 
     /**
      * @throws ConfigFileExtensionNotSupportedException
@@ -303,6 +304,7 @@ final readonly class Application
             'init' => (new Command\InitCommand())->execute($config, $output, $formatter),
             'compare' => (new Command\CompareCommand())->execute($config, $output, $formatter),
             'baseline' => (new Command\BaselineCommand($this))->execute($config, $output, $formatter),
+            'mcp' => (new McpCommand($this))->execute($config, $output, $formatter),
             default => throw new ParamException("Unknown command: $command"),
         };
     }

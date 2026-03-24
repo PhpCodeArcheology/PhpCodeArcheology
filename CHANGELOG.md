@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026-03-24
+
+### Added
+- **MCP Server (`mcp` subcommand).** PhpCodeArcheology is the first PHP static analysis tool with native [Model Context Protocol](https://modelcontextprotocol.io) support. AI assistants (Claude, Cursor, etc.) can now query analysis results directly via 9 structured tools: `get_health_score`, `get_problems`, `get_metrics`, `get_hotspots`, `get_refactoring_priorities`, `get_dependencies`, `get_class_list`, `get_graph`, `search_code`.
+- **`.mcp.json`** project file for zero-config Claude Code team sharing.
+- **README: AI Integration (MCP Server) section** with quick-start instructions and tool reference.
+
 ## [1.7.0] - 2026-03-24
 
 ### Added

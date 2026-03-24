@@ -19,7 +19,7 @@ final class ArgumentParser
         }
 
         // Detect subcommand (first non-flag argument)
-        $commands = ['init', 'compare', 'baseline'];
+        $commands = ['init', 'compare', 'baseline', 'mcp'];
         if (!empty($argv)) {
             $firstKey = array_key_first($argv);
             $firstArg = $argv[$firstKey];

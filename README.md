@@ -10,6 +10,45 @@ Unlike PHPStan or Psalm (which focus on type safety and bug detection), PhpCodeA
 
 ![PhpCodeArcheology Dashboard](docs/screenshot-dashboard.png)
 
+## AI Integration (MCP Server)
+
+PhpCodeArcheology is the **first PHP static analysis tool with native MCP (Model Context Protocol) support** — meaning AI assistants like Claude can query your codebase analysis results directly, without reading files or parsing JSON manually.
+
+### Quick Start with Claude Code
+
+```bash
+claude mcp add phpcodearcheology -- php bin/phpcodearcheology mcp
+```
+
+Or drop a `.mcp.json` into your project root (already included if you installed via Composer):
+
+```json
+{
+  "mcpServers": {
+    "phpcodearcheology": {
+      "command": "php",
+      "args": ["bin/phpcodearcheology", "mcp"]
+    }
+  }
+}
+```
+
+Once connected, Claude can answer questions like *"Which classes have the highest technical debt?"*, *"Show me all God Classes"*, or *"What are the top refactoring priorities in this project?"* — using live analysis data.
+
+### Available MCP Tools
+
+| Tool | Description |
+|------|-------------|
+| `get_health_score` | Overall code health score, grade, and project statistics |
+| `get_problems` | Code quality problems, filterable by severity and type |
+| `get_metrics` | Detailed metrics for a specific class, file, or function |
+| `get_hotspots` | Git hotspots ranked by churn × complexity |
+| `get_refactoring_priorities` | Ranked refactoring candidates with recommendations |
+| `get_dependencies` | Class dependency analysis (incoming/outgoing) |
+| `get_class_list` | All classes with key metrics, sortable and filterable |
+| `get_graph` | Knowledge graph as JSON (nodes, edges, cycles) |
+| `search_code` | Search entities by name with metric overview |
+
 ## Features
 
 - **60+ code quality metrics** per file, class, and function — cyclomatic complexity, cognitive complexity, maintainability index, LCOM, Halstead metrics, coupling, instability, and more

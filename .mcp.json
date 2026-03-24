@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "phpcodearcheology": {
+      "command": "php",
+      "args": ["bin/phpcodearcheology", "mcp"]
+    }
+  }
+}
