@@ -6,7 +6,7 @@ namespace PhpCodeArch\Application;
 
 final class Config
 {
-    private const VALID_REPORT_TYPES = ['html', 'markdown', 'json', 'sarif', 'ai-summary'];
+    private const VALID_REPORT_TYPES = ['html', 'markdown', 'json', 'sarif', 'ai-summary', 'graph'];
 
     private array $config = [];
 

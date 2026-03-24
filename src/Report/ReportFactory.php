@@ -60,6 +60,7 @@ class ReportFactory
             'json' => new JsonReport($config, $reportDataFactory, $historyDate, $twigLoader, $twig, $output),
             'sarif' => new SarifReport($config, $reportDataFactory, $historyDate, $twigLoader, $twig, $output),
             'ai-summary' => new AiSummaryReport($config, $reportDataFactory, $historyDate, $twigLoader, $twig, $output),
+            'graph' => new GraphReport($config, $reportDataFactory, $historyDate, $twigLoader, $twig, $output),
             default => throw new ReportTypeNotSupported("Report type $type not supported."),
         };
     }

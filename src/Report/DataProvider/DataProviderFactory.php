@@ -93,6 +93,11 @@ class DataProviderFactory
         return new RefactoringPriorityDataProvider($this->metricsController);
     }
 
+    public function getGraphDataProvider(): GraphDataProvider
+    {
+        return new GraphDataProvider($this->metricsController);
+    }
+
     public function getHistoryDataProvider(string $historyFile): HistoryDataProvider
     {
         $provider = new HistoryDataProvider($this->metricsController);

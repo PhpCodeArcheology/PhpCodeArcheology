@@ -15,7 +15,7 @@ Unlike PHPStan or Psalm (which focus on type safety and bug detection), PhpCodeA
 - **60+ code quality metrics** per file, class, and function — cyclomatic complexity, cognitive complexity, maintainability index, LCOM, Halstead metrics, coupling, instability, and more
 - **Problem detection** with 13 built-in rules — God Class, too complex, dead code, security smells, SOLID violations, deep inheritance, low type coverage
 - **Git integration** — churn analysis, hotspot detection (high churn + high complexity), author tracking
-- **Multiple report formats** — interactive HTML, Markdown, JSON, SARIF (GitHub Code Scanning), AI summary
+- **Multiple report formats** — interactive HTML, Markdown, JSON, SARIF (GitHub Code Scanning), AI summary, Knowledge Graph (JSON)
 - **Health Score** — single 0-100 score with A-F grading for your entire project
 - **Technical Debt Score** — weighted problem score normalised per 100 logical lines of code
 - **History tracking** — trend charts across multiple analysis runs
@@ -87,7 +87,7 @@ To create a config file interactively:
 
 | Option | Description |
 |--------|-------------|
-| `--report-type=TYPE` | Report format: `html` (default), `markdown`, `json`, `sarif`, `ai-summary`. Comma-separated for multiple: `html,json` |
+| `--report-type=TYPE` | Report format: `html` (default), `markdown`, `json`, `sarif`, `ai-summary`, `graph`. Comma-separated for multiple: `html,json` |
 | `--report-dir=DIR` | Output directory (default: `tmp/report`) |
 | `--quick` | Fast analysis with terminal output only, no report generation |
 | `--no-color` | Disable coloured terminal output (also respects `NO_COLOR` env) |
@@ -207,6 +207,7 @@ All threshold values shown above are the defaults. You only need to specify valu
 | `json` | `json/` | `report.json` | Machine processing, custom tooling |
 | `sarif` | `sarif/` | `report.sarif.json` | GitHub Code Scanning, VS Code SARIF Viewer |
 | `ai-summary` | `ai-summary/` | `ai-summary.md` | Token-efficient summary for LLM consumption |
+| `graph` | `graph/` | `graph.json` | Knowledge Graph (nodes + edges) for AI tools and visualisations |
 
 Since v1.6.0, each report type writes into its own subdirectory. `history.jsonl` remains in the report root.
 
@@ -222,6 +223,8 @@ tmp/report/
 │   └── ...
 ├── ai-summary/
 │   └── ai-summary.md
+├── graph/
+│   └── graph.json
 └── history.jsonl
 ```
 
@@ -232,6 +235,72 @@ Generate multiple report types in one run:
 ```
 
 > **Upgrading from v1.5.x?** Old report files in the report root (e.g. `index.html`, `report.json`) are no longer overwritten. They can be safely deleted.
+
+## Knowledge Graph Export
+
+The `graph` report type exports your codebase structure as a machine-readable Knowledge Graph — designed for AI tools, graph databases, and custom visualisations.
+
+```bash
+./vendor/bin/phpcodearcheology --report-type=graph --report-dir=output src/
+# Writes: output/graph/graph.json
+```
+
+The JSON output contains four top-level arrays:
+
+**`nodes`** — five types of nodes, each with an `id`, `type`, `name`, `metrics`, and `flags`:
+
+| Node type | Metrics |
+|-----------|---------|
+| `class` | `cc`, `lcom`, `mi`, `instability`, `afferentCoupling`, `efferentCoupling`, `gitChurnCount`, `gitCodeAgeDays` |
+| `method` | `cc`, `cognitiveComplexity`, `params` |
+| `function` | `cc`, `cognitiveComplexity`, `params` |
+| `package` | `abstractness`, `instability`, `distanceFromMainline` |
+| `author` | `commitCount`, `filesChanged` |
+
+**`edges`** — relationships between nodes:
+
+| Edge type | Meaning |
+|-----------|---------|
+| `declares` | Class → Method |
+| `extends` | Class → Parent class |
+| `implements` | Class → Interface |
+| `uses_trait` | Class → Trait |
+| `depends_on` | Class → Class (via `new` / static call) |
+| `belongs_to` | Class → Package |
+| `authored_by` | Class → Author |
+| `cycle_member` | Class ↔ Class (dependency cycle, bidirectional) |
+
+**`clusters`** — classes grouped by package.
+
+**`cycles`** — detected dependency cycles with the involved class node IDs.
+
+```json
+{
+  "version": "1.0",
+  "generatedAt": "2026-03-24T12:00:00+00:00",
+  "nodes": [
+    { "id": "class:x1a2b3c4", "type": "class", "name": "App\\UserService",
+      "path": "/src/UserService.php",
+      "metrics": { "cc": 12, "lcom": 3, "mi": 65.2, "instability": 0.8,
+                   "afferentCoupling": 5, "efferentCoupling": 20,
+                   "gitChurnCount": 15, "gitCodeAgeDays": 42 },
+      "flags": { "interface": false, "trait": false, "abstract": false,
+                 "final": false, "enum": false },
+      "problems": [] }
+  ],
+  "edges": [
+    { "source": "class:x1a2b3c4", "target": "class:x9c0d1e2f",
+      "type": "depends_on", "weight": 1 }
+  ],
+  "clusters": [
+    { "id": "package:App\\Services", "name": "App\\Services",
+      "nodeIds": ["class:x1a2b3c4"] }
+  ],
+  "cycles": [
+    { "nodes": ["class:xabc123", "class:xdef456"], "length": 2 }
+  ]
+}
+```
 
 ## Key Metrics
 
