@@ -3,7 +3,6 @@
 [![Packagist Version](https://img.shields.io/packagist/v/php-code-archeology/php-code-archeology)](https://packagist.org/packages/php-code-archeology/php-code-archeology)
 [![PHP Version](https://img.shields.io/packagist/php-v/php-code-archeology/php-code-archeology)](https://packagist.org/packages/php-code-archeology/php-code-archeology)
 [![License](https://img.shields.io/packagist/l/php-code-archeology/php-code-archeology)](https://packagist.org/packages/php-code-archeology/php-code-archeology)
-[![Tests](https://img.shields.io/github/actions/workflow/status/marcuskober/PhpCodeArcheology/tests.yml?label=tests)](https://github.com/marcuskober/PhpCodeArcheology/actions)
 
 **PhpCodeArcheology** is a PHP static analysis tool that measures code quality through 60+ metrics including cyclomatic complexity, maintainability index, coupling, and cohesion. It generates comprehensive reports for files, classes, methods, and functions — detecting code smells, identifying hotspots via git churn analysis, and tracking quality trends over time.
 
@@ -35,6 +34,32 @@ Unlike PHPStan or Psalm (which focus on type safety and bug detection), PhpCodeA
 ```bash
 composer require --dev php-code-archeology/php-code-archeology
 ```
+
+### Global Installation
+
+```bash
+composer global require php-code-archeology/php-code-archeology
+```
+
+Make sure `~/.composer/vendor/bin` (or `~/.config/composer/vendor/bin`) is in your `$PATH`. Then run from any directory:
+
+```bash
+phpcodearcheology /path/to/your/project
+```
+
+### Docker
+
+```bash
+docker build -t phpcodearcheology https://github.com/PhpCodeArcheology/PhpCodeArcheology.git
+```
+
+Run against a local project:
+
+```bash
+docker run --rm -v "$(pwd)":/project -v "$(pwd)/report":/output phpcodearcheology /project
+```
+
+This mounts your project into the container and writes the HTML report to `./report/`.
 
 ## Quick Start
 
@@ -200,6 +225,23 @@ All threshold values shown above are the defaults. You only need to specify valu
 For detailed descriptions, formulas, thresholds, and interpretation guidelines, see the **[Metric Reference](docs/metrics.md)**.
 
 The HTML report also includes a full **Metric Glossary** with descriptions, thresholds, and severity levels.
+
+## Development
+
+The HTML report templates use **Tailwind CSS**. The compiled `output.css` is committed to the repository, so you do **not** need Node.js to use or contribute to this project.
+
+If you modify HTML templates or CSS, rebuild with:
+
+```bash
+npm install
+npm run build:css
+```
+
+For live rebuilding during development:
+
+```bash
+npm run watch:css
+```
 
 ## Author
 

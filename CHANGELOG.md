@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.1] - 2026-03-24
+
+### Fixed
+- **Installation broken on PHP 8.2/8.3.** `composer.lock` was generated on PHP 8.5 and locked `symfony/yaml v8.0.6` (requires PHP >=8.4). Removed `composer.lock` from version control — Composer now resolves compatible versions per platform, as recommended for library packages.
+- Declared missing `ext-mbstring` requirement in `composer.json`. The codebase uses `mb_strlen`, `mb_substr`, `mb_detect_encoding` etc. — without this declaration, installations lacking mbstring would fail with cryptic errors.
+- Removed broken Tests badge from README (pointed to non-existent GitHub Actions workflow).
+
+### Changed
+- Dockerfile uses `composer update` instead of `composer install` (no lock file in repo).
+- Removed unused `plotly.js-dist` dependency from `package.json`. The project uses Chart.js.
+- Added `build:css` and `watch:css` npm scripts for Tailwind CSS development workflow.
+
+### Added
+- README: Docker installation instructions with volume mount example.
+- README: Global installation via `composer global require`.
+- README: Development section explaining the Tailwind CSS build chain.
+
 ## [1.5.0] - 2026-03-19
 
 ### Added
