@@ -27,7 +27,7 @@ class JsonReport implements ReportInterface
         protected readonly Environment       $twig,
         private readonly CliOutput           $output)
     {
-        $this->outputDir = $config->get('reportDir') . DIRECTORY_SEPARATOR;
+        $this->outputDir = $config->get('reportDir') . DIRECTORY_SEPARATOR . 'json' . DIRECTORY_SEPARATOR;
 
         if (!is_dir($this->outputDir)) {
             mkdir(directory: $this->outputDir, recursive: true);

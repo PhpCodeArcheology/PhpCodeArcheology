@@ -17,6 +17,9 @@ class MarkdownReport extends HtmlReport
     {
         parent::__construct($config, $dataProviderFactory, $historyDate, $twigLoader, $twig, $output);
 
+        $this->reportSubDirName = 'markdown';
+        $this->outputDir = $config->get('reportDir') . DIRECTORY_SEPARATOR . 'markdown' . DIRECTORY_SEPARATOR;
+
         $this->templateDir = dirname(__DIR__, 2) . '/templates/markdown' . DIRECTORY_SEPARATOR;
         $this->twigLoader->setPaths($this->templateDir);
 
@@ -28,6 +31,10 @@ class MarkdownReport extends HtmlReport
 
     public function generate(): void
     {
+        if (!is_dir($this->outputDir)) {
+            mkdir(directory: $this->outputDir, recursive: true);
+        }
+
         $this->clearReportDir();
 
         mkdir($this->outputDir . 'files');

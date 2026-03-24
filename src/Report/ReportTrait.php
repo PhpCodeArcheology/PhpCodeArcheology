@@ -14,6 +14,13 @@ trait ReportTrait
 
     protected string $templateDir = '';
 
+    protected string $reportSubDirName = '';
+
+    protected function getReportSubDir(): string
+    {
+        return $this->reportSubDirName;
+    }
+
     protected function clearReportDir(): void
     {
         if ($this->outputDir === '' || $this->outputDir === '/' || $this->outputDir === DIRECTORY_SEPARATOR) {

@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-03-24
+
+### Added
+- **Multiple report types in one run.** `--report-type=html,json` (comma-separated) generates all specified formats in a single analysis pass.
+
+### Changed
+- **Report subdirectory isolation.** Each report type now writes into its own subdirectory under `reportDir`: `html/`, `markdown/`, `json/`, `sarif/`, `ai-summary/`. `history.jsonl` remains in the report root.
+
+### Migration
+- Existing report files in the root of `reportDir` (e.g. `index.html`, `report.json`) are no longer overwritten and can be safely deleted. The CLI displays a notice if old root-level files are detected.
+
 ## [1.5.1] - 2026-03-24
 
 ### Fixed

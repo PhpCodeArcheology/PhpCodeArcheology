@@ -62,9 +62,13 @@ final class Config
         }
 
         if ($this->has('reportType')) {
-            $reportType = strtolower($this->get('reportType'));
-            if (!in_array($reportType, self::VALID_REPORT_TYPES, true)) {
-                $errors[] = "Unknown report type '$reportType'. Valid types: " . implode(', ', self::VALID_REPORT_TYPES) . '.';
+            $reportTypes = $this->get('reportType');
+            $reportTypes = is_array($reportTypes) ? $reportTypes : [$reportTypes];
+            foreach ($reportTypes as $reportType) {
+                $reportType = strtolower($reportType);
+                if (!in_array($reportType, self::VALID_REPORT_TYPES, true)) {
+                    $errors[] = "Unknown report type '$reportType'. Valid types: " . implode(', ', self::VALID_REPORT_TYPES) . '.';
+                }
             }
         }
 

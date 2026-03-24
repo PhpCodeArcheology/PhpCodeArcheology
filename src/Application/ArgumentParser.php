@@ -44,7 +44,8 @@ final class ArgumentParser
                         break;
 
                     case 'report-type':
-                        $config->set('reportType', $value);
+                        $types = array_map('trim', explode(',', $value));
+                        $config->set('reportType', count($types) === 1 ? $types[0] : $types);
                         break;
 
                     case 'report-dir':

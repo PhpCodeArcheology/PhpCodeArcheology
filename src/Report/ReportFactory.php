@@ -15,6 +15,32 @@ use Twig\Loader\FilesystemLoader;
 class ReportFactory
 {
     /**
+     * @return ReportInterface[]
+     * @throws ReportTypeNotSupported
+     */
+    public static function createMultiple(
+        Config              $config,
+        DataProviderFactory $reportDataFactory,
+        false|\DateTimeImmutable $historyDate,
+        FilesystemLoader    $twigLoader,
+        Environment         $twig,
+        CliOutput           $output
+    ): array
+    {
+        $types = $config->get('reportType') ?? 'html';
+        $types = is_array($types) ? array_unique($types) : [$types];
+
+        $reports = [];
+        foreach ($types as $type) {
+            $singleConfig = clone $config;
+            $singleConfig->set('reportType', strtolower($type));
+            $reports[] = self::create($singleConfig, $reportDataFactory, $historyDate, $twigLoader, $twig, $output);
+        }
+
+        return $reports;
+    }
+
+    /**
      * @throws ReportTypeNotSupported
      */
     public static function create(

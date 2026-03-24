@@ -30,14 +30,11 @@ class HtmlReport implements ReportInterface
         protected readonly Environment      $twig,
         private readonly CliOutput          $output)
     {
-        $this->outputDir = $config->get('reportDir') . DIRECTORY_SEPARATOR;
+        $this->reportSubDirName = 'html';
+        $this->outputDir = $config->get('reportDir') . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR;
 
         $this->templateDir = dirname(__DIR__, 2) . '/templates/html' . DIRECTORY_SEPARATOR;
         $this->assetDir = $this->templateDir . 'assets';
-
-        if (! is_dir($this->outputDir)) {
-            mkdir(directory: $this->outputDir, recursive: true);
-        }
 
         $this->twigLoader->setPaths($this->templateDir);
         $this->twigLoader->addPath($this->templateDir . 'parts', 'Parts');
@@ -46,6 +43,10 @@ class HtmlReport implements ReportInterface
 
     public function generate(): void
     {
+        if (!is_dir($this->outputDir)) {
+            mkdir(directory: $this->outputDir, recursive: true);
+        }
+
         $this->clearReportDir();
 
         mkdir(directory: $this->outputDir . 'assets', recursive: true);

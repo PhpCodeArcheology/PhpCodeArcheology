@@ -87,7 +87,7 @@ To create a config file interactively:
 
 | Option | Description |
 |--------|-------------|
-| `--report-type=TYPE` | Report format: `html` (default), `markdown`, `json`, `sarif`, `ai-summary` |
+| `--report-type=TYPE` | Report format: `html` (default), `markdown`, `json`, `sarif`, `ai-summary`. Comma-separated for multiple: `html,json` |
 | `--report-dir=DIR` | Output directory (default: `tmp/report`) |
 | `--quick` | Fast analysis with terminal output only, no report generation |
 | `--no-color` | Disable coloured terminal output (also respects `NO_COLOR` env) |
@@ -200,13 +200,38 @@ All threshold values shown above are the defaults. You only need to specify valu
 
 ## Report Types
 
-| Type | Output | Use Case |
-|------|--------|----------|
-| `html` | Interactive HTML report with charts | Browser-based review |
-| `markdown` | Markdown files | Text-based review, Git-friendly |
-| `json` | `report.json` | Machine processing, custom tooling |
-| `sarif` | `report.sarif.json` | GitHub Code Scanning, VS Code SARIF Viewer |
-| `ai-summary` | `ai-summary.md` | Token-efficient summary for LLM consumption |
+| Type | Subdirectory | Output | Use Case |
+|------|-------------|--------|----------|
+| `html` | `html/` | Interactive HTML report with charts | Browser-based review |
+| `markdown` | `markdown/` | Markdown files | Text-based review, Git-friendly |
+| `json` | `json/` | `report.json` | Machine processing, custom tooling |
+| `sarif` | `sarif/` | `report.sarif.json` | GitHub Code Scanning, VS Code SARIF Viewer |
+| `ai-summary` | `ai-summary/` | `ai-summary.md` | Token-efficient summary for LLM consumption |
+
+Since v1.6.0, each report type writes into its own subdirectory. `history.jsonl` remains in the report root.
+
+```
+tmp/report/
+├── html/
+│   └── index.html
+├── json/
+│   └── report.json
+├── sarif/
+│   └── report.sarif.json
+├── markdown/
+│   └── ...
+├── ai-summary/
+│   └── ai-summary.md
+└── history.jsonl
+```
+
+Generate multiple report types in one run:
+
+```bash
+./vendor/bin/phpcodearcheology --report-type=html,json
+```
+
+> **Upgrading from v1.5.x?** Old report files in the report root (e.g. `index.html`, `report.json`) are no longer overwritten. They can be safely deleted.
 
 ## Key Metrics
 

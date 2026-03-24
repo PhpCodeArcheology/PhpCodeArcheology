@@ -56,7 +56,7 @@ use Twig\Loader\FilesystemLoader;
 
 final readonly class Application
 {
-    const VERSION = '1.5.1';
+    const VERSION = '1.6.0';
 
     /**
      * @throws ConfigFileExtensionNotSupportedException
@@ -106,7 +106,7 @@ final readonly class Application
         $historyService = new HistoryService();
         $historyDate = $historyService->setDeltas($metricsController, $config);
 
-        $report = ReportFactory::create(
+        $reports = ReportFactory::createMultiple(
             $config,
             $dataProviderFactory,
             $historyDate,
@@ -114,7 +114,19 @@ final readonly class Application
             $twig,
             $output
         );
-        $report->generate();
+
+        foreach ($reports as $report) {
+            $report->generate();
+        }
+
+        // Migration hint for users upgrading from pre-v1.6.0
+        $oldIndexFile = $config->get('reportDir') . DIRECTORY_SEPARATOR . 'index.html';
+        if (file_exists($oldIndexFile)) {
+            $output->outNl();
+            $output->outNl('Note: Since v1.6.0, reports are generated in subdirectories (e.g., html/, json/).');
+            $output->outNl('Old report files in the root directory can be safely removed.');
+            $output->outNl();
+        }
 
         $historyService->writeHistory($metricsController, $config);
 
