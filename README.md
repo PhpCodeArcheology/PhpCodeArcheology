@@ -16,18 +16,28 @@ PhpCodeArcheology is the **first PHP static analysis tool with native MCP (Model
 
 ### Quick Start with Claude Code
 
+The setup depends on how you installed PhpCodeArcheology:
+
+**Global installation** (`composer global require phpcodearcheology/phpcodearcheology`):
+
 ```bash
-claude mcp add phpcodearcheology -- php bin/phpcodearcheology mcp
+claude mcp add phpcodearcheology -- phpcodearcheology mcp
 ```
 
-Or drop a `.mcp.json` into your project root (already included if you installed via Composer):
+**Project dependency** (`composer require --dev phpcodearcheology/phpcodearcheology`):
+
+```bash
+claude mcp add phpcodearcheology -- vendor/bin/phpcodearcheology mcp
+```
+
+Or drop a `.mcp.json` into your project root for team sharing:
 
 ```json
 {
   "mcpServers": {
     "phpcodearcheology": {
-      "command": "php",
-      "args": ["bin/phpcodearcheology", "mcp"]
+      "command": "vendor/bin/phpcodearcheology",
+      "args": ["mcp"]
     }
   }
 }
