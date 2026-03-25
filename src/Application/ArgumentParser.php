@@ -33,6 +33,27 @@ final class ArgumentParser
             }
         }
 
+        // Normalize space-separated value params: --param value → --param=value
+        $valueParams = ['coverage-file', 'report-type', 'report-dir', 'git-root', 'fail-on', 'extensions', 'exclude'];
+        $argv = array_values($argv);
+        $normalized = [];
+        $i = 0;
+        while ($i < count($argv)) {
+            if (
+                preg_match('#^--([\w\-]+)$#', $argv[$i], $m)
+                && in_array($m[1], $valueParams, true)
+                && isset($argv[$i + 1])
+                && !str_starts_with($argv[$i + 1], '-')
+            ) {
+                $normalized[] = $argv[$i] . '=' . $argv[$i + 1];
+                $i += 2;
+            } else {
+                $normalized[] = $argv[$i];
+                $i++;
+            }
+        }
+        $argv = $normalized;
+
         foreach ($argv as $key => $value) {
             if (preg_match('#--([\w\-]+)=(.*)#', $value, $matches)) {
                 [, $param, $value] = $matches;
@@ -60,6 +81,11 @@ final class ArgumentParser
                         $git = $config->get('git') ?? [];
                         $git['root'] = $resolved;
                         $config->set('git', $git);
+                        break;
+
+                    case 'coverage-file':
+                        $resolved = realpath($value);
+                        $config->set('coverageFile', $resolved !== false ? $resolved : $value);
                         break;
 
                     case 'fail-on':

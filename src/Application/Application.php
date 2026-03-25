@@ -8,8 +8,11 @@ use PhpCodeArch\Application\ConfigFile\ConfigFileFinder;
 use PhpCodeArch\Application\ConfigFile\Exceptions\ConfigFileExtensionNotSupportedException;
 use PhpCodeArch\Application\ConfigFile\Exceptions\MultipleConfigFilesException;
 use PhpCodeArch\Application\Service\ClaudeMdGenerator;
+use PhpCodeArch\Application\Service\CloverXmlParser;
 use PhpCodeArch\Application\Service\FrameworkDetector;
+use PhpCodeArch\Application\Service\TestCoversParser;
 use PhpCodeArch\Application\Service\HistoryService;
+use PhpCodeArch\Application\Service\TestDirectoryScanner;
 use PhpCodeArch\Application\Service\SummaryPrinter;
 use PhpCodeArch\Calculators\CalculatorService;
 use PhpCodeArch\Calculators\CouplingCalculator;
@@ -19,6 +22,7 @@ use PhpCodeArch\Calculators\LayerViolationCalculator;
 use PhpCodeArch\Calculators\PackageCohesionCalculator;
 use PhpCodeArch\Calculators\SolidViolationCalculator;
 use PhpCodeArch\Calculators\FileCalculator;
+use PhpCodeArch\Calculators\TestMappingCalculator;
 use PhpCodeArch\Calculators\HealthScoreCalculator;
 use PhpCodeArch\Calculators\RefactoringPriorityCalculator;
 use PhpCodeArch\Calculators\InheritanceDepthCalculator;
@@ -36,6 +40,7 @@ use PhpCodeArch\Predictions\PredictionInterface;
 use PhpCodeArch\Predictions\PredictionService;
 use PhpCodeArch\Predictions\DeadCodePrediction;
 use PhpCodeArch\Predictions\HotspotPrediction;
+use PhpCodeArch\Predictions\UntestedComplexCodePrediction;
 use PhpCodeArch\Predictions\DeepInheritancePrediction;
 use PhpCodeArch\Predictions\DependencyCyclePrediction;
 use PhpCodeArch\Predictions\LowTypeCoveragePrediction;
@@ -59,7 +64,7 @@ use Twig\Loader\FilesystemLoader;
 
 final readonly class Application
 {
-    const VERSION = '2.4.0';
+    const VERSION = '2.5.0';
 
     /**
      * @throws ConfigFileExtensionNotSupportedException
@@ -92,6 +97,45 @@ final readonly class Application
             $projectRoot = $config->get('runningDir') ?: ($config->get('files')[0] ?? getcwd());
             $frameworkResult = $detector->detect($projectRoot);
             $config->set('frameworkDetection', $frameworkResult);
+
+            $testScanner = new TestDirectoryScanner($frameworkResult);
+            $testScanResult = $testScanner->scan($projectRoot);
+            $config->set('testScanResult', $testScanResult);
+
+            if (!empty($testScanResult->classBasedTestFiles)) {
+                $phpParser = (new ParserFactory())->createForHostVersion();
+                $coversParser = new TestCoversParser($phpParser);
+                $coversResult = $coversParser->parse($testScanResult->classBasedTestFiles);
+                $config->set('coversParseResult', $coversResult);
+            }
+
+            // Use composer.json directory as the true project root for coverage
+            $composerRoot = $frameworkResult->composerJsonPath !== ''
+                ? dirname($frameworkResult->composerJsonPath)
+                : $projectRoot;
+
+            // Auto-detect Clover XML in common locations
+            if ($config->get('coverageFile') === null) {
+                $candidates = ['clover.xml', 'coverage/clover.xml', 'build/logs/clover.xml', 'build/coverage/clover.xml'];
+                foreach ($candidates as $candidate) {
+                    $path = $composerRoot . DIRECTORY_SEPARATOR . $candidate;
+                    if (is_file($path)) {
+                        $config->set('coverageFile', $path);
+                        break;
+                    }
+                }
+            }
+
+            $coverageFile = $config->get('coverageFile');
+            if ($coverageFile !== null) {
+                if (is_file($coverageFile)) {
+                    $cloverParser = new CloverXmlParser();
+                    $coverageData = $cloverParser->parse($coverageFile, $composerRoot);
+                    $config->set('coverageData', $coverageData);
+                } else {
+                    fwrite(STDERR, "Warning: Coverage file not found: {$coverageFile}\n");
+                }
+            }
         }
 
         // Quick mode: reduced analysis, no report
@@ -155,6 +199,22 @@ final readonly class Application
         }
 
         (new SummaryPrinter())->print($metricsController, $config, $problems, $output, $formatter);
+
+        $frameworkDetection = $config->get('frameworkDetection');
+        if ($frameworkDetection instanceof \PhpCodeArch\Application\Service\FrameworkDetectionResult
+            && $frameworkDetection->hasTestFramework()
+            && $config->get('coverageFile') === null) {
+            $output->outNl();
+            $output->outNl('Tip: For precise line-level coverage data, generate a Clover XML report first:');
+            if ($frameworkDetection->pestDetected) {
+                $output->outNl('  ' . $formatter->info('XDEBUG_MODE=coverage vendor/bin/pest --coverage-clover clover.xml'));
+            }
+            if ($frameworkDetection->phpunitDetected) {
+                $output->outNl('  ' . $formatter->info('XDEBUG_MODE=coverage vendor/bin/phpunit --coverage-clover clover.xml'));
+            }
+            $output->outNl('  Requires Xdebug or PCOV PHP extension.');
+            $output->outNl('  The clover.xml will be detected automatically on the next run.');
+        }
 
         return $this->determineExitCode($config, $problems);
     }
@@ -255,13 +315,24 @@ final readonly class Application
      * @param CliOutput $output
      * @return void
      */
-    private function runCalculators(MetricsController $metricsController, CliOutput $output): void
+    private function runCalculators(MetricsController $metricsController, CliOutput $output, ?Config $config = null): void
     {
         $packageIACalculator = new PackageInstabilityAbstractnessCalculator($metricsController);
+
+        $frameworkDetection = $config?->get('frameworkDetection');
+        $testScanResult = $config?->get('testScanResult');
+        $coverageData = $config?->get('coverageData');
+        $coversParseResult = $config?->get('coversParseResult');
+
+        // Use composer.json directory as project root for coverage path matching
+        $composerRoot = ($frameworkDetection instanceof \PhpCodeArch\Application\Service\FrameworkDetectionResult && $frameworkDetection->composerJsonPath !== '')
+            ? dirname($frameworkDetection->composerJsonPath)
+            : ($config?->get('runningDir') ?: ($config?->get('files')[0] ?? getcwd()));
 
         $calculatorService = new CalculatorService([
             new MaintainabilityIndexCalculator($metricsController),
             new FileCalculator($metricsController),
+            new TestMappingCalculator($metricsController, $frameworkDetection, $testScanResult, $coverageData, $composerRoot, $coversParseResult),
             new VariablesCalculator($metricsController),
             new CouplingCalculator($metricsController, $packageIACalculator),
             new InheritanceDepthCalculator($metricsController),
@@ -297,6 +368,7 @@ final readonly class Application
             new DeadCodePrediction(),
             new SecuritySmellPrediction(),
             new SolidViolationPrediction(),
+            new UntestedComplexCodePrediction($config),
             new HotspotPrediction($config),
         ], $metricsController, $output);
         $predictions->predict();
@@ -359,7 +431,7 @@ final readonly class Application
             );
         }
 
-        $this->runCalculators($metricsController, $output);
+        $this->runCalculators($metricsController, $output, $config);
 
         $problems = $this->runPredictors($metricsController, $output, $config);
         $this->setProblems($metricsController, $problems);

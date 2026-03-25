@@ -88,3 +88,22 @@ it('throws on unknown parameters', function () {
 it('throws on unknown flag parameters', function () {
     $this->parser->parse(['--unknown-flag']);
 })->throws(ParamException::class, 'does not exist');
+
+it('parses --coverage-file=path (equals form)', function () {
+    $config = $this->parser->parse(['--coverage-file=nonexistent-coverage.xml']);
+
+    expect($config->get('coverageFile'))->toBe('nonexistent-coverage.xml');
+});
+
+it('parses --coverage-file path (space form)', function () {
+    $config = $this->parser->parse(['--coverage-file', 'nonexistent-coverage.xml']);
+
+    expect($config->get('coverageFile'))->toBe('nonexistent-coverage.xml');
+});
+
+it('does not merge boolean flags with next argument (--quick src/ should NOT become --quick=src/)', function () {
+    $config = $this->parser->parse(['--quick', 'src/']);
+
+    expect($config->get('quickMode'))->toBeTrue()
+        ->and($config->get('files'))->toContain('src/');
+});

@@ -8,3 +8,4 @@ debug.txt
 php-codearch-config.yaml
 .claude/settings.local.json
 composer.lock
+clover.xml

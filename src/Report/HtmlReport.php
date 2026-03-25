@@ -77,6 +77,7 @@ class HtmlReport implements ReportInterface
             [$this, 'generateProblemsPage'],
             [$this, 'generateRefactoringRoadmapPage'],
             [$this, 'generateGitPage'],
+            [$this, 'generateTestsPage'],
             [$this, 'generateKnowledgeGraphPage'],
             [$this, 'generateGlossaryPage'],
         ];
@@ -321,6 +322,14 @@ class HtmlReport implements ReportInterface
         $data['pageTitle'] = 'Git Analysis';
         $data['currentPage'] = 'git.html';
         $this->renderTemplate('git.html.twig', $data, 'git.html');
+    }
+
+    protected function generateTestsPage(): void
+    {
+        $data = $this->dataProviderFactory->getTestsDataProvider()->getTemplateData();
+        $data['pageTitle'] = 'Tests';
+        $data['currentPage'] = 'tests.html';
+        $this->renderTemplate('tests.html.twig', $data, 'tests.html');
     }
 
     protected function generateKnowledgeGraphPage(): void

@@ -473,4 +473,54 @@ return [
         ],
     ],
     ['key' => 'refactoringPriorityDrivers', 'type' => 'storage'],
+
+    // Test coverage
+    [
+        'key' => 'hasTest',
+        'name' => 'Has test',
+        'shortName' => 'Tested',
+        'description' => 'Whether a matching test file was found for this class.',
+        'valueType' => \PhpCodeArch\Metrics\Model\Enums\MetricValueType::Bool,
+        'better' => \PhpCodeArch\Metrics\Model\Enums\BetterDirection::High,
+        'visibility' => \PhpCodeArch\Metrics\Model\Enums\MetricVisibility::ShowEverywhere,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
+        ],
+    ],
+    [
+        'key' => 'testFileCount',
+        'name' => 'Test file count',
+        'shortName' => 'Tests',
+        'description' => 'Number of test files mapped to this class.',
+        'valueType' => \PhpCodeArch\Metrics\Model\Enums\MetricValueType::Int,
+        'better' => \PhpCodeArch\Metrics\Model\Enums\BetterDirection::High,
+        'visibility' => \PhpCodeArch\Metrics\Model\Enums\MetricVisibility::ShowDetails,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
+        ],
+    ],
+    [
+        'key' => 'testType',
+        'name' => 'Test type',
+        'shortName' => '',
+        'description' => 'Type of test coverage: unit, integration, or unknown.',
+        'valueType' => \PhpCodeArch\Metrics\Model\Enums\MetricValueType::String,
+        'better' => \PhpCodeArch\Metrics\Model\Enums\BetterDirection::Irrelevant,
+        'visibility' => \PhpCodeArch\Metrics\Model\Enums\MetricVisibility::ShowDetails,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
+        ],
+    ],
+    [
+        'key' => 'lineCoverage',
+        'name' => 'Line coverage',
+        'shortName' => 'Coverage',
+        'description' => 'Percentage of executable lines covered by tests (from Clover XML).',
+        'valueType' => \PhpCodeArch\Metrics\Model\Enums\MetricValueType::Percentage,
+        'better' => \PhpCodeArch\Metrics\Model\Enums\BetterDirection::High,
+        'visibility' => \PhpCodeArch\Metrics\Model\Enums\MetricVisibility::ShowEverywhere,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
+        ],
+    ],
 ];

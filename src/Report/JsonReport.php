@@ -41,6 +41,7 @@ class JsonReport implements ReportInterface
         $projectData = $this->dataProviderFactory->getProjectDataProvider()->getTemplateData();
         $problemData = $this->dataProviderFactory->getProblemDataProvider()->getTemplateData();
         $gitData = $this->dataProviderFactory->getGitDataProvider()->getTemplateData();
+        $testsData = $this->dataProviderFactory->getTestsDataProvider()->getTemplateData();
 
         $report = [
             'version' => '1.0',
@@ -52,6 +53,7 @@ class JsonReport implements ReportInterface
             'functions' => $this->buildFunctionsSection(),
             'problems' => $this->buildProblemsSection($problemData),
             'git' => $this->buildGitSection($gitData),
+            'tests' => $this->buildTestsSection($testsData),
         ];
 
         $json = json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
@@ -164,6 +166,22 @@ class JsonReport implements ReportInterface
             'activeAuthors' => $gitData['gitActiveAuthors'] ?? 0,
             'analysisPeriod' => $gitData['gitAnalysisPeriod'] ?? 'N/A',
             'hotspots' => array_slice($gitData['hotspots'] ?? [], 0, 50),
+        ];
+    }
+
+    private function buildTestsSection(array $testsData): array
+    {
+        $stats = $testsData['stats'] ?? [];
+        return [
+            'testRatio' => $stats['testRatio'] ?? 0,
+            'testFileCount' => $stats['testFileCount'] ?? 0,
+            'productionFileCount' => $stats['productionFileCount'] ?? 0,
+            'testedClassCount' => $stats['testedClassCount'] ?? 0,
+            'untestedClassCount' => $stats['untestedClassCount'] ?? 0,
+            'testedClassRatio' => $stats['testedClassRatio'] ?? 0,
+            'coveragePercent' => $stats['overallCoveragePercent'] ?? null,
+            'detectedTestFrameworks' => $stats['detectedTestFrameworks'] ?? '',
+            'coverageGaps' => $testsData['coverageGaps'] ?? [],
         ];
     }
 

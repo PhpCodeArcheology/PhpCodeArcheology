@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-PhpCodeArcheology is a PHP static analysis tool focused on architecture and maintainability. It measures 60+ code quality metrics, detects problems via 13 built-in rules, and generates reports in HTML, Markdown, JSON, SARIF, and Knowledge Graph formats. It includes an MCP server for AI-native code intelligence.
+PhpCodeArcheology is a PHP static analysis tool focused on architecture and maintainability. It measures 60+ code quality metrics, detects problems via 14 built-in rules, and generates reports in HTML, Markdown, JSON, SARIF, and Knowledge Graph formats. It includes test analysis (auto-detects PHPUnit/Pest/Codeception, maps test files to classes, integrates Clover XML coverage) and an MCP server for AI-native code intelligence.
 
 ## Language
 
@@ -26,7 +26,7 @@ The tool, documentation, CLI output, and all user-facing text are in **English**
   - `Predictions/` — Problem detectors (too complex, god class, dead code, etc.)
   - `Report/` — Report generators and data providers
   - `Mcp/` — MCP server command and tools
-  - `Application/` — CLI app, config, analyzers
+  - `Application/` — CLI app, config, analyzers, services (e.g. `Service/CloverXmlParser.php`)
 - `data/metrics/` — Metric type definitions (used for glossary and report rendering)
 - `templates/html/` — Twig templates for HTML report
 - `templates/markdown/` — Twig templates for Markdown report
@@ -37,10 +37,18 @@ The tool, documentation, CLI output, and all user-facing text are in **English**
 
 ```bash
 # Analyze and generate HTML report
-php bin/phpcodearcheology src/
+php vendor/bin/phpcodearcheology src/
 
 # Quick terminal-only output
-php bin/phpcodearcheology --quick src/
+php vendor/bin/phpcodearcheology --quick src/
+
+# With Clover XML coverage data
+php vendor/bin/phpcodearcheology --coverage-file clover.xml src/
+
+# Generate coverage first (PHPUnit or Pest)
+# Requires Xdebug or PCOV PHP extension
+XDEBUG_MODE=coverage vendor/bin/pest --coverage-clover clover.xml
+# or: XDEBUG_MODE=coverage vendor/bin/phpunit --coverage-clover clover.xml
 
 # Run tests
 php vendor/bin/pest
@@ -64,3 +72,4 @@ This project follows **Semantic Versioning** (semver.org):
 - All problem detectors use `PredictionTrait` for config access and framework-aware helpers
 - The `lcomExclude` pattern (class name + interface matching) is the model for all exclusion logic
 - Framework detection is automatic via `composer.json` parsing — adjustments are per-pattern, not blanket
+- Test framework detection is automatic via `composer.json` (PHPUnit/Pest/Codeception) — test directories are scanned and test files mapped to production classes via namespace, naming convention, and directory structure

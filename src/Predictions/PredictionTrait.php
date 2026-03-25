@@ -8,7 +8,6 @@ use PhpCodeArch\Application\Config;
 use PhpCodeArch\Application\Service\FrameworkDetectionResult;
 use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
-use PhpCodeArch\Predictions\Problems\TooComplexProblem;
 
 trait PredictionTrait
 {
@@ -21,7 +20,7 @@ trait PredictionTrait
         }
 
         foreach ($keys as $key) {
-            $problem = TooComplexProblem::ofProblemLevelAndMessage(
+            $problem = $problemClass::ofProblemLevelAndMessage(
                 problemLevel: $level,
                 message: $message
             );

@@ -1,0 +1,24 @@
+{% include('parts/header.md.twig') %}
+
+## Test Analysis
+
+- **Test Ratio:** {{ stats.testRatio|number_format(1) }}% ({{ stats.testFileCount }} test files / {{ stats.productionFileCount }} production files)
+- **Tested Classes:** {{ stats.testedClassCount }} / {{ stats.testedClassCount + stats.untestedClassCount }} ({{ stats.testedClassRatio|number_format(1) }}%)
+- **Test Frameworks:** {{ stats.detectedTestFrameworks ?: 'None detected' }}
+{% if stats.functionBasedTestFileCount > 0 %}
+- **Function-based Tests:** {{ stats.functionBasedTestFileCount }} files (not mapped to classes)
+{% endif %}
+
+### Untested Complex Classes
+
+{% if coverageGaps|length > 0 %}
+| # | Class | CC | LLOC | Priority |
+|---|-------|----|-----:|---------:|
+{% for gap in coverageGaps %}
+| {{ loop.index }} | {{ gap.fullName }} | {{ gap.cc }} | {{ gap.lloc }} | {{ gap.refactoringPriority|number_format(1) }} |
+{% endfor %}
+{% else %}
+All classes have tests or low complexity.
+{% endif %}
+
+{% include('parts/footer.md.twig') %}

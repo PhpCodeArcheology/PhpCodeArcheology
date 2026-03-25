@@ -945,4 +945,18 @@ return [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::MethodCollection,
         ],
     ],
+
+    // Test detection
+    [
+        'key' => 'isTestFile',
+        'name' => 'Test file',
+        'shortName' => '',
+        'description' => 'Whether this file is a test file.',
+        'valueType' => \PhpCodeArch\Metrics\Model\Enums\MetricValueType::Bool,
+        'better' => \PhpCodeArch\Metrics\Model\Enums\BetterDirection::Irrelevant,
+        'visibility' => \PhpCodeArch\Metrics\Model\Enums\MetricVisibility::ShowNowhere,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::FileCollection,
+        ],
+    ],
 ];

@@ -30,6 +30,7 @@ class HealthScoreCalculator implements CalculatorInterface
             [
                 'healthScore' => round($result['healthScore'], 1),
                 'healthScoreGrade' => $this->scoreToGrade($result['healthScore']),
+                'healthScoreVersion' => 2,
                 'overallHtmlRatio' => $result['overallHtmlRatio'],
                 'overallPublicMethodRatio' => $result['overallPublicMethodRatio'],
                 'overallStaticMethodRatio' => $result['overallStaticMethodRatio'],
@@ -47,7 +48,7 @@ class HealthScoreCalculator implements CalculatorInterface
         $avgMI = $metrics->get('overallAvgMI')?->getValue() ?? 0;
         $miScore = min(100, max(0, ($avgMI - 40) * 1.25));
         $scores[] = $miScore;
-        $weights[] = 0.15;
+        $weights[] = 0.13;
 
         // 2. Problem density (10%) — logarithmic decay for graceful degradation
         $errors = $metrics->get('overallErrorCount')?->getValue() ?? 0;
@@ -58,19 +59,19 @@ class HealthScoreCalculator implements CalculatorInterface
         $problemDensity = ($errors + $warnings) / $totalEntities;
         $problemScore = max(0, 100 - 30 * log(1 + $problemDensity));
         $scores[] = $problemScore;
-        $weights[] = 0.10;
+        $weights[] = 0.09;
 
         // 3. Cyclomatic Complexity (10%) — lower is better
         $avgCC = $metrics->get('overallAvgCC')?->getValue() ?? 0;
         $ccScore = max(0, min(100, 100 - ($avgCC - 1) * 5));
         $scores[] = $ccScore;
-        $weights[] = 0.10;
+        $weights[] = 0.09;
 
         // 4. Coupling — Distance from main sequence (10%) — lower is better
         $avgDistance = abs($metrics->get('overallDistanceFromMainline')?->getValue() ?? 0);
         $couplingScore = max(0, min(100, (1 - $avgDistance) * 100));
         $scores[] = $couplingScore;
-        $weights[] = 0.10;
+        $weights[] = 0.09;
 
         // 5. Code structure balance (5%) — LLOC outside classes/functions should be low
         $lloc = $metrics->get('overallLloc')?->getValue() ?? 1;
@@ -86,7 +87,7 @@ class HealthScoreCalculator implements CalculatorInterface
         $htmlRatio = $totalLoc > 0 ? $htmlLoc / $totalLoc : 0;
         $htmlScore = 100 * pow(1 - $htmlRatio, 3);
         $scores[] = $htmlScore;
-        $weights[] = 0.15;
+        $weights[] = 0.13;
 
         // 7. Encapsulation quality (15%) — visibility distribution + static method ratio
         $totalMethods = $metrics->get('overallMethodsCount')?->getValue() ?? 0;
@@ -112,7 +113,7 @@ class HealthScoreCalculator implements CalculatorInterface
         }
 
         $scores[] = $encapsulationScore;
-        $weights[] = 0.15;
+        $weights[] = 0.13;
 
         // 8. Dependency health (10%) — penalizes cycle breadth and count
         $classesInCycles = $metrics->get('overallClassesInCycles')?->getValue() ?? 0;
@@ -126,7 +127,7 @@ class HealthScoreCalculator implements CalculatorInterface
         }
 
         $scores[] = $depScore;
-        $weights[] = 0.10;
+        $weights[] = 0.09;
 
         // 9. Abstractness (10%) — projects need interfaces/abstract classes
         $abstractness = abs($metrics->get('overallAbstractness')?->getValue() ?? 0);
@@ -134,6 +135,22 @@ class HealthScoreCalculator implements CalculatorInterface
         $abstractScore = min(100, $abstractness * 1000);
         $scores[] = $abstractScore;
         $weights[] = 0.10;
+
+        // 10. Test coverage (10%) — prefer Clover XML line coverage, fall back to class ratio
+        $coveragePercent = $metrics->get('overallCoveragePercent')?->getValue() ?? null;
+        $testedClassRatio = $metrics->get('overallTestedClassRatio')?->getValue() ?? null;
+        $testFileCount = $metrics->get('overallTestFileCount')?->getValue() ?? 0;
+
+        if ($coveragePercent !== null) {
+            $testScore = min(100, $coveragePercent);
+            $scores[] = $testScore;
+            $weights[] = 0.10;
+        } elseif ($testedClassRatio !== null && $testFileCount > 0) {
+            $testScore = min(100, $testedClassRatio);
+            $scores[] = $testScore;
+            $weights[] = 0.10;
+        }
+        // If no test data: don't add the factor at all — remaining weights auto-normalize
 
         // Weighted average
         $totalWeight = array_sum($weights);

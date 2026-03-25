@@ -29,6 +29,8 @@ class FrameworkDetector
             array_keys($data['require-dev'] ?? [])
         );
 
+        $devDeps = array_keys($data['require-dev'] ?? []);
+
         $hasDoctrine = false;
         foreach ($allDeps as $dep) {
             if (str_starts_with($dep, 'doctrine/')) {
@@ -37,11 +39,19 @@ class FrameworkDetector
             }
         }
 
+        $psr4Autoload = $this->parsePsr4Section($data['autoload']['psr-4'] ?? []);
+        $psr4AutoloadDev = $this->parsePsr4Section($data['autoload-dev']['psr-4'] ?? []);
+
         return new FrameworkDetectionResult(
             doctrineDetected: $hasDoctrine,
             symfonyDetected: in_array('symfony/framework-bundle', $allDeps, true),
             laravelDetected: in_array('laravel/framework', $allDeps, true),
             composerJsonPath: $composerJsonPath,
+            phpunitDetected: in_array('phpunit/phpunit', $devDeps, true),
+            pestDetected: in_array('pestphp/pest', $devDeps, true),
+            codeceptionDetected: in_array('codeception/codeception', $devDeps, true),
+            psr4Autoload: $psr4Autoload,
+            psr4AutoloadDev: $psr4AutoloadDev,
         );
     }
 
@@ -63,5 +73,22 @@ class FrameworkDetector
         }
 
         return null;
+    }
+
+    private function parsePsr4Section(array $psr4Data): array
+    {
+        $result = [];
+        foreach ($psr4Data as $namespace => $paths) {
+            $namespace = rtrim((string) $namespace, '\\') . '\\';
+            if (is_string($paths)) {
+                $paths = [$paths];
+            }
+            if (is_array($paths)) {
+                foreach ($paths as $path) {
+                    $result[$namespace] = rtrim((string) $path, '/');
+                }
+            }
+        }
+        return $result;
     }
 }

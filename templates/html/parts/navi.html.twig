@@ -49,6 +49,12 @@
       </ul>
     </li>
     <li class="mt-8">
+      <h2 class="mb-3 mt-3 font-semibold">Tests</h2>
+      <ul class="border-l border-cyan-900 space-y-2">
+        <li><a href="{% if isSubdir %}../{% endif %}tests.html" class="block border-l pl-4 -ml-px {% if currentPage == 'tests.html' %}border-cyan-500 text-cyan-500{% else %}border-transparent hover:border-gray-200 text-gray-400 hover:text-gray-200{% endif %}">Test Coverage</a></li>
+      </ul>
+    </li>
+    <li class="mt-8">
       <h2 class="mb-3 mt-3 font-semibold">Graph</h2>
       <ul class="border-l border-cyan-900 space-y-2">
         <li><a href="{% if isSubdir %}../{% endif %}knowledge-graph.html" class="block border-l pl-4 -ml-px {% if currentPage == 'knowledge-graph.html' %}border-cyan-500 text-cyan-500{% else %}border-transparent hover:border-gray-200 text-gray-400 hover:text-gray-200{% endif %}">Knowledge Graph</a></li>

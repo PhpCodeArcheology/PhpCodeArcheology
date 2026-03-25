@@ -18,6 +18,11 @@
       "src/functions.php"
     ]
   },
+  "autoload-dev": {
+    "psr-4": {
+      "Tests\\": "tests/"
+    }
+  },
   "authors": [
     {
       "name": "Marcus Kober",

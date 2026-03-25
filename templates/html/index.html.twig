@@ -7,6 +7,8 @@
     border-radius: 0.75rem;
     padding: 1.25rem;
     position: relative;
+    min-width: 0;
+    overflow: hidden;
   }
   .dash-panel::before {
     content: '';
@@ -142,6 +144,11 @@
   {% set totalFiles = 0 %}
   {% set totalFunctions = 0 %}
   {% set totalMethods = 0 %}
+  {% set testRatio = 0 %}
+  {% set testedClassCount = 0 %}
+  {% set untestedClassCount = 0 %}
+  {% set detectedTestFrameworks = '' %}
+  {% set overallCoveragePercent = null %}
 
   {% for element in elements %}
     {% set key = element.getMetricTypeKey() %}
@@ -157,6 +164,11 @@
     {% if key == 'overallFiles' %}{% set totalFiles = element.getValue() %}{% endif %}
     {% if key == 'overallFunctions' %}{% set totalFunctions = element.getValue() %}{% endif %}
     {% if key == 'overallMethodsCount' %}{% set totalMethods = element.getValue() %}{% endif %}
+    {% if key == 'overallTestRatio' %}{% set testRatio = element.getValue() %}{% endif %}
+    {% if key == 'overallTestedClassCount' %}{% set testedClassCount = element.getValue() %}{% endif %}
+    {% if key == 'overallUntestedClassCount' %}{% set untestedClassCount = element.getValue() %}{% endif %}
+    {% if key == 'detectedTestFrameworks' %}{% set detectedTestFrameworks = element.getValue() %}{% endif %}
+    {% if key == 'overallCoveragePercent' %}{% set overallCoveragePercent = element.getValue() %}{% endif %}
   {% endfor %}
 
   {# --- Hero: Health Score + Stats Row --- #}
@@ -317,6 +329,42 @@
     </div>
     <div style="margin-top: 0.75rem;">
       <a href="refactoring-roadmap.html" style="color: rgb(6 182 212); font-size: 0.8rem; text-decoration: none;">View full roadmap &rarr;</a>
+    </div>
+  </div>
+  {% endif %}
+
+  {# --- Test Coverage Widget --- #}
+  {% if detectedTestFrameworks != '' or testedClassCount > 0 %}
+  <div class="dash-panel" style="margin-bottom: 1.5rem;">
+    <div class="dash-panel-label">Test Coverage</div>
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-bottom: 0.75rem;">
+      <div class="stat-card">
+        <div class="stat-label">Test Ratio</div>
+        <div class="stat-value" style="color: {% if testRatio >= 60 %}#86efac{% elseif testRatio >= 30 %}#fde68a{% else %}#fca5a5{% endif %}">
+          {{ testRatio|number_format(1) }}%
+        </div>
+      </div>
+      <div class="stat-card" style="grid-column: span 2;">
+        <div class="stat-label">Tested Classes</div>
+        <div class="stat-value" style="color: {% if (testedClassCount + untestedClassCount) > 0 and testedClassCount / (testedClassCount + untestedClassCount) >= 0.6 %}#86efac{% elseif (testedClassCount + untestedClassCount) > 0 and testedClassCount / (testedClassCount + untestedClassCount) >= 0.3 %}#fde68a{% else %}#fca5a5{% endif %}">
+          {{ testedClassCount }} / {{ testedClassCount + untestedClassCount }}
+        </div>
+        {% if detectedTestFrameworks != '' %}
+        <div style="font-size: 0.7rem; color: rgba(255,255,255,0.4); margin-top: 0.2rem;">{{ detectedTestFrameworks }}</div>
+        {% endif %}
+      </div>
+      {% if overallCoveragePercent is not null %}
+      <div class="stat-card" style="grid-column: span 3;">
+        <div class="stat-label">Line Coverage</div>
+        <div class="stat-value" style="color: {% if overallCoveragePercent >= 80 %}#4ade80{% elseif overallCoveragePercent >= 50 %}#fde68a{% else %}#f87171{% endif %}">
+          {{ overallCoveragePercent|number_format(1) }}%
+        </div>
+        <div style="font-size: 0.7rem; color: rgba(255,255,255,0.4); margin-top: 0.2rem;">from Clover XML</div>
+      </div>
+      {% endif %}
+    </div>
+    <div style="margin-top: 0.75rem;">
+      <a href="tests.html" style="color: rgb(6 182 212); font-size: 0.8rem; text-decoration: none;">View test coverage &rarr;</a>
     </div>
   </div>
   {% endif %}

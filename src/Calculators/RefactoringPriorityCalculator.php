@@ -42,6 +42,7 @@ class RefactoringPriorityCalculator implements CalculatorInterface
         $layerViolations = $metrics->get('layerViolationCount')?->getValue() ?? 0;
         $solidViolations = $metrics->get('solidViolationCount')?->getValue() ?? 0;
         $usedFromOutside = $metrics->get('usedFromOutsideCount')?->getValue() ?? 0;
+        $hasTest = (bool) ($metrics->get('hasTest')?->getValue() ?? false);
 
         // Git metrics (file-level, looked up via class filePath)
         $gitChurn = $this->getFileGitMetric($metrics, 'gitChurnCount');
@@ -96,7 +97,7 @@ class RefactoringPriorityCalculator implements CalculatorInterface
 
         [$recommendation, $drivers] = $this->buildRecommendation(
             $subScores,
-            compact('cc', 'lcom', 'lloc', 'inCycle', 'cycleLength', 'layerViolations', 'solidViolations'),
+            compact('cc', 'lcom', 'lloc', 'inCycle', 'cycleLength', 'layerViolations', 'solidViolations', 'hasTest'),
             $errorCount,
             $warningCount
         );
@@ -124,9 +125,18 @@ class RefactoringPriorityCalculator implements CalculatorInterface
 
     private function isSkippable(ClassMetricsCollection $metrics): bool
     {
-        return (bool) ($metrics->get('interface')?->getValue() ?? false)
+        if (
+            (bool) ($metrics->get('interface')?->getValue() ?? false)
             || (bool) ($metrics->get('trait')?->getValue() ?? false)
-            || (bool) ($metrics->get('enum')?->getValue() ?? false);
+            || (bool) ($metrics->get('enum')?->getValue() ?? false)
+        ) {
+            return true;
+        }
+
+        $shortName = basename(str_replace('\\', '/', $metrics->getName()));
+        return str_ends_with($shortName, 'Test')
+            || str_ends_with($shortName, 'Spec')
+            || str_ends_with($shortName, 'Cest');
     }
 
     private function countProblems(ClassMetricsCollection $metrics): array
@@ -190,6 +200,11 @@ class RefactoringPriorityCalculator implements CalculatorInterface
                 'CC=%d is very high. Extract methods or split into strategy/command objects.',
                 $raw['cc']
             );
+        }
+
+        if (!($raw['hasTest'] ?? false) && $raw['cc'] > 5) {
+            $drivers[] = 'untested';
+            $recommendations[] = 'No tests found for this class. Add tests before refactoring to avoid regressions.';
         }
 
         if ($subScores['cohesion'] >= 40) {

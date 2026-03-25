@@ -1,0 +1,138 @@
+{% include('@Parts/header.html.twig') %}
+
+{% set sortArrow %}<span class="sort-icon transition-all opacity-0"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M12.53 16.28a.75.75 0 0 1-1.06 0l-7.5-7.5a.75.75 0 0 1 1.06-1.06L12 14.69l6.97-6.97a.75.75 0 1 1 1.06 1.06l-7.5 7.5Z" clip-rule="evenodd" /></svg></span>{% endset %}
+
+<div class="mt-6 lg:w-5/6">
+  <div class="mb-7 text-sm">
+    <ul class="flex gap-1">
+      <li class="flex after:content-['⮁'] gap-1">
+        <a href="index.html" class="text-cyan-500">Home</a>
+      </li>
+      <li>Tests</li>
+    </ul>
+  </div>
+
+  <h1 class="mb-6 text-3xl font-semibold font-display">Tests</h1>
+
+  {# Summary Cards #}
+  <div style="display: grid; grid-template-columns: repeat({% if stats.overallCoveragePercent is not null %}5{% else %}4{% endif %}, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
+    <div class="rounded-xl border border-cyan-800 bg-cyan-950/45 p-4 text-center">
+      <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Test Ratio</div>
+      <div style="font-family: 'Oswald', sans-serif; font-size: 2.5rem; font-weight: 500;
+        {% if stats.testRatio >= 60 %}color: #86efac{% elseif stats.testRatio >= 30 %}color: #fde68a{% else %}color: #fca5a5{% endif %}">
+        {{ stats.testRatio|number_format(1) }}%
+      </div>
+      <div style="font-size: 0.7rem; color: rgba(255,255,255,0.4);">{{ stats.testFileCount }} test / {{ stats.productionFileCount }} prod files</div>
+    </div>
+    <div class="rounded-xl border border-cyan-800 bg-cyan-950/45 p-4 text-center">
+      <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Tested Classes</div>
+      <div style="font-family: 'Oswald', sans-serif; font-size: 2.5rem; font-weight: 500;
+        {% if stats.testedClassRatio >= 60 %}color: #86efac{% elseif stats.testedClassRatio >= 30 %}color: #fde68a{% else %}color: #fca5a5{% endif %}">
+        {{ stats.testedClassCount }} / {{ stats.testedClassCount + stats.untestedClassCount }}
+      </div>
+      <div style="font-size: 0.7rem; color: rgba(255,255,255,0.4);">{{ stats.testedClassRatio|number_format(1) }}% covered</div>
+    </div>
+    <div class="rounded-xl border border-cyan-800 bg-cyan-950/45 p-4 text-center">
+      <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Test Frameworks</div>
+      <div style="font-family: 'Oswald', sans-serif; font-size: 1.25rem; font-weight: 500; padding-top: 0.75rem;">
+        {{ stats.detectedTestFrameworks ?: 'None detected' }}
+      </div>
+    </div>
+    <div class="rounded-xl border border-cyan-800 bg-cyan-950/45 p-4 text-center">
+      <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Function-based Tests</div>
+      <div style="font-family: 'Oswald', sans-serif; font-size: 2.5rem; font-weight: 500;">{{ stats.functionBasedTestFileCount }}</div>
+      <div style="font-size: 0.7rem; color: rgba(255,255,255,0.4);">not mapped to classes</div>
+    </div>
+    {% if stats.overallCoveragePercent is not null %}
+    <div class="rounded-xl border border-cyan-800 bg-cyan-950/45 p-4 text-center">
+      <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Line Coverage</div>
+      <div style="font-family: 'Oswald', sans-serif; font-size: 2.5rem; font-weight: 500;
+        {% if stats.overallCoveragePercent >= 80 %}color: #4ade80{% elseif stats.overallCoveragePercent >= 50 %}color: #fde68a{% else %}color: #f87171{% endif %}">
+        {{ stats.overallCoveragePercent|number_format(1) }}%
+      </div>
+      <div style="font-size: 0.7rem; color: rgba(255,255,255,0.4);">from Clover XML</div>
+    </div>
+    {% endif %}
+  </div>
+
+  {# Coverage Gaps Table #}
+  {% if coverageGaps|length > 0 %}
+  <div class="rounded-xl border border-cyan-800 bg-cyan-950/45 p-4 mb-6">
+    <h3 style="color: rgba(6,182,212,0.7); font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; font-family: 'Oswald', sans-serif; margin-bottom: 0.75rem;">Untested Complex Classes</h3>
+
+    <div class="filters mb-4 flex justify-end">
+      <div>
+        <input type="text" name="filter" class="namefilter text-black rounded px-2 py-0.5" placeholder="Search class name">
+        <button class="button-reset">Reset</button>
+      </div>
+    </div>
+
+    <div class="relative overflow-x-auto">
+      <table class="sortable desc w-full border-collapse border border-slate-500 text-sm rounded-xl" data-currentsort="2:desc:int">
+        <thead class="bg-cyan-950/25">
+          <tr>
+            <th class="border border-slate-500 text-left px-2 py-0.5 cursor-pointer" data-sortable="string">
+              <span class="label-box flex justify-between items-center gap-1"><span class="label-name">Class</span>{{ sortArrow|raw }}</span>
+            </th>
+            <th class="border border-slate-500 text-left px-2 py-0.5 cursor-pointer" data-sortable="int">
+              <span class="label-box flex justify-between items-center gap-1"><span class="label-name">CC</span>{{ sortArrow|raw }}</span>
+            </th>
+            <th class="border border-slate-500 text-left px-2 py-0.5 cursor-pointer" data-sortable="int">
+              <span class="label-box flex justify-between items-center gap-1"><span class="label-name">LLOC</span>{{ sortArrow|raw }}</span>
+            </th>
+            {% if stats.overallCoveragePercent is not null %}
+            <th class="border border-slate-500 text-left px-2 py-0.5 cursor-pointer" data-sortable="float">
+              <span class="label-box flex justify-between items-center gap-1"><span class="label-name">Coverage</span>{{ sortArrow|raw }}</span>
+            </th>
+            {% endif %}
+            <th class="border border-slate-500 text-left px-2 py-0.5 cursor-pointer" data-sortable="float">
+              <span class="label-box flex justify-between items-center gap-1"><span class="label-name">Priority</span>{{ sortArrow|raw }}</span>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for gap in coverageGaps %}
+          <tr class="even:bg-cyan-950/45 odd:bg-cyan-950/85 transition-colors hover:bg-cyan-800">
+            <td class="border border-slate-500 text-left px-2 py-0.5 filter-name" data-filter="{{ gap.fullName }}" data-sort="{{ gap.fullName }}">
+              <a href="classes/{{ gap.id|replace({'\\': '-', '/': '-'}) }}.html" class="group block">
+                {% if gap.fullName != gap.name %}<span class="text-white/40 group-hover:text-white">{{ gap.fullName[:gap.fullName|length - gap.name|length] }}</span>{% endif %}<span class="font-semibold group-hover:text-cyan-400">{{ gap.name }}</span>
+              </a>
+            </td>
+            <td class="border border-slate-500 text-right px-2 py-0.5 {% if gap.cc >= 20 %}bg-red-900{% elseif gap.cc >= 10 %}bg-yellow-900{% endif %}" data-sort="{{ gap.cc }}">{{ gap.cc }}</td>
+            <td class="border border-slate-500 text-right px-2 py-0.5" data-sort="{{ gap.lloc }}">{{ gap.lloc }}</td>
+            {% if stats.overallCoveragePercent is not null %}
+            <td class="border border-slate-500 text-right px-2 py-0.5" data-sort="{{ gap.lineCoverage ?? -1 }}">
+              {% if gap.lineCoverage is not null %}
+                <span style="color: {% if gap.lineCoverage >= 80 %}#4ade80{% elseif gap.lineCoverage >= 50 %}#fde68a{% else %}#f87171{% endif %}">
+                  {{ gap.lineCoverage|number_format(1) }}%
+                </span>
+              {% else %}
+                <span style="color: rgba(255,255,255,0.3);">—</span>
+              {% endif %}
+            </td>
+            {% endif %}
+            <td class="border border-slate-500 text-right px-2 py-0.5" data-sort="{{ gap.refactoringPriority }}">
+              <span class="px-1.5 py-0.5 rounded-md
+                {% if gap.refactoringPriority >= 75 %}bg-red-900
+                {% elseif gap.refactoringPriority >= 50 %}bg-orange-900
+                {% elseif gap.refactoringPriority >= 25 %}bg-yellow-900
+                {% else %}bg-cyan-900{% endif %}">
+                {{ gap.refactoringPriority|number_format(1) }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+  <div class="rounded-xl border border-green-800 bg-green-950/30 p-8 text-center mb-6">
+    <div style="font-size: 2rem; margin-bottom: 0.5rem;">&#10003;</div>
+    <h2 class="text-xl font-semibold text-green-300 mb-2">All classes have tests or low complexity.</h2>
+    <p class="text-zinc-400">No untested high-complexity classes found.</p>
+  </div>
+  {% endif %}
+</div>
+
+{% include('@Parts/footer.html.twig') %}

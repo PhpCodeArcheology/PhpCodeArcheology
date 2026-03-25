@@ -267,6 +267,96 @@ it('skips non-project collections', function () {
     expect(true)->toBeTrue();
 });
 
+// ── Factor 10: Test coverage ──────────────────────────────────────────────────
+
+it('includes test coverage factor when overallTestedClassRatio is set', function () {
+    $metrics = cleanProjectMetrics();
+    $metrics['overallTestedClassRatio'] = 80.0;
+    $metrics['overallTestFileCount'] = 10;
+
+    setProjectMetrics($this->controller, $metrics);
+
+    $collection = $this->controller->getMetricCollection(
+        MetricCollectionTypeEnum::ProjectCollection,
+        null
+    );
+
+    $this->calculator->calculate($collection);
+
+    $score = getProjectMetric($this->controller, 'healthScore');
+    expect($score)->toBeGreaterThan(0);
+});
+
+it('skips test coverage factor when no test data exists and score is still valid', function () {
+    // Without test data
+    $metricsWithout = cleanProjectMetrics();
+    setProjectMetrics($this->controller, $metricsWithout);
+
+    $collection = $this->controller->getMetricCollection(
+        MetricCollectionTypeEnum::ProjectCollection,
+        null
+    );
+    $this->calculator->calculate($collection);
+    $scoreWithout = getProjectMetric($this->controller, 'healthScore');
+
+    // With full test coverage
+    $metricsWith = cleanProjectMetrics();
+    $metricsWith['overallTestedClassRatio'] = 100.0;
+    $metricsWith['overallTestFileCount'] = 20;
+    setProjectMetrics($this->controller, $metricsWith);
+
+    $this->calculator->calculate($collection);
+    $scoreWith = getProjectMetric($this->controller, 'healthScore');
+
+    // Both produce valid numeric scores; test coverage boosts the already-clean project
+    expect($scoreWithout)->toBeFloat()
+        ->and($scoreWith)->toBeFloat()
+        ->and($scoreWith)->toBeGreaterThanOrEqual($scoreWithout);
+});
+
+it('prefers overallCoveragePercent over overallTestedClassRatio', function () {
+    // High Clover coverage + low class ratio → should score high
+    $metricsHigh = cleanProjectMetrics();
+    $metricsHigh['overallCoveragePercent'] = 95.0;
+    $metricsHigh['overallTestedClassRatio'] = 5.0;
+    $metricsHigh['overallTestFileCount'] = 10;
+
+    setProjectMetrics($this->controller, $metricsHigh);
+
+    $collection = $this->controller->getMetricCollection(
+        MetricCollectionTypeEnum::ProjectCollection,
+        null
+    );
+    $this->calculator->calculate($collection);
+    $scoreHigh = getProjectMetric($this->controller, 'healthScore');
+
+    // Low Clover coverage + high class ratio → should score lower
+    $metricsLow = cleanProjectMetrics();
+    $metricsLow['overallCoveragePercent'] = 5.0;
+    $metricsLow['overallTestedClassRatio'] = 95.0;
+    $metricsLow['overallTestFileCount'] = 10;
+
+    setProjectMetrics($this->controller, $metricsLow);
+    $this->calculator->calculate($collection);
+    $scoreLow = getProjectMetric($this->controller, 'healthScore');
+
+    expect($scoreHigh)->toBeGreaterThan($scoreLow);
+});
+
+it('sets healthScoreVersion to 2', function () {
+    setProjectMetrics($this->controller, cleanProjectMetrics());
+
+    $collection = $this->controller->getMetricCollection(
+        MetricCollectionTypeEnum::ProjectCollection,
+        null
+    );
+    $this->calculator->calculate($collection);
+
+    expect(getProjectMetric($this->controller, 'healthScoreVersion'))->toBe(2);
+});
+
+// ── Grade thresholds ──────────────────────────────────────────────────────────
+
 it('computes correct grade thresholds', function () {
     // Test each grade boundary by manipulating metrics to hit target scores
     $metrics = cleanProjectMetrics();

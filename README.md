@@ -58,12 +58,14 @@ Once connected, Claude can answer questions like *"Which classes have the highes
 | `get_class_list` | All classes with key metrics, sortable and filterable |
 | `get_graph` | Knowledge graph as JSON (nodes, edges, cycles) |
 | `get_impact_analysis` | Impact analysis: what breaks if you change a method? Shows callers and call chains |
+| `get_test_coverage` | Test coverage summary — tested/untested classes, coverage gaps, test mapping |
 | `search_code` | Search entities by name with metric overview |
 
 ## Features
 
 - **60+ code quality metrics** per file, class, and function — cyclomatic complexity, cognitive complexity, maintainability index, LCOM, Halstead metrics, coupling, instability, and more
-- **Problem detection** with 13 built-in rules — God Class, too complex, dead code, security smells, SOLID violations, deep inheritance, low type coverage
+- **Problem detection** with 14 built-in rules — God Class, too complex, dead code, security smells, SOLID violations, deep inheritance, low type coverage, untested complex code
+- **Test analysis** — auto-detects PHPUnit/Pest/Codeception, maps test files to production classes, integrates Clover XML for line-level coverage, highlights untested hotspots
 - **Git integration** — churn analysis, hotspot detection (high churn + high complexity), author tracking
 - **Multiple report formats** — interactive HTML, Markdown, JSON, SARIF (GitHub Code Scanning), AI summary, Knowledge Graph (JSON)
 - **Health Score** — single 0-100 score with A-F grading for your entire project
@@ -129,6 +131,35 @@ To create a config file interactively:
 ./vendor/bin/phpcodearcheology init
 ```
 
+## Test Analysis
+
+PhpCodeArcheology automatically detects your test infrastructure from `composer.json` (PHPUnit, Pest, or Codeception) and maps test files to production classes using PSR-4 namespaces, naming conventions, and directory structure.
+
+**What you get out of the box:**
+
+- Per-class `hasTest` flag and test file count in the HTML/Markdown/JSON reports
+- `UntestedComplexCode` warnings for classes with cyclomatic complexity ≥ 8 and no tests (only when test infrastructure is detected)
+- `untested` as a refactoring priority driver
+- A **Tests page** in the HTML and Markdown reports with a coverage gaps table and dashboard tiles
+
+**Important note on Pest:** Pest's function-based tests (`it(...)`, `test(...)`) contain no class declaration and cannot be mapped to production classes by name alone. To get accurate coverage for Pest projects, generate a Clover XML report — this tracks actual line execution regardless of test style.
+
+**With Clover XML coverage data** (optional, recommended for Pest), you get line-level coverage per class:
+
+```bash
+# Generate coverage first (requires Xdebug or PCOV PHP extension)
+XDEBUG_MODE=coverage vendor/bin/pest --coverage-clover clover.xml
+# or: XDEBUG_MODE=coverage vendor/bin/phpunit --coverage-clover clover.xml
+
+# PhpCodeArcheology auto-detects clover.xml in common locations (project root, build/logs/, etc.)
+./vendor/bin/phpcodearcheology src/
+
+# Or specify explicitly:
+./vendor/bin/phpcodearcheology --coverage-file clover.xml src/
+```
+
+Coverage data is factored into the **Health Score** as a 10th factor (10% weight). The `get_test_coverage` MCP tool exposes all coverage data to AI assistants.
+
 ## CLI Options
 
 ```
@@ -146,6 +177,7 @@ To create a config file interactively:
 | `--git-root=DIR` | Git repository root (default: current directory) |
 | `--extensions=EXT` | File extensions to analyse (comma-separated, default: `php`) |
 | `--exclude=DIR` | Directories to exclude (comma-separated) |
+| `--coverage-file=FILE` | Clover XML coverage file from PHPUnit/Pest for line-level coverage data |
 | `--version` | Show version |
 
 ## Subcommands

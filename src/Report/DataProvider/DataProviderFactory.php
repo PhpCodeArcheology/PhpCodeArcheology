@@ -93,6 +93,11 @@ class DataProviderFactory
         return new RefactoringPriorityDataProvider($this->metricsController);
     }
 
+    public function getTestsDataProvider(): TestsDataProvider
+    {
+        return new TestsDataProvider($this->metricsController);
+    }
+
     public function getGraphDataProvider(): GraphDataProvider
     {
         return new GraphDataProvider($this->metricsController);

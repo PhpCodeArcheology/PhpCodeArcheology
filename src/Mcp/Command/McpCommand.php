@@ -18,6 +18,7 @@ use PhpCodeArch\Mcp\Tools\ImpactAnalysisTool;
 use PhpCodeArch\Mcp\Tools\HotspotsTool;
 use PhpCodeArch\Mcp\Tools\MetricsTool;
 use PhpCodeArch\Mcp\Tools\ProblemsTool;
+use PhpCodeArch\Mcp\Tools\GetTestCoverageTool;
 use PhpCodeArch\Mcp\Tools\RefactoringTool;
 use PhpCodeArch\Mcp\Tools\SearchCodeTool;
 use PhpCodeArch\Report\DataProvider\DataProviderFactory;
@@ -64,6 +65,7 @@ class McpCommand
         $graphTool = new GraphTool($dataProviderFactory);
         $searchCodeTool = new SearchCodeTool($dataProviderFactory, $metricsController);
         $impactAnalysisTool = new ImpactAnalysisTool($dataProviderFactory);
+        $testCoverageTool = new GetTestCoverageTool($dataProviderFactory);
 
         $server = new McpServer('PhpCodeArcheology');
 
@@ -117,6 +119,11 @@ class McpCommand
                 'get_impact_analysis',
                 'Analyzes the impact of changing a method. Shows direct and transitive callers across classes, affected class count, and call chains. Provide class_name (required) and optionally method_name and depth (default 2).',
                 $impactAnalysisTool->getImpactAnalysis(...)
+            )
+            ->tool(
+                'get_test_coverage',
+                'Get test coverage analysis: test ratio, tested classes, and untested complex code gaps',
+                $testCoverageTool->getTestCoverage(...)
             );
 
         $server->run();
