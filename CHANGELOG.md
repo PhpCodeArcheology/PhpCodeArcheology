@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-03-25
+
+### Added
+- **Method-level call tracking.** Cross-class method calls (`StaticCall`, `new`) are now tracked in the `DependencyVisitor` and exported as `calls` edges in the Knowledge Graph (`graph.json`). Each edge carries a `weight` indicating the number of call-sites. Configurable via `graph.methodCalls: true` (default: enabled).
+- **`get_impact_analysis` MCP tool.** New tool for AI-assisted refactoring — analyzes what breaks when a method changes. Shows outgoing calls, direct callers, transitive callers (configurable depth via BFS), and a summary of affected methods and classes.
+- **"Method Calls" section in HTML method detail pages.** Displays "Called by" (incoming) and "Calls to" (outgoing) with links to the respective class and method detail pages.
+- **`calls` edge visualization** in the D3 knowledge graph (yellow dashed lines). `method`, `declares`, and `calls` filters are now active by default.
+- **Metric Reference** (`docs/metrics.md`) expanded with all previously undocumented metrics: Type Coverage, Documentation Coverage, Code Duplication, Refactoring Priority, Complexity Density, Estimated Runtime Complexity, Encapsulation Score. Health Score corrected from 5 to 9 weighted dimensions with formulas.
+
+### Fixed
+- **Report path in summary output** now reflects the subdirectory structure introduced in v1.6.0 (e.g. `html/index.html` instead of `index.html`).
+- **Duplicate "Parameters" column** removed from method tables in HTML report. The metric-driven "Params" column remains.
+- **German texts in knowledge graph** translated to English ("Nur Probleme" → "Problems only", "Hinweis: >500 Nodes…", "Teil eines Zyklus", legend hints).
+
 ## [2.0.0] - 2026-03-24
 
 ### Added
