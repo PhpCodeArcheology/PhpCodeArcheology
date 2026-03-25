@@ -160,19 +160,8 @@
         return;
       }
 
-      // Node limit warning
-      let alphaDecayVal = 0.028;
-      if (visibleNodes.length > 500) {
-        alphaDecayVal = 0.05;
-        g.append('text')
-          .attr('x', container.clientWidth / 2)
-          .attr('y', 22)
-          .attr('text-anchor', 'middle')
-          .attr('fill', '#f59e0b')
-          .attr('font-size', '0.78rem')
-          .attr('font-family', "'Source Sans 3', sans-serif")
-          .text('Note: >500 nodes — performance reduced. Narrow filters for better interactivity.');
-      }
+      // Increase alpha decay for large graphs to settle faster
+      let alphaDecayVal = visibleNodes.length > 500 ? 0.05 : 0.028;
 
       // Update arrow marker colors for current theme
       defs.selectAll('marker path').each(function () {
