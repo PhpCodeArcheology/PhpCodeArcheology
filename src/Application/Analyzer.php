@@ -137,7 +137,7 @@ readonly class Analyzer
             $phpCode = @file_get_contents($file);
 
             if ($shortOpenTags && $phpCode !== false) {
-                $phpCode = preg_replace('/<\?(?!php|=)/', '<?php', $phpCode);
+                $phpCode = preg_replace('/<\?(?!php|=)/', '<?php ', $phpCode);
             }
 
             $fileErrorCollection = new ErrorCollection();

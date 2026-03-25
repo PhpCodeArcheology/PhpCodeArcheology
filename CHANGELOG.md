@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.2] - 2026-03-25
+
+### Fixed
+- **Short open tag replacement** added missing space: `<?}?>` was replaced to `<?php}?>` (invalid) instead of `<?php }?>`. Also fixes `<?if(` becoming `<?phpif(`. Reduced PB parse errors from 120 to 5.
+- **Skipped file details** now shown with file path and error message instead of just a count.
+- **Knowledge graph filter state** now reads from DOM chips at init instead of hardcoded Set, so `method`/`declares`/`calls` render immediately when active by default.
+
 ## [2.2.0] - 2026-03-25
 
 ### Added
