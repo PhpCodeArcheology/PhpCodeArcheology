@@ -1,0 +1,11 @@
+# Refactoring Roadmap
+
+{% if refactoringPriorities|length > 0 %}
+| Class | Score | Drivers | CC | LCOM | LLOC | Used By | Recommendation |
+|-------|------:|---------|---:|-----:|-----:|--------:|----------------|
+{% for entry in refactoringPriorities %}
+| {{ entry.fullName }} | {{ entry.score|number_format(1) }} | {{ entry.drivers|join(', ') }} | {{ entry.cc }} | {{ entry.lcom }} | {{ entry.lloc }} | {{ entry.usedFromOutsideCount }} | {{ entry.recommendation }} |
+{% endfor %}
+{% else %}
+No refactoring needed — all classes have a clean bill of health.
+{% endif %}

@@ -45,6 +45,11 @@ class MarkdownReport extends HtmlReport
         $this->generateReportFiles();
     }
 
+    protected function generateKnowledgeGraphPage(): void
+    {
+        // Knowledge Graph is an interactive D3 visualization — skip for markdown
+    }
+
     protected function renderTemplate(string $template, array $data, string $outputFile): void
     {
         $mdTemplate = str_replace('.html.twig', '.md.twig', $template);
