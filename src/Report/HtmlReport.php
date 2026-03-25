@@ -150,6 +150,18 @@ class HtmlReport implements ReportInterface
         $data['kgCycleCount'] = count($graphData['cycles']);
         $data['kgPackageCount'] = count(array_filter($graphData['nodes'], fn(array $n) => $n['type'] === 'package'));
 
+        // Count ERROR-level cycle problems (framework-pattern cycles are INFO, not counted)
+        $errorCycleCount = 0;
+        foreach ($data['classProblems'] ?? [] as $classProblemData) {
+            foreach ($classProblemData['problems'] ?? [] as $problem) {
+                if ($problem instanceof \PhpCodeArch\Predictions\Problems\DependencyCycleProblem
+                    && $problem->getProblemLevel() === \PhpCodeArch\Predictions\PredictionInterface::ERROR) {
+                    $errorCycleCount++;
+                }
+            }
+        }
+        $data['errorCycleCount'] = $errorCycleCount;
+
         // Top 5 most-connected classes
         $classNodes = array_filter($graphData['nodes'], fn(array $n) => $n['type'] === 'class');
         $classConnections = [];

@@ -335,7 +335,7 @@
       </div>
       <div class="stat-card">
         <div class="stat-label">Cycles</div>
-        <div class="stat-value" style="color: {% if kgCycleCount > 0 %}#ef4444{% else %}#86efac{% endif %};">{{ kgCycleCount }}</div>
+        <div class="stat-value" style="color: {% if errorCycleCount > 0 %}#ef4444{% elseif kgCycleCount > 0 %}#fbbf24{% else %}#86efac{% endif %};">{{ kgCycleCount }}</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">Packages</div>
