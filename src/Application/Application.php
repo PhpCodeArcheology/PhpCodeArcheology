@@ -51,13 +51,14 @@ use PhpCodeArch\Report\ReportFactory;
 use PhpCodeArch\Report\ReportTypeNotSupported;
 use PhpParser\NodeTraverser;
 use PhpParser\ParserFactory;
+use PhpParser\PhpVersion;
 use Twig\Environment;
 use Twig\Extension\DebugExtension;
 use Twig\Loader\FilesystemLoader;
 
 final readonly class Application
 {
-    const VERSION = '2.1.0';
+    const VERSION = '2.2.0';
 
     /**
      * @throws ConfigFileExtensionNotSupportedException
@@ -202,9 +203,14 @@ final readonly class Application
 
     private function createAndRunAnalyzer(Config $config, MetricsController $metricsController, FileList $fileList, CliOutput $output): void
     {
+        $phpConfig = $config->get('php') ?? [];
+        $parser = isset($phpConfig['version'])
+            ? (new ParserFactory())->createForVersion(PhpVersion::fromString($phpConfig['version']))
+            : (new ParserFactory())->createForHostVersion();
+
         $analyzer = new Analyzer(
             $config,
-            (new ParserFactory())->createForHostVersion(),
+            $parser,
             new NodeTraverser(),
             $metricsController,
             $output);

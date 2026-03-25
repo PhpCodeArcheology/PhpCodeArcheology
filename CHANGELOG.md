@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-03-25
+
+### Added
+- **Target PHP version config (`php.version`).** Configure the PHP version used for parsing, independent of the local CLI version. Uses PhpParser's emulative lexer to handle syntax differences. Example: `php: { version: "7.4" }`.
+- **Short open tag support (`php.shortOpenTags`).** When enabled, `<?` is treated as a PHP open tag (equivalent to `<?php`). Essential for analysing legacy codebases that use short open tags while running on a PHP installation with `short_open_tag` disabled. All occurrences are handled, not just the first one. Default: `false`.
+
 ## [2.1.0] - 2026-03-25
 
 ### Added

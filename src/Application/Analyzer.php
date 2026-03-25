@@ -124,6 +124,7 @@ readonly class Analyzer
         $progressBar = new ProgressBar($this->output, $formatter, $fileCount, 'Analysing');
 
         $fileNameCollection = new FileNameCollection();
+        $shortOpenTags = ($this->config->get('php') ?? [])['shortOpenTags'] ?? false;
 
         foreach ($fileList->getFiles() as $count => $file) {
             $progressBar->advance();
@@ -133,6 +134,10 @@ readonly class Analyzer
             }
 
             $phpCode = @file_get_contents($file);
+
+            if ($shortOpenTags && $phpCode !== false) {
+                $phpCode = preg_replace('/<\?(?!php|=)/', '<?php', $phpCode);
+            }
 
             $fileErrorCollection = new ErrorCollection();
 

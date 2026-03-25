@@ -204,6 +204,10 @@ git:
 graph:
   methodCalls: true  # Track cross-class method calls in the knowledge graph (default: true)
 
+php:
+  version: "8.2"       # Target PHP version for parsing (default: host PHP version)
+  shortOpenTags: false  # Treat <? as PHP open tag (default: false)
+
 qualityGate:
   maxErrors: 0
   maxWarnings: 10

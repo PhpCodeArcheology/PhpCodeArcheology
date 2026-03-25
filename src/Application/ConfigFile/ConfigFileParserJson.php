@@ -89,5 +89,9 @@ class ConfigFileParserJson implements ConfigFileParserInterface
         if (isset($data['graph'])) {
             $config->set('graph', $data['graph']);
         }
+
+        if (isset($data['php'])) {
+            $config->set('php', $data['php']);
+        }
     }
 }
