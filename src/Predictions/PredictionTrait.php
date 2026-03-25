@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PhpCodeArch\Predictions;
 
 use PhpCodeArch\Application\Config;
+use PhpCodeArch\Application\Service\FrameworkDetectionResult;
 use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Predictions\Problems\TooComplexProblem;
@@ -84,6 +85,17 @@ trait PredictionTrait
             }
         }
 
+        // Framework-aware: additional Symfony patterns where LCOM is structurally irrelevant
+        if ($this->isSymfonyDetected()) {
+            $frameworkPatterns = ['*Subscriber', '*Listener', '*Command', '*Handler'];
+            foreach ($frameworkPatterns as $pattern) {
+                $shortName = substr(strrchr($className, '\\') ?: $className, 1) ?: $className;
+                if (fnmatch($pattern, $shortName)) {
+                    return true;
+                }
+            }
+        }
+
         return false;
     }
 
@@ -104,5 +116,33 @@ trait PredictionTrait
         }
 
         return $value;
+    }
+
+    protected function getFrameworkDetection(): ?FrameworkDetectionResult
+    {
+        $detection = $this->config?->get('frameworkDetection');
+        return $detection instanceof FrameworkDetectionResult ? $detection : null;
+    }
+
+    protected function isDoctrineDetected(): bool
+    {
+        return $this->getFrameworkDetection()?->doctrineDetected ?? false;
+    }
+
+    protected function isSymfonyDetected(): bool
+    {
+        return $this->getFrameworkDetection()?->symfonyDetected ?? false;
+    }
+
+    protected function isFrameworkAdjustmentEnabled(string $adjustment): bool
+    {
+        if ($this->getFrameworkDetection() === null) {
+            return false;
+        }
+
+        $frameworkConfig = $this->config?->get('framework') ?? [];
+        $adjustments = $frameworkConfig['adjustments'] ?? [];
+
+        return $adjustments[$adjustment] ?? true;
     }
 }

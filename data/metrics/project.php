@@ -802,4 +802,18 @@ return [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
         ],
     ],
+
+    // Framework detection
+    [
+        'key' => 'detectedFrameworks',
+        'name' => 'Detected Frameworks',
+        'shortName' => 'Frameworks',
+        'description' => 'PHP frameworks auto-detected via composer.json (Symfony, Laravel, Doctrine). Metric thresholds are adjusted for known framework patterns.',
+        'valueType' => \PhpCodeArch\Metrics\Model\Enums\MetricValueType::String,
+        'better' => \PhpCodeArch\Metrics\Model\Enums\BetterDirection::Irrelevant,
+        'visibility' => \PhpCodeArch\Metrics\Model\Enums\MetricVisibility::ShowEverywhere,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
+        ],
+    ],
 ];

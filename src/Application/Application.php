@@ -8,6 +8,7 @@ use PhpCodeArch\Application\ConfigFile\ConfigFileFinder;
 use PhpCodeArch\Application\ConfigFile\Exceptions\ConfigFileExtensionNotSupportedException;
 use PhpCodeArch\Application\ConfigFile\Exceptions\MultipleConfigFilesException;
 use PhpCodeArch\Application\Service\ClaudeMdGenerator;
+use PhpCodeArch\Application\Service\FrameworkDetector;
 use PhpCodeArch\Application\Service\HistoryService;
 use PhpCodeArch\Application\Service\SummaryPrinter;
 use PhpCodeArch\Calculators\CalculatorService;
@@ -58,7 +59,7 @@ use Twig\Loader\FilesystemLoader;
 
 final readonly class Application
 {
-    const VERSION = '2.3.0';
+    const VERSION = '3.0.0';
 
     /**
      * @throws ConfigFileExtensionNotSupportedException
@@ -84,6 +85,15 @@ final readonly class Application
         $memoryLimit = $config->get('memoryLimit') ?? '1G';
         ini_set('memory_limit', $memoryLimit);
 
+        // Framework detection (runs in all modes)
+        $frameworkConfig = $config->get('framework') ?? [];
+        if ($frameworkConfig['detect'] ?? true) {
+            $detector = new FrameworkDetector();
+            $projectRoot = $config->get('runningDir') ?: ($config->get('files')[0] ?? getcwd());
+            $frameworkResult = $detector->detect($projectRoot);
+            $config->set('frameworkDetection', $frameworkResult);
+        }
+
         // Quick mode: reduced analysis, no report
         if ($config->get('quickMode')) {
             $fileList = $this->createFileList($config);
@@ -92,6 +102,14 @@ final readonly class Application
             $this->runQuickCalculators($metricsController, $output);
             $quickOutput = new QuickOutput($metricsController, $output, $formatter);
             $quickOutput->render();
+
+            $frameworkResult = $config->get('frameworkDetection');
+            if ($frameworkResult instanceof \PhpCodeArch\Application\Service\FrameworkDetectionResult
+                && $frameworkResult->hasAnyFramework()) {
+                $output->outNl('  Frameworks: ' . $formatter->info($frameworkResult->getSummary()));
+                $output->outNl();
+            }
+
             return 0;
         }
 
@@ -274,7 +292,7 @@ final readonly class Application
             new TooMuchHtmlPrediction($config),
             new LowTypeCoveragePrediction($config),
             new DeepInheritancePrediction($config),
-            new DependencyCyclePrediction(),
+            new DependencyCyclePrediction($config),
             new TooManyParametersPrediction($config),
             new DeadCodePrediction(),
             new SecuritySmellPrediction(),
@@ -329,6 +347,16 @@ final readonly class Application
         if ($gitConfig['enable'] ?? true) {
             $gitAnalyzer = new \PhpCodeArch\Git\GitAnalyzer($config, $metricsController, $output);
             $gitAnalyzer->analyze();
+        }
+
+        // Store framework detection result in project metrics
+        $frameworkResult = $config->get('frameworkDetection');
+        if ($frameworkResult instanceof \PhpCodeArch\Application\Service\FrameworkDetectionResult) {
+            $metricsController->setMetricValues(
+                MetricCollectionTypeEnum::ProjectCollection,
+                null,
+                ['detectedFrameworks' => $frameworkResult->getSummary()]
+            );
         }
 
         $this->runCalculators($metricsController, $output);

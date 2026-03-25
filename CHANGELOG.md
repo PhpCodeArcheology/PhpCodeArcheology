@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 2026-03-25
+
+### Added
+- **Automatic framework detection.** Detects Symfony, Laravel, and Doctrine from `composer.json` and adjusts metric thresholds for known framework patterns. Detected frameworks are shown in CLI output, HTML dashboard, and all report types.
+- **Doctrine cycle downgrade.** Entity↔Repository 2-node cycles and Entity↔Entity ORM relationship cycles are automatically downgraded from Error to Info when Doctrine is detected. Only cycles matching the specific pattern are affected — genuine architectural cycles remain Error.
+- **Controller threshold adjustment.** When Symfony or Laravel is detected, dependency and coupling thresholds for `*Controller` classes are raised (Too Dependent: 20→35, God Class coupling: 10→25) since controllers are orchestrators by design.
+- **Extended LCOM exclusions for Symfony.** Classes matching `*Subscriber`, `*Listener`, `*Command`, `*Handler` are excluded from LCOM warnings when Symfony is detected.
+- **`framework` config section** with `detect: true` (default) and individually toggleable adjustments (`doctrineCycles`, `entityCycles`, `controllerThresholds`).
+
+### Changed
+- **MCP SDK switched to `logiscape/mcp-sdk-php`.** Eliminates `psr/http-message` conflicts with Symfony 7.x and Laravel 10+.
+
 ## [2.3.0] - 2026-03-25
 
 ### Changed

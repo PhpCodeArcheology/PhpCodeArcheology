@@ -46,7 +46,15 @@ class GodClassPrediction implements PredictionInterface
                 ++ $suspectIndex;
             }
 
-            if ($classMetrics->usesCount + $classMetrics->usedByCount > 10) {
+            $couplingThreshold = 10;
+            if ($this->isFrameworkAdjustmentEnabled('controllerThresholds')
+                && ($this->isSymfonyDetected() || $this->getFrameworkDetection()?->laravelDetected)
+                && fnmatch('*Controller', $metric->getName())
+            ) {
+                $couplingThreshold = 25;
+            }
+
+            if ($classMetrics->usesCount + $classMetrics->usedByCount > $couplingThreshold) {
                 ++ $suspectIndex;
             }
 

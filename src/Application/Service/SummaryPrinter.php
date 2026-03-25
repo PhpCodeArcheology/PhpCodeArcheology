@@ -63,6 +63,10 @@ class SummaryPrinter
             $formatter->bold($grade),
             $formatter->info((string) $healthScore),
         ));
+        $frameworks = $get('detectedFrameworks');
+        if ($frameworks) {
+            $output->outNl(' Frameworks: ' . $formatter->info($frameworks));
+        }
         $output->outNl(sprintf(
             ' Errors: %s  |  Warnings: %s  |  Info: %s',
             $errStr,

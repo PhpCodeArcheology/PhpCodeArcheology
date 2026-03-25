@@ -31,6 +31,15 @@ class TooDependentPrediction implements PredictionInterface
                         ? $this->threshold('tooDependent.function', 10)
                         : $this->threshold('tooDependent.class', 20);
 
+                    // Framework-aware: raise threshold for Symfony/Laravel controllers
+                    if ($metric instanceof ClassMetricsCollection
+                        && $this->isFrameworkAdjustmentEnabled('controllerThresholds')
+                        && ($this->isSymfonyDetected() || $this->getFrameworkDetection()?->laravelDetected)
+                        && fnmatch('*Controller', $metric->getName())
+                    ) {
+                        $maxDependency = $this->threshold('tooDependent.controller', 35);
+                    }
+
                     $tooDependent = ($metric->get('usesCount')?->getValue() ?? 0) > $maxDependency;
 
                     $metricsController->setMetricValueByIdentifierString(

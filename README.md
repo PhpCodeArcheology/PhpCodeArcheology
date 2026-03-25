@@ -206,6 +206,13 @@ php:
   version: "8.2"       # Target PHP version for parsing (default: host PHP version)
   shortOpenTags: false  # Treat <? as PHP open tag (default: false)
 
+framework:
+  detect: true                    # Auto-detect Symfony/Laravel/Doctrine from composer.json (default: true)
+  adjustments:
+    doctrineCycles: true          # Downgrade Entity↔Repository cycles to info (default: true)
+    entityCycles: true            # Downgrade Entity↔Entity ORM cycles to info (default: true)
+    controllerThresholds: true    # Raise dependency thresholds for controllers (default: true)
+
 qualityGate:
   maxErrors: 0
   maxWarnings: 10
