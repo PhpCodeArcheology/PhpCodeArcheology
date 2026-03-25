@@ -40,11 +40,12 @@ class SummaryPrinter
         $reportDir = $config->get('reportDir') ?? '';
         $reportType = $config->get('reportType') ?? 'html';
         $reportFile = match ($reportType) {
-            'html' => $reportDir . '/index.html',
-            'json' => $reportDir . '/report.json',
-            'sarif' => $reportDir . '/report.sarif.json',
-            'ai-summary' => $reportDir . '/ai-summary.md',
-            'markdown' => $reportDir . '/index.md',
+            'html' => $reportDir . '/html/index.html',
+            'json' => $reportDir . '/json/report.json',
+            'sarif' => $reportDir . '/sarif/report.sarif.json',
+            'ai-summary' => $reportDir . '/ai-summary/ai-summary.md',
+            'markdown' => $reportDir . '/markdown/index.md',
+            'graph' => $reportDir . '/graph/graph.json',
             default => $reportDir,
         };
 
