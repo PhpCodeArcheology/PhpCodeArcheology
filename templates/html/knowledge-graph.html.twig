@@ -239,7 +239,7 @@
       <span class="filter-chip" data-filter-type="node" data-value="trait"     style="color:#f97316; border-color:#f97316;">trait</span>
       <span class="filter-chip" data-filter-type="node" data-value="package"   style="color:#22c55e; border-color:#22c55e;">package</span>
       <span class="filter-chip" data-filter-type="node" data-value="author"    style="color:#ec4899; border-color:#ec4899;">author</span>
-      <span class="filter-chip inactive" data-filter-type="node" data-value="method"   style="color:#94a3b8; border-color:#94a3b8;">method</span>
+      <span class="filter-chip" data-filter-type="node" data-value="method"   style="color:#94a3b8; border-color:#94a3b8;">method</span>
       <span class="filter-chip inactive" data-filter-type="node" data-value="function" style="color:#64748b; border-color:#64748b;">function</span>
     </div>
 
@@ -252,7 +252,8 @@
       <span class="filter-chip" data-filter-type="edge" data-value="cycle_member" style="color:#ef4444; border-color:#ef4444;">cycle_member</span>
       <span class="filter-chip inactive" data-filter-type="edge" data-value="belongs_to"  style="color:rgba(255,255,255,0.5); border-color:rgba(255,255,255,0.2);">belongs_to</span>
       <span class="filter-chip inactive" data-filter-type="edge" data-value="authored_by" style="color:#ec4899; border-color:#ec4899;">authored_by</span>
-      <span class="filter-chip inactive" data-filter-type="edge" data-value="declares"    style="color:rgba(255,255,255,0.4); border-color:rgba(255,255,255,0.15);">declares</span>
+      <span class="filter-chip" data-filter-type="edge" data-value="declares"    style="color:rgba(255,255,255,0.4); border-color:rgba(255,255,255,0.15);">declares</span>
+      <span class="filter-chip" data-filter-type="edge" data-value="calls"       style="color:#facc15; border-color:#facc15;">calls</span>
     </div>
 
     <div class="filter-group">
@@ -264,7 +265,7 @@
     <div class="filter-group">
       <label class="problems-only-label">
         <input type="checkbox" id="problems-only" style="accent-color:#ef4444; cursor:pointer;">
-        Nur Probleme
+        Problems only
       </label>
     </div>
 
@@ -304,8 +305,9 @@
       <div class="legend-edge-item"><div class="legend-line" style="background:rgba(255,255,255,0.2);"></div><span>belongs_to</span></div>
       <div class="legend-edge-item"><div class="legend-line" style="background:#ec4899; opacity:0.5;"></div><span>authored_by</span></div>
       <div class="legend-edge-item"><div class="legend-line" style="background:rgba(255,255,255,0.15);"></div><span>declares</span></div>
+      <div class="legend-edge-item"><div class="legend-line" style="background:#facc15; border-style:dashed;"></div><span>calls</span></div>
     </div>
-    <div class="legend-hint">Node-Größe = CC &nbsp;|&nbsp; Roter Rand = Zyklus &nbsp;|&nbsp; Klick = Detail-Seite</div>
+    <div class="legend-hint">Node size = CC &nbsp;|&nbsp; Red border = Cycle &nbsp;|&nbsp; Click = Detail page</div>
   </div>
 </div>
 

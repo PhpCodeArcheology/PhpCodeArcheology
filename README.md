@@ -57,6 +57,7 @@ Once connected, Claude can answer questions like *"Which classes have the highes
 | `get_dependencies` | Class dependency analysis (incoming/outgoing) |
 | `get_class_list` | All classes with key metrics, sortable and filterable |
 | `get_graph` | Knowledge graph as JSON (nodes, edges, cycles) |
+| `get_impact_analysis` | Impact analysis: what breaks if you change a method? Shows callers and call chains |
 | `search_code` | Search entities by name with metric overview |
 
 ## Features
@@ -198,6 +199,9 @@ git:
   since: "6 months ago"
   root: "."  # Git repository root (useful for monorepos or subdirectory analysis)
 
+graph:
+  methodCalls: true  # Track cross-class method calls in the knowledge graph (default: true)
+
 qualityGate:
   maxErrors: 0
   maxWarnings: 10
@@ -315,6 +319,7 @@ The JSON output contains four top-level arrays:
 | `implements` | Class → Interface |
 | `uses_trait` | Class → Trait |
 | `depends_on` | Class → Class (via `new` / static call) |
+| `calls` | Method → Method (cross-class calls via `new` / static call, weight = call-site count) |
 | `belongs_to` | Class → Package |
 | `authored_by` | Class → Author |
 | `cycle_member` | Class ↔ Class (dependency cycle, bidirectional) |

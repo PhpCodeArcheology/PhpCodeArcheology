@@ -20,6 +20,7 @@
     belongs_to:  { dark: 'rgba(255,255,255,0.1)',  light: 'rgba(0,0,0,0.08)',      dash: [2, 3], width: 1   },
     authored_by: { dark: 'rgba(236,72,153,0.3)',   light: 'rgba(236,72,153,0.4)',  dash: null,   width: 1   },
     declares:    { dark: 'rgba(255,255,255,0.08)', light: 'rgba(0,0,0,0.06)',      dash: null,   width: 0.5 },
+    calls:       { dark: '#facc15',                light: '#ca8a04',               dash: [3, 2], width: 1   },
   };
 
   function resolveNodeType(node) {
@@ -151,7 +152,7 @@
           .attr('fill', isLight ? '#94a3b8' : 'rgba(255,255,255,0.3)')
           .attr('font-size', '1rem')
           .attr('font-family', "'Source Sans 3', sans-serif")
-          .text('Keine Nodes sichtbar — Filter anpassen');
+          .text('No visible nodes — adjust filters');
         return;
       }
 
@@ -166,7 +167,7 @@
           .attr('fill', '#f59e0b')
           .attr('font-size', '0.78rem')
           .attr('font-family', "'Source Sans 3', sans-serif")
-          .text('Hinweis: >500 Nodes — Performance reduziert. Filter einschränken für bessere Interaktivität.');
+          .text('Note: >500 nodes — performance reduced. Narrow filters for better interactivity.');
       }
 
       // Update arrow marker colors for current theme
@@ -269,7 +270,7 @@
           if (lcom !== '—') html += '<div class="graph-tooltip-row">LCOM: ' + lcom + '</div>';
           if (mi   !== '—') html += '<div class="graph-tooltip-row">MI: '   + mi   + '</div>';
           if (problems > 0) html += '<div class="graph-tooltip-row" style="color:#f59e0b;">⚠ ' + problems + ' Problem' + (problems > 1 ? 'e' : '') + '</div>';
-          if (isCycle)      html += '<div class="graph-tooltip-warn">⟳ Teil eines Zyklus</div>';
+          if (isCycle)      html += '<div class="graph-tooltip-warn">⟳ Part of a cycle</div>';
 
           tooltipBody.innerHTML = html;
           tooltip.style.display = 'block';

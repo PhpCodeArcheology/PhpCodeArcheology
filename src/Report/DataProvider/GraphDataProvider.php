@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Report\DataProvider;
 
+use PhpCodeArch\Metrics\Identity\FunctionAndClassIdentifier;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
@@ -17,6 +18,7 @@ class GraphDataProvider implements ReportDataProviderInterface
     private array $edges = [];
     private array $clusters = [];
     private array $cycles = [];
+    private array $knownMethodIds = [];
 
     public function gatherData(): void
     {
@@ -119,6 +121,9 @@ class GraphDataProvider implements ReportDataProviderInterface
 
         // Step 5: Deduplicate cycles (each cycle is reported once per member class)
         $this->cycles = $this->deduplicateCycles($rawCycles);
+
+        // Step 6: Build method calls edges (requires all method nodes to be known)
+        $this->buildMethodCallEdges($nameToId);
 
         $this->templateData['graphData'] = $this->getGraphData();
     }
@@ -243,7 +248,7 @@ class GraphDataProvider implements ReportDataProviderInterface
         if ($methodsCollection !== null) {
             foreach ($methodsCollection->getAsArray() as $methodId => $methodName) {
                 if ($methodId === null || $methodName === null) continue;
-                $this->processMethodNode((string) $methodId, $classNodeId);
+                $this->processMethodNode((string) $methodId, $classNodeId, $nameToId);
             }
         }
 
@@ -391,6 +396,7 @@ class GraphDataProvider implements ReportDataProviderInterface
     private function processMethodNode(
         string $methodId,
         string $classNodeId,
+        array $nameToId,
     ): void {
         $methodCollection = $this->metricsController->getMetricCollectionByIdentifierString($methodId);
         if ($methodCollection === null) {
@@ -427,6 +433,8 @@ class GraphDataProvider implements ReportDataProviderInterface
             'type' => 'declares',
             'weight' => 1,
         ];
+
+        $this->knownMethodIds[$methodId] = true;
     }
 
     private function deduplicateCycles(array $rawCycles): array
@@ -446,5 +454,45 @@ class GraphDataProvider implements ReportDataProviderInterface
         }
 
         return $result;
+    }
+
+    private function buildMethodCallEdges(array $nameToId): void
+    {
+        foreach ($this->knownMethodIds as $methodId => $_) {
+            $methodCallsCollection = $this->metricsController->getCollectionByIdentifierString($methodId, 'methodCalls');
+            if ($methodCallsCollection === null) {
+                continue;
+            }
+
+            $callCounts = [];
+            foreach ($methodCallsCollection->getAsArray() as $call) {
+                $key = $call['targetClass'] . '::' . $call['targetMethod'];
+                $callCounts[$key] = ($callCounts[$key] ?? 0) + 1;
+            }
+
+            foreach ($callCounts as $callKey => $count) {
+                [$targetClassName, $targetMethodName] = explode('::', $callKey, 2);
+
+                if (!isset($nameToId[$targetClassName])) {
+                    continue;
+                }
+
+                $targetMethodId = (string) FunctionAndClassIdentifier::ofNameAndPath(
+                    $targetMethodName,
+                    $targetClassName
+                );
+
+                if (!isset($this->knownMethodIds[$targetMethodId])) {
+                    continue;
+                }
+
+                $this->edges[] = [
+                    'source' => 'method:' . $methodId,
+                    'target' => 'method:' . $targetMethodId,
+                    'type' => 'calls',
+                    'weight' => $count,
+                ];
+            }
+        }
     }
 }

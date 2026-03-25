@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Analysis;
 
+use PhpCodeArch\Application\Config;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\Collections\ClassNameCollection;
 use PhpCodeArch\Metrics\Model\Collections\InterfaceNameCollection;
+use PhpCodeArch\Metrics\Model\Collections\MethodCallCollection;
 use PhpCodeArch\Metrics\Model\Collections\TraitNameCollection;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
@@ -70,6 +72,19 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface
     private array $outsideDependencies = [];
 
     /**
+     * @var string[]
+     */
+    private array $currentMethodName = [];
+
+    /**
+     * Cross-class method call edges: [className][methodName][] = ['targetClass' => ..., 'targetMethod' => ...]
+     * @var array
+     */
+    private array $methodCallEdges = [];
+
+    private bool $trackMethodCalls = true;
+
+    /**
      * @param Node $node
      * @return void
      */
@@ -82,6 +97,7 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface
 
             case $node instanceof Node\Stmt\ClassMethod:
                 $this->setupMethodMetrics();
+                $this->currentMethodName[] = (string) $node->name;
                 break;
 
             case $node instanceof Node\Stmt\Class_:
@@ -115,12 +131,20 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface
             case $node instanceof Node\Stmt\ClassMethod:
                 $this->createFunctionDependencies($node);
                 $this->saveMethodDependencies($node);
+                $this->saveMethodCallEdges($node);
+                array_pop($this->currentMethodName);
                 break;
 
             case $node instanceof Node\Expr\New_:
+                $this->setDependency($node);
+                $this->setUses($node);
+                $this->recordMethodCallFromNew($node);
+                break;
+
             case $node instanceof Node\Expr\StaticCall:
                 $this->setDependency($node);
                 $this->setUses($node);
+                $this->recordMethodCallFromStaticCall($node);
                 break;
 
             case $node instanceof Node\Expr\ClassConstFetch:
@@ -441,7 +465,90 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface
         $this->functionDependencies = [];
         $this->methodDependencies = [];
         $this->outsideDependencies = [];
+        $this->methodCallEdges = [];
+        $this->currentMethodName = [];
         $this->insideFunction = false;
         $this->insideMethod = false;
+    }
+
+    public function injectConfig(Config $config): void
+    {
+        $graphConfig = $config->get('graph') ?? [];
+        $this->trackMethodCalls = $graphConfig['methodCalls'] ?? true;
+    }
+
+    private function recordMethodCall(string $targetClass, string $targetMethod): void
+    {
+        if (!$this->trackMethodCalls || !$this->insideMethod) {
+            return;
+        }
+
+        $className = end($this->currentClassName);
+        $methodName = end($this->currentMethodName);
+
+        if (!$className || !$methodName) {
+            return;
+        }
+
+        if ($targetClass === $className) {
+            return;
+        }
+
+        $this->methodCallEdges[$className][$methodName][] = [
+            'targetClass' => $targetClass,
+            'targetMethod' => $targetMethod,
+        ];
+    }
+
+    private function recordMethodCallFromStaticCall(Node\Expr\StaticCall $node): void
+    {
+        $targetClass = getNodeName($node->class);
+
+        if (!$targetClass || !$node->name instanceof Node\Identifier) {
+            return;
+        }
+
+        $targetClassLower = strtolower($targetClass);
+        if ($targetClassLower === 'self' || $targetClassLower === 'static' || $targetClassLower === 'parent') {
+            return;
+        }
+
+        $this->recordMethodCall($targetClass, (string) $node->name);
+    }
+
+    private function recordMethodCallFromNew(Node\Expr\New_ $node): void
+    {
+        $targetClass = getNodeName($node->class);
+
+        if (!$targetClass) {
+            return;
+        }
+
+        $this->recordMethodCall($targetClass, '__construct');
+    }
+
+    private function saveMethodCallEdges(Node\Stmt\ClassMethod $node): void
+    {
+        if (!$this->trackMethodCalls) {
+            return;
+        }
+
+        $className = end($this->currentClassName);
+        $methodName = (string) $node->name;
+        $calls = $this->methodCallEdges[$className][$methodName] ?? [];
+
+        if (empty($calls)) {
+            return;
+        }
+
+        $this->metricsController->setCollection(
+            MetricCollectionTypeEnum::MethodCollection,
+            [
+                'path' => $className,
+                'name' => $methodName,
+            ],
+            new MethodCallCollection($calls),
+            'methodCalls'
+        );
     }
 }

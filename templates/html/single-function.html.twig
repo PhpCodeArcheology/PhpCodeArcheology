@@ -91,6 +91,86 @@
     {% endif %}
   </div>
 
+  {% if isMethod %}
+    {% set outgoingCalls = methodCalls[metricCollectionId] is defined ? methodCalls[metricCollectionId] : [] %}
+    {% set incomingCalls = calledBy[metricCollectionId] is defined ? calledBy[metricCollectionId] : [] %}
+
+    {% if outgoingCalls is not empty or incomingCalls is not empty %}
+    <div class="mt-8 rounded-xl border border-cyan-800 bg-cyan-950/45 p-4">
+      <h3 class="mb-3 text-xl font-semibold font-display">Method Calls</h3>
+
+      {% if incomingCalls is not empty %}
+      <h4 class="mb-2 text-sm font-semibold text-white/50 uppercase tracking-wider">Called by</h4>
+      <table class="w-full border-collapse mb-6">
+        <thead>
+          <tr class="border-b border-white/15">
+            <th class="text-left p-2">Class</th>
+            <th class="text-left p-2">Method</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for caller in incomingCalls %}
+            <tr class="odd:bg-cyan-950/85 even:bg-cyan-950/55 border-t border-white/15">
+              <td class="p-2">
+                {% if caller.sourceClassId %}
+                  <a href="../classes/{{ caller.sourceClassId }}.html" class="text-cyan-500 hover:text-cyan-300">{{ caller.sourceClass }}</a>
+                {% else %}
+                  <span class="text-white/60">{{ caller.sourceClass }}</span>
+                {% endif %}
+              </td>
+              <td class="p-2">
+                {% if caller.sourceMethodId %}
+                  <a href="../methods/{{ caller.sourceMethodId }}.html" class="text-cyan-500 hover:text-cyan-300 font-semibold">{{ caller.sourceMethod }}</a>
+                {% else %}
+                  <span class="font-semibold">{{ caller.sourceMethod }}</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
+
+      {% if outgoingCalls is not empty %}
+      <h4 class="mb-2 text-sm font-semibold text-white/50 uppercase tracking-wider">Calls to</h4>
+      <table class="w-full border-collapse">
+        <thead>
+          <tr class="border-b border-white/15">
+            <th class="text-left p-2">Class</th>
+            <th class="text-left p-2">Method</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% set seen = [] %}
+          {% for call in outgoingCalls %}
+            {% set callKey = call.targetClass ~ '::' ~ call.targetMethod %}
+            {% if callKey not in seen %}
+              {% set seen = seen|merge([callKey]) %}
+              <tr class="odd:bg-cyan-950/85 even:bg-cyan-950/55 border-t border-white/15">
+                <td class="p-2">
+                  {% if call.targetClassId %}
+                    <a href="../classes/{{ call.targetClassId }}.html" class="text-cyan-500 hover:text-cyan-300">{{ call.targetClass }}</a>
+                  {% else %}
+                    <span class="text-white/60">{{ call.targetClass }}</span>
+                  {% endif %}
+                </td>
+                <td class="p-2">
+                  {% if call.targetMethodId %}
+                    <a href="../methods/{{ call.targetMethodId }}.html" class="text-cyan-500 hover:text-cyan-300 font-semibold">{{ call.targetMethod }}</a>
+                  {% else %}
+                    <span class="font-semibold">{{ call.targetMethod }}</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endif %}
+          {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
+    </div>
+    {% endif %}
+  {% endif %}
+
   {% include('@Parts/divider.html.twig') %}
 
   <div class="my-8 grid sm:grid-cols-3 gap-3">

@@ -14,6 +14,7 @@ use PhpCodeArch\Mcp\Tools\ClassListTool;
 use PhpCodeArch\Mcp\Tools\DependenciesTool;
 use PhpCodeArch\Mcp\Tools\GraphTool;
 use PhpCodeArch\Mcp\Tools\HealthScoreTool;
+use PhpCodeArch\Mcp\Tools\ImpactAnalysisTool;
 use PhpCodeArch\Mcp\Tools\HotspotsTool;
 use PhpCodeArch\Mcp\Tools\MetricsTool;
 use PhpCodeArch\Mcp\Tools\ProblemsTool;
@@ -63,6 +64,7 @@ class McpCommand
         $dependenciesTool = new DependenciesTool($dataProviderFactory);
         $graphTool = new GraphTool($dataProviderFactory);
         $searchCodeTool = new SearchCodeTool($dataProviderFactory, $metricsController);
+        $impactAnalysisTool = new ImpactAnalysisTool($dataProviderFactory);
 
         $server = Server::make()
             ->withServerInfo('PhpCodeArcheology', Application::VERSION)
@@ -110,6 +112,11 @@ class McpCommand
                 handler: $searchCodeTool->searchCode(...),
                 name: 'search_code',
                 description: 'Search for classes, files, or functions by name. Returns matching entities with key metrics.'
+            )
+            ->withTool(
+                handler: $impactAnalysisTool->getImpactAnalysis(...),
+                name: 'get_impact_analysis',
+                description: 'Analyzes the impact of changing a method. Shows direct and transitive callers across classes, affected class count, and call chains. Provide class_name (required) and optionally method_name and depth (default 2).'
             )
             ->build();
 
