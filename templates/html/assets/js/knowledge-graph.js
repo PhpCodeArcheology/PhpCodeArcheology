@@ -70,8 +70,12 @@
     if (statPackages) statPackages.textContent = nodes.filter(function (n) { return n.type === 'package'; }).length;
 
     // Filter state
-    const activeNodeTypes = new Set(['class', 'interface', 'trait', 'package', 'author']);
-    const activeEdgeTypes = new Set(['depends_on', 'extends', 'implements', 'uses_trait', 'cycle_member']);
+    const activeNodeTypes = new Set(
+      Array.from(document.querySelectorAll('.filter-chip[data-filter-type="node"]:not(.inactive)')).map(c => c.getAttribute('data-value'))
+    );
+    const activeEdgeTypes = new Set(
+      Array.from(document.querySelectorAll('.filter-chip[data-filter-type="edge"]:not(.inactive)')).map(c => c.getAttribute('data-value'))
+    );
     let minCC        = 0;
     let problemsOnly = false;
 

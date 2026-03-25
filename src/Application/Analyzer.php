@@ -125,6 +125,7 @@ readonly class Analyzer
 
         $fileNameCollection = new FileNameCollection();
         $shortOpenTags = ($this->config->get('php') ?? [])['shortOpenTags'] ?? false;
+        $errorFiles = [];
 
         foreach ($fileList->getFiles() as $count => $file) {
             $progressBar->advance();
@@ -157,6 +158,7 @@ readonly class Analyzer
 
             if ($phpCode === false) {
                 $fileErrorCollection->set("Could not read file: $file");
+                $errorFiles[] = [$file, 'Could not read file'];
                 ++$projectFileErrors;
                 continue;
             }
@@ -172,6 +174,7 @@ readonly class Analyzer
                 $ast = $this->parser->parse($phpCode);
             } catch (Error $e) {
                 $fileErrorCollection->set($e->getMessage());
+                $errorFiles[] = [$file, $e->getMessage()];
                 ++$projectFileErrors;
             }
 
@@ -200,8 +203,15 @@ readonly class Analyzer
 
         if ($projectFileErrors > 0) {
             $this->output->outNl(
-                $formatter->warning("Warning: $projectFileErrors file(s) had errors and were skipped.")
+                $formatter->warning("Warning: $projectFileErrors file(s) had errors and were skipped:")
             );
+            $commonPath = $this->config->get('files')[0] ?? '';
+            foreach ($errorFiles as [$errorFile, $errorMessage]) {
+                $displayPath = str_starts_with($errorFile, $commonPath)
+                    ? substr($errorFile, strlen($commonPath) + 1)
+                    : $errorFile;
+                $this->output->outNl('  ' . $formatter->dim($displayPath) . ': ' . $errorMessage);
+            }
         }
 
         $this->output->outNl(
