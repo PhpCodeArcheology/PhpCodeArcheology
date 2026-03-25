@@ -85,8 +85,6 @@ Once connected, Claude can answer questions like *"Which classes have the highes
 composer require --dev php-code-archeology/php-code-archeology
 ```
 
-> **Dependency conflict?** If you get a `psr/http-message` version conflict, use `composer require --dev php-code-archeology/php-code-archeology -W` to allow Composer to resolve transitive dependencies.
-
 ### Global Installation
 
 ```bash

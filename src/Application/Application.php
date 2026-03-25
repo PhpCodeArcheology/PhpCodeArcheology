@@ -58,7 +58,7 @@ use Twig\Loader\FilesystemLoader;
 
 final readonly class Application
 {
-    const VERSION = '2.2.0';
+    const VERSION = '2.3.0';
 
     /**
      * @throws ConfigFileExtensionNotSupportedException

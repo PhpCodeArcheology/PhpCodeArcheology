@@ -21,8 +21,7 @@ use PhpCodeArch\Mcp\Tools\ProblemsTool;
 use PhpCodeArch\Mcp\Tools\RefactoringTool;
 use PhpCodeArch\Mcp\Tools\SearchCodeTool;
 use PhpCodeArch\Report\DataProvider\DataProviderFactory;
-use PhpMcp\Server\Server;
-use PhpMcp\Server\Transports\StdioServerTransport;
+use Mcp\Server\McpServer;
 
 class McpCommand
 {
@@ -66,61 +65,61 @@ class McpCommand
         $searchCodeTool = new SearchCodeTool($dataProviderFactory, $metricsController);
         $impactAnalysisTool = new ImpactAnalysisTool($dataProviderFactory);
 
-        $server = Server::make()
-            ->withServerInfo('PhpCodeArcheology', Application::VERSION)
-            ->withTool(
-                handler: $healthTool->getHealthScore(...),
-                name: 'get_health_score',
-                description: 'Returns the overall code health score, grade, technical debt score, problem counts, and project statistics.'
-            )
-            ->withTool(
-                handler: $problemsTool->getProblems(...),
-                name: 'get_problems',
-                description: 'Returns a filtered list of code problems. Filter by severity (error/warning/info), type keyword, and limit.'
-            )
-            ->withTool(
-                handler: $hotspotsTool->getHotspots(...),
-                name: 'get_hotspots',
-                description: 'Returns the top N code hotspots ranked by churn × cyclomatic complexity. Files that change often and are complex.'
-            )
-            ->withTool(
-                handler: $refactoringTool->getRefactoringPriorities(...),
-                name: 'get_refactoring_priorities',
-                description: 'Returns classes ranked by refactoring priority score. Includes recommendation and driving factors.'
-            )
-            ->withTool(
-                handler: $classListTool->getClassList(...),
-                name: 'get_class_list',
-                description: 'Returns a sorted and filtered list of classes with key metrics (CC, LLOC, MI, refactoring priority, coupling).'
-            )
-            ->withTool(
-                handler: $metricsTool->getMetrics(...),
-                name: 'get_metrics',
-                description: 'Returns all available metrics for a specific class, file, or function. Provide the entity name (e.g. \'UserService\').'
-            )
-            ->withTool(
-                handler: $dependenciesTool->getDependencies(...),
-                name: 'get_dependencies',
-                description: 'Returns dependency information for a specific class — outgoing dependencies, incoming usage, and coupling metrics.'
-            )
-            ->withTool(
-                handler: $graphTool->getGraph(...),
-                name: 'get_graph',
-                description: 'Returns the knowledge graph of the project as JSON with nodes, edges, clusters, and dependency cycles.'
-            )
-            ->withTool(
-                handler: $searchCodeTool->searchCode(...),
-                name: 'search_code',
-                description: 'Search for classes, files, or functions by name. Returns matching entities with key metrics.'
-            )
-            ->withTool(
-                handler: $impactAnalysisTool->getImpactAnalysis(...),
-                name: 'get_impact_analysis',
-                description: 'Analyzes the impact of changing a method. Shows direct and transitive callers across classes, affected class count, and call chains. Provide class_name (required) and optionally method_name and depth (default 2).'
-            )
-            ->build();
+        $server = new McpServer('PhpCodeArcheology');
 
-        $server->listen(new StdioServerTransport());
+        $server
+            ->tool(
+                'get_health_score',
+                'Returns the overall code health score, grade, technical debt score, problem counts, and project statistics.',
+                $healthTool->getHealthScore(...)
+            )
+            ->tool(
+                'get_problems',
+                'Returns a filtered list of code problems. Filter by severity (error/warning/info), type keyword, and limit.',
+                $problemsTool->getProblems(...)
+            )
+            ->tool(
+                'get_hotspots',
+                'Returns the top N code hotspots ranked by churn × cyclomatic complexity. Files that change often and are complex.',
+                $hotspotsTool->getHotspots(...)
+            )
+            ->tool(
+                'get_refactoring_priorities',
+                'Returns classes ranked by refactoring priority score. Includes recommendation and driving factors.',
+                $refactoringTool->getRefactoringPriorities(...)
+            )
+            ->tool(
+                'get_class_list',
+                'Returns a sorted and filtered list of classes with key metrics (CC, LLOC, MI, refactoring priority, coupling).',
+                $classListTool->getClassList(...)
+            )
+            ->tool(
+                'get_metrics',
+                'Returns all available metrics for a specific class, file, or function. Provide the entity name (e.g. \'UserService\').',
+                $metricsTool->getMetrics(...)
+            )
+            ->tool(
+                'get_dependencies',
+                'Returns dependency information for a specific class — outgoing dependencies, incoming usage, and coupling metrics.',
+                $dependenciesTool->getDependencies(...)
+            )
+            ->tool(
+                'get_graph',
+                'Returns the knowledge graph of the project as JSON with nodes, edges, clusters, and dependency cycles.',
+                $graphTool->getGraph(...)
+            )
+            ->tool(
+                'search_code',
+                'Search for classes, files, or functions by name. Returns matching entities with key metrics.',
+                $searchCodeTool->searchCode(...)
+            )
+            ->tool(
+                'get_impact_analysis',
+                'Analyzes the impact of changing a method. Shows direct and transitive callers across classes, affected class count, and call chains. Provide class_name (required) and optionally method_name and depth (default 2).',
+                $impactAnalysisTool->getImpactAnalysis(...)
+            );
+
+        $server->run();
 
         return 0;
     }

@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2026-03-25
+
+### Changed
+- **MCP SDK switched from `php-mcp/server` to `logiscape/mcp-sdk-php`.** The previous SDK pulled in `react/http` which requires `psr/http-message ^1.0` — incompatible with Symfony 7.x and Laravel 10+ (which require `psr/http-message ^2.0`). The new SDK has minimal dependencies (`psr/log` only), eliminating all Composer conflicts. PhpCodeArcheology can now be installed as a project dev-dependency in any modern PHP framework without issues.
+
+### Removed
+- Dependency conflict installation hint from README (no longer needed).
+
 ## [2.2.2] - 2026-03-25
 
 ### Fixed
