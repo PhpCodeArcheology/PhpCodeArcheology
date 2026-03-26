@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.1] - 2026-03-26
+
+### Fixed
+- **Fatal error with null property/method names in LCOM calculation.** `getNodeName()` can return `null` for dynamic property accesses (`$this->$prop`) and dynamic method calls (`$this->$method()`). The LCOM visitor now skips these instead of passing `null` to `Graph\Node::__construct()`. Fixes [#1](https://github.com/PhpCodeArcheology/PhpCodeArcheology/issues/1).
+
 ## [2.4.0] - 2026-03-25
 
 ### Added

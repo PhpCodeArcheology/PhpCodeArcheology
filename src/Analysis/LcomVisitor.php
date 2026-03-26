@@ -128,6 +128,9 @@ class LcomVisitor implements NodeVisitor, VisitorInterface
                 && getNodeName($node->var) === 'this') {
 
                 $nodeName = getNodeName($node->name);
+                if ($nodeName === null) {
+                    return;
+                }
                 $name = $nodeName . '()';
                 if (!$this->graph->has($name)) {
                     $this->graph->insert(new GraphNode($name));
@@ -143,6 +146,9 @@ class LcomVisitor implements NodeVisitor, VisitorInterface
             && $node->var->name === 'this') {
 
             $name = getNodeName($node);
+            if ($name === null) {
+                return;
+            }
             if (!$this->graph->has($name)) {
                 $this->graph->insert(new GraphNode($name));
             }
