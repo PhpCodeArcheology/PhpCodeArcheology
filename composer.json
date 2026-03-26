@@ -4,7 +4,14 @@
   "keywords": [
     "analysis",
     "php",
-    "testing",
+    "static-analysis",
+    "code-metrics",
+    "complexity",
+    "architecture",
+    "maintainability",
+    "technical-debt",
+    "code-quality",
+    "mcp",
     "qa",
     "quality"
   ],
