@@ -175,18 +175,20 @@ class TooComplexPrediction implements PredictionInterface
             sprintf('overall%sAvgLcom', $className)
         )->getValue();
 
+        $lcomTolerance = $this->threshold('tooComplex.lcomRelativeTolerance', 0.30);
+
         $problemCount += $this->check(
             'lcom',
             $values['lcom'],
-            function($value) use ($avgLcom) {
-                $max = $avgLcom + $avgLcom * 0.3;
+            function($value) use ($avgLcom, $lcomTolerance) {
+                $max = $avgLcom + $avgLcom * $lcomTolerance;
                 return $value > $max;
             },
             $metricsController,
             $identifierString,
             TooComplexProblem::class,
-            $this->getLevel(),
-            'LCOM is more than 30% above average LCOM (' . number_format($avgLcom,3) . ').'
+            self::WARNING,
+            'LCOM is more than ' . ($lcomTolerance * 100) . '% above average LCOM (' . number_format($avgLcom,3) . ').'
         );
 
         return $problemCount;
@@ -206,6 +208,9 @@ class TooComplexPrediction implements PredictionInterface
 
         $problemCount = 0;
 
+        $isFrameworkProject = $this->isFrameworkAdjustmentEnabled('complexityThresholds')
+            && ($this->isSymfonyDetected() || $this->getFrameworkDetection()?->laravelDetected);
+
         $problemCount += $this->check(
             'cc',
             $values['cc'],
@@ -222,11 +227,18 @@ class TooComplexPrediction implements PredictionInterface
             'Complexity is too high.'
         );
 
+        $maxDifficulty = $isFrameworkProject
+            ? $this->threshold('tooComplex.difficultyFramework', 35)
+            : $this->threshold('tooComplex.difficulty', 20);
+
         $problemCount += $this->check(
             'difficulty',
             $values['difficulty'],
-            function($value) {
-                return $value > $this->threshold('tooComplex.difficulty', 20);
+            function($value) use ($values, $maxDifficulty) {
+                if ($values['lloc'] <= $this->threshold('tooComplex.trivialLloc', 5)) {
+                    return false;
+                }
+                return $value > $maxDifficulty;
             },
             $metricsController,
             $identifierString,
@@ -241,19 +253,26 @@ class TooComplexPrediction implements PredictionInterface
             sprintf('overall%sAvgEffort', $className)
         )->getValue();
 
+        $effortTolerance = $isFrameworkProject
+            ? $this->threshold('tooComplex.effortRelativeToleranceFramework', 0.50)
+            : $this->threshold('tooComplex.effortRelativeTolerance', 0.30);
+
         $problemCount += $this->check(
             'effort',
             $values['effort'],
-            function($value) use ($avgEffort) {
-                $max = $avgEffort + $avgEffort * 0.3;
+            function($value) use ($values, $avgEffort, $effortTolerance) {
+                if ($values['lloc'] <= $this->threshold('tooComplex.trivialLloc', 5)) {
+                    return false;
+                }
+                $max = $avgEffort + $avgEffort * $effortTolerance;
 
                 return $value > $max;
             },
             $metricsController,
             $identifierString,
             TooComplexProblem::class,
-            $this->getLevel(),
-            'Effort more than 30% above average effort (' . number_format($avgEffort) . ').'
+            self::WARNING,
+            'Effort more than ' . ($effortTolerance * 100) . '% above average effort (' . number_format($avgEffort) . ').'
         );
 
         $avgMi = $metricsController->getMetricValue(
@@ -268,15 +287,21 @@ class TooComplexPrediction implements PredictionInterface
             $identifierString, 'typeCoverage'
         )?->getValue() ?? null;
 
-        $miTolerance = 0.2; // default: 20% below average
+        $miTolerance = $this->threshold('tooComplex.miRelativeTolerance', 0.20);
         if ($typeCoverage !== null && $typeCoverage > 80) {
-            $miTolerance = 0.3; // 30% below average for well-typed code
+            $miTolerance = max($miTolerance, $this->threshold('tooComplex.miRelativeToleranceTyped', 0.30));
+        }
+        if ($isFrameworkProject) {
+            $miTolerance = max($miTolerance, $this->threshold('tooComplex.miRelativeToleranceFramework', 0.35));
         }
 
         $problemCount += $this->check(
             'maintainabilityIndex',
             $values['maintainabilityIndex'],
-            function($value) use ($avgMi, $miTolerance) {
+            function($value) use ($values, $avgMi, $miTolerance) {
+                if ($values['lloc'] <= $this->threshold('tooComplex.trivialLloc', 5)) {
+                    return false;
+                }
                 $min = $avgMi - $avgMi * $miTolerance;
 
                 return $value < $min;
@@ -284,7 +309,7 @@ class TooComplexPrediction implements PredictionInterface
             $metricsController,
             $identifierString,
             TooComplexProblem::class,
-            $this->getLevel(),
+            self::WARNING,
             'Maintainability index is more than ' . ($miTolerance * 100) . '% below average MI (' . number_format($avgMi) . ').'
         );
 
