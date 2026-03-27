@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Report\DataProvider;
 
-use PhpCodeArch\Metrics\Identity\FunctionAndClassIdentifier;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
 use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
+use PhpCodeArch\Report\DataProvider\Graph\ClassNodeCollector;
+use PhpCodeArch\Report\DataProvider\Graph\EdgeCollector;
+use PhpCodeArch\Report\DataProvider\Graph\PackageNodeCollector;
 
 class GraphDataProvider implements ReportDataProviderInterface
 {
@@ -23,8 +25,6 @@ class GraphDataProvider implements ReportDataProviderInterface
     private array $clusters = [];
     /** @var list<array<string, mixed>> */
     private array $cycles = [];
-    /** @var array<string, true> */
-    private array $knownMethodIds = [];
 
     public function gatherData(): void
     {
@@ -47,7 +47,7 @@ class GraphDataProvider implements ReportDataProviderInterface
             }
         }
 
-        // Step 2: First pass — collect git data from files and aggregate authors
+        // Step 2: Collect git data from file collections
         /** @var array<string, array{commitCount: int, filesChanged: int}> $authorData */
         $authorData = [];
         /** @var array<string, array{gitAuthors: array<mixed>, gitChurnCount: int, gitCodeAgeDays: mixed}> $fileGitData */
@@ -59,21 +59,23 @@ class GraphDataProvider implements ReportDataProviderInterface
             }
         }
 
-        // Step 3: Second pass — collect class, function nodes and edges
-        /** @var list<array<string, mixed>> $rawCycles */
-        $rawCycles = [];
+        // Step 3: Collect class and function nodes/edges
+        $classCollector = new ClassNodeCollector($this->metricsController);
 
         foreach ($this->metricsController->getAllCollections() as $collection) {
             $identifierString = (string) $collection->getIdentifier();
 
             if ($collection instanceof ClassMetricsCollection) {
-                $this->processClassCollection($collection, $identifierString, $nameToId, $rawCycles, $fileGitData);
+                $classCollector->processCollection($collection, $identifierString, $nameToId, $fileGitData);
             } elseif ($collection instanceof FunctionMetricsCollection) {
                 $this->processFunctionCollection($collection, $identifierString);
             }
         }
 
-        // Step 3: Author nodes
+        $this->nodes = array_merge($this->nodes, $classCollector->getNodes());
+        $this->edges = array_merge($this->edges, $classCollector->getEdges());
+
+        // Step 4: Author nodes
         foreach ($authorData as $authorName => $data) {
             $this->nodes[] = [
                 'id' => 'author:'.$authorName,
@@ -87,58 +89,21 @@ class GraphDataProvider implements ReportDataProviderInterface
             ];
         }
 
-        // Step 4: Package nodes and clusters
-        $packages = $this->metricsController->getMetricCollectionsByCollectionKeys(
-            MetricCollectionTypeEnum::ProjectCollection,
-            null,
-            'packages'
+        // Step 5: Package nodes and clusters
+        $packageCollector = new PackageNodeCollector($this->metricsController);
+        $packageData = $packageCollector->collect($nameToId);
+        $this->nodes = array_merge($this->nodes, $packageData['nodes']);
+        $this->clusters = $packageData['clusters'];
+
+        // Step 6: Deduplicate cycles
+        $this->cycles = $this->deduplicateCycles($classCollector->getRawCycles());
+
+        // Step 7: Build method call edges
+        $edgeCollector = new EdgeCollector($this->metricsController);
+        $this->edges = array_merge(
+            $this->edges,
+            $edgeCollector->buildMethodCallEdges($classCollector->getKnownMethodIds(), $nameToId)
         );
-
-        foreach ($packages as $packageCollection) {
-            $packageName = $packageCollection->getName();
-            $packageNodeId = 'package:'.$packageName;
-
-            $this->nodes[] = [
-                'id' => $packageNodeId,
-                'type' => 'package',
-                'name' => $packageName,
-                'metrics' => [
-                    'abstractness' => $packageCollection->get(MetricKey::ABSTRACTNESS)?->getValue(),
-                    'instability' => $packageCollection->get(MetricKey::INSTABILITY)?->getValue(),
-                    'distanceFromMainline' => $packageCollection->get(MetricKey::DISTANCE_FROM_MAINLINE)?->getValue(),
-                    'cohesion' => null,
-                ],
-                'problems' => [],
-            ];
-
-            $clusterNodeIds = [];
-            $classesInPackage = $packageCollection->getCollection('classes');
-            if (null !== $classesInPackage) {
-                foreach ($classesInPackage->getAsArray() as $className) {
-                    if (!is_string($className)) {
-                        continue;
-                    }
-                    $resolvedId = $nameToId[$className] ?? null;
-                    if (null !== $resolvedId) {
-                        $clusterNodeIds[] = 'class:'.$resolvedId;
-                    }
-                }
-            }
-
-            if ([] !== $clusterNodeIds) {
-                $this->clusters[] = [
-                    'id' => 'package:'.$packageName,
-                    'name' => $packageName,
-                    'nodeIds' => $clusterNodeIds,
-                ];
-            }
-        }
-
-        // Step 5: Deduplicate cycles (each cycle is reported once per member class)
-        $this->cycles = $this->deduplicateCycles($rawCycles);
-
-        // Step 6: Build method calls edges (requires all method nodes to be known)
-        $this->buildMethodCallEdges($nameToId);
 
         $this->templateData['graphData'] = $this->getGraphData();
     }
@@ -212,217 +177,12 @@ class GraphDataProvider implements ReportDataProviderInterface
         }
     }
 
-    /**
-     * @param array<string, string>                                                                     $nameToId
-     * @param list<array<string, mixed>>                                                                $rawCycles
-     * @param array<string, array{gitAuthors: array<mixed>, gitChurnCount: int, gitCodeAgeDays: mixed}> $fileGitData
-     */
-    private function processClassCollection(
-        ClassMetricsCollection $collection,
-        string $identifierString,
-        array $nameToId,
-        array &$rawCycles,
-        array $fileGitData,
-    ): void {
-        $className = $collection->getName();
-
-        // Skip anonymous classes
-        if (str_starts_with($className, 'anonymous@')) {
-            return;
-        }
-
-        $classNodeId = 'class:'.$identifierString;
-        $filePath = $collection->getPath();
-        $gitData = $fileGitData[$filePath] ?? null;
-
-        $metrics = [
-            'cc' => $collection->get(MetricKey::CC)?->getValue(),
-            'lcom' => $collection->get(MetricKey::LCOM)?->getValue(),
-            'mi' => $collection->get(MetricKey::MAINTAINABILITY_INDEX)?->getValue(),
-            'instability' => $collection->get(MetricKey::INSTABILITY)?->getValue(),
-            'afferentCoupling' => $collection->get(MetricKey::USED_BY_COUNT)?->getValue(),
-            'efferentCoupling' => $collection->get(MetricKey::USES_COUNT)?->getValue(),
-        ];
-
-        if (null !== $gitData) {
-            $metrics['gitChurnCount'] = $gitData['gitChurnCount'];
-            $metrics['gitCodeAgeDays'] = $gitData['gitCodeAgeDays'];
-        }
-
-        $this->nodes[] = [
-            'id' => $classNodeId,
-            'type' => 'class',
-            'name' => $className,
-            'path' => $filePath,
-            'metrics' => $metrics,
-            'flags' => [
-                'interface' => $collection->getBool(MetricKey::INTERFACE),
-                'trait' => $collection->getBool(MetricKey::TRAIT),
-                'abstract' => $collection->getBool(MetricKey::ABSTRACT),
-                'final' => $collection->getBool(MetricKey::FINAL),
-                'enum' => $collection->getBool(MetricKey::ENUM),
-            ],
-            'problems' => [],
-        ];
-
-        // authored_by edges: Class→Author
-        if (null !== $gitData) {
-            foreach ($gitData['gitAuthors'] as $authorName) {
-                if (!is_string($authorName)) {
-                    continue;
-                }
-                $this->edges[] = [
-                    'source' => $classNodeId,
-                    'target' => 'author:'.$authorName,
-                    'type' => 'authored_by',
-                    'weight' => 1,
-                ];
-            }
-        }
-
-        // declares edges: Class→Method
-        $methodsCollection = $this->metricsController->getCollectionByIdentifierString($identifierString, 'methods');
-        if ($methodsCollection instanceof \PhpCodeArch\Metrics\Model\Collections\CollectionInterface) {
-            foreach ($methodsCollection->getAsArray() as $methodId => $methodName) {
-                if ('' === (string) $methodId || null === $methodName) {
-                    continue;
-                }
-                $this->processMethodNode((string) $methodId, $classNodeId);
-            }
-        }
-
-        // extends edges
-        $extendsCollection = $this->metricsController->getCollectionByIdentifierString($identifierString, 'extends');
-        if ($extendsCollection instanceof \PhpCodeArch\Metrics\Model\Collections\CollectionInterface) {
-            foreach ($extendsCollection->getAsArray() as $parentName) {
-                if (!is_string($parentName) || '' === $parentName) {
-                    continue;
-                }
-                $parentId = $nameToId[$parentName] ?? null;
-                if (null !== $parentId) {
-                    $this->edges[] = [
-                        'source' => $classNodeId,
-                        'target' => 'class:'.$parentId,
-                        'type' => 'extends',
-                        'weight' => 1,
-                    ];
-                }
-            }
-        }
-
-        // implements edges
-        $interfacesCollection = $this->metricsController->getCollectionByIdentifierString($identifierString, 'interfaces');
-        if ($interfacesCollection instanceof \PhpCodeArch\Metrics\Model\Collections\CollectionInterface) {
-            foreach ($interfacesCollection->getAsArray() as $interfaceName) {
-                if (!is_string($interfaceName) || '' === $interfaceName) {
-                    continue;
-                }
-                $interfaceId = $nameToId[$interfaceName] ?? null;
-                if (null !== $interfaceId) {
-                    $this->edges[] = [
-                        'source' => $classNodeId,
-                        'target' => 'class:'.$interfaceId,
-                        'type' => 'implements',
-                        'weight' => 1,
-                    ];
-                }
-            }
-        }
-
-        // uses_trait edges
-        $traitsCollection = $this->metricsController->getCollectionByIdentifierString($identifierString, 'traits');
-        if ($traitsCollection instanceof \PhpCodeArch\Metrics\Model\Collections\CollectionInterface) {
-            foreach ($traitsCollection->getAsArray() as $traitName) {
-                if (!is_string($traitName) || '' === $traitName) {
-                    continue;
-                }
-                $traitId = $nameToId[$traitName] ?? null;
-                if (null !== $traitId) {
-                    $this->edges[] = [
-                        'source' => $classNodeId,
-                        'target' => 'class:'.$traitId,
-                        'type' => 'uses_trait',
-                        'weight' => 1,
-                    ];
-                }
-            }
-        }
-
-        // depends_on edges — use usedClasses (NOT usesInProject which includes extends/implements)
-        $usedClassesCollection = $this->metricsController->getCollectionByIdentifierString($identifierString, 'usedClasses');
-        if ($usedClassesCollection instanceof \PhpCodeArch\Metrics\Model\Collections\CollectionInterface) {
-            foreach ($usedClassesCollection->getAsArray() as $depName) {
-                if (!is_string($depName) || '' === $depName) {
-                    continue;
-                }
-                $depId = $nameToId[$depName] ?? null;
-                if (null !== $depId) {
-                    $this->edges[] = [
-                        'source' => $classNodeId,
-                        'target' => 'class:'.$depId,
-                        'type' => 'depends_on',
-                        'weight' => 1,
-                    ];
-                }
-            }
-        }
-
-        // belongs_to edge: Class→Package
-        $packageName = $collection->get(MetricKey::PACKAGE)?->getValue();
-        if (is_string($packageName) && '' !== $packageName) {
-            $this->edges[] = [
-                'source' => $classNodeId,
-                'target' => 'package:'.$packageName,
-                'type' => 'belongs_to',
-                'weight' => 1,
-            ];
-        }
-
-        // cycle_member edges (bidirectional — each class adds edges to all other members)
-        if ($collection->getBool(MetricKey::IN_DEPENDENCY_CYCLE)) {
-            $cycleClassNames = $collection->getArray(MetricKey::DEPENDENCY_CYCLE_CLASSES);
-            $cycleLength = $collection->get(MetricKey::DEPENDENCY_CYCLE_LENGTH)?->getValue();
-
-            foreach ($cycleClassNames as $memberName) {
-                if (!is_string($memberName) || $memberName === $className) {
-                    continue;
-                }
-                $memberId = $nameToId[$memberName] ?? null;
-                if (null !== $memberId) {
-                    $this->edges[] = [
-                        'source' => $classNodeId,
-                        'target' => 'class:'.$memberId,
-                        'type' => 'cycle_member',
-                        'weight' => 1,
-                    ];
-                }
-            }
-
-            /** @var list<string> $stringNames */
-            $stringNames = array_filter(
-                $cycleClassNames,
-                fn (mixed $n): bool => is_string($n)
-            );
-
-            $rawCycles[] = [
-                'nodes' => array_values(array_filter(
-                    array_map(
-                        static fn (string $name) => isset($nameToId[$name]) ? 'class:'.$nameToId[$name] : null,
-                        $stringNames
-                    )
-                )),
-                'length' => $cycleLength,
-            ];
-        }
-    }
-
     private function processFunctionCollection(
         FunctionMetricsCollection $collection,
         string $identifierString,
     ): void {
         $functionType = $collection->getString(MetricKey::FUNCTION_TYPE);
 
-        // Skip methods — they are handled via processClassCollection declares edges
         if ('method' === $functionType) {
             return;
         }
@@ -443,46 +203,6 @@ class GraphDataProvider implements ReportDataProviderInterface
             ],
             'problems' => [],
         ];
-    }
-
-    private function processMethodNode(
-        string $methodId,
-        string $classNodeId,
-    ): void {
-        $methodCollection = $this->metricsController->getMetricCollectionByIdentifierString($methodId);
-
-        $methodName = $methodCollection->getName();
-
-        $cogC = $methodCollection->get(MetricKey::COGNITIVE_COMPLEXITY)?->getValue()
-            ?? $methodCollection->get('cogC')?->getValue();
-
-        $this->nodes[] = [
-            'id' => 'method:'.$methodId,
-            'type' => 'method',
-            'name' => $methodName,
-            'metrics' => [
-                'cc' => $methodCollection->get(MetricKey::CC)?->getValue(),
-                'cognitiveComplexity' => $cogC,
-                'params' => $methodCollection->get(MetricKey::PARAMETER_COUNT)?->getValue(),
-            ],
-            'flags' => [
-                'public' => $methodCollection->getBool(MetricKey::PUBLIC),
-                'private' => $methodCollection->getBool(MetricKey::PRIVATE),
-                'protected' => $methodCollection->getBool(MetricKey::PROTECTED),
-                'static' => $methodCollection->getBool(MetricKey::STATIC),
-            ],
-            'problems' => [],
-        ];
-
-        // declares edge: Class→Method
-        $this->edges[] = [
-            'source' => $classNodeId,
-            'target' => 'method:'.$methodId,
-            'type' => 'declares',
-            'weight' => 1,
-        ];
-
-        $this->knownMethodIds[$methodId] = true;
     }
 
     /**
@@ -508,55 +228,5 @@ class GraphDataProvider implements ReportDataProviderInterface
         }
 
         return $result;
-    }
-
-    /** @param array<string, string> $nameToId */
-    private function buildMethodCallEdges(array $nameToId): void
-    {
-        foreach (array_keys($this->knownMethodIds) as $methodId) {
-            $methodCallsCollection = $this->metricsController->getCollectionByIdentifierString($methodId, 'methodCalls');
-            if (!$methodCallsCollection instanceof \PhpCodeArch\Metrics\Model\Collections\CollectionInterface) {
-                continue;
-            }
-
-            /** @var array<string, int> $callCounts */
-            $callCounts = [];
-            foreach ($methodCallsCollection->getAsArray() as $call) {
-                if (!is_array($call)) {
-                    continue;
-                }
-                $targetClass = is_string($call['targetClass'] ?? null) ? $call['targetClass'] : '';
-                $targetMethod = is_string($call['targetMethod'] ?? null) ? $call['targetMethod'] : '';
-                if ('' === $targetClass || '' === $targetMethod) {
-                    continue;
-                }
-                $callKey = $targetClass.'::'.$targetMethod;
-                $callCounts[$callKey] = ($callCounts[$callKey] ?? 0) + 1;
-            }
-
-            foreach ($callCounts as $callKey => $count) {
-                [$targetClassName, $targetMethodName] = explode('::', $callKey, 2);
-
-                if (!isset($nameToId[$targetClassName])) {
-                    continue;
-                }
-
-                $targetMethodId = (string) FunctionAndClassIdentifier::ofNameAndPath(
-                    $targetMethodName,
-                    $targetClassName
-                );
-
-                if (!isset($this->knownMethodIds[$targetMethodId])) {
-                    continue;
-                }
-
-                $this->edges[] = [
-                    'source' => 'method:'.$methodId,
-                    'target' => 'method:'.$targetMethodId,
-                    'type' => 'calls',
-                    'weight' => $count,
-                ];
-            }
-        }
     }
 }
