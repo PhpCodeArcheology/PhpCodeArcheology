@@ -68,13 +68,25 @@ Several metric calculations were corrected in v2.7.0. This section documents wha
 
 **Effect:** Package cohesion is now capped at 1.0.
 
+### Halstead Difficulty Threshold — Recalibration (MEDIUM impact)
+
+**Change:** Default threshold raised from 20 to 30 (non-framework) and 35 to 45 (framework projects).
+
+**Rationale:** Unlike McCabe CC (where 10 is a widely accepted threshold), there is no established consensus in the literature for a Halstead Difficulty threshold. Verifysoft, IBM, MATLAB/Simulink, PHPMetrics, Schneider Electric, and the original Halstead (1977) paper define no recommended Difficulty ranges. The metric was designed for trend analysis, not binary pass/fail judgments.
+
+Our previous threshold of 20 was self-chosen and flagged 22% of all entities — too aggressive for a meaningful signal. The new threshold of 30 flags entities that are genuinely hard to understand while reducing noise.
+
+The tool also applies a **relative check**: effort values more than 30% above the project average are flagged separately. This combination of absolute floor + relative outlier detection provides better signal than either approach alone.
+
+**Effect:** Fewer "Difficulty too high" errors (~40% reduction). Error counts will decrease significantly.
+
 ### Expected Impact on Your Results
 
 Based on real-world validation (1,731-file Symfony/Doctrine project):
 
 | Metric | Expected Change | Magnitude |
 |--------|----------------|-----------|
-| **Error count** | **Decrease** — fewer false positives from double-counting, God Class, and LCOM | **-30% to -40%** |
+| **Error count** | **Decrease** — fewer false positives from double-counting, God Class, LCOM, and recalibrated Difficulty threshold | **-40% to -50%** |
 | **Warning count** | Mostly unchanged | Minimal |
 | **Health Score** | Slight increase — fewer errors improve problem density | **+0.5 to +2 points** |
 | **Avg CC** | Unchanged for most projects. Slightly lower if `<=>` is used heavily | Minimal |
@@ -86,7 +98,21 @@ Based on real-world validation (1,731-file Symfony/Doctrine project):
 | **Layer violations** | May increase — Entity/Model classes are now checked | Low |
 | **Distance from Mainline** | Now always >= 0, was sometimes negative | Low |
 
-**Summary:** Most projects will see **significantly fewer errors** and a **slightly better Health Score**. The corrected Halstead method-level metrics are the biggest individual change but do not affect aggregate CC or MI. The overall architectural assessment (Coupling, Abstractness, Instability) remains stable.
+**Summary:** Most projects will see **significantly fewer errors** and a **better Health Score**. The recalibrated Difficulty threshold (20→30) combined with the Halstead operand bug fix are the biggest contributors. The overall architectural assessment (Coupling, Abstractness, Instability) remains stable.
+
+### A Note on Interpreting Scores
+
+The Health Score is a **guideline**, not a verdict. A score of 75 in a project with complex mathematical algorithms, protocol parsers, or domain-heavy business logic can represent excellent engineering — some code is inherently complex and cannot (and should not) be simplified further.
+
+Use the score to:
+- **Track trends** — is the codebase getting better or worse over time?
+- **Find outliers** — which classes or methods deviate significantly from the project average?
+- **Prioritize refactoring** — focus effort where it has the most impact
+
+Do **not** use the score to:
+- Judge a project as "good" or "bad" based on a single number
+- Set a mandatory minimum score that all code must achieve
+- Compare scores between fundamentally different types of projects
 
 ---
 
