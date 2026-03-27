@@ -104,7 +104,7 @@ final class ArgumentParser
 
                 switch ($param) {
                     case 'version':
-                        throw new VersionDisplayException(Application::VERSION);
+                        throw new VersionDisplayException(Version::CURRENT);
                     case 'generate-claude-md':
                         $config->set('generateClaudeMd', true);
                         break;

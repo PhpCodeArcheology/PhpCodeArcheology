@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace PhpCodeArch\Mcp\Command;
 
 use Mcp\Server\McpServer;
-use PhpCodeArch\Application\Application;
+use PhpCodeArch\Application\AnalysisPipelineInterface;
 use PhpCodeArch\Application\CliFormatter;
 use PhpCodeArch\Application\CliOutput;
 use PhpCodeArch\Application\Config;
@@ -27,7 +27,7 @@ use PhpCodeArch\Report\DataProvider\DataProviderFactory;
 class McpCommand
 {
     public function __construct(
-        private readonly Application $application,
+        private readonly AnalysisPipelineInterface $application,
     ) {
     }
 

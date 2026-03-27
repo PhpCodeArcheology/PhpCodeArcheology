@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Application\Command;
 
-use PhpCodeArch\Application\Application;
+use PhpCodeArch\Application\AnalysisPipelineInterface;
 use PhpCodeArch\Application\CliFormatter;
+use PhpCodeArch\Application\Version;
 use PhpCodeArch\Application\CliOutput;
 use PhpCodeArch\Application\Config;
 use PhpCodeArch\Metrics\Controller\MetricsController;
@@ -19,7 +20,7 @@ class BaselineCommand
     private const BASELINE_FILENAME = '.phpcodearch-baseline.json';
 
     public function __construct(
-        private readonly Application $application,
+        private readonly AnalysisPipelineInterface $application,
     ) {
     }
 
@@ -181,7 +182,7 @@ class BaselineCommand
     {
         return [
             'createdAt' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
-            'toolVersion' => Application::VERSION,
+            'toolVersion' => Version::CURRENT,
             'problemCounts' => [
                 'errors' => $problems[PredictionInterface::ERROR] ?? 0,
                 'warnings' => $problems[PredictionInterface::WARNING] ?? 0,

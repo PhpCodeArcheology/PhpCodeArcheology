@@ -66,15 +66,10 @@ use Twig\Environment;
 use Twig\Extension\DebugExtension;
 use Twig\Loader\FilesystemLoader;
 
-final readonly class Application
+final readonly class Application implements AnalysisPipelineInterface
 {
-    public const VERSION = '2.7.0';
-
-    /**
-     * Version that introduced breaking changes to metric calculations.
-     * Users will be prompted to acknowledge before running analysis.
-     */
-    private const BREAKING_CHANGES_VERSION = '2.7.0';
+    /** @deprecated Use Version::CURRENT instead */
+    public const VERSION = Version::CURRENT;
 
     /**
      * @param array<int, string> $argv
@@ -165,7 +160,7 @@ final readonly class Application
 
         // Breaking changes notice: prompt user before first analysis with new calculations
         if (!$this->isBreakingChangesAcknowledged($config)) {
-            $output->outNl($formatter->warning('Important: Metric calculations have changed in v'.self::BREAKING_CHANGES_VERSION.'.'));
+            $output->outNl($formatter->warning('Important: Metric calculations have changed in v'.Version::BREAKING_CHANGES.'.'));
             $output->outNl('Several formulas have been corrected (Halstead, Coupling, LCOM, CC, and others).');
             $output->outNl('Analysis results may differ from previous runs.');
             $output->outNl();
@@ -571,7 +566,7 @@ final readonly class Application
         $acknowledged = $config->get('acknowledgedVersion');
 
         return is_string($acknowledged)
-            && version_compare($acknowledged, self::BREAKING_CHANGES_VERSION, '>=');
+            && version_compare($acknowledged, Version::BREAKING_CHANGES, '>=');
     }
 
     private function acknowledgeBreakingChanges(Config $config): void
@@ -589,7 +584,7 @@ final readonly class Application
             if (!is_array($data)) {
                 $data = [];
             }
-            $data['acknowledgedVersion'] = self::BREAKING_CHANGES_VERSION;
+            $data['acknowledgedVersion'] = Version::BREAKING_CHANGES;
             file_put_contents($jsonPath, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)."\n");
         } else {
             // Use YAML config (create or update)
@@ -604,16 +599,16 @@ final readonly class Application
             if (str_contains($yaml, 'acknowledgedVersion:')) {
                 $yaml = (string) preg_replace(
                     '/acknowledgedVersion:.*/',
-                    'acknowledgedVersion: '.self::BREAKING_CHANGES_VERSION,
+                    'acknowledgedVersion: '.Version::BREAKING_CHANGES,
                     $yaml
                 );
             } else {
-                $yaml = rtrim($yaml)."\nacknowledgedVersion: ".self::BREAKING_CHANGES_VERSION."\n";
+                $yaml = rtrim($yaml)."\nacknowledgedVersion: ".Version::BREAKING_CHANGES."\n";
             }
 
             file_put_contents($yamlPath, $yaml);
         }
 
-        $config->set('acknowledgedVersion', self::BREAKING_CHANGES_VERSION);
+        $config->set('acknowledgedVersion', Version::BREAKING_CHANGES);
     }
 }
