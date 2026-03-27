@@ -4,15 +4,11 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Application;
 
-use PhpCodeArch\Application\Service\FrameworkDetectionResult;
-use PhpCodeArch\Calculators\CalculatorRegistry;
 use PhpCodeArch\Calculators\CalculatorService;
 use PhpCodeArch\Git\GitAnalyzer;
 use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
-use PhpCodeArch\Metrics\Model\MetricsContainer;
 use PhpCodeArch\Predictions\PredictionInterface;
-use PhpCodeArch\Predictions\PredictionRegistry;
 use PhpCodeArch\Predictions\PredictionService;
 use PhpParser\NodeTraverser;
 use PhpParser\ParserFactory;
@@ -25,6 +21,11 @@ final class AnalysisPipeline implements AnalysisPipelineInterface
     // Both registries are therefore instantiated inline within each run method rather than
     // via constructor injection. Refactor if registries are redesigned to accept MetricsController
     // per-method instead of per-construction.
+
+    public function __construct(
+        private readonly ServiceFactory $factory = new ServiceFactory(),
+    ) {
+    }
 
     /**
      * Run full analysis pipeline: parse → git → calculators → predictors → debt.
@@ -45,8 +46,8 @@ final class AnalysisPipeline implements AnalysisPipelineInterface
         }
 
         // Store framework detection result in project metrics
-        $frameworkResult = $config->get('frameworkDetection');
-        if ($frameworkResult instanceof FrameworkDetectionResult) {
+        $frameworkResult = $config->getFrameworkDetection();
+        if (null !== $frameworkResult) {
             $metricsController->setMetricValues(
                 MetricCollectionTypeEnum::ProjectCollection,
                 null,
@@ -54,11 +55,11 @@ final class AnalysisPipeline implements AnalysisPipelineInterface
             );
         }
 
-        $calculatorRegistry = new CalculatorRegistry($metricsController);
+        $calculatorRegistry = $this->factory->createCalculatorRegistry($metricsController);
         $calculatorService = new CalculatorService($calculatorRegistry->getMainCalculators($config), $metricsController, $output);
         $calculatorService->run();
 
-        $predictionRegistry = new PredictionRegistry();
+        $predictionRegistry = $this->factory->createPredictionRegistry();
         $predictionService = new PredictionService($predictionRegistry->getPredictions($config), $metricsController, $output);
         $predictionService->predict();
         $problems = $predictionService->getProblemCount();
@@ -78,7 +79,7 @@ final class AnalysisPipeline implements AnalysisPipelineInterface
         $metricsController = $this->createMetricController($config);
         $this->createAndRunAnalyzer($config, $metricsController, $fileList, $output);
 
-        $calculatorRegistry = new CalculatorRegistry($metricsController);
+        $calculatorRegistry = $this->factory->createCalculatorRegistry($metricsController);
         $calculatorService = new CalculatorService($calculatorRegistry->getQuickCalculators(), $metricsController, $output);
         $calculatorService->run();
 
@@ -109,11 +110,9 @@ final class AnalysisPipeline implements AnalysisPipelineInterface
 
     private function createMetricController(Config $config): MetricsController
     {
-        $metricsCollection = new MetricsContainer();
-        $metricsController = new MetricsController($metricsCollection);
+        $metricsController = $this->factory->createMetricsController();
         $metricsController->registerMetricTypes();
-        $filesRaw = $config->get('files');
-        $files = is_array($filesRaw) ? array_filter($filesRaw, 'is_string') : [];
+        $files = array_filter($config->getFiles(), 'is_string');
         $metricsController->createProjectMetricsCollection(array_values($files));
 
         return $metricsController;

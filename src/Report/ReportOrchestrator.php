@@ -8,7 +8,6 @@ use PhpCodeArch\Application\CliFormatter;
 use PhpCodeArch\Application\CliOutput;
 use PhpCodeArch\Application\Config;
 use PhpCodeArch\Application\Service\ClaudeMdGenerator;
-use PhpCodeArch\Application\Service\FrameworkDetectionResult;
 use PhpCodeArch\Application\Service\HistoryService;
 use PhpCodeArch\Application\Service\SummaryPrinter;
 use PhpCodeArch\Metrics\Controller\MetricsController;
@@ -56,8 +55,7 @@ final class ReportOrchestrator
         }
 
         // Migration hint for users upgrading from pre-v1.6.0
-        $reportDirVal = $config->get('reportDir');
-        $oldIndexFile = (is_string($reportDirVal) ? $reportDirVal : '').DIRECTORY_SEPARATOR.'index.html';
+        $oldIndexFile = $config->getReportDir().DIRECTORY_SEPARATOR.'index.html';
         if (file_exists($oldIndexFile)) {
             $output->outNl();
             $output->outNl('Note: Since v1.6.0, reports are generated in subdirectories (e.g., html/, json/).');
@@ -74,8 +72,8 @@ final class ReportOrchestrator
         $formatter = $output->getFormatter() ?? new CliFormatter();
         (new SummaryPrinter())->print($metricsController, $config, $problems, $output, $formatter);
 
-        $frameworkDetection = $config->get('frameworkDetection');
-        if ($frameworkDetection instanceof FrameworkDetectionResult
+        $frameworkDetection = $config->getFrameworkDetection();
+        if (null !== $frameworkDetection
             && $frameworkDetection->hasTestFramework()
             && null === $config->get('coverageFile')) {
             $output->outNl();

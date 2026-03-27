@@ -21,11 +21,11 @@ final class BootstrapService
         }
 
         $detector = new FrameworkDetector();
-        $runningDirRaw = $config->get('runningDir');
-        $filesRaw = $config->get('files');
-        $projectRoot = is_string($runningDirRaw) && '' !== $runningDirRaw
-            ? $runningDirRaw
-            : (is_array($filesRaw) && is_string($filesRaw[0] ?? null) ? $filesRaw[0] : (getcwd() ?: ''));
+        $runningDir = $config->getRunningDir();
+        $files = $config->getFiles();
+        $projectRoot = '' !== $runningDir
+            ? $runningDir
+            : (is_string($files[0] ?? null) ? $files[0] : (getcwd() ?: ''));
         $frameworkResult = $detector->detect($projectRoot);
         $config->set('frameworkDetection', $frameworkResult);
 
@@ -79,8 +79,7 @@ final class BootstrapService
 
     public function acknowledgeBreakingChanges(Config $config): void
     {
-        $runningDir = $config->get('runningDir');
-        $runningDir = is_string($runningDir) ? $runningDir : (getcwd() ?: '');
+        $runningDir = $config->getRunningDir();
 
         // Find existing config file or create a new YAML one
         $yamlPath = $runningDir.DIRECTORY_SEPARATOR.'php-codearch-config.yaml';

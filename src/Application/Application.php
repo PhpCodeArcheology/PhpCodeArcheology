@@ -7,18 +7,20 @@ namespace PhpCodeArch\Application;
 use PhpCodeArch\Application\ConfigFile\ConfigFileFinder;
 use PhpCodeArch\Application\ConfigFile\Exceptions\ConfigFileExtensionNotSupportedException;
 use PhpCodeArch\Application\ConfigFile\Exceptions\MultipleConfigFilesException;
-use PhpCodeArch\Application\Service\BootstrapService;
-use PhpCodeArch\Application\Service\FrameworkDetectionResult;
 use PhpCodeArch\Mcp\Command\McpCommand;
 use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Predictions\PredictionInterface;
-use PhpCodeArch\Report\ReportOrchestrator;
 use PhpCodeArch\Report\ReportTypeNotSupported;
 
 final readonly class Application implements AnalysisPipelineInterface
 {
     /** @deprecated Use Version::CURRENT instead */
     public const VERSION = Version::CURRENT;
+
+    public function __construct(
+        private ServiceFactory $factory = new ServiceFactory(),
+    ) {
+    }
 
     /**
      * @param array<int, string> $argv
@@ -38,22 +40,22 @@ final readonly class Application implements AnalysisPipelineInterface
         }
 
         $formatter = new CliFormatter(
-            $config->get('noColor') ? false : null
+            $config->isNoColor() ? false : null
         );
         $output = new CliOutput();
         $output->setFormatter($formatter);
 
-        $command = $config->get('command');
-        if (is_string($command)) {
+        $command = $config->getCommand();
+        if (null !== $command) {
             return $this->dispatchCommand($command, $config, $output, $formatter);
         }
 
-        $memoryLimit = $config->get('memoryLimit') ?? '1G';
-        if (is_string($memoryLimit) && preg_match('/^[0-9]+[KMG]?$/i', $memoryLimit)) {
+        $memoryLimit = $config->getMemoryLimit();
+        if (preg_match('/^[0-9]+[KMG]?$/i', $memoryLimit)) {
             ini_set('memory_limit', $memoryLimit);
         }
 
-        $bootstrap = new BootstrapService();
+        $bootstrap = $this->factory->createBootstrapService();
         $bootstrap->detectFrameworkAndCoverage($config);
 
         if (!$bootstrap->isBreakingChangesAcknowledged($config)) {
@@ -64,12 +66,12 @@ final readonly class Application implements AnalysisPipelineInterface
 
         $pipeline = $this->createPipeline();
 
-        if ($config->get('quickMode')) {
+        if ($config->isQuickMode()) {
             $metricsController = $pipeline->runQuickAnalysis($config, $output);
             (new QuickOutput($metricsController, $output, $formatter))->render();
 
-            $frameworkResult = $config->get('frameworkDetection');
-            if ($frameworkResult instanceof FrameworkDetectionResult
+            $frameworkResult = $config->getFrameworkDetection();
+            if (null !== $frameworkResult
                 && $frameworkResult->hasAnyFramework()) {
                 $output->outNl('  Frameworks: '.$formatter->info($frameworkResult->getSummary()));
                 $output->outNl();
@@ -80,7 +82,7 @@ final readonly class Application implements AnalysisPipelineInterface
 
         [$metricsController, $problems] = $pipeline->runAnalysis($config, $output);
 
-        (new ReportOrchestrator())->generateReports($config, $metricsController, $output, $problems);
+        $this->factory->createReportOrchestrator()->generateReports($config, $metricsController, $output, $problems);
 
         return $this->determineExitCode($config, $problems);
     }
@@ -97,7 +99,7 @@ final readonly class Application implements AnalysisPipelineInterface
 
     private function createPipeline(): AnalysisPipeline
     {
-        return new AnalysisPipeline();
+        return $this->factory->createAnalysisPipeline();
     }
 
     /**
@@ -125,15 +127,14 @@ final readonly class Application implements AnalysisPipelineInterface
             $config->set('reportType', 'html');
         }
 
-        $runningDirVal = $config->get('runningDir');
-        $runningDir = is_string($runningDirVal) ? $runningDirVal : '';
-        $reportDirRaw = $config->get('reportDir');
-        if (!$reportDirRaw) {
+        $runningDir = $config->getRunningDir();
+        $reportDirRaw = $config->getReportDir();
+        if ('' === $reportDirRaw) {
             $reportDir = $runningDir.'/tmp/report';
-        } elseif (is_string($reportDirRaw) && !str_starts_with($reportDirRaw, DIRECTORY_SEPARATOR)) {
+        } elseif (!str_starts_with($reportDirRaw, DIRECTORY_SEPARATOR)) {
             $reportDir = $runningDir.DIRECTORY_SEPARATOR.$reportDirRaw;
         } else {
-            $reportDir = is_string($reportDirRaw) ? $reportDirRaw : '';
+            $reportDir = $reportDirRaw;
         }
         if (!is_dir($reportDir)) {
             mkdir($reportDir, 0755, true);
@@ -145,7 +146,7 @@ final readonly class Application implements AnalysisPipelineInterface
             $config->set('packageSize', 2);
         }
 
-        if (!$config->get('command')) {
+        if (null === $config->getCommand()) {
             try {
                 $config->validate();
             } catch (ConfigException $e) {
@@ -171,8 +172,7 @@ final readonly class Application implements AnalysisPipelineInterface
     /** @param array<int, int> $problems */
     private function determineExitCode(Config $config, array $problems): int
     {
-        $failOnRaw = $config->get('failOn');
-        $failOn = is_string($failOnRaw) ? $failOnRaw : null;
+        $failOn = $config->getFailOn();
 
         if (null === $failOn) {
             $qualityGateRaw = $config->get('qualityGate');
