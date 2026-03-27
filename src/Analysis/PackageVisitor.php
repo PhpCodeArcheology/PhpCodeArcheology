@@ -6,26 +6,26 @@ namespace PhpCodeArch\Analysis;
 
 use PhpCodeArch\Application\Config;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
+use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\Collections\ClassNameCollection;
 use PhpCodeArch\Metrics\Model\Collections\FileNameCollection;
 use PhpCodeArch\Metrics\Model\Collections\FunctionNameCollection;
 use PhpCodeArch\Metrics\Model\Collections\PackageNameCollection;
-use PhpCodeArch\Metrics\Model\PackageMetrics\PackageMetricsCollection;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
 
-class PackageVisitor implements NodeVisitor, VisitorInterface
+class PackageVisitor implements NodeVisitor, VisitorInterface, InitializableVisitorInterface, ConfigAwareVisitorInterface
 {
     use VisitorTrait;
 
+    /** @var array<int, string> */
     private array $packages = [];
 
     private string $fileNamespace = '';
 
     private string $filePackage = '';
 
-    private ?PackageMetricsCollection $currentPackageMetric;
-
+    /** @var array<string, array{classes: array<int, string>, functions: array<int, string>, files: array<int, string>}> */
     private array $packageData = [];
 
     private Config $config;
@@ -47,17 +47,19 @@ class PackageVisitor implements NodeVisitor, VisitorInterface
         $this->initCollections('_global');
     }
 
-    public function beforeTraverse(array $nodes): void
+    public function beforeTraverse(array $nodes): ?array
     {
         $this->fileNamespace = '_global';
         $this->packageData = [];
         $this->getCurrentPackageMetric('_global');
+
+        return null;
     }
 
-    public function enterNode(Node $node): void
+    public function enterNode(Node $node): int|Node|null
     {
-        if (! $node instanceof Node\Stmt\Namespace_) {
-            return;
+        if (!$node instanceof Node\Stmt\Namespace_) {
+            return null;
         }
 
         $namespace = (string) $node->name;
@@ -67,7 +69,7 @@ class PackageVisitor implements NodeVisitor, VisitorInterface
             $namespaceParts = explode('\\', $namespace);
             if (count($namespaceParts) > $packageSize) {
                 $newArray = [];
-                for ($i = 0; $i < $packageSize; $i ++) {
+                for ($i = 0; $i < $packageSize; ++$i) {
                     $newArray[] = $namespaceParts[$i];
                 }
                 $namespace = implode('\\', $newArray);
@@ -77,9 +79,11 @@ class PackageVisitor implements NodeVisitor, VisitorInterface
         $this->fileNamespace = $namespace;
         $this->getCurrentPackageMetric($namespace);
         $this->setFileCount($namespace);
+
+        return null;
     }
 
-    public function leaveNode(Node $node): void
+    public function leaveNode(Node $node): int|Node|array|null
     {
         switch (true) {
             case $node instanceof Node\Stmt\Class_:
@@ -98,10 +102,10 @@ class PackageVisitor implements NodeVisitor, VisitorInterface
                         'name' => $className,
                     ],
                     $package,
-                    'package'
+                    MetricKey::PACKAGE
                 );
 
-                $this->packageData[$package]['classes'][] = ClassName::ofNode($node)->__toString();
+                $this->packageData[$package]['classes'][] = $className;
 
                 $this->metricsController->setCollectionDataUnique(
                     MetricCollectionTypeEnum::PackageCollection,
@@ -126,7 +130,7 @@ class PackageVisitor implements NodeVisitor, VisitorInterface
                         'name' => (string) $node->namespacedName,
                     ],
                     $package,
-                    'package'
+                    MetricKey::PACKAGE
                 );
 
                 $this->packageData[$package]['functions'][] = $functionName;
@@ -142,22 +146,23 @@ class PackageVisitor implements NodeVisitor, VisitorInterface
                 break;
         }
 
+        return null;
     }
 
-    public function afterTraverse(array $nodes): void
+    public function afterTraverse(array $nodes): ?array
     {
         $this->metricsController->setMetricValue(
             MetricCollectionTypeEnum::FileCollection,
             ['path' => $this->path],
             $this->fileNamespace,
-            'namespace'
+            MetricKey::NAMESPACE
         );
 
         $this->metricsController->setMetricValue(
             MetricCollectionTypeEnum::FileCollection,
             ['path' => $this->path],
             $this->filePackage,
-            'package'
+            MetricKey::PACKAGE
         );
 
         $this->metricsController->setCollectionDataUnique(
@@ -167,15 +172,17 @@ class PackageVisitor implements NodeVisitor, VisitorInterface
             null,
             $this->path
         );
+
+        return null;
     }
 
     private function getCurrentPackageMetric(?string $packageName = null): void
     {
-        if (! $packageName) {
+        if (!$packageName) {
             $packageName = $this->fileNamespace;
         }
 
-        if (! in_array($packageName, $this->packages)) {
+        if (!in_array($packageName, $this->packages)) {
             $this->packages[] = $packageName;
 
             $packageCollection = $this->metricsController->createMetricCollection(
@@ -224,24 +231,20 @@ class PackageVisitor implements NodeVisitor, VisitorInterface
         $package = $this->fileNamespace;
 
         $docBlock = $node->getDocComment();
-        $docBlock = $docBlock ? $docBlock->getText() : '';
+        $docBlock = $docBlock instanceof \PhpParser\Comment\Doc ? $docBlock->getText() : '';
 
         if (preg_match('/^\s*\* @package (.*)/m', $docBlock, $matches)) {
             $package = trim($matches[1]);
         }
 
         if (preg_match('/^\s*\* @subpackage (.*)/m', $docBlock, $matches)) {
-            $package = $package . '\\' . trim($matches[1]);
+            $package = $package.'\\'.trim($matches[1]);
         }
 
         return $package;
     }
 
-    /**
-     * @param string|null $packageName
-     * @return void
-     */
-    public function initCollections(?string $packageName): void
+    public function initCollections(string $packageName): void
     {
         $collections = [
             'classes' => new ClassNameCollection(),

@@ -6,7 +6,7 @@ namespace PhpCodeArch\Predictions\Problems;
 
 readonly class SecuritySmellProblem extends AbstractProblem
 {
-    static function ofProblemLevelAndMessage(int $problemLevel, string $message): SecuritySmellProblem
+    public static function ofProblemLevelAndMessage(int $problemLevel, string $message): SecuritySmellProblem
     {
         return new SecuritySmellProblem($problemLevel, $message);
     }

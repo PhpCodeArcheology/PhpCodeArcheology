@@ -11,6 +11,7 @@ class StderrOutput extends CliOutput
     public function out(string $message): static
     {
         fwrite(STDERR, $message);
+
         return $this;
     }
 

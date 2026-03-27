@@ -12,9 +12,8 @@ class ConfigFileParserYaml extends ConfigFileParserJson implements ConfigFilePar
 {
     public function __construct(
         private readonly string $file,
-        private readonly Yaml $yaml
-    )
-    {
+        private readonly Yaml $yaml,
+    ) {
         parent::__construct($file);
     }
 
@@ -26,8 +25,15 @@ class ConfigFileParserYaml extends ConfigFileParserJson implements ConfigFilePar
         if (!is_file($this->file)) {
             throw new ConfigFileNotFoundException();
         }
-        
-        $parsedData = json_encode($this->yaml::parse(file_get_contents($this->file)));
+
+        $fileContent = file_get_contents($this->file);
+        if (false === $fileContent) {
+            throw new ConfigFileNotFoundException();
+        }
+        $parsedData = json_encode($this->yaml::parse($fileContent));
+        if (false === $parsedData) {
+            throw new ConfigFileNotFoundException();
+        }
         $this->parseJson($parsedData, $config);
     }
 }

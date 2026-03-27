@@ -6,29 +6,30 @@ namespace PhpCodeArch\Application;
 
 final class ArgumentParser
 {
+    /** @param array<int, string> $argv */
     public function parse(array $argv): Config
     {
         $config = new Config();
 
-        if (count($argv) === 0) {
+        if (0 === count($argv)) {
             return $config;
         }
 
-        if (str_ends_with($argv[0], 'phpcodearcheology')) {
+        if (str_ends_with((string) $argv[0], 'phpcodearcheology')) {
             array_shift($argv);
         }
 
         // Detect subcommand (first non-flag argument)
         $commands = ['init', 'compare', 'baseline', 'mcp'];
-        if (!empty($argv)) {
+        if ([] !== $argv) {
             $firstKey = array_key_first($argv);
             $firstArg = $argv[$firstKey];
-            if (!str_starts_with($firstArg, '-') && in_array($firstArg, $commands, true)) {
+            if (!str_starts_with((string) $firstArg, '-') && in_array($firstArg, $commands, true)) {
                 $config->set('command', $firstArg);
                 unset($argv[$firstKey]);
 
                 // Store remaining positional args as commandArgs (won't be overwritten by config file)
-                $commandArgs = array_values(array_filter($argv, fn($v) => !str_starts_with($v, '-')));
+                $commandArgs = array_values(array_filter($argv, fn ($v): bool => !str_starts_with((string) $v, '-')));
                 $config->set('commandArgs', $commandArgs);
             }
         }
@@ -40,22 +41,22 @@ final class ArgumentParser
         $i = 0;
         while ($i < count($argv)) {
             if (
-                preg_match('#^--([\w\-]+)$#', $argv[$i], $m)
+                preg_match('#^--([\w\-]+)$#', (string) $argv[$i], $m)
                 && in_array($m[1], $valueParams, true)
                 && isset($argv[$i + 1])
                 && !str_starts_with($argv[$i + 1], '-')
             ) {
-                $normalized[] = $argv[$i] . '=' . $argv[$i + 1];
+                $normalized[] = $argv[$i].'='.$argv[$i + 1];
                 $i += 2;
             } else {
                 $normalized[] = $argv[$i];
-                $i++;
+                ++$i;
             }
         }
         $argv = $normalized;
 
         foreach ($argv as $key => $value) {
-            if (preg_match('#--([\w\-]+)=(.*)#', $value, $matches)) {
+            if (preg_match('#--([\w\-]+)=(.*)#', (string) $value, $matches)) {
                 [, $param, $value] = $matches;
 
                 switch ($param) {
@@ -65,8 +66,8 @@ final class ArgumentParser
                         break;
 
                     case 'report-type':
-                        $types = array_map('trim', explode(',', $value));
-                        $config->set('reportType', count($types) === 1 ? $types[0] : $types);
+                        $types = array_map(trim(...), explode(',', $value));
+                        $config->set('reportType', 1 === count($types) ? $types[0] : $types);
                         break;
 
                     case 'report-dir':
@@ -75,17 +76,18 @@ final class ArgumentParser
 
                     case 'git-root':
                         $resolved = realpath($value);
-                        if ($resolved === false) {
+                        if (false === $resolved) {
                             throw new ParamException("Git root directory '$value' does not exist.");
                         }
-                        $git = $config->get('git') ?? [];
+                        $existing = $config->get('git');
+                        $git = is_array($existing) ? $existing : [];
                         $git['root'] = $resolved;
                         $config->set('git', $git);
                         break;
 
                     case 'coverage-file':
                         $resolved = realpath($value);
-                        $config->set('coverageFile', $resolved !== false ? $resolved : $value);
+                        $config->set('coverageFile', false !== $resolved ? $resolved : $value);
                         break;
 
                     case 'fail-on':
@@ -93,19 +95,16 @@ final class ArgumentParser
                         break;
 
                     default:
-                        throw new ParamException('CLI parameter "' . $param . '" does not exist.');
+                        throw new ParamException('CLI parameter "'.$param.'" does not exist.');
                 }
 
                 unset($argv[$key]);
-            }
-            elseif (preg_match('#--([\w\-]+)#', $value, $matches)) {
+            } elseif (preg_match('#--([\w\-]+)#', (string) $value, $matches)) {
                 $param = $matches[1];
 
                 switch ($param) {
                     case 'version':
-                        echo PHP_EOL . "PhpCodeArcheology v" . Application::VERSION;
-                        exit;
-
+                        throw new VersionDisplayException(Application::VERSION);
                     case 'generate-claude-md':
                         $config->set('generateClaudeMd', true);
                         break;
@@ -119,15 +118,16 @@ final class ArgumentParser
                         break;
 
                     default:
-                        throw new ParamException('CLI parameter "' . $param . '" does not exist.');
+                        throw new ParamException('CLI parameter "'.$param.'" does not exist.');
                 }
 
                 unset($argv[$key]);
             }
         }
 
-        if (empty($argv)) {
-            $config->set('files', [getcwd() . '/src']);
+        if ([] === $argv) {
+            $config->set('files', [getcwd().'/src']);
+
             return $config;
         }
 

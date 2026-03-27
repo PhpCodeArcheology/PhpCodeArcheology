@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PhpCodeArch\Predictions;
 
 use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Predictions\Problems\SolidViolationProblem;
 
@@ -19,7 +20,7 @@ class SolidViolationPrediction implements PredictionInterface
                 continue;
             }
 
-            $violations = $metric->get('solidViolations')?->getValue() ?? [];
+            $violations = $metric->get(MetricKey::SOLID_VIOLATIONS)?->asArray() ?? [];
             if (empty($violations)) {
                 continue;
             }
@@ -28,12 +29,12 @@ class SolidViolationPrediction implements PredictionInterface
 
             $problem = SolidViolationProblem::ofProblemLevelAndMessage(
                 problemLevel: $this->getLevel(),
-                message: sprintf('SOLID violation(s): %s', implode(', ', $violations))
+                message: sprintf('SOLID violation(s): %s', implode(', ', array_map(fn (mixed $v): string => is_scalar($v) ? strval($v) : '', $violations)))
             );
 
             $metricsController->setProblemByIdentifierString(
                 identifierString: (string) $metric->getIdentifier(),
-                key: 'solidViolationCount',
+                key: MetricKey::SOLID_VIOLATION_COUNT,
                 problem: $problem
             );
         }

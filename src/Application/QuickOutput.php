@@ -6,17 +6,17 @@ namespace PhpCodeArch\Application;
 
 use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
-use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
+use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
+use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
 
 class QuickOutput
 {
     public function __construct(
         private readonly MetricsController $metricsController,
-        private readonly CliOutput         $output,
-        private readonly CliFormatter      $formatter,
-    )
-    {
+        private readonly CliOutput $output,
+        private readonly CliFormatter $formatter,
+    ) {
     }
 
     public function render(): void
@@ -29,14 +29,14 @@ class QuickOutput
 
     private function renderProjectOverview(): void
     {
-        $get = fn(string $key) => $this->metricsController->getMetricValue(
+        $getInt = fn (string $key): int => $this->metricsController->getMetricValue(
             MetricCollectionTypeEnum::ProjectCollection, null, $key
-        )?->getValue() ?? 0;
+        )?->asInt() ?? 0;
 
-        $files = number_format((int) $get('overallFiles'));
-        $classes = number_format((int) $get('overallClasses'));
-        $methods = number_format((int) $get('overallMethodsCount'));
-        $lloc = number_format((int) $get('overallLloc'));
+        $files = number_format($getInt(MetricKey::OVERALL_FILES));
+        $classes = number_format($getInt(MetricKey::OVERALL_CLASSES));
+        $methods = number_format($getInt(MetricKey::OVERALL_METHODS_COUNT));
+        $lloc = number_format($getInt(MetricKey::OVERALL_LLOC));
 
         $this->output->outNl();
         $this->output->outNl($this->formatter->bold('  Quick Analysis'));
@@ -58,23 +58,23 @@ class QuickOutput
                 continue;
             }
 
-            $cc = $collection->get('cc')?->getValue() ?? 0;
-            $loc = $collection->get('loc')?->getValue() ?? 0;
-            $mi = $collection->get('mi')?->getValue() ?? 0;
-            $fileName = $collection->get('fileName')?->getValue() ?? $collection->getName();
+            $cc = $collection->getInt(MetricKey::CC);
+            $loc = $collection->getInt(MetricKey::LOC);
+            $mi = $collection->get('mi')?->asFloat() ?? 0.0;
+            $fileName = $collection->getString(MetricKey::FILE_NAME) ?: $collection->getName();
 
             $files[] = [
                 'name' => $fileName,
                 'loc' => $loc,
                 'cc' => $cc,
-                'mi' => round((float) $mi, 1),
+                'mi' => round($mi, 1),
             ];
         }
 
-        usort($files, fn($a, $b) => $b['cc'] <=> $a['cc']);
+        usort($files, fn (array $a, array $b): int => $b['cc'] <=> $a['cc']);
         $top = array_slice($files, 0, 10);
 
-        if (empty($top)) {
+        if ([] === $top) {
             return;
         }
 
@@ -84,13 +84,13 @@ class QuickOutput
         $table = new TerminalTable($this->output, $this->formatter);
         $table->setHeaders(['File', 'LOC', 'CC', 'MI']);
 
-        $table->setColumnFormatter(2, fn($val, $padded) => match (true) {
+        $table->setColumnFormatter(2, fn ($val, string $padded): string => match (true) {
             $val > 20 => $this->formatter->error($padded),
             $val > 10 => $this->formatter->warning($padded),
             default => $this->formatter->success($padded),
         });
 
-        $table->setColumnFormatter(3, fn($val, $padded) => match (true) {
+        $table->setColumnFormatter(3, fn ($val, string $padded): string => match (true) {
             $val < 50 => $this->formatter->error($padded),
             $val < 70 => $this->formatter->warning($padded),
             default => $this->formatter->success($padded),
@@ -98,8 +98,8 @@ class QuickOutput
 
         foreach ($top as $file) {
             $name = $file['name'];
-            if (mb_strlen($name) > 50) {
-                $name = '...' . mb_substr($name, -47);
+            if (mb_strlen((string) $name) > 50) {
+                $name = '...'.mb_substr((string) $name, -47);
             }
             $table->addRow([$name, $file['loc'], $file['cc'], $file['mi']]);
         }
@@ -116,22 +116,22 @@ class QuickOutput
                 continue;
             }
 
-            $cc = $collection->get('cc')?->getValue() ?? 0;
-            $methods = $collection->get('numberOfMethods')?->getValue() ?? 0;
-            $mi = $collection->get('mi')?->getValue() ?? 0;
+            $cc = $collection->getInt(MetricKey::CC);
+            $methods = $collection->get('numberOfMethods')?->asInt() ?? 0;
+            $mi = $collection->get('mi')?->asFloat() ?? 0.0;
 
             $classes[] = [
                 'name' => $collection->getName(),
                 'methods' => $methods,
                 'cc' => $cc,
-                'mi' => round((float) $mi, 1),
+                'mi' => round($mi, 1),
             ];
         }
 
-        usort($classes, fn($a, $b) => $b['cc'] <=> $a['cc']);
+        usort($classes, fn (array $a, array $b): int => $b['cc'] <=> $a['cc']);
         $top = array_slice($classes, 0, 10);
 
-        if (empty($top)) {
+        if ([] === $top) {
             return;
         }
 
@@ -141,13 +141,13 @@ class QuickOutput
         $table = new TerminalTable($this->output, $this->formatter);
         $table->setHeaders(['Class', 'Methods', 'CC', 'MI']);
 
-        $table->setColumnFormatter(2, fn($val, $padded) => match (true) {
+        $table->setColumnFormatter(2, fn ($val, string $padded): string => match (true) {
             $val > 20 => $this->formatter->error($padded),
             $val > 10 => $this->formatter->warning($padded),
             default => $this->formatter->success($padded),
         });
 
-        $table->setColumnFormatter(3, fn($val, $padded) => match (true) {
+        $table->setColumnFormatter(3, fn ($val, string $padded): string => match (true) {
             $val < 50 => $this->formatter->error($padded),
             $val < 70 => $this->formatter->warning($padded),
             default => $this->formatter->success($padded),
@@ -156,7 +156,7 @@ class QuickOutput
         foreach ($top as $class) {
             $name = $class['name'];
             if (mb_strlen($name) > 50) {
-                $name = '...' . mb_substr($name, -47);
+                $name = '...'.mb_substr($name, -47);
             }
             $table->addRow([$name, $class['methods'], $class['cc'], $class['mi']]);
         }
@@ -166,12 +166,12 @@ class QuickOutput
 
     private function renderSummary(): void
     {
-        $get = fn(string $key) => $this->metricsController->getMetricValue(
+        $getFloat = fn (string $key): float => $this->metricsController->getMetricValue(
             MetricCollectionTypeEnum::ProjectCollection, null, $key
-        )?->getValue() ?? 0;
+        )?->asFloat() ?? 0.0;
 
-        $avgCC = round((float) $get('overallAvgCC'), 2);
-        $avgMI = round((float) $get('overallAvgMI'), 1);
+        $avgCC = round($getFloat(MetricKey::OVERALL_AVG_CC), 2);
+        $avgMI = round($getFloat(MetricKey::OVERALL_AVG_MI), 1);
 
         $ccStr = match (true) {
             $avgCC > 15 => $this->formatter->error((string) $avgCC),

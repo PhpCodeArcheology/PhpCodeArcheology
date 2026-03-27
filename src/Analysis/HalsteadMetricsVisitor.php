@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Analysis;
 
-use PhpCodeArch\Metrics\Identity\FileIdentifier;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
-use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
+use PhpCodeArch\Metrics\MetricKey;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
 
-class HalsteadMetricsVisitor implements NodeVisitor, VisitorInterface
+class HalsteadMetricsVisitor implements NodeVisitor, VisitorInterface, PathAwareVisitorInterface
 {
     use VisitorTrait;
 
@@ -24,22 +23,28 @@ class HalsteadMetricsVisitor implements NodeVisitor, VisitorInterface
      */
     private array $currentFunctionName = [];
 
+    /** @var array<int, string> */
     private array $operators = [];
 
+    /** @var array<int, mixed> */
     private array $operands = [];
 
+    /** @var array<string, array<int, string>> */
     private array $classOperators = [];
 
+    /** @var array<string, array<int, mixed>> */
     private array $classOperands = [];
 
+    /** @var array<string, array<int, string>> */
     private array $functionOperators = [];
 
+    /** @var array<string, array<int, mixed>> */
     private array $functionOperands = [];
 
     /**
-     * @inheritDoc
+     * @param array<int, Node> $nodes
      */
-    public function beforeTraverse(array $nodes): void
+    public function beforeTraverse(array $nodes): ?array
     {
         $this->operators = [];
         $this->operands = [];
@@ -49,12 +54,11 @@ class HalsteadMetricsVisitor implements NodeVisitor, VisitorInterface
         $this->functionOperands = [];
         $this->currentClassName = [];
         $this->currentFunctionName = [];
+
+        return null;
     }
 
-    /**
-     * @inheritDoc
-     */
-    public function enterNode(Node $node): void
+    public function enterNode(Node $node): int|Node|null
     {
         switch (true) {
             case $node instanceof Node\Stmt\Class_:
@@ -69,7 +73,7 @@ class HalsteadMetricsVisitor implements NodeVisitor, VisitorInterface
                 $this->currentClassName[] = $className;
                 break;
 
-            case $node instanceof Node\Stmt\Function_:#
+            case $node instanceof Node\Stmt\Function_:
                 $functionName = (string) $node->namespacedName;
 
                 $this->functionOperators[$functionName] = [];
@@ -80,6 +84,9 @@ class HalsteadMetricsVisitor implements NodeVisitor, VisitorInterface
 
             case $node instanceof Node\Stmt\ClassMethod:
                 $className = end($this->currentClassName);
+                if (false === $className) {
+                    break;
+                }
                 $methodName = (string) $node->name;
 
                 $key = sprintf('%s::%s', $className, $methodName);
@@ -90,12 +97,11 @@ class HalsteadMetricsVisitor implements NodeVisitor, VisitorInterface
                 $this->currentFunctionName[] = $methodName;
                 break;
         }
+
+        return null;
     }
 
-    /**
-     * @inheritDoc
-     */
-    public function leaveNode(Node $node): void
+    public function leaveNode(Node $node): int|Node|array|null
     {
         $this->countOperators($node);
         $this->countOperands($node);
@@ -106,6 +112,9 @@ class HalsteadMetricsVisitor implements NodeVisitor, VisitorInterface
             case $node instanceof Node\Stmt\Trait_:
             case $node instanceof Node\Stmt\Enum_:
                 $className = array_pop($this->currentClassName);
+                if (null === $className) {
+                    break;
+                }
 
                 $this->metricsController->setMetricValues(
                     MetricCollectionTypeEnum::ClassCollection,
@@ -113,12 +122,15 @@ class HalsteadMetricsVisitor implements NodeVisitor, VisitorInterface
                         'path' => $this->path,
                         'name' => $className,
                     ],
-                    $this->calculateMetrics($this->classOperators[$className], $this->classOperands[$className])
+                    $this->calculateMetrics($this->classOperators[$className] ?? [], $this->classOperands[$className] ?? [])
                 );
                 break;
 
             case $node instanceof Node\Stmt\Function_:
                 $functionName = array_pop($this->currentFunctionName);
+                if (null === $functionName) {
+                    break;
+                }
 
                 $this->metricsController->setMetricValues(
                     MetricCollectionTypeEnum::FunctionCollection,
@@ -126,13 +138,16 @@ class HalsteadMetricsVisitor implements NodeVisitor, VisitorInterface
                         'path' => $this->path,
                         'name' => $functionName,
                     ],
-                    $this->calculateMetrics($this->functionOperators[$functionName], $this->functionOperands[$functionName])
+                    $this->calculateMetrics($this->functionOperators[$functionName] ?? [], $this->functionOperands[$functionName] ?? [])
                 );
                 break;
 
             case $node instanceof Node\Stmt\ClassMethod:
                 $className = end($this->currentClassName);
                 $methodName = array_pop($this->currentFunctionName);
+                if (false === $className || null === $methodName) {
+                    break;
+                }
 
                 $key = sprintf('%s::%s', $className, $methodName);
 
@@ -142,16 +157,18 @@ class HalsteadMetricsVisitor implements NodeVisitor, VisitorInterface
                         'path' => $className,
                         'name' => $methodName,
                     ],
-                    $this->calculateMetrics($this->functionOperators[$key], $this->functionOperands[$key])
+                    $this->calculateMetrics($this->functionOperators[$key] ?? [], $this->functionOperands[$key] ?? [])
                 );
                 break;
         }
+
+        return null;
     }
 
     /**
-     * @inheritDoc
+     * @param array<int, Node> $nodes
      */
-    public function afterTraverse(array $nodes): void
+    public function afterTraverse(array $nodes): ?array
     {
         // Calculate file metrics
         $halstead = $this->calculateMetrics($this->operators, $this->operands);
@@ -161,12 +178,20 @@ class HalsteadMetricsVisitor implements NodeVisitor, VisitorInterface
             ['path' => $this->path],
             $halstead,
         );
+
+        return null;
     }
 
+    /**
+     * @param array<int, string> $operators
+     * @param array<int, mixed>  $operands
+     *
+     * @return array<string, int|float>
+     */
     private function calculateMetrics(array $operators, array $operands): array
     {
-        $uniqueOperators = array_map('unserialize', array_unique(array_map('serialize', $operators)));
-        $uniqueOperands = array_map('unserialize', array_unique(array_map('serialize', $operands)));
+        $uniqueOperators = array_map(unserialize(...), array_unique(array_map(serialize(...), $operators)));
+        $uniqueOperands = array_map(unserialize(...), array_unique(array_map(serialize(...), $operands)));
 
         $n1 = count($uniqueOperators);
         $n2 = count($uniqueOperands);
@@ -176,19 +201,19 @@ class HalsteadMetricsVisitor implements NodeVisitor, VisitorInterface
         $n = $n1 + $n2;
         $N = $N1 + $N2;
 
-        if ($n2 === 0 || $N2 === 0) {
+        if (0 === $n2 || 0 === $N2) {
             return [
-                'vocabulary' => $n,
-                'length' => $N,
-                'calcLength' => 0,
-                'volume' => 0,
-                'difficulty' => 0,
-                'effort' => 0,
-                'operators' => $N1,
-                'operands' => $N2,
-                'uniqueOperators' => $n1,
-                'uniqueOperands' => $n2,
-                'complexityDensity' => 0,
+                MetricKey::VOCABULARY => $n,
+                MetricKey::LENGTH => $N,
+                MetricKey::CALC_LENGTH => 0,
+                MetricKey::VOLUME => 0,
+                MetricKey::DIFFICULTY => 0,
+                MetricKey::EFFORT => 0,
+                MetricKey::OPERATORS => $N1,
+                MetricKey::OPERANDS => $N2,
+                MetricKey::UNIQUE_OPERATORS => $n1,
+                MetricKey::UNIQUE_OPERANDS => $n2,
+                MetricKey::COMPLEXITY_DENSITY => 0,
             ];
         }
 
@@ -200,7 +225,7 @@ class HalsteadMetricsVisitor implements NodeVisitor, VisitorInterface
         $effort = $difficulty * $volume;
 
         /**
-         * Special Php legacy analyzer metrics
+         * Special Php legacy analyzer metrics.
          *
          * $complexityDensity
          * This metric calculates the connection between the difficulty and size of the code and
@@ -210,21 +235,21 @@ class HalsteadMetricsVisitor implements NodeVisitor, VisitorInterface
         $complexityDensity = $difficulty / ($vocabulary + $length);
 
         return [
-            'vocabulary' => $vocabulary,
-            'length' => $length,
-            'calcLength' => $calculatedLength,
-            'volume' => $volume,
-            'difficulty' => $difficulty,
-            'effort' => $effort,
-            'operators' => $N1,
-            'operands' => $N2,
-            'uniqueOperators' => $n1,
-            'uniqueOperands' => $n2,
-            'complexityDensity' => $complexityDensity,
+            MetricKey::VOCABULARY => $vocabulary,
+            MetricKey::LENGTH => $length,
+            MetricKey::CALC_LENGTH => $calculatedLength,
+            MetricKey::VOLUME => $volume,
+            MetricKey::DIFFICULTY => $difficulty,
+            MetricKey::EFFORT => $effort,
+            MetricKey::OPERATORS => $N1,
+            MetricKey::OPERANDS => $N2,
+            MetricKey::UNIQUE_OPERATORS => $n1,
+            MetricKey::UNIQUE_OPERANDS => $n2,
+            MetricKey::COMPLEXITY_DENSITY => $complexityDensity,
         ];
     }
 
-    private function afterSetPath(): void
+    public function afterSetPath(string $path): void
     {
         $this->operators = [];
         $this->operands = [];
@@ -262,26 +287,25 @@ class HalsteadMetricsVisitor implements NodeVisitor, VisitorInterface
             case $node instanceof Node\Expr\PostDec:
             case $node instanceof Node\Expr\PostInc:
             case $node instanceof Node\Stmt\TryCatch:
-            case $node instanceof Node\Stmt\Throw_:
-                $this->operators[] = get_class($node);
+            case $node instanceof Node\Expr\Throw_:
+                $this->operators[] = $node::class;
 
                 if (count($this->currentClassName) > 0) {
                     $className = end($this->currentClassName);
 
-                    $this->classOperators[$className][] = get_class($node);
+                    $this->classOperators[$className][] = $node::class;
 
                     if (count($this->currentFunctionName) > 0) {
                         $methodName = end($this->currentFunctionName);
                         $key = sprintf('%s::%s', $className, $methodName);
 
-                        if (isset ($this->functionOperators[$key])) {
-                            $this->functionOperators[$key][] = get_class($node);
+                        if (isset($this->functionOperators[$key])) {
+                            $this->functionOperators[$key][] = $node::class;
                         }
                     }
-                }
-                elseif (count($this->currentFunctionName) > 0) {
+                } elseif (count($this->currentFunctionName) > 0) {
                     $functionName = end($this->currentFunctionName);
-                    $this->functionOperators[$functionName][] = get_class($node);
+                    $this->functionOperators[$functionName][] = $node::class;
                 }
                 break;
         }
@@ -296,12 +320,10 @@ class HalsteadMetricsVisitor implements NodeVisitor, VisitorInterface
             case $node instanceof Node\Scalar:
                 if (isset($node->value)) {
                     $name = $node->value;
-                }
-                elseif (isset($node->name)) {
+                } elseif (isset($node->name)) {
                     $name = $node->name;
-                }
-                else {
-                    $name = get_class($node);
+                } else {
+                    $name = $node::class;
                 }
 
                 $this->operands[] = $name;
@@ -315,12 +337,11 @@ class HalsteadMetricsVisitor implements NodeVisitor, VisitorInterface
                         $methodName = end($this->currentFunctionName);
                         $key = sprintf('%s::%s', $className, $methodName);
 
-                        if (isset ($this->functionOperands[$key])) {
-                            $this->functionOperands[$key][] = get_class($node);
+                        if (isset($this->functionOperands[$key])) {
+                            $this->functionOperands[$key][] = $name;
                         }
                     }
-                }
-                elseif (count($this->currentFunctionName) > 0) {
+                } elseif (count($this->currentFunctionName) > 0) {
                     $functionName = end($this->currentFunctionName);
                     $this->functionOperands[$functionName][] = $name;
                 }

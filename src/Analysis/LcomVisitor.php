@@ -1,15 +1,19 @@
-<?php /** @noinspection ALL */
+<?php
+
+/** @noinspection ALL */
 
 declare(strict_types=1);
 
 namespace PhpCodeArch\Analysis;
 
+use function PhpCodeArch\getNodeName;
+
 use PhpCodeArch\Graph\Graph;
 use PhpCodeArch\Graph\Node as GraphNode;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
+use PhpCodeArch\Metrics\MetricKey;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
-use function PhpCodeArch\getNodeName;
 
 class LcomVisitor implements NodeVisitor, VisitorInterface
 {
@@ -17,32 +21,31 @@ class LcomVisitor implements NodeVisitor, VisitorInterface
 
     private Graph $graph;
 
-    private GraphNode $fromNode;
+    private ?GraphNode $fromNode = null;
 
     /**
-     * @var string[]
+     * @var array<int, string>
      */
     private array $currentMethodName = [];
 
     /**
-     * @inheritDoc
+     * @param array<int, Node> $nodes
      */
-    public function beforeTraverse(array $nodes): void
+    public function beforeTraverse(array $nodes): ?array
     {
         $this->graph = new Graph();
+
+        return null;
     }
 
-    /**
-     * @inheritDoc
-     */
-    public function enterNode(Node $node): void
+    public function enterNode(Node $node): int|Node|null
     {
         switch (true) {
             case $node instanceof Node\Stmt\ClassMethod:
                 $this->currentMethodName[] = (string) $node->name;
 
-                $graphNodeName = $node->name . '()';
-                if (! $this->graph->has($graphNodeName)) {
+                $graphNodeName = $node->name.'()';
+                if (!$this->graph->has($graphNodeName)) {
                     $this->graph->insert(new GraphNode($graphNodeName));
                 }
 
@@ -55,12 +58,11 @@ class LcomVisitor implements NodeVisitor, VisitorInterface
                 $this->graph = new Graph();
                 break;
         }
+
+        return null;
     }
 
-    /**
-     * @inheritDoc
-     */
-    public function leaveNode(Node $node): void
+    public function leaveNode(Node $node): int|Node|array|null
     {
         $this->updateGraph($node);
 
@@ -85,20 +87,23 @@ class LcomVisitor implements NodeVisitor, VisitorInterface
                         'name' => ClassName::ofNode($node)->__toString(),
                     ],
                     $lcom,
-                    'lcom'
+                    MetricKey::LCOM
                 );
 
                 $this->graph = new Graph();
 
                 break;
         }
+
+        return null;
     }
 
     /**
-     * @inheritDoc
+     * @param array<int, Node> $nodes
      */
-    public function afterTraverse(array $nodes)
+    public function afterTraverse(array $nodes): ?array
     {
+        return null;
     }
 
     private function traverseNodes(GraphNode $node): int
@@ -116,44 +121,38 @@ class LcomVisitor implements NodeVisitor, VisitorInterface
         return 1;
     }
 
-    /**
-     * @param Node $node
-     * @return void
-     */
     public function updateGraph(Node $node): void
     {
-        if (count($this->currentMethodName) > 0 && $node instanceof Node\Expr\MethodCall) {
-            if (!$node->var instanceof Node\Expr\New_
-                && isset($node->var->name)
-                && getNodeName($node->var) === 'this') {
-
-                $nodeName = getNodeName($node->name);
-                if ($nodeName === null) {
-                    return;
-                }
-                $name = $nodeName . '()';
-                if (!$this->graph->has($name)) {
-                    $this->graph->insert(new GraphNode($name));
-                }
-                $toNode = $this->graph->get($name);
+        if (count($this->currentMethodName) > 0 && $node instanceof Node\Expr\MethodCall && (!$node->var instanceof Node\Expr\New_ && (property_exists($node->var, 'name') && null !== $node->var->name) && 'this' === getNodeName($node->var))) {
+            $nodeName = getNodeName($node->name);
+            if (null === $nodeName) {
+                return;
+            }
+            $name = $nodeName.'()';
+            if (!$this->graph->has($name)) {
+                $this->graph->insert(new GraphNode($name));
+            }
+            $toNode = $this->graph->get($name);
+            if (null !== $this->fromNode && null !== $toNode) {
                 $this->graph->addEdge($this->fromNode, $toNode);
             }
         }
 
         if (count($this->currentMethodName) > 0
             && $node instanceof Node\Expr\PropertyFetch
-            && isset ($node->var->name)
-            && $node->var->name === 'this') {
-
+            && (property_exists($node->var, 'name') && null !== $node->var->name)
+            && 'this' === $node->var->name) {
             $name = getNodeName($node);
-            if ($name === null) {
+            if (null === $name) {
                 return;
             }
             if (!$this->graph->has($name)) {
                 $this->graph->insert(new GraphNode($name));
             }
             $toNode = $this->graph->get($name);
-            $this->graph->addEdge($this->fromNode, $toNode);
+            if (null !== $this->fromNode && null !== $toNode) {
+                $this->graph->addEdge($this->fromNode, $toNode);
+            }
         }
     }
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PhpCodeArch\Calculators;
 
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
+use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
 
 class VariablesCalculator implements CalculatorInterface
@@ -21,57 +22,57 @@ class VariablesCalculator implements CalculatorInterface
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             'classes'
-        )->getAsArray();
+        )?->getAsArray() ?? [];
 
         $files = $this->metricsController->getCollection(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             'files'
-        )->getAsArray();
+        )?->getAsArray() ?? [];
 
         $functions = $this->metricsController->getCollection(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             'functions'
-        )->getAsArray();
+        )?->getAsArray() ?? [];
 
         $methods = $this->metricsController->getCollection(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             'methods'
-        )->getAsArray();
+        )?->getAsArray() ?? [];
 
         $elements = array_merge($classes, $files, $functions, $methods);
 
-        foreach ($elements as $elementId => $elementName) {
+        foreach (array_keys($elements) as $elementId) {
             $classMetricCollection = $this->metricsController->getMetricCollectionByIdentifierString($elementId);
 
-            $superglobals = $classMetricCollection->get('superglobals')?->getValue() ?? [];
-            $variables = $classMetricCollection->get('variables')?->getValue() ?? [];
-            $constants = $classMetricCollection->get('constants')?->getValue() ?? [];
+            $superglobals = $classMetricCollection->getArray(MetricKey::SUPERGLOBALS);
+            $variables = $classMetricCollection->getArray(MetricKey::VARIABLES);
+            $constants = $classMetricCollection->getArray(MetricKey::CONSTANTS);
 
             $metricValues = [
-                'superglobalsUsed' => array_sum($superglobals),
-                'distinctSuperglobalsUsed' => count(
+                MetricKey::SUPERGLOBALS_USED => array_sum($superglobals),
+                MetricKey::DISTINCT_SUPERGLOBALS_USED => count(
                     array_filter(
                         $superglobals,
-                        fn($variableCount) => $variableCount > 0
+                        fn ($variableCount): bool => $variableCount > 0
                     )
                 ),
-                'variablesUsed' => array_sum($variables),
-                'distinctVariablesUsed' => count($variables),
-                'constantsUsed' => array_sum($constants),
-                'distinctConstantsUsed' => count($constants),
+                MetricKey::VARIABLES_USED => array_sum($variables),
+                MetricKey::DISTINCT_VARIABLES_USED => count($variables),
+                MetricKey::CONSTANTS_USED => array_sum($constants),
+                MetricKey::DISTINCT_CONSTANTS_USED => count($constants),
             ];
 
-            $metricValues['superglobalMetric'] = $metricValues['variablesUsed'] > 0 ?
-                    round((($metricValues['superglobalsUsed'] + $metricValues['constantsUsed']) /
+            $metricValues[MetricKey::SUPERGLOBAL_METRIC] = ($metricValues[MetricKey::SUPERGLOBALS_USED] + $metricValues[MetricKey::VARIABLES_USED] + $metricValues[MetricKey::CONSTANTS_USED]) > 0 ?
+                    round((($metricValues[MetricKey::SUPERGLOBALS_USED] + $metricValues[MetricKey::CONSTANTS_USED]) /
                             (
-                                $metricValues['superglobalsUsed'] +
-                                $metricValues['variablesUsed'] +
-                                $metricValues['constantsUsed']
+                                $metricValues[MetricKey::SUPERGLOBALS_USED] +
+                                $metricValues[MetricKey::VARIABLES_USED] +
+                                $metricValues[MetricKey::CONSTANTS_USED]
                             )
-                        ) * 100,
+                    ) * 100,
                         2
                     )
                     : 0;

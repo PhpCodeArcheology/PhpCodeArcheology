@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PhpCodeArch\Report\DataProvider;
 
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
+use PhpCodeArch\Metrics\MetricKey;
 
 class PackagesDataProvider implements ReportDataProviderInterface
 {
@@ -18,9 +19,10 @@ class PackagesDataProvider implements ReportDataProviderInterface
             'packages'
         );
 
-        $packages = array_filter($packages, function($package) {
+        $packages = array_filter($packages, function ($package): bool {
             $classes = $package->getCollection('classes');
-            return count($classes->getAsArray()) !== 0;
+
+            return null !== $classes && 0 !== count($classes->getAsArray());
         });
 
         $listMetrics = $this->metricsController->getListMetricsByCollectionType(
@@ -31,12 +33,12 @@ class PackagesDataProvider implements ReportDataProviderInterface
         foreach ($packages as $package) {
             $packageName = $package->getName();
 
-            $a = $package->get('abstractness')->getValue();
-            $i = $package->get('instability')->getValue();
+            $a = $package->getFloat(MetricKey::ABSTRACTNESS);
+            $i = $package->getFloat(MetricKey::INSTABILITY);
 
             $aiKey = sprintf('%s-%s', $a, $i);
 
-            if (! isset($aiMap[$aiKey])) {
+            if (!isset($aiMap[$aiKey])) {
                 $aiMap[$aiKey] = [
                     'x' => $i,
                     'y' => $a,
@@ -66,12 +68,8 @@ class PackagesDataProvider implements ReportDataProviderInterface
         $templateData = [
             'aiChart' => $chartData,
             'packages' => $packages,
-            'tableHeaders' =>array_map(function($metricType) {
-                return $metricType->__toArray();
-            }, $listMetrics),
-            'listMetricKeys' => array_map(function($metricType) {
-                return $metricType->getKey();
-            }, $listMetrics),
+            'tableHeaders' => array_map(fn ($metricType) => $metricType->__toArray(), $listMetrics),
+            'listMetricKeys' => array_map(fn ($metricType) => $metricType->getKey(), $listMetrics),
         ];
 
         $this->templateData = array_merge($this->templateData, $templateData);

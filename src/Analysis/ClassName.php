@@ -5,41 +5,35 @@ declare(strict_types=1);
 namespace PhpCodeArch\Analysis;
 
 use PhpParser\Node;
+use PhpParser\Node\Stmt\ClassLike;
 
 /**
- * ClassName ValueObject
+ * ClassName ValueObject.
  *
  * Creates a ClassName out of a PHPParser Node while detecting anonymous classes.
  */
-class ClassName
+class ClassName implements \Stringable
 {
-    /**
-     * @return string
-     */
     public function __toString(): string
     {
         return $this->name;
     }
 
-    /**
-     * @param Node $node
-     * @return ClassName
-     */
-    public static function ofNode(Node $node): ClassName
+    public static function ofNode(ClassLike $node): ClassName
     {
-        $attributes = $node->getAttributes();
-        $anonymousIdentifier = sprintf('%s-%s', $attributes['startLine'], $attributes['startTokenPos']);
+        $anonymousIdentifier = sprintf('%d-%d', $node->getStartLine(), $node->getStartTokenPos());
 
-        $name = $node->namespacedName ?? 'anonymous@' . hash('crc32', $anonymousIdentifier);;
+        $name = $node->namespacedName instanceof Node\Name
+            ? $node->namespacedName->toString()
+            : 'anonymous@'.hash('crc32', $anonymousIdentifier);
 
-        return new self((string) $name);
+        return new self($name);
     }
 
     /**
-     * Private constructor
-     *
-     * @param string $name
+     * Private constructor.
      */
-    private function __construct(private string $name)
-    {}
+    private function __construct(private readonly string $name)
+    {
+    }
 }

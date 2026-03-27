@@ -116,5 +116,5 @@ it('returns an error string when an exception is thrown', function () {
 
     $result = (new DependenciesTool($factory))->getDependencies('Any');
 
-    expect($result)->toBe('Error retrieving dependencies: coupling error');
+    expect($result)->toBe('An error occurred while retrieving dependencies.');
 });

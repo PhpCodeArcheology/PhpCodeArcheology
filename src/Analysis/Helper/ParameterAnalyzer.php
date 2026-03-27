@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Analysis\Helper;
 
-use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
+use function PhpCodeArch\getNodeName;
+
 use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
+use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\Collections\ParameterCollection;
 use PhpParser\Node;
-use function PhpCodeArch\getNodeName;
 
 class ParameterAnalyzer
 {
@@ -18,11 +20,9 @@ class ParameterAnalyzer
     }
 
     /**
-     * Set parameters on functions and class methods
+     * Set parameters on functions and class methods.
      *
-     * @param Node\Stmt\Function_|Node\Stmt\ClassMethod $node
-     * @param array $identifierData
-     * @return void
+     * @param array{path?: string, name?: string} $identifierData
      */
     public function handleParameters(
         Node\Stmt\Function_|Node\Stmt\ClassMethod $node,
@@ -31,20 +31,20 @@ class ParameterAnalyzer
         $parameterCollection = new ParameterCollection();
 
         $docBlock = $node->getDocComment();
-        $docBlockText = $docBlock ? $docBlock->getText() : '';
+        $docBlockText = $docBlock instanceof \PhpParser\Comment\Doc ? $docBlock->getText() : '';
 
         $docBlockText = str_replace('*/', '', $docBlockText);
         $docBlockText = preg_replace('/^\s*\*\s?/m', '', $docBlockText);
 
         $pattern = '/@param\s+([^\s]+)\s+(\$[^\s]+)(?:\s+([^@]*))?/ms';
-        preg_match_all($pattern, $docBlockText, $matches, PREG_SET_ORDER);
+        preg_match_all($pattern, (string) $docBlockText, $matches, PREG_SET_ORDER);
 
         $paramDetails = [];
         foreach ($matches as $match) {
             $paramDetails[$match[2]] = [
                 'type' => $match[1],
                 'variable' => $match[2],
-                'description' => trim($match[3] ?? '')
+                'description' => trim($match[3] ?? ''),
             ];
         }
 
@@ -60,22 +60,26 @@ class ParameterAnalyzer
 
             $type = null;
 
-            if ($parameter->type !== null) {
+            if (null !== $parameter->type) {
                 $type = $this->getTypeName($parameter->type);
             }
 
-            $name = '$' . (string) $parameter->var->name;
+            $paramVar = $parameter->var;
+            if (!$paramVar instanceof Node\Expr\Variable || !is_string($paramVar->name)) {
+                continue;
+            }
+            $name = '$'.$paramVar->name;
 
-            if ($type === null && isset($paramDetails[$name])) {
+            if (null === $type && isset($paramDetails[$name])) {
                 $type = $paramDetails[$name]['type'];
             }
 
-            $totalParams++;
-            if ($parameter->default !== null) {
-                $optionalParams++;
+            ++$totalParams;
+            if (null !== $parameter->default) {
+                ++$optionalParams;
             }
             if ($parameter->type instanceof Node\NullableType) {
-                $nullableParams++;
+                ++$nullableParams;
             }
 
             $parameterCollection->set([
@@ -98,13 +102,16 @@ class ParameterAnalyzer
             $metricsType,
             $identifierData,
             [
-                'parameterCount' => $totalParams,
-                'optionalParameterCount' => $optionalParams,
-                'nullableParameterCount' => $nullableParams,
+                MetricKey::PARAMETER_COUNT => $totalParams,
+                MetricKey::OPTIONAL_PARAMETER_COUNT => $optionalParams,
+                MetricKey::NULLABLE_PARAMETER_COUNT => $nullableParams,
             ]
         );
     }
 
+    /**
+     * @param array{path?: string, name?: string} $identifierData
+     */
     public function handleReturn(
         Node\Stmt\Function_|Node\Stmt\ClassMethod $node,
         array $identifierData): void
@@ -112,7 +119,7 @@ class ParameterAnalyzer
         $returnType = 'not specified';
 
         $docBlock = $node->getDocComment();
-        $docBlockText = $docBlock ? $docBlock->getText() : '';
+        $docBlockText = $docBlock instanceof \PhpParser\Comment\Doc ? $docBlock->getText() : '';
         if (preg_match('/^\s*\* @return (.*)/m', $docBlockText, $matches)) {
             $returnType = trim($matches[1]);
         }
@@ -127,7 +134,7 @@ class ParameterAnalyzer
             $metricsType,
             $identifierData,
             $returnType,
-            'returnType'
+            MetricKey::RETURN_TYPE
         );
     }
 
@@ -137,16 +144,22 @@ class ParameterAnalyzer
             case $type instanceof Node\Name\FullyQualified:
             case $type instanceof Node\Name:
             case $type instanceof Node\NullableType:
-                return getNodeName($type);
+                return getNodeName($type) ?? 'mixed';
 
             case $type instanceof Node\Identifier:
-            case $type instanceof Node\Expr\Variable:
                 return $type->name;
 
+            case $type instanceof Node\Expr\Variable:
+                $varName = $type->name;
+                if (!is_string($varName)) {
+                    return 'mixed';
+                }
+
+                return $varName;
+
             case $type instanceof Node\UnionType:
-                $types = array_map(function($type) {
-                    return $this->getTypeName($type);
-                }, $type->types);
+                $types = array_map(fn (\PhpParser\Node\Identifier|\PhpParser\Node\IntersectionType|Node\Name $type) => $this->getTypeName($type), $type->types);
+
                 return implode('|', $types);
         }
 

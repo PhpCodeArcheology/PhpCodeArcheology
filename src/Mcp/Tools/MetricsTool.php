@@ -5,16 +5,15 @@ declare(strict_types=1);
 namespace PhpCodeArch\Mcp\Tools;
 
 use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
 use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
-use PhpCodeArch\Report\DataProvider\DataProviderFactory;
 
 class MetricsTool
 {
     public function __construct(
-        private readonly DataProviderFactory $factory,
-        private readonly MetricsController $metricsController
+        private readonly MetricsController $metricsController,
     ) {
     }
 
@@ -31,26 +30,27 @@ class MetricsTool
                     default => null,
                 };
 
-                if ($entityType === null) {
+                if (null === $entityType) {
                     continue;
                 }
 
-                if ($type !== 'any' && $entityType !== $type) {
+                if ('any' !== $type && $entityType !== $type) {
                     continue;
                 }
 
                 $name = $collection->getName();
-                $singleName = $collection->get('singleName')?->getValue() ?? '';
+                $singleName = $collection->getString(MetricKey::SINGLE_NAME);
 
-                if (stripos($name, $entity) === false && stripos($singleName, $entity) === false) {
+                if (false === stripos((string) $name, $entity) && false === stripos($singleName, $entity)) {
                     continue;
                 }
 
                 $found[] = [$entityType, $collection];
             }
 
-            if (empty($found)) {
-                $typeHint = $type !== 'any' ? " (type: {$type})" : '';
+            if ([] === $found) {
+                $typeHint = 'any' !== $type ? " (type: {$type})" : '';
+
                 return "No entity found matching '{$entity}'{$typeHint}.";
             }
 
@@ -72,13 +72,17 @@ class MetricsTool
                     $value = $metricValue->getValue();
                     if (is_array($value)) {
                         $count = count($value);
-                        $lines[] = sprintf('%-35s [array, %d items]', $key . ':', $count);
+                        $lines[] = sprintf('%-35s [array, %d items]', $key.':', $count);
                     } elseif (is_bool($value)) {
-                        $lines[] = sprintf('%-35s %s', $key . ':', $value ? 'true' : 'false');
+                        $lines[] = sprintf('%-35s %s', $key.':', $value ? 'true' : 'false');
                     } elseif (is_float($value)) {
-                        $lines[] = sprintf('%-35s %s', $key . ':', round($value, 4));
+                        $lines[] = sprintf('%-35s %s', $key.':', round($value, 4));
+                    } elseif (is_int($value)) {
+                        $lines[] = sprintf('%-35s %d', $key.':', $value);
+                    } elseif (is_string($value)) {
+                        $lines[] = sprintf('%-35s %s', $key.':', $value);
                     } else {
-                        $lines[] = sprintf('%-35s %s', $key . ':', $value ?? 'null');
+                        $lines[] = sprintf('%-35s %s', $key.':', 'null');
                     }
                 }
 
@@ -87,7 +91,7 @@ class MetricsTool
 
             return implode("\n", $lines);
         } catch (\Throwable $e) {
-            return 'Error retrieving metrics: ' . $e->getMessage();
+            return 'An error occurred while retrieving metrics.';
         }
     }
 }

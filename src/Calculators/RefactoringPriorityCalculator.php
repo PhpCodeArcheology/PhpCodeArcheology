@@ -6,12 +6,14 @@ namespace PhpCodeArch\Calculators;
 
 use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
+use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
 use PhpCodeArch\Predictions\PredictionInterface;
 
 class RefactoringPriorityCalculator implements CalculatorInterface
 {
+    /** @var list<float> */
     private array $scores = [];
 
     public function __construct(
@@ -34,27 +36,28 @@ class RefactoringPriorityCalculator implements CalculatorInterface
         [$errorCount, $warningCount, $infoCount] = $this->countProblems($metrics);
 
         // Read metrics
-        $cc = $metrics->get('cc')?->getValue() ?? 0;
-        $lcom = $metrics->get('lcom')?->getValue() ?? 0;
-        $lloc = $metrics->get('lloc')?->getValue() ?? 0;
-        $inCycle = (bool) ($metrics->get('inDependencyCycle')?->getValue() ?? false);
-        $cycleLength = $metrics->get('dependencyCycleLength')?->getValue() ?? 0;
-        $layerViolations = $metrics->get('layerViolationCount')?->getValue() ?? 0;
-        $solidViolations = $metrics->get('solidViolationCount')?->getValue() ?? 0;
-        $usedFromOutside = $metrics->get('usedFromOutsideCount')?->getValue() ?? 0;
-        $hasTest = (bool) ($metrics->get('hasTest')?->getValue() ?? false);
+        $cc = $metrics->getInt(MetricKey::CC);
+        $lcom = $metrics->getInt(MetricKey::LCOM);
+        $lloc = $metrics->getInt(MetricKey::LLOC);
+        $inCycle = $metrics->getBool(MetricKey::IN_DEPENDENCY_CYCLE);
+        $cycleLength = $metrics->getInt(MetricKey::DEPENDENCY_CYCLE_LENGTH);
+        $layerViolations = $metrics->getInt(MetricKey::LAYER_VIOLATION_COUNT);
+        $solidViolations = $metrics->getInt(MetricKey::SOLID_VIOLATION_COUNT);
+        $usedFromOutside = $metrics->getInt(MetricKey::USED_FROM_OUTSIDE_COUNT);
+        $hasTest = $metrics->getBool(MetricKey::HAS_TEST);
 
         // Git metrics (file-level, looked up via class filePath)
-        $gitChurn = $this->getFileGitMetric($metrics, 'gitChurnCount');
-        $gitAuthors = $this->getFileGitMetric($metrics, 'gitAuthorCount');
-        $gitAgeDays = $this->getFileGitMetric($metrics, 'gitCodeAgeDays');
+        $gitChurn = $this->getFileGitMetric($metrics, MetricKey::GIT_CHURN_COUNT);
+        $gitAuthors = $this->getFileGitMetric($metrics, MetricKey::GIT_AUTHOR_COUNT);
+        $gitAgeDays = $this->getFileGitMetric($metrics, MetricKey::GIT_CODE_AGE_DAYS);
 
         // Gate: zero problems AND no structural issues → score 0
         $totalProblems = $errorCount + $warningCount + $infoCount;
         $hasStructuralIssues = $inCycle || $layerViolations > 0 || $solidViolations > 0 || $lcom > 1;
 
-        if ($totalProblems === 0 && !$hasStructuralIssues) {
+        if (0 === $totalProblems && !$hasStructuralIssues) {
             $this->storeResult($metrics, 0, '', []);
+
             return;
         }
 
@@ -97,7 +100,7 @@ class RefactoringPriorityCalculator implements CalculatorInterface
 
         [$recommendation, $drivers] = $this->buildRecommendation(
             $subScores,
-            compact('cc', 'lcom', 'lloc', 'inCycle', 'cycleLength', 'layerViolations', 'solidViolations', 'hasTest'),
+            ['cc' => $cc, 'lcom' => $lcom, 'lloc' => $lloc, 'inCycle' => $inCycle, 'cycleLength' => $cycleLength, 'layerViolations' => $layerViolations, 'solidViolations' => $solidViolations, 'hasTest' => $hasTest],
             $errorCount,
             $warningCount
         );
@@ -108,7 +111,7 @@ class RefactoringPriorityCalculator implements CalculatorInterface
     public function afterTraverse(): void
     {
         $count = count($this->scores);
-        $needingRefactoring = count(array_filter($this->scores, fn(float $s) => $s > 0));
+        $needingRefactoring = count(array_filter($this->scores, fn (float $s): bool => $s > 0));
         $avg = $count > 0 ? round(array_sum($this->scores) / $count, 1) : 0;
         $max = $count > 0 ? max($this->scores) : 0;
 
@@ -116,9 +119,9 @@ class RefactoringPriorityCalculator implements CalculatorInterface
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             [
-                'overallAvgRefactoringPriority' => $avg,
-                'overallMaxRefactoringPriority' => $max,
-                'overallClassesNeedingRefactoring' => $needingRefactoring,
+                MetricKey::OVERALL_AVG_REFACTORING_PRIORITY => $avg,
+                MetricKey::OVERALL_MAX_REFACTORING_PRIORITY => $max,
+                MetricKey::OVERALL_CLASSES_NEEDING_REFACTORING => $needingRefactoring,
             ]
         );
     }
@@ -126,19 +129,23 @@ class RefactoringPriorityCalculator implements CalculatorInterface
     private function isSkippable(ClassMetricsCollection $metrics): bool
     {
         if (
-            (bool) ($metrics->get('interface')?->getValue() ?? false)
-            || (bool) ($metrics->get('trait')?->getValue() ?? false)
-            || (bool) ($metrics->get('enum')?->getValue() ?? false)
+            $metrics->getBool(MetricKey::INTERFACE)
+            || $metrics->getBool(MetricKey::TRAIT)
+            || $metrics->getBool(MetricKey::ENUM)
         ) {
             return true;
         }
 
         $shortName = basename(str_replace('\\', '/', $metrics->getName()));
+
         return str_ends_with($shortName, 'Test')
             || str_ends_with($shortName, 'Spec')
             || str_ends_with($shortName, 'Cest');
     }
 
+    /**
+     * @return array{int, int, int}
+     */
     private function countProblems(ClassMetricsCollection $metrics): array
     {
         $errors = 0;
@@ -159,16 +166,17 @@ class RefactoringPriorityCalculator implements CalculatorInterface
         return [$errors, $warnings, $infos];
     }
 
+    /** @var array<string, \PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection>|null */
     private ?array $fileCollectionIndex = null;
 
     private function getFileGitMetric(ClassMetricsCollection $metrics, string $key): int
     {
-        $filePath = $metrics->get('filePath')?->getValue() ?? '';
-        if ($filePath === '') {
+        $filePath = $metrics->getString(MetricKey::FILE_PATH);
+        if ('' === $filePath) {
             return 0;
         }
 
-        if ($this->fileCollectionIndex === null) {
+        if (null === $this->fileCollectionIndex) {
             $this->fileCollectionIndex = [];
             foreach ($this->metricsController->getAllCollections() as $collection) {
                 if ($collection instanceof \PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection) {
@@ -178,13 +186,19 @@ class RefactoringPriorityCalculator implements CalculatorInterface
         }
 
         $fileCollection = $this->fileCollectionIndex[$filePath] ?? null;
-        if ($fileCollection === null) {
+        if (null === $fileCollection) {
             return 0;
         }
 
-        return (int) ($fileCollection->get($key)?->getValue() ?? 0);
+        return $fileCollection->get($key)?->asInt() ?? 0;
     }
 
+    /**
+     * @param array{problems: float|int, complexity: float|int, cohesion: float|int, size: float|int, structural: float|int}                   $subScores
+     * @param array{cc: int, lcom: int, lloc: int, inCycle: bool, cycleLength: int, layerViolations: int, solidViolations: int, hasTest: bool} $raw
+     *
+     * @return array{string, list<string>}
+     */
     private function buildRecommendation(
         array $subScores,
         array $raw,
@@ -202,7 +216,7 @@ class RefactoringPriorityCalculator implements CalculatorInterface
             );
         }
 
-        if (!($raw['hasTest'] ?? false) && $raw['cc'] > 5) {
+        if (!$raw['hasTest'] && $raw['cc'] > 5) {
             $drivers[] = 'untested';
             $recommendations[] = 'No tests found for this class. Add tests before refactoring to avoid regressions.';
         }
@@ -253,7 +267,7 @@ class RefactoringPriorityCalculator implements CalculatorInterface
             );
         }
 
-        if (empty($drivers) && $subScores['complexity'] > 0) {
+        if ([] === $drivers && $subScores['complexity'] > 0) {
             $drivers[] = 'moderate complexity';
             $recommendations[] = 'Minor issues detected. Consider simplifying when next modifying this class.';
         }
@@ -264,25 +278,28 @@ class RefactoringPriorityCalculator implements CalculatorInterface
         ];
     }
 
+    /**
+     * @param list<string> $drivers
+     */
     private function storeResult(ClassMetricsCollection $metrics, float $priority, string $recommendation, array $drivers): void
     {
         $this->scores[] = $priority;
 
         $this->metricsController->setMetricValueByIdentifierString(
             (string) $metrics->getIdentifier(),
-            'refactoringPriority',
+            MetricKey::REFACTORING_PRIORITY,
             $priority
         );
 
         $this->metricsController->setMetricValueByIdentifierString(
             (string) $metrics->getIdentifier(),
-            'refactoringPriorityRecommendation',
+            MetricKey::REFACTORING_PRIORITY_RECOMMENDATION,
             $recommendation
         );
 
         $this->metricsController->setMetricValueByIdentifierString(
             (string) $metrics->getIdentifier(),
-            'refactoringPriorityDrivers',
+            MetricKey::REFACTORING_PRIORITY_DRIVERS,
             $drivers
         );
     }

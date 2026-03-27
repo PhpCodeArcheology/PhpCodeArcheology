@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace PhpCodeArch\Analysis;
 
 use PhpCodeArch\Metrics\Controller\MetricsController;
@@ -13,9 +15,8 @@ trait VisitorTrait
          * @var MetricsController $metricsController
          */
         private readonly MetricsController $metricsController,
-    )
-    {
-        if (method_exists($this, 'init')) {
+    ) {
+        if ($this instanceof InitializableVisitorInterface) {
             $this->init();
         }
     }
@@ -24,8 +25,8 @@ trait VisitorTrait
     {
         $this->path = $path;
 
-        if (method_exists($this, 'afterSetPath')) {
-            $this->afterSetPath();
+        if ($this instanceof PathAwareVisitorInterface) {
+            $this->afterSetPath($path);
         }
     }
 }

@@ -12,7 +12,10 @@ use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
 
 require_once __DIR__ . '/test_helpers.php';
 
-$cycloTests = require __DIR__ . '/fileprovider/test-cyclo-provider.php';
+$cycloTests = array_merge(
+    require __DIR__ . '/fileprovider/test-cyclo-provider.php',
+    require __DIR__ . '/fileprovider/test-hand-cc-provider.php',
+);
 
 function getCycloVisitors(): array
 {

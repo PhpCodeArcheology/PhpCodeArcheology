@@ -6,7 +6,7 @@ namespace PhpCodeArch\Predictions\Problems;
 
 readonly class LowTypeCoverageProblem extends AbstractProblem
 {
-    static function ofProblemLevelAndMessage(int $problemLevel, string $message): LowTypeCoverageProblem
+    public static function ofProblemLevelAndMessage(int $problemLevel, string $message): LowTypeCoverageProblem
     {
         return new LowTypeCoverageProblem($problemLevel, $message);
     }

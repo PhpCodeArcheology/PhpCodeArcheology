@@ -106,5 +106,5 @@ it('returns an error string when an exception is thrown', function () {
 
     $result = (new ClassListTool($factory))->getClassList();
 
-    expect($result)->toBe('Error retrieving class list: provider error');
+    expect($result)->toBe('An error occurred while retrieving the class list.');
 });

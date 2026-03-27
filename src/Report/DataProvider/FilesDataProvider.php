@@ -32,7 +32,7 @@ class FilesDataProvider implements ReportDataProviderInterface
 
         $fileClasses = [];
         $fileFunctions = [];
-        foreach ($files as $fileKey => $_) {
+        foreach (array_keys($files) as $fileKey) {
             $classKeyNamePairs = $this->metricsController->getCollectionByIdentifierString(
                 $fileKey,
                 'classes'
@@ -68,27 +68,13 @@ class FilesDataProvider implements ReportDataProviderInterface
             'files' => $files,
             'fileClasses' => $fileClasses,
             'fileFunctions' => $fileFunctions,
-            'tableHeaders' => array_map(function($metricType) {
-                return $metricType->__toArray();
-            }, $listMetrics),
-            'functionTableHeaders' => array_map(function($metricType) {
-                return $metricType->__toArray();
-            }, $functionListMetrics),
-            'classTableHeaders' => array_map(function($metricType) {
-                return $metricType->__toArray();
-            }, $classListMetrics),
-            'listMetricKeys' => array_map(function($metricType) {
-                return $metricType->getKey();
-            }, $listMetrics),
-            'detailMetricKeys' => array_map(function($metricType) {
-                return $metricType->getKey();
-            }, $detailMetrics),
-            'classListMetricKeys' => array_map(function($metricType) {
-                return $metricType->getKey();
-            }, $classListMetrics),
-            'functionListMetricKeys' => array_map(function($metricType) {
-                return $metricType->getKey();
-            }, $functionListMetrics),
+            'tableHeaders' => array_map(fn ($metricType) => $metricType->__toArray(), $listMetrics),
+            'functionTableHeaders' => array_map(fn ($metricType) => $metricType->__toArray(), $functionListMetrics),
+            'classTableHeaders' => array_map(fn ($metricType) => $metricType->__toArray(), $classListMetrics),
+            'listMetricKeys' => array_map(fn ($metricType) => $metricType->getKey(), $listMetrics),
+            'detailMetricKeys' => array_map(fn ($metricType) => $metricType->getKey(), $detailMetrics),
+            'classListMetricKeys' => array_map(fn ($metricType) => $metricType->getKey(), $classListMetrics),
+            'functionListMetricKeys' => array_map(fn ($metricType) => $metricType->getKey(), $functionListMetrics),
         ];
 
         $this->templateData = array_merge($this->templateData, $templateData);

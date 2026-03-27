@@ -9,9 +9,12 @@ use PhpParser\NodeVisitorAbstract;
 
 class TestCoversVisitor extends NodeVisitorAbstract
 {
-    private array $useMap = [];         // alias/shortName → FQCN
-    private array $covers = [];         // collected covered FQCNs
-    private array $useStatements = [];  // all imported FQCNs
+    /** @var array<string, string> alias/shortName → FQCN */
+    private array $useMap = [];
+    /** @var string[] collected covered FQCNs */
+    private array $covers = [];
+    /** @var string[] all imported FQCNs */
+    private array $useStatements = [];
 
     public function enterNode(Node $node): ?int
     {
@@ -23,13 +26,14 @@ class TestCoversVisitor extends NodeVisitorAbstract
                 $this->useMap[$alias] = $fqcn;
                 $this->useStatements[] = $fqcn;
             }
+
             return null;
         }
 
         // Extract @covers from class and method docblocks + attributes
         if ($node instanceof Node\Stmt\Class_ || $node instanceof Node\Stmt\ClassMethod) {
             $docComment = $node->getDocComment();
-            if ($docComment !== null) {
+            if ($docComment instanceof \PhpParser\Comment\Doc) {
                 $this->extractFromDocblock($docComment->getText());
             }
 
@@ -38,13 +42,11 @@ class TestCoversVisitor extends NodeVisitorAbstract
                 foreach ($node->attrGroups as $attrGroup) {
                     foreach ($attrGroup->attrs as $attr) {
                         $attrName = $attr->name->toString();
-                        if ($attrName === 'CoversClass' || str_ends_with($attrName, '\\CoversClass')) {
-                            if (!empty($attr->args)) {
-                                $arg = $attr->args[0]->value;
-                                if ($arg instanceof Node\Expr\ClassConstFetch
-                                    && $arg->class instanceof Node\Name) {
-                                    $this->covers[] = $this->resolveName($arg->class->toString());
-                                }
+                        if (('CoversClass' === $attrName || str_ends_with($attrName, '\\CoversClass')) && [] !== $attr->args) {
+                            $arg = $attr->args[0]->value;
+                            if ($arg instanceof Node\Expr\ClassConstFetch
+                                && $arg->class instanceof Node\Name) {
+                                $this->covers[] = $this->resolveName($arg->class->toString());
                             }
                         }
                     }
@@ -73,16 +75,17 @@ class TestCoversVisitor extends NodeVisitorAbstract
         if (!str_contains($name, '\\') && isset($this->useMap[$name])) {
             return $this->useMap[$name];
         }
+
         return $name;
     }
 
-    /** @return string[] Unique covered FQCNs */
+    /** @return list<string> Unique covered FQCNs */
     public function getCovers(): array
     {
         return array_values(array_unique($this->covers));
     }
 
-    /** @return string[] Unique imported FQCNs */
+    /** @return list<string> Unique imported FQCNs */
     public function getUseStatements(): array
     {
         return array_values(array_unique($this->useStatements));

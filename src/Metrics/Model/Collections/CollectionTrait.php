@@ -6,13 +6,16 @@ namespace PhpCodeArch\Metrics\Model\Collections;
 
 trait CollectionTrait
 {
+    /** @param array<array-key, mixed> $items */
     public function __construct(private array $items = [])
-    {}
+    {
+    }
 
     public function set(mixed $value, ?string $key = null): void
     {
-        if ($key === null) {
+        if (null === $key) {
             $this->items[] = $value;
+
             return;
         }
 
@@ -25,8 +28,9 @@ trait CollectionTrait
             return;
         }
 
-        if ($key === null) {
+        if (null === $key) {
             $this->items[] = $value;
+
             return;
         }
 
@@ -40,7 +44,7 @@ trait CollectionTrait
 
     public function get(string $key): mixed
     {
-        if (! $this->has($key)) {
+        if (!$this->has($key)) {
             return null;
         }
 
@@ -52,11 +56,13 @@ trait CollectionTrait
         return count($this->items);
     }
 
+    /** @return \Traversable<array-key, mixed> */
     public function getIterator(): \Traversable
     {
         return new \ArrayIterator($this->items);
     }
 
+    /** @return array<array-key, mixed> */
     public function getAsArray(): array
     {
         return $this->items;

@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Analysis\Helper;
 
-use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 use PhpCodeArch\Metrics\Controller\MetricsController;
-use PhpCodeArch\Metrics\Model\Collections\ConstantCollection;
+use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
+use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\Collections\CollectionInterface;
+use PhpCodeArch\Metrics\Model\Collections\ConstantCollection;
 use PhpCodeArch\Metrics\Model\Collections\FileNameCollection;
 use PhpCodeArch\Metrics\Model\Collections\PropertyCollection;
 use PhpParser\Node;
 use PhpParser\PrettyPrinter\Standard;
-use function PhpCodeArch\getNodeName;
 
 class ClassMemberAnalyzer
 {
@@ -22,12 +22,15 @@ class ClassMemberAnalyzer
     ) {
     }
 
+    /**
+     * @param array<string, mixed>                                  $classInfo
+     * @param array{path?: string, name?: string, files?: string[]} $classIdentifierData
+     */
     public function handleClassMethods(
         array $classInfo,
         Node\Stmt\Class_|Node\Stmt\Trait_|Node\Stmt\Enum_|Node\Stmt\Interface_ $node,
         array $classIdentifierData): void
     {
-
         $this->metricsController->setCollection(
             MetricCollectionTypeEnum::ClassCollection,
             $classIdentifierData,
@@ -36,31 +39,31 @@ class ClassMemberAnalyzer
         );
 
         $classMetricData = [
-            'methodCount' => 0,
-            'privateCount' => 0,
-            'publicCount' => 0,
-            'staticCount' => 0,
+            MetricKey::METHOD_COUNT => 0,
+            MetricKey::PRIVATE_COUNT => 0,
+            MetricKey::PUBLIC_COUNT => 0,
+            MetricKey::STATIC_COUNT => 0,
         ];
 
         foreach ($node->stmts as $stmt) {
-            if (! $stmt instanceof Node\Stmt\ClassMethod) {
+            if (!$stmt instanceof Node\Stmt\ClassMethod) {
                 continue;
             }
 
-            ++ $classMetricData['methodCount'];
+            ++$classMetricData[MetricKey::METHOD_COUNT];
 
             $data = $this->handleClassMethod($classInfo, $stmt, $classIdentifierData);
 
-            $classMetricData['privateCount'] += intval($data['private']);
-            $classMetricData['publicCount'] += intval($data['public']);
-            $classMetricData['staticCount'] += intval($data['static']);
+            $classMetricData[MetricKey::PRIVATE_COUNT] += intval($data[MetricKey::PRIVATE]);
+            $classMetricData[MetricKey::PUBLIC_COUNT] += intval($data[MetricKey::PUBLIC]);
+            $classMetricData[MetricKey::STATIC_COUNT] += intval($data[MetricKey::STATIC]);
         }
 
         $projectMetrics = [
-            'overallMethodsCount' => 'methodCount',
-            'overallPublicMethodsCount' => 'publicCount',
-            'overallPrivateMethodsCount' => 'privateCount',
-            'overallStaticMethodsCount' => 'staticCount',
+            MetricKey::OVERALL_METHODS_COUNT => MetricKey::METHOD_COUNT,
+            MetricKey::OVERALL_PUBLIC_METHODS_COUNT => MetricKey::PUBLIC_COUNT,
+            MetricKey::OVERALL_PRIVATE_METHODS_COUNT => MetricKey::PRIVATE_COUNT,
+            MetricKey::OVERALL_STATIC_METHODS_COUNT => MetricKey::STATIC_COUNT,
         ];
 
         foreach ($projectMetrics as $projectMetric => $classMetricKey) {
@@ -70,8 +73,9 @@ class ClassMemberAnalyzer
                 MetricCollectionTypeEnum::ProjectCollection,
                 null,
                 $projectMetric,
-                function($value) use ($incrementBy) {
-                    $value = $value ?? 0;
+                function (int|float|null $value) use ($incrementBy): float|int {
+                    $value ??= 0;
+
                     return $value + $incrementBy;
                 }
             );
@@ -84,11 +88,17 @@ class ClassMemberAnalyzer
         );
     }
 
+    /**
+     * @param array<string, mixed>                                  $classInfo
+     * @param array{path?: string, name?: string, files?: string[]} $classIdentifierData
+     *
+     * @return array{classInfo: array<string, mixed>, functionType: string, protected: bool, public: bool, private: bool, static: bool}
+     */
     public function handleClassMethod(array $classInfo, Node\Stmt\ClassMethod $node, array $classIdentifierData): array
     {
         $methodIdentifierData = [
-            'path' => $classIdentifierData['name'],
-            'name' => (string)$node->name,
+            'path' => $classIdentifierData['name'] ?? '',
+            'name' => (string) $node->name,
         ];
 
         $methodMetricCollection = $this->metricsController->createMetricCollection(
@@ -101,7 +111,7 @@ class ClassMemberAnalyzer
             null,
             'methods',
             (string) $methodMetricCollection->getIdentifier(),
-            $methodMetricCollection->getName()
+            $methodIdentifierData['name']
         );
 
         $this->metricsController->setCollectionData(
@@ -109,19 +119,19 @@ class ClassMemberAnalyzer
             $classIdentifierData,
             'methods',
             (string) $methodMetricCollection->getIdentifier(),
-            $methodMetricCollection->getName()
+            $methodIdentifierData['name']
         );
 
         $this->parameterAnalyzer->handleParameters($node, $methodIdentifierData);
         $this->parameterAnalyzer->handleReturn($node, $methodIdentifierData);
 
         $methodData = [
-            'classInfo' => $classInfo,
-            'functionType' => 'method',
-            'protected' => $node->isProtected(),
-            'public' => $node->isPublic(),
-            'private' => $node->isPrivate() || $node->isProtected(),
-            'static' => $node->isStatic(),
+            MetricKey::CLASS_INFO => $classInfo,
+            MetricKey::FUNCTION_TYPE => 'method',
+            MetricKey::PROTECTED => $node->isProtected(),
+            MetricKey::PUBLIC => $node->isPublic(),
+            MetricKey::PRIVATE => $node->isPrivate() || $node->isProtected(),
+            MetricKey::STATIC => $node->isStatic(),
         ];
 
         $this->metricsController->setMetricValues(
@@ -133,6 +143,10 @@ class ClassMemberAnalyzer
         return $methodData;
     }
 
+    /**
+     * @param array<string, mixed>                                  $classInfo
+     * @param array{path?: string, name?: string, files?: string[]} $identifierData
+     */
     public function handleClassProperties(array $classInfo, Node\Stmt\Trait_|Node\Stmt\Enum_|Node\Stmt\Interface_|Node\Stmt\Class_ $node, array $identifierData): void
     {
         $propertyCollection = new PropertyCollection();
@@ -152,10 +166,14 @@ class ClassMemberAnalyzer
             MetricCollectionTypeEnum::ClassCollection,
             $identifierData,
             count($propertyCollection),
-            'propertyCount'
+            MetricKey::PROPERTY_COUNT
         );
     }
 
+    /**
+     * @param array<string, mixed>                                  $classInfo
+     * @param array{path?: string, name?: string, files?: string[]} $identifierData
+     */
     public function handleClassConstants(array $classInfo, Node\Stmt\Trait_|Node\Stmt\Enum_|Node\Stmt\Interface_|Node\Stmt\Class_ $node, array $identifierData): void
     {
         $constantCollection = new ConstantCollection();
@@ -175,14 +193,14 @@ class ClassMemberAnalyzer
             MetricCollectionTypeEnum::ClassCollection,
             $identifierData,
             count($constantCollection),
-            'constantCount'
+            MetricKey::CONSTANT_COUNT
         );
     }
 
     public function handlePropOrConst(Node\Stmt\Property|Node\Stmt\ClassConst $element, string $arrayKey, CollectionInterface $collection): void
     {
         $docBlock = $element->getDocComment();
-        $docBlockText = $docBlock ? $docBlock->getText() : '';
+        $docBlockText = $docBlock instanceof \PhpParser\Comment\Doc ? $docBlock->getText() : '';
 
         $docBlockText = str_replace('*/', '', $docBlockText);
         $docBlockText = preg_replace('/^\s*\*\s?/m', '', $docBlockText);
@@ -190,7 +208,7 @@ class ClassMemberAnalyzer
         $pattern = '/@var\s+([^\s]+)(?:\s+(.*))?/ms';
 
         $docBlockVar = [];
-        if (preg_match($pattern, $docBlockText, $matches)) {
+        if (preg_match($pattern, (string) $docBlockText, $matches)) {
             $docBlockVar = [
                 'type' => $matches[1],
                 'comment' => $matches[2] ?? '',
@@ -202,30 +220,40 @@ class ClassMemberAnalyzer
 
         $propNamePrefix = $element instanceof Node\Stmt\Property ? '$' : '';
 
-        foreach ($element->{$arrayKey} as $prop) {
-            $propName = $propNamePrefix . $prop->name->toString();
+        $props = $element instanceof Node\Stmt\Property ? $element->props : $element->consts;
+        foreach ($props as $prop) {
+            $propName = $propNamePrefix.$prop->name->toString();
             $propType = $this->parameterAnalyzer->getTypeName($element->type);
             $propComment = '';
 
             $value = null;
             $valueType = null;
 
-            if ($element instanceof Node\Stmt\ClassConst) {
+            if ($element instanceof Node\Stmt\ClassConst && $prop instanceof Node\Const_) {
                 $value = $prop->value->getAttribute('rawValue');
 
                 $valueType = match (true) {
                     $prop->value instanceof Node\Expr\Array_ => 'array',
                     $prop->value instanceof Node\Expr\ConstFetch, $prop->value instanceof Node\Expr\ClassConstFetch => 'constant',
-                    default => isset($prop->value->value) ? gettype($prop->value->value) : '',
+                    default => match (true) {
+                        $prop->value instanceof Node\Scalar\Int_,
+                        $prop->value instanceof Node\Scalar\Float_,
+                        $prop->value instanceof Node\Scalar\String_ => gettype($prop->value->value),
+                        default => '',
+                    },
                 };
 
-                if ($valueType === '') {
+                if ('' === $valueType) {
                     $prettyPrinter = new Standard();
                     $value = $prettyPrinter->prettyPrintExpr($prop->value);
                 }
 
-                if ($valueType === 'constant') {
-                    $value = $prop->value->name->toString();
+                if ('constant' === $valueType) {
+                    if ($prop->value instanceof Node\Expr\ConstFetch) {
+                        $value = $prop->value->name->toString();
+                    } elseif ($prop->value instanceof Node\Expr\ClassConstFetch && $prop->value->name instanceof Node\Identifier) {
+                        $value = $prop->value->name->toString();
+                    }
                     $valueType = '';
                 }
             }
@@ -244,6 +272,5 @@ class ClassMemberAnalyzer
                 'valueType' => $valueType,
             ]);
         }
-
     }
 }

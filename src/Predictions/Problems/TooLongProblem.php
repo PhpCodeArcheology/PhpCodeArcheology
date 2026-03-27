@@ -6,7 +6,7 @@ namespace PhpCodeArch\Predictions\Problems;
 
 readonly class TooLongProblem extends AbstractProblem
 {
-    static function ofProblemLevelAndMessage(int $problemLevel, string $message): TooLongProblem
+    public static function ofProblemLevelAndMessage(int $problemLevel, string $message): TooLongProblem
     {
         return new TooLongProblem($problemLevel, $message);
     }

@@ -6,7 +6,7 @@ namespace PhpCodeArch\Predictions\Problems;
 
 readonly class TooManyParametersProblem extends AbstractProblem
 {
-    static function ofProblemLevelAndMessage(int $problemLevel, string $message): TooManyParametersProblem
+    public static function ofProblemLevelAndMessage(int $problemLevel, string $message): TooManyParametersProblem
     {
         return new TooManyParametersProblem($problemLevel, $message);
     }

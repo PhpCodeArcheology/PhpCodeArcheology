@@ -6,25 +6,28 @@ namespace PhpCodeArch\Report;
 
 use PhpCodeArch\Application\CliOutput;
 use PhpCodeArch\Application\Config;
+use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\MetricValue;
 use PhpCodeArch\Predictions\PredictionInterface;
+use PhpCodeArch\Predictions\Problems\ProblemInterface;
 use PhpCodeArch\Report\DataProvider\DataProviderFactory;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
 
 class AiSummaryReport implements ReportInterface
 {
-    private string $outputDir;
+    private readonly string $outputDir;
 
     public function __construct(
-        private readonly Config              $config,
+        Config $config,
         private readonly DataProviderFactory $dataProviderFactory,
-        private readonly false|\DateTimeImmutable $historyDate,
-        protected readonly FilesystemLoader  $twigLoader,
-        protected readonly Environment       $twig,
-        private readonly CliOutput           $output)
+        false|\DateTimeImmutable $historyDate,
+        FilesystemLoader $twigLoader,
+        Environment $twig,
+        private readonly CliOutput $output)
     {
-        $this->outputDir = $config->get('reportDir') . DIRECTORY_SEPARATOR . 'ai-summary' . DIRECTORY_SEPARATOR;
+        $reportDir = $config->get('reportDir');
+        $this->outputDir = (is_string($reportDir) ? $reportDir : '').DIRECTORY_SEPARATOR.'ai-summary'.DIRECTORY_SEPARATOR;
 
         if (!is_dir($this->outputDir)) {
             mkdir(directory: $this->outputDir, recursive: true);
@@ -52,47 +55,53 @@ class AiSummaryReport implements ReportInterface
         $lines[] = $this->buildRefactoringPriorities($refactoringData);
 
         $content = implode("\n", $lines);
-        file_put_contents($this->outputDir . 'ai-summary.md', $content);
+        file_put_contents($this->outputDir.'ai-summary.md', $content);
 
         $formatter = $this->output->getFormatter() ?? new \PhpCodeArch\Application\CliFormatter();
         $this->output->outNl($formatter->success('AI summary written to ai-summary.md'));
         $this->output->outNl();
     }
 
+    /** @param array<string, mixed> $projectData */
     private function buildExecutiveSummary(array $projectData): string
     {
-        $metrics = $projectData['elements'] ?? [];
+        $elementsRaw = $projectData['elements'] ?? null;
+        $metrics = is_array($elementsRaw) ? $elementsRaw : [];
         $lines = [];
 
         $lines[] = '## Executive Summary';
         $lines[] = '';
 
         $keyMetrics = [
-            'overallFiles' => 'Files',
-            'overallClasses' => 'Classes',
-            'overallFunctionCount' => 'Functions',
-            'overallMethodsCount' => 'Methods',
-            'overallLoc' => 'LOC',
-            'overallLloc' => 'Logical LOC',
-            'overallAvgCC' => 'Avg Cyclomatic Complexity',
-            'overallAvgMI' => 'Avg Maintainability Index',
-            'healthScore' => 'Health Score',
-            'overallTechnicalDebtScore' => 'Technical Debt Score',
-            'overallErrorCount' => 'Errors',
-            'overallWarningCount' => 'Warnings',
-            'overallInformationCount' => 'Info',
+            MetricKey::OVERALL_FILES => 'Files',
+            MetricKey::OVERALL_CLASSES => 'Classes',
+            MetricKey::OVERALL_FUNCTION_COUNT => 'Functions',
+            MetricKey::OVERALL_METHODS_COUNT => 'Methods',
+            MetricKey::OVERALL_LOC => 'LOC',
+            MetricKey::OVERALL_LLOC => 'Logical LOC',
+            MetricKey::OVERALL_AVG_CC => 'Avg Cyclomatic Complexity',
+            MetricKey::OVERALL_AVG_MI => 'Avg Maintainability Index',
+            MetricKey::HEALTH_SCORE => 'Health Score',
+            MetricKey::OVERALL_TECHNICAL_DEBT_SCORE => 'Technical Debt Score',
+            MetricKey::OVERALL_ERROR_COUNT => 'Errors',
+            MetricKey::OVERALL_WARNING_COUNT => 'Warnings',
+            MetricKey::OVERALL_INFORMATION_COUNT => 'Info',
         ];
 
         foreach ($keyMetrics as $key => $label) {
-            if (isset($metrics[$key]) && $metrics[$key] instanceof MetricValue) {
-                $lines[] = '- ' . $label . ': ' . $metrics[$key]->getValueFormatted();
+            $metricValue = $metrics[$key] ?? null;
+            if ($metricValue instanceof MetricValue) {
+                $formatted = $metricValue->getValueFormatted();
+                $lines[] = '- '.$label.': '.(is_scalar($formatted) ? (string) $formatted : '');
             }
         }
 
         $lines[] = '';
+
         return implode("\n", $lines);
     }
 
+    /** @param array<string, mixed> $problemData */
     private function buildTopProblems(array $problemData): string
     {
         $lines = [];
@@ -108,14 +117,25 @@ class AiSummaryReport implements ReportInterface
         ];
 
         foreach ($categoryMap as $key => $category) {
-            foreach ($problemData[$key] ?? [] as $entityId => $entityProblems) {
-                $name = $entityId;
+            $categoryData = $problemData[$key] ?? null;
+            foreach (is_array($categoryData) ? $categoryData : [] as $entityId => $entityProblems) {
+                if (!is_array($entityProblems)) {
+                    continue;
+                }
+                $name = (string) $entityId;
                 $data = $entityProblems['data'] ?? null;
-                if ($data !== null && method_exists($data, 'getName')) {
-                    $name = $data->getName();
+                if (is_object($data) && method_exists($data, 'getName')) {
+                    $nameResult = $data->getName();
+                    if (is_string($nameResult)) {
+                        $name = $nameResult;
+                    }
                 }
 
-                foreach ($entityProblems['problems'] ?? [] as $problem) {
+                $problemList = $entityProblems['problems'] ?? null;
+                foreach (is_array($problemList) ? $problemList : [] as $problem) {
+                    if (!$problem instanceof ProblemInterface) {
+                        continue;
+                    }
                     $allProblems[] = [
                         'level' => $problem->getProblemLevel(),
                         'category' => $category,
@@ -128,14 +148,15 @@ class AiSummaryReport implements ReportInterface
         }
 
         // Sort by level descending (errors first)
-        usort($allProblems, fn($a, $b) => $b['level'] <=> $a['level']);
+        usort($allProblems, fn (array $a, array $b): int => $b['level'] <=> $a['level']);
 
         // Top 10
         $top = array_slice($allProblems, 0, 10);
 
-        if (empty($top)) {
+        if ([] === $top) {
             $lines[] = 'No problems detected.';
             $lines[] = '';
+
             return implode("\n", $lines);
         }
 
@@ -147,26 +168,29 @@ class AiSummaryReport implements ReportInterface
                 default => 'UNKNOWN',
             };
 
-            $lines[] = ($i + 1) . '. [' . $levelStr . '] ' . $problem['category'] . ':' . $problem['entity'];
-            $lines[] = '   ' . $problem['message'];
-            if ($problem['recommendation'] !== '') {
-                $lines[] = '   Recommendation: ' . $problem['recommendation'];
+            $lines[] = ((int) $i + 1).'. ['.$levelStr.'] '.$problem['category'].':'.$problem['entity'];
+            $lines[] = '   '.$problem['message'];
+            if ('' !== $problem['recommendation']) {
+                $lines[] = '   Recommendation: '.$problem['recommendation'];
             }
         }
 
         $remaining = count($allProblems) - 10;
         if ($remaining > 0) {
             $lines[] = '';
-            $lines[] = '... and ' . $remaining . ' more problems.';
+            $lines[] = '... and '.$remaining.' more problems.';
         }
 
         $lines[] = '';
+
         return implode("\n", $lines);
     }
 
+    /** @param array<string, mixed> $projectData */
     private function buildMetricsOverview(array $projectData): string
     {
-        $metrics = $projectData['elements'] ?? [];
+        $elementsRaw = $projectData['elements'] ?? null;
+        $metrics = is_array($elementsRaw) ? $elementsRaw : [];
         $lines = [];
 
         $lines[] = '## Metrics Overview';
@@ -178,47 +202,66 @@ class AiSummaryReport implements ReportInterface
             }
 
             $type = $metricValue->getMetricType();
-            $lines[] = '- ' . $type->getName() . ' (' . $key . '): ' . $metricValue->getValueFormatted();
+            $formatted = $metricValue->getValueFormatted();
+            $lines[] = '- '.$type->getName().' ('.$key.'): '.(is_scalar($formatted) ? (string) $formatted : '');
         }
 
         $lines[] = '';
+
         return implode("\n", $lines);
     }
 
+    /** @param array<string, mixed> $gitData */
     private function buildHotspots(array $gitData): string
     {
         $lines = [];
         $lines[] = '## Hotspots';
         $lines[] = '';
 
-        $hotspots = array_slice($gitData['hotspots'] ?? [], 0, 10);
+        $hotspotsRaw = $gitData['hotspots'] ?? null;
+        $hotspots = array_slice(is_array($hotspotsRaw) ? $hotspotsRaw : [], 0, 10);
 
-        if (empty($hotspots)) {
+        if ([] === $hotspots) {
             $lines[] = 'No hotspot data available.';
             $lines[] = '';
+
             return implode("\n", $lines);
         }
 
         foreach ($hotspots as $i => $hotspot) {
-            $score = $hotspot['churn'] * $hotspot['cc'];
-            $lines[] = ($i + 1) . '. ' . $hotspot['name'] . ' (score:' . $score . ' churn:' . $hotspot['churn'] . ' cc:' . $hotspot['cc'] . ' authors:' . $hotspot['authors'] . ')';
+            if (!is_array($hotspot)) {
+                continue;
+            }
+            $churnRaw = $hotspot['churn'] ?? 0;
+            $ccRaw = $hotspot['cc'] ?? 0;
+            $churn = is_numeric($churnRaw) ? (float) $churnRaw : 0.0;
+            $cc = is_numeric($ccRaw) ? (float) $ccRaw : 0.0;
+            $score = $churn * $cc;
+            $name = is_string($hotspot['name'] ?? null) ? $hotspot['name'] : '';
+            $authorsRaw = $hotspot['authors'] ?? '';
+            $authors = is_scalar($authorsRaw) ? (string) $authorsRaw : '';
+            $lines[] = ($i + 1).'. '.$name.' (score:'.$score.' churn:'.$churn.' cc:'.$cc.' authors:'.$authors.')';
         }
 
         $lines[] = '';
+
         return implode("\n", $lines);
     }
 
+    /** @param array<string, mixed> $refactoringData */
     private function buildRefactoringPriorities(array $refactoringData): string
     {
         $lines = [];
         $lines[] = '## Refactoring Priorities';
         $lines[] = '';
 
-        $priorities = array_slice($refactoringData['refactoringPriorities'] ?? [], 0, 10);
+        $prioritiesRaw = $refactoringData['refactoringPriorities'] ?? null;
+        $priorities = array_slice(is_array($prioritiesRaw) ? $prioritiesRaw : [], 0, 10);
 
-        if (empty($priorities)) {
+        if ([] === $priorities) {
             $lines[] = 'No refactoring priorities detected. All classes are clean.';
             $lines[] = '';
+
             return implode("\n", $lines);
         }
 
@@ -226,17 +269,30 @@ class AiSummaryReport implements ReportInterface
         $lines[] = '';
 
         foreach ($priorities as $i => $entry) {
-            $drivers = implode(', ', $entry['drivers'] ?? []);
-            $lines[] = ($i + 1) . '. **' . $entry['fullName'] . '** (score:' . $entry['score'] . ' cc:' . $entry['cc'] . ' lcom:' . $entry['lcom'] . ' lloc:' . $entry['lloc'] . ')';
-            if (!empty($entry['recommendation'])) {
-                $lines[] = '   ' . $entry['recommendation'];
+            if (!is_array($entry)) {
+                continue;
             }
-            if ($drivers !== '') {
-                $lines[] = '   Drivers: ' . $drivers;
+            $driversRaw = $entry['drivers'] ?? null;
+            $drivers = is_array($driversRaw)
+                ? implode(', ', array_map(fn (mixed $d): string => is_string($d) ? $d : '', $driversRaw))
+                : '';
+            $fullName = is_string($entry['fullName'] ?? null) ? $entry['fullName'] : '';
+            $score = is_scalar($entry['score'] ?? null) ? $entry['score'] : 0;
+            $cc = is_scalar($entry['cc'] ?? null) ? $entry['cc'] : 0;
+            $lcom = is_scalar($entry['lcom'] ?? null) ? $entry['lcom'] : 0;
+            $lloc = is_scalar($entry['lloc'] ?? null) ? $entry['lloc'] : 0;
+            $recommendation = is_string($entry['recommendation'] ?? null) ? $entry['recommendation'] : '';
+            $lines[] = ($i + 1).'. **'.$fullName.'** (score:'.$score.' cc:'.$cc.' lcom:'.$lcom.' lloc:'.$lloc.')';
+            if ('' !== $recommendation) {
+                $lines[] = '   '.$recommendation;
+            }
+            if ('' !== $drivers) {
+                $lines[] = '   Drivers: '.$drivers;
             }
         }
 
         $lines[] = '';
+
         return implode("\n", $lines);
     }
 }

@@ -6,6 +6,10 @@ namespace PhpCodeArch\Application\Service;
 
 final readonly class FrameworkDetectionResult
 {
+    /**
+     * @param array<string, string> $psr4Autoload
+     * @param array<string, string> $psr4AutoloadDev
+     */
     public function __construct(
         public bool $doctrineDetected = false,
         public bool $symfonyDetected = false,
@@ -29,33 +33,51 @@ final readonly class FrameworkDetectionResult
         return $this->phpunitDetected || $this->pestDetected || $this->codeceptionDetected;
     }
 
+    /** @return string[] */
     public function getDetectedNames(): array
     {
         $names = [];
-        if ($this->symfonyDetected) $names[] = 'Symfony';
-        if ($this->laravelDetected) $names[] = 'Laravel';
-        if ($this->doctrineDetected) $names[] = 'Doctrine';
+        if ($this->symfonyDetected) {
+            $names[] = 'Symfony';
+        }
+        if ($this->laravelDetected) {
+            $names[] = 'Laravel';
+        }
+        if ($this->doctrineDetected) {
+            $names[] = 'Doctrine';
+        }
+
         return $names;
     }
 
+    /** @return string[] */
     public function getTestFrameworkNames(): array
     {
         $names = [];
-        if ($this->phpunitDetected) $names[] = 'PHPUnit';
-        if ($this->pestDetected) $names[] = 'Pest';
-        if ($this->codeceptionDetected) $names[] = 'Codeception';
+        if ($this->phpunitDetected) {
+            $names[] = 'PHPUnit';
+        }
+        if ($this->pestDetected) {
+            $names[] = 'Pest';
+        }
+        if ($this->codeceptionDetected) {
+            $names[] = 'Codeception';
+        }
+
         return $names;
     }
 
     public function getSummary(): string
     {
         $names = $this->getDetectedNames();
-        return empty($names) ? '' : implode(' + ', $names);
+
+        return implode(' + ', $names);
     }
 
     public function getTestFrameworkSummary(): string
     {
         $names = $this->getTestFrameworkNames();
-        return empty($names) ? '' : implode(' + ', $names);
+
+        return implode(' + ', $names);
     }
 }

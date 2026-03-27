@@ -5,6 +5,55 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.7.0] - 2026-03-27
+
+### Breaking Changes (Metric Corrections)
+
+Several metric calculations have been corrected. Analysis results may differ from previous runs. The tool will display a one-time notice before the first analysis. See `docs/metrics-formulas.md` for full details.
+
+- **Halstead method-level operand fix.** Method-level operands were tracked by AST node class name instead of actual value, making `uniqueOperands` too low and `difficulty`/`effort` inflated. Method-level Halstead metrics will now be significantly more accurate (lower difficulty/effort).
+- **TooComplex double-counting fix.** Classes exceeding `avgMethodCc` threshold were counted as two separate problems. Error counts will decrease by ~30-40%.
+- **God Class false positive fix.** Suspect index incremented per long method instead of once for "has any long method". Fewer false God Class detections.
+- **LCOM zero-average floor.** When project average LCOM was 0, every class with LCOM > 0 was flagged. Now uses a minimum floor of 1.
+- **Layer violation Layer-0 fix.** Entity/Model/Domain classes were skipped entirely. Now correctly checked for upward dependencies.
+- **Coupling Distance from Mainline.** Missing `abs()` in Robert C. Martin's formula. Now always >= 0.
+- **Coupling file/function handleMetric.** Operated on MetricValue objects instead of values.
+- **Maintainability Index default.** Inconsistent fallback (171 vs 50) now consistently 171.
+- **Spaceship operator CC.** Counted as +2, now +1 (standard McCabe).
+- **Package Cohesion normalization.** Values could exceed 1.0, now capped.
+
+### Added
+
+- **MetricKey constants.** All 249 metric keys are now available as `MetricKey::CC`, `MetricKey::LLOC`, etc. Eliminates magic strings throughout the codebase.
+- **Typed metric accessors.** `MetricValue` now offers `asInt()`, `asFloat()`, `asBool()`, `asString()`, `asArray()`. Collections offer `getInt()`, `getFloat()`, `getBool()`, `getString()`, `getArray()` with null-safe defaults.
+- **Visitor interfaces.** `InitializableVisitorInterface`, `ConfigAwareVisitorInterface`, `PathAwareVisitorInterface` replace `method_exists()` checks.
+- **Breaking changes notice.** First-run prompt warns users about changed calculations. Acknowledgement is stored in project config (`acknowledgedVersion`).
+- **Metrics formulas documentation.** `docs/metrics-formulas.md` with original sources, formulas, and implementation notes for all major metrics.
+- **Hand-calculated test fixtures.** Dedicated test files with step-by-step manual calculations for CC, CogC, Halstead, MI, LCOM, LOC, and Coupling.
+- **Git pre-push hook.** `.githooks/pre-push` checks tests, CS Fixer, and PHPStan before pushing to main.
+- **Composer scripts.** `composer test`, `composer analyse`, `composer cs-check`, `composer cs-fix`, `composer check` (all three).
+- **PHPStan at level max.** 0 errors on the entire codebase.
+- **PHP CS Fixer with Symfony ruleset.** `declare(strict_types=1)` in all files.
+
+### Fixed
+
+- **XXE protection.** `simplexml_load_file()` now uses `LIBXML_NONET` flag.
+- **Script injection in HTML reports.** `json_encode()` now uses `JSON_HEX_TAG | JSON_HEX_AMP` for JSON embedded in `<script>` tags.
+- **Twig debug mode.** Now conditional on `APP_DEBUG=1` environment variable instead of always active.
+- **MCP tool error messages.** No longer expose internal exception details. Generic error messages returned instead.
+- **Memory limit validation.** Config value validated with regex before passing to `ini_set()`.
+- **Template XSS.** `|raw` filter replaced with proper Twig loops in `single-class.html.twig`.
+- **PrettyPrinter performance.** Cached as property instead of re-instantiated per class/method/function.
+- **Output buffer pattern.** `ReportTrait::renderTemplate()` uses direct `file_put_contents()` instead of `ob_start/echo/ob_get_clean`.
+- **CalculatorInterface return type.** Added missing `: void`.
+- **ArgumentParser exit.** Replaced bare `exit;` with `VersionDisplayException`.
+- **`getPackagDataProvider` typo.** Renamed to `getPackageDataProvider`.
+
+### Removed
+
+- **Dead code.** `DataProviderFactory::predictProgrammingParadigm()`, `CalculatorTrait::$usedMetricTypes`, `DependencyVisitor::$currentClassMetrics`.
+- **`examples/` directory.** Superseded by `tests/Feature/Analysis/testfiles/`.
+
 ## [2.6.1] - 2026-03-26
 
 ### Fixed

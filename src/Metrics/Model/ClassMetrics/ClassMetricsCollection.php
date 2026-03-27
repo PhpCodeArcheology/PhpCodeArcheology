@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Metrics\Model\ClassMetrics;
 
-
 use PhpCodeArch\Metrics\Identity\FunctionAndClassIdentifier;
 use PhpCodeArch\Metrics\Identity\IdentifierInterface;
 use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
@@ -18,9 +17,8 @@ class ClassMetricsCollection implements MetricsCollectionInterface
 
     public function __construct(
         private readonly string $path,
-        private readonly string $name
-    )
-    {
+        private readonly string $name,
+    ) {
         $this->identifier = FunctionAndClassIdentifier::ofNameAndPath($this->name, $this->path);
     }
 

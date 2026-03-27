@@ -21,7 +21,7 @@ function makeMetricsTool(array $collections): MetricsTool
 
     $factory = Mockery::mock(DataProviderFactory::class)->shouldIgnoreMissing();
 
-    return new MetricsTool($factory, $mc);
+    return new MetricsTool($mc);
 }
 
 it('returns metrics for a found class entity', function () {
@@ -90,7 +90,7 @@ it('returns an error string when an exception is thrown', function () {
 
     $factory = Mockery::mock(DataProviderFactory::class)->shouldIgnoreMissing();
 
-    $result = (new MetricsTool($factory, $mc))->getMetrics('Any');
+    $result = (new MetricsTool($mc))->getMetrics('Any');
 
-    expect($result)->toBe('Error retrieving metrics: controller error');
+    expect($result)->toBe('An error occurred while retrieving metrics.');
 });

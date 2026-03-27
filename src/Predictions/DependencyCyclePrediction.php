@@ -6,6 +6,7 @@ namespace PhpCodeArch\Predictions;
 
 use PhpCodeArch\Application\Config;
 use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Predictions\Problems\DependencyCycleProblem;
 
@@ -27,7 +28,7 @@ class DependencyCyclePrediction implements PredictionInterface
                 continue;
             }
 
-            $inCycle = $metric->get('inDependencyCycle')?->getValue() ?? false;
+            $inCycle = $metric->get(MetricKey::IN_DEPENDENCY_CYCLE)?->asBool() ?? false;
 
             if (!$inCycle) {
                 continue;
@@ -35,9 +36,9 @@ class DependencyCyclePrediction implements PredictionInterface
 
             ++$problemCount;
 
-            $cycleClasses = $metric->get('dependencyCycleClasses')?->getValue() ?? [];
-            $cycleLength = $metric->get('dependencyCycleLength')?->getValue() ?? 0;
-            $classesPreview = implode(', ', array_slice($cycleClasses, 0, 5));
+            $cycleClasses = $metric->get(MetricKey::DEPENDENCY_CYCLE_CLASSES)?->asArray() ?? [];
+            $cycleLength = $metric->get(MetricKey::DEPENDENCY_CYCLE_LENGTH)?->asInt() ?? 0;
+            $classesPreview = implode(', ', array_map(fn (mixed $v): string => is_scalar($v) ? strval($v) : '', array_slice($cycleClasses, 0, 5)));
 
             $level = $this->getLevel();
             $message = sprintf(
@@ -69,7 +70,7 @@ class DependencyCyclePrediction implements PredictionInterface
 
             $metricsController->setProblemByIdentifierString(
                 identifierString: (string) $metric->getIdentifier(),
-                key: 'inDependencyCycle',
+                key: MetricKey::IN_DEPENDENCY_CYCLE,
                 problem: $problem
             );
         }
@@ -82,13 +83,16 @@ class DependencyCyclePrediction implements PredictionInterface
         return PredictionInterface::ERROR;
     }
 
+    /**
+     * @param array<mixed> $cycleClasses
+     */
     private function isDoctrineEntityRepoCycle(array $cycleClasses, int $cycleLength): bool
     {
         if (!$this->isDoctrineDetected() || !$this->isFrameworkAdjustmentEnabled('doctrineCycles')) {
             return false;
         }
 
-        if ($cycleLength !== 2 || count($cycleClasses) !== 2) {
+        if (2 !== $cycleLength || 2 !== count($cycleClasses)) {
             return false;
         }
 
@@ -96,7 +100,8 @@ class DependencyCyclePrediction implements PredictionInterface
         $hasNonRepository = false;
 
         foreach ($cycleClasses as $className) {
-            $shortName = substr(strrchr($className, '\\') ?: $className, 1) ?: $className;
+            $classNameStr = is_string($className) ? $className : '';
+            $shortName = substr(strrchr($classNameStr, '\\') ?: $classNameStr, 1) ?: $classNameStr;
             if (fnmatch('*Repository', $shortName)) {
                 $hasRepository = true;
             } else {
@@ -107,6 +112,9 @@ class DependencyCyclePrediction implements PredictionInterface
         return $hasRepository && $hasNonRepository;
     }
 
+    /**
+     * @param array<mixed> $cycleClasses
+     */
     private function isDoctrineEntityCycle(array $cycleClasses): bool
     {
         if (!$this->isDoctrineDetected() || !$this->isFrameworkAdjustmentEnabled('entityCycles')) {
@@ -114,7 +122,7 @@ class DependencyCyclePrediction implements PredictionInterface
         }
 
         foreach ($cycleClasses as $className) {
-            if (!$this->looksLikeDoctrineEntity($className)) {
+            if (!is_string($className) || !$this->looksLikeDoctrineEntity($className)) {
                 return false;
             }
         }
@@ -126,12 +134,13 @@ class DependencyCyclePrediction implements PredictionInterface
     {
         $parts = explode('\\', $className);
         foreach ($parts as $part) {
-            if ($part === 'Entity' || $part === 'Model' || $part === 'Document') {
+            if ('Entity' === $part || 'Model' === $part || 'Document' === $part) {
                 return true;
             }
         }
 
         $shortName = end($parts) ?: $className;
+
         return fnmatch('*Repository', $shortName);
     }
 }

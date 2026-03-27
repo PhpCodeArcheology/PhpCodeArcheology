@@ -19,20 +19,40 @@ class MetricTypeRegistry
 
     public function register(): void
     {
-        $metricTypes = require __DIR__ . '/../../data/metric-types.php';
+        $rawData = require __DIR__.'/../../data/metric-types.php';
+        if (!is_array($rawData)) {
+            return;
+        }
 
-        foreach ($metricTypes as $metricTypeArray) {
-            if (isset($metricTypeArray['type']) && $metricTypeArray['type'] === 'storage') {
-                $metricType = MetricType::fromKey($metricTypeArray['key']);
+        foreach ($rawData as $metricTypeData) {
+            if (!is_array($metricTypeData)) {
+                continue;
+            }
+
+            $typeValue = $metricTypeData['type'] ?? null;
+            if (is_string($typeValue) && 'storage' === $typeValue) {
+                $keyValue = $metricTypeData['key'] ?? null;
+                if (!is_string($keyValue)) {
+                    continue;
+                }
+                $metricType = MetricType::fromKey($keyValue);
                 $metricType->setValueType(MetricValueType::Storage);
                 $this->addMetricType($metricType, MetricCollectionTypeEnum::ProjectCollection);
                 continue;
             }
 
-            $collections = array_pop($metricTypeArray);
-            $metricType = MetricType::fromArray($metricTypeArray);
+            $collectionsRaw = $metricTypeData['collections'] ?? null;
+            if (!is_array($collectionsRaw)) {
+                continue;
+            }
+            unset($metricTypeData['collections']);
 
-            foreach ($collections as $collection) {
+            $metricType = MetricType::fromArray($metricTypeData);
+
+            foreach ($collectionsRaw as $collection) {
+                if (!$collection instanceof MetricCollectionTypeEnum) {
+                    continue;
+                }
                 $this->addMetricType($metricType, $collection);
             }
         }
@@ -57,26 +77,29 @@ class MetricTypeRegistry
         $this->metricTypeMap[$metricType->getKey()] = $metricType;
     }
 
+    /** @return MetricType[] */
     public function getByCollectionTypeAndVisibility(MetricCollectionTypeEnum $collectionType, MetricVisibility $visibility, bool $showEverywhere = true): array
     {
         if (!isset($this->metricTypes[$collectionType->name])) {
             return [];
         }
 
-        return array_filter($this->metricTypes[$collectionType->name], function ($metricType) use ($visibility, $showEverywhere) {
+        return array_filter($this->metricTypes[$collectionType->name], function (MetricType $metricType) use ($visibility, $showEverywhere): bool {
             if (is_array($metricType->getVisibility())) {
                 return in_array($visibility, $metricType->getVisibility()) || ($showEverywhere && in_array(MetricVisibility::ShowEverywhere, $metricType->getVisibility()));
             }
 
-            return $metricType->getVisibility() === $visibility || ($metricType->getVisibility() === MetricVisibility::ShowEverywhere && $showEverywhere);
+            return $metricType->getVisibility() === $visibility || (MetricVisibility::ShowEverywhere === $metricType->getVisibility() && $showEverywhere);
         });
     }
 
+    /** @return MetricType[] */
     public function getDetailMetrics(MetricCollectionTypeEnum $collectionType): array
     {
         return $this->getByCollectionTypeAndVisibility($collectionType, MetricVisibility::ShowDetails);
     }
 
+    /** @return MetricType[] */
     public function getListMetrics(MetricCollectionTypeEnum $collectionType): array
     {
         return $this->getByCollectionTypeAndVisibility($collectionType, MetricVisibility::ShowList);
@@ -85,8 +108,8 @@ class MetricTypeRegistry
     public function applyTypeToValue(MetricValue $metricValue): void
     {
         $metricType = $this->metricTypeMap[$metricValue->getMetricTypeKey()] ?? null;
-        if ($metricType === null) {
-            throw new \RuntimeException('Unknown metric type key: ' . $metricValue->getMetricTypeKey());
+        if (null === $metricType) {
+            throw new \RuntimeException('Unknown metric type key: '.$metricValue->getMetricTypeKey());
         }
         $metricValue->setMetricType($metricType);
     }

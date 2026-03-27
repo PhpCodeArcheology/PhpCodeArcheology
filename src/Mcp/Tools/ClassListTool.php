@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Mcp\Tools;
 
+use PhpCodeArch\Metrics\MetricKey;
+use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
 use PhpCodeArch\Report\DataProvider\DataProviderFactory;
 
 class ClassListTool
@@ -18,7 +20,7 @@ class ClassListTool
     ];
 
     public function __construct(
-        private readonly DataProviderFactory $factory
+        private readonly DataProviderFactory $factory,
     ) {
     }
 
@@ -26,56 +28,55 @@ class ClassListTool
     {
         try {
             $data = $this->factory->getClassDataProvider()->getTemplateData();
-            $classes = $data['classes'] ?? [];
+            $classesRaw = $data['classes'] ?? [];
+            $classes = is_array($classesRaw) ? $classesRaw : [];
 
             if (empty($classes)) {
-                return "No class data available.";
+                return 'No class data available.';
             }
 
             $rows = [];
             foreach ($classes as $collection) {
-                $name = $collection->get('singleName')?->getValue() ?? '';
-                $fullName = $collection->get('fullName')?->getValue() ?? $name;
+                if (!$collection instanceof MetricsCollectionInterface) {
+                    continue;
+                }
+                $name = $collection->getString(MetricKey::SINGLE_NAME);
+                $fullName = $collection->getString(MetricKey::FULL_NAME) ?: $name;
 
-                if ($filter !== '' && stripos($fullName, $filter) === false && stripos($name, $filter) === false) {
+                if ('' !== $filter && false === stripos($fullName, $filter) && false === stripos($name, $filter)) {
                     continue;
                 }
 
                 $rows[] = [
                     'name' => $name,
                     'fullName' => $fullName,
-                    'cc' => $collection->get('cc')?->getValue() ?? 0,
-                    'lloc' => $collection->get('lloc')?->getValue() ?? 0,
-                    'maintainabilityIndex' => round((float) ($collection->get('maintainabilityIndex')?->getValue() ?? 0), 1),
-                    'refactoringPriority' => $collection->get('refactoringPriority')?->getValue() ?? 0,
-                    'usedFromOutsideCount' => $collection->get('usedFromOutsideCount')?->getValue() ?? 0,
+                    'cc' => $collection->getInt(MetricKey::CC),
+                    'lloc' => $collection->getInt(MetricKey::LLOC),
+                    'maintainabilityIndex' => round($collection->getFloat(MetricKey::MAINTAINABILITY_INDEX), 1),
+                    'refactoringPriority' => $collection->getFloat(MetricKey::REFACTORING_PRIORITY),
+                    'usedFromOutsideCount' => $collection->getInt(MetricKey::USED_FROM_OUTSIDE_COUNT),
                 ];
             }
 
             $sortKey = self::SORT_KEYS[$sort_by] ?? 'refactoringPriority';
-            $isNumeric = $sortKey !== 'singleName';
 
-            usort($rows, function ($a, $b) use ($sortKey, $isNumeric) {
-                if ($isNumeric) {
-                    return $b[$sortKey] <=> $a[$sortKey];
-                }
-                return strcmp((string) $a[$sortKey], (string) $b[$sortKey]);
-            });
+            usort($rows, fn (array $a, array $b): int => $b[$sortKey] <=> $a[$sortKey]);
 
             $total = count($rows);
             $rows = array_slice($rows, 0, max(1, $limit));
 
             $lines = [
                 "# Class List (sorted by: {$sort_by})",
-                "Total: {$total} classes | Showing: " . count($rows),
-                "",
-                sprintf("%-40s %4s %5s %5s %8s %8s", "Class", "CC", "LLOC", "MI", "Priority", "Coupling"),
-                str_repeat("-", 74),
+                "Total: {$total} classes | Showing: ".count($rows),
+                '',
+                sprintf('%-40s %4s %5s %5s %8s %8s', 'Class', 'CC', 'LLOC', 'MI', 'Priority', 'Coupling'),
+                str_repeat('-', 74),
             ];
 
             foreach ($rows as $row) {
-                $shortName = strlen($row['name']) > 38 ? '...' . substr($row['name'], -35) : $row['name'];
-                $lines[] = sprintf("%-40s %4d %5d %5.1f %8d %8d",
+                $rowName = $row['name'];
+                $shortName = strlen($rowName) > 38 ? '...'.substr($rowName, -35) : $rowName;
+                $lines[] = sprintf('%-40s %4d %5d %5.1f %8.1f %8d',
                     $shortName,
                     $row['cc'],
                     $row['lloc'],
@@ -87,7 +88,7 @@ class ClassListTool
 
             return implode("\n", $lines);
         } catch (\Throwable $e) {
-            return "Error retrieving class list: " . $e->getMessage();
+            return 'An error occurred while retrieving the class list.';
         }
     }
 }

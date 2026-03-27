@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PhpCodeArch\Report\DataProvider;
 
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
+use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 
 class RefactoringPriorityDataProvider implements ReportDataProviderInterface
@@ -20,26 +21,26 @@ class RefactoringPriorityDataProvider implements ReportDataProviderInterface
                 continue;
             }
 
-            $priority = $collection->get('refactoringPriority')?->getValue() ?? 0;
+            $priority = $collection->getFloat(MetricKey::REFACTORING_PRIORITY);
             if ($priority <= 0) {
                 continue;
             }
 
             $priorities[] = [
                 'id' => (string) $collection->getIdentifier(),
-                'name' => $collection->get('singleName')?->getValue() ?? '',
-                'fullName' => $collection->get('fullName')?->getValue() ?? '',
+                'name' => $collection->getString(MetricKey::SINGLE_NAME),
+                'fullName' => $collection->getString(MetricKey::FULL_NAME),
                 'score' => $priority,
-                'recommendation' => $collection->get('refactoringPriorityRecommendation')?->getValue() ?? '',
-                'drivers' => $collection->get('refactoringPriorityDrivers')?->getValue() ?? [],
-                'cc' => $collection->get('cc')?->getValue() ?? 0,
-                'lcom' => $collection->get('lcom')?->getValue() ?? 0,
-                'lloc' => $collection->get('lloc')?->getValue() ?? 0,
-                'usedFromOutsideCount' => $collection->get('usedFromOutsideCount')?->getValue() ?? 0,
+                'recommendation' => $collection->getString(MetricKey::REFACTORING_PRIORITY_RECOMMENDATION),
+                'drivers' => $collection->getArray(MetricKey::REFACTORING_PRIORITY_DRIVERS),
+                'cc' => $collection->getInt(MetricKey::CC),
+                'lcom' => $collection->getFloat(MetricKey::LCOM),
+                'lloc' => $collection->getInt(MetricKey::LLOC),
+                'usedFromOutsideCount' => $collection->getInt(MetricKey::USED_FROM_OUTSIDE_COUNT),
             ];
         }
 
-        usort($priorities, fn($a, $b) => $b['score'] <=> $a['score']);
+        usort($priorities, fn (array $a, array $b): int => $b['score'] <=> $a['score']);
 
         // Score distribution buckets
         $distribution = ['clean' => 0, 'low' => 0, 'medium' => 0, 'high' => 0, 'critical' => 0];
@@ -50,14 +51,14 @@ class RefactoringPriorityDataProvider implements ReportDataProviderInterface
                 continue;
             }
             // Skip interfaces, traits, enums
-            if (($collection->get('interface')?->getValue() ?? false)
-                || ($collection->get('trait')?->getValue() ?? false)
-                || ($collection->get('enum')?->getValue() ?? false)) {
+            if ($collection->getBool(MetricKey::INTERFACE)
+                || $collection->getBool(MetricKey::TRAIT)
+                || $collection->getBool(MetricKey::ENUM)) {
                 continue;
             }
 
-            $totalClasses++;
-            $score = $collection->get('refactoringPriority')?->getValue() ?? 0;
+            ++$totalClasses;
+            $score = $collection->getFloat(MetricKey::REFACTORING_PRIORITY);
 
             match (true) {
                 $score <= 0 => $distribution['clean']++,
@@ -73,15 +74,15 @@ class RefactoringPriorityDataProvider implements ReportDataProviderInterface
         $this->templateData['totalClasses'] = $totalClasses;
 
         $this->templateData['avgPriority'] = $this->metricsController->getMetricValue(
-            MetricCollectionTypeEnum::ProjectCollection, null, 'overallAvgRefactoringPriority'
-        )?->getValue() ?? 0;
+            MetricCollectionTypeEnum::ProjectCollection, null, MetricKey::OVERALL_AVG_REFACTORING_PRIORITY
+        )?->asFloat() ?? 0.0;
 
         $this->templateData['maxPriority'] = $this->metricsController->getMetricValue(
-            MetricCollectionTypeEnum::ProjectCollection, null, 'overallMaxRefactoringPriority'
-        )?->getValue() ?? 0;
+            MetricCollectionTypeEnum::ProjectCollection, null, MetricKey::OVERALL_MAX_REFACTORING_PRIORITY
+        )?->asFloat() ?? 0.0;
 
         $this->templateData['classesNeedingRefactoring'] = $this->metricsController->getMetricValue(
-            MetricCollectionTypeEnum::ProjectCollection, null, 'overallClassesNeedingRefactoring'
-        )?->getValue() ?? 0;
+            MetricCollectionTypeEnum::ProjectCollection, null, MetricKey::OVERALL_CLASSES_NEEDING_REFACTORING
+        )?->asInt() ?? 0;
     }
 }

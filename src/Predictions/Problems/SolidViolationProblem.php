@@ -6,7 +6,7 @@ namespace PhpCodeArch\Predictions\Problems;
 
 readonly class SolidViolationProblem extends AbstractProblem
 {
-    static function ofProblemLevelAndMessage(int $problemLevel, string $message): SolidViolationProblem
+    public static function ofProblemLevelAndMessage(int $problemLevel, string $message): SolidViolationProblem
     {
         return new SolidViolationProblem($problemLevel, $message);
     }

@@ -8,12 +8,11 @@ use PhpCodeArch\Application\CliFormatter;
 use PhpCodeArch\Application\CliOutput;
 use PhpCodeArch\Application\ProgressBar;
 use PhpCodeArch\Metrics\Controller\MetricsController;
-use PhpCodeArch\Metrics\Model\MetricsContainer;
 
 class PredictionService
 {
     /**
-     * @var int[]
+     * @var array<int, int>
      */
     private array $problemCount = [];
 
@@ -23,9 +22,8 @@ class PredictionService
          */
         private readonly array $predictions,
         private readonly MetricsController $metricsController,
-        private readonly CliOutput $output
-    )
-    {
+        private readonly CliOutput $output,
+    ) {
         $this->problemCount = [
             PredictionInterface::INFO => 0,
             PredictionInterface::WARNING => 0,
@@ -49,6 +47,9 @@ class PredictionService
         $progressBar->finish();
     }
 
+    /**
+     * @return array<int, int>
+     */
     public function getProblemCount(): array
     {
         return $this->problemCount;

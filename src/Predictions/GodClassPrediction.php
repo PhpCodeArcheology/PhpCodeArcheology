@@ -6,6 +6,7 @@ namespace PhpCodeArch\Predictions;
 
 use PhpCodeArch\Application\Config;
 use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 
 class GodClassPrediction implements PredictionInterface
@@ -22,44 +23,46 @@ class GodClassPrediction implements PredictionInterface
         $problemCount = 0;
 
         foreach ($metricsController->getAllCollections() as $metric) {
-            if (! $metric instanceof ClassMetricsCollection) {
+            if (!$metric instanceof ClassMetricsCollection) {
                 continue;
             }
 
             $suspectIndex = 0;
 
-            $classMetrics = (object) $metricsController->getMetricValuesByIdentifierString(
+            $metricsValues = $metricsController->getMetricValuesByIdentifierString(
                 (string) $metric->getIdentifier(),
                 [
-                    'publicCount',
-                    'usesCount',
-                    'usedByCount',
-                    'lcom',
+                    MetricKey::PUBLIC_COUNT,
+                    MetricKey::USES_COUNT,
+                    MetricKey::USED_BY_COUNT,
+                    MetricKey::LCOM,
                 ]
             );
 
-            foreach ($classMetrics as &$metricValue) {
-                $metricValue = $metricValue?->getValue() ?? 0;
-            }
+            $publicCount = $metricsValues[MetricKey::PUBLIC_COUNT]?->asInt() ?? 0;
+            $usesCount = $metricsValues[MetricKey::USES_COUNT]?->asInt() ?? 0;
+            $usedByCount = $metricsValues[MetricKey::USED_BY_COUNT]?->asInt() ?? 0;
+            $lcom = $metricsValues[MetricKey::LCOM]?->asFloat() ?? 0.0;
 
-            if ($classMetrics->publicCount > 10) {
-                ++ $suspectIndex;
+            if ($publicCount > 10) {
+                ++$suspectIndex;
             }
 
             $couplingThreshold = 10;
+            $frameworkDetection = $this->getFrameworkDetection();
             if ($this->isFrameworkAdjustmentEnabled('controllerThresholds')
-                && ($this->isSymfonyDetected() || $this->getFrameworkDetection()?->laravelDetected)
+                && ($this->isSymfonyDetected() || (null !== $frameworkDetection && $frameworkDetection->laravelDetected))
                 && fnmatch('*Controller', $metric->getName())
             ) {
                 $couplingThreshold = 25;
             }
 
-            if ($classMetrics->usesCount + $classMetrics->usedByCount > $couplingThreshold) {
-                ++ $suspectIndex;
+            if ($usesCount + $usedByCount > $couplingThreshold) {
+                ++$suspectIndex;
             }
 
-            if (($classMetrics->lcom ?? 0) > 1 && !$this->shouldSkipLcom($metricsController, $metric)) {
-                ++ $suspectIndex;
+            if ($lcom > 1 && !$this->shouldSkipLcom($metricsController, $metric)) {
+                ++$suspectIndex;
             }
 
             $methodCollection = $metricsController->getCollectionByIdentifierString(
@@ -67,27 +70,37 @@ class GodClassPrediction implements PredictionInterface
                 'methods'
             );
 
-            foreach ($methodCollection as $methodIdString => $methodName) {
-                $tooLong = $metricsController->getMetricValueByIdentifierString(
-                    $methodIdString,
-                    'predictionTooLong'
-                );
-                if ($tooLong->getValue() === true) {
-                    ++ $suspectIndex;
+            $hasLongMethods = false;
+            if (null !== $methodCollection) {
+                foreach ($methodCollection as $methodIdString => $methodName) {
+                    if (!is_string($methodIdString)) {
+                        continue;
+                    }
+                    $tooLong = $metricsController->getMetricValueByIdentifierString(
+                        $methodIdString,
+                        MetricKey::PREDICTION_TOO_LONG
+                    );
+                    if ($tooLong?->asBool()) {
+                        $hasLongMethods = true;
+                        break;
+                    }
                 }
+            }
+            if ($hasLongMethods) {
+                ++$suspectIndex;
             }
 
             $maybeIsGodObject = $suspectIndex >= 3;
 
             if ($maybeIsGodObject) {
-                ++ $problemCount;
+                ++$problemCount;
             }
 
             $metricsController->setMetricValuesByIdentifierString(
                 (string) $metric->getIdentifier(),
                 [
-                    'predictionGodObject' => $maybeIsGodObject,
-                    'godObjectSuspectIndex' => $suspectIndex,
+                    MetricKey::PREDICTION_GOD_OBJECT => $maybeIsGodObject,
+                    MetricKey::GOD_OBJECT_SUSPECT_INDEX => $suspectIndex,
                 ]
             );
         }

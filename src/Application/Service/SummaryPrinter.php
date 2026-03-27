@@ -13,19 +13,41 @@ use PhpCodeArch\Predictions\PredictionInterface;
 
 class SummaryPrinter
 {
+    /**
+     * @param array<int, int> $problems
+     */
     public function print(MetricsController $metricsController, Config $config, array $problems, CliOutput $output, CliFormatter $formatter): void
     {
-        $get = fn(string $key) => $metricsController->getMetricValue(
-            MetricCollectionTypeEnum::ProjectCollection, null, $key
-        )?->getValue() ?? 0;
+        $getInt = function (string $key) use ($metricsController): int {
+            $v = $metricsController->getMetricValue(
+                MetricCollectionTypeEnum::ProjectCollection, null, $key
+            )?->getValue() ?? 0;
 
-        $files = number_format((int) $get('overallFiles'));
-        $classes = number_format((int) $get('overallClasses'));
-        $lloc = number_format((int) $get('overallLloc'));
-        $avgCC = round((float) $get('overallAvgCC'), 2);
-        $avgMI = round((float) $get('overallAvgMI'), 1);
-        $healthScore = round((float) $get('healthScore'), 1);
-        $grade = $get('healthScoreGrade') ?: '?';
+            return is_numeric($v) ? (int) $v : 0;
+        };
+
+        $getFloat = function (string $key) use ($metricsController): float {
+            $v = $metricsController->getMetricValue(
+                MetricCollectionTypeEnum::ProjectCollection, null, $key
+            )?->getValue() ?? 0;
+
+            return is_numeric($v) ? (float) $v : 0.0;
+        };
+
+        $getRaw = function (string $key) use ($metricsController): mixed {
+            return $metricsController->getMetricValue(
+                MetricCollectionTypeEnum::ProjectCollection, null, $key
+            )?->getValue() ?? null;
+        };
+
+        $files = number_format($getInt('overallFiles'));
+        $classes = number_format($getInt('overallClasses'));
+        $lloc = number_format($getInt('overallLloc'));
+        $avgCC = round($getFloat('overallAvgCC'), 2);
+        $avgMI = round($getFloat('overallAvgMI'), 1);
+        $healthScore = round($getFloat('healthScore'), 1);
+        $gradeRaw = $getRaw('healthScoreGrade');
+        $grade = is_string($gradeRaw) ? $gradeRaw : '?';
 
         $errors = $problems[PredictionInterface::ERROR] ?? 0;
         $warnings = $problems[PredictionInterface::WARNING] ?? 0;
@@ -37,15 +59,17 @@ class SummaryPrinter
         $warnStr = $warnings > 0 ? $formatter->warning(number_format($warnings)) : $formatter->success('0');
         $infoStr = number_format($infos);
 
-        $reportDir = $config->get('reportDir') ?? '';
-        $reportType = $config->get('reportType') ?? 'html';
+        $reportDirRaw = $config->get('reportDir');
+        $reportDir = is_string($reportDirRaw) ? $reportDirRaw : '';
+        $reportTypeRaw = $config->get('reportType');
+        $reportType = is_string($reportTypeRaw) ? $reportTypeRaw : 'html';
         $reportFile = match ($reportType) {
-            'html' => $reportDir . '/html/index.html',
-            'json' => $reportDir . '/json/report.json',
-            'sarif' => $reportDir . '/sarif/report.sarif.json',
-            'ai-summary' => $reportDir . '/ai-summary/ai-summary.md',
-            'markdown' => $reportDir . '/markdown/index.md',
-            'graph' => $reportDir . '/graph/graph.json',
+            'html' => $reportDir.'/html/index.html',
+            'json' => $reportDir.'/json/report.json',
+            'sarif' => $reportDir.'/sarif/report.sarif.json',
+            'ai-summary' => $reportDir.'/ai-summary/ai-summary.md',
+            'markdown' => $reportDir.'/markdown/index.md',
+            'graph' => $reportDir.'/graph/graph.json',
             default => $reportDir,
         };
 
@@ -63,9 +87,10 @@ class SummaryPrinter
             $formatter->bold($grade),
             $formatter->info((string) $healthScore),
         ));
-        $frameworks = $get('detectedFrameworks');
-        if ($frameworks) {
-            $output->outNl(' Frameworks: ' . $formatter->info($frameworks));
+        $frameworksRaw = $getRaw('detectedFrameworks');
+        $frameworks = is_string($frameworksRaw) ? $frameworksRaw : '';
+        if ('' !== $frameworks) {
+            $output->outNl(' Frameworks: '.$formatter->info($frameworks));
         }
         $output->outNl(sprintf(
             ' Errors: %s  |  Warnings: %s  |  Info: %s',
@@ -73,7 +98,7 @@ class SummaryPrinter
             $warnStr,
             $infoStr,
         ));
-        $output->outNl(' Report: ' . $formatter->dim($reportFile));
+        $output->outNl(' Report: '.$formatter->dim($reportFile));
         $output->outNl($line);
         $output->outNl();
     }

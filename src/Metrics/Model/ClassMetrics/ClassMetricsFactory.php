@@ -14,13 +14,12 @@ class ClassMetricsFactory
 {
     public static function createFromMetricsByNodeAndPath(
         MetricsContainer $metrics,
-        Node             $node,
-        mixed            $path): MetricsCollectionInterface
+        Node\Stmt\ClassLike $node,
+        string $path): MetricsCollectionInterface
     {
         $className = (string) ClassName::ofNode($node);
-        $classId = (string) FunctionAndClassIdentifier::ofNameAndPath($className, (string) $path);
+        $classId = (string) FunctionAndClassIdentifier::ofNameAndPath($className, $path);
 
         return $metrics->get($classId);
     }
-
 }

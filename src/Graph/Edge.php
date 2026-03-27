@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Graph;
 
-class Edge
+class Edge implements \Stringable
 {
-    public function __construct(private Node $from, private Node $to)
+    public function __construct(private readonly Node $from, private readonly Node $to)
     {
     }
 

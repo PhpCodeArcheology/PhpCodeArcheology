@@ -7,7 +7,9 @@ namespace PhpCodeArch\Calculators;
 use PhpCodeArch\Calculators\Helpers\PackageInstabilityAbstractnessCalculator;
 use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
+use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
+use PhpCodeArch\Metrics\Model\Collections\CollectionInterface;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
 use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
 use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
@@ -16,6 +18,7 @@ class CouplingCalculator implements CalculatorInterface
 {
     use CalculatorTrait;
 
+    /** @var array<string, CollectionInterface|null> */
     private array $collectionMap = [];
 
     private int $usedByCount = 0;
@@ -24,8 +27,10 @@ class CouplingCalculator implements CalculatorInterface
 
     private float $instability = 0;
 
+    /** @var array<string, string[]> */
     private array $abstractClasses = [];
 
+    /** @var array<string, string[]> */
     private array $concreteClasses = [];
 
     public function __construct(
@@ -57,25 +62,27 @@ class CouplingCalculator implements CalculatorInterface
     public function calculate(MetricsCollectionInterface $metrics): void
     {
         $identifierString = (string) $metrics->getIdentifier();
-        $name = $metrics->getName();
 
         $metricValues = null;
 
         switch (true) {
             case $metrics instanceof FileMetricsCollection:
+                $name = $metrics->getName();
                 $metricValues = $this->handleFile($identifierString, $name);
                 break;
 
             case $metrics instanceof ClassMetricsCollection:
+                $name = $metrics->getName();
                 $metricValues = $this->handleClass($identifierString, $name);
                 break;
 
             case $metrics instanceof FunctionMetricsCollection:
+                $name = $metrics->getName();
                 $metricValues = $this->handleFunction($identifierString, $name);
                 break;
         }
 
-        if ($metricValues === null) {
+        if (null === $metricValues) {
             return;
         }
 
@@ -89,19 +96,28 @@ class CouplingCalculator implements CalculatorInterface
     {
         $this->packageCalculator->afterTraverse();
 
-        foreach ($this->collectionMap['classes'] as $classId => $className) {
+        $classesCollection = $this->collectionMap['classes'];
+        if (!$classesCollection instanceof CollectionInterface) {
+            return;
+        }
+
+        foreach ($classesCollection->getAsArray() as $classId => $className) {
+            if (!is_string($classId)) {
+                continue;
+            }
+
             $metricValues = $this->metricsController->getMetricValuesByIdentifierString(
                 $classId,
                 [
-                    'usesCount',
-                    'usedByCount',
-                    'usesForInstabilityCount',
+                    MetricKey::USES_COUNT,
+                    MetricKey::USED_BY_COUNT,
+                    MetricKey::USES_FOR_INSTABILITY_COUNT,
                 ]
             );
 
-            $usesCount = $metricValues['usesCount']?->getValue() ?? 0;
-            $usedByCount = $metricValues['usedByCount']?->getValue() ?? 0;
-            $usesForInstabilityCount = $metricValues['usesForInstabilityCount']?->getValue() ?? 0;
+            $usesCount = $metricValues[MetricKey::USES_COUNT]?->asInt() ?? 0;
+            $usedByCount = $metricValues[MetricKey::USED_BY_COUNT]?->asInt() ?? 0;
+            $usesForInstabilityCount = $metricValues[MetricKey::USES_FOR_INSTABILITY_COUNT]?->asInt() ?? 0;
 
             /**
              * @see https://kariera.future-processing.pl/blog/object-oriented-metrics-by-robert-martin/
@@ -110,7 +126,7 @@ class CouplingCalculator implements CalculatorInterface
 
             $this->metricsController->setMetricValueByIdentifierString(
                 $classId,
-                'instability',
+                MetricKey::INSTABILITY,
                 $instability
             );
 
@@ -119,58 +135,56 @@ class CouplingCalculator implements CalculatorInterface
             $this->instability += $instability;
         }
 
-        $avgUsesCount = count($this->collectionMap['classes']) > 0 ? $this->usesCount / count($this->collectionMap['classes']) : 0;
-        $avgUsedByCount = count($this->collectionMap['classes']) > 0 ? $this->usedByCount / count($this->collectionMap['classes']) : 0;
-        $avgInstability = count($this->collectionMap['classes']) > 0 ? $this->instability / count($this->collectionMap['classes']) : 0;
+        $classCount = $classesCollection->count();
+        $avgUsesCount = $classCount > 0 ? $this->usesCount / $classCount : 0;
+        $avgUsedByCount = $classCount > 0 ? $this->usedByCount / $classCount : 0;
+        $avgInstability = $classCount > 0 ? $this->instability / $classCount : 0;
 
-        $abstractClassesCount = array_reduce($this->abstractClasses, function($count, $packageClasses) {
-            return $count + count($packageClasses);
-        }, 0);
+        $abstractClassesCount = array_reduce($this->abstractClasses, fn (int|float $count, array $packageClasses) => $count + count($packageClasses), 0);
 
-        $concreteClassesCount = array_reduce($this->concreteClasses, function($count, $packageClasses) {
-            return $count + count($packageClasses);
-        }, 0);
+        $concreteClassesCount = array_reduce($this->concreteClasses, fn (int|float $count, array $packageClasses) => $count + count($packageClasses), 0);
 
         $overallAbstractness = ($abstractClassesCount + $concreteClassesCount) > 0 ? $abstractClassesCount / ($abstractClassesCount + $concreteClassesCount) : 0;
-        $overallDistanceFromMainline = $overallAbstractness + $avgInstability - 1;
+        $overallDistanceFromMainline = abs($overallAbstractness + $avgInstability - 1);
 
         $this->metricsController->setMetricValues(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             [
-                'overallAvgUsesCount' => $avgUsesCount,
-                'overallAvgUsedByCount' => $avgUsedByCount,
-                'overallAvgInstability' => $avgInstability,
-                'overallAbstractness' => $overallAbstractness,
-                'overallDistanceFromMainline' => $overallDistanceFromMainline,
+                MetricKey::OVERALL_AVG_USES_COUNT => $avgUsesCount,
+                MetricKey::OVERALL_AVG_USED_BY_COUNT => $avgUsedByCount,
+                MetricKey::OVERALL_AVG_INSTABILITY => $avgInstability,
+                MetricKey::OVERALL_ABSTRACTNESS => $overallAbstractness,
+                MetricKey::OVERALL_DISTANCE_FROM_MAINLINE => $overallDistanceFromMainline,
             ]
         );
     }
 
+    /** @return array<string, mixed> */
     private function handleClass(string $identifierString, string $className): array
     {
         $metricValues = $this->metricsController->getMetricValuesByIdentifierString(
             $identifierString,
             [
-                'uses',
-                'usesCount',
-                'usesInProject',
-                'usesForInstability',
-                'usedBy',
-                'usedByCount',
-                'usesInProjectCount',
-                'usesForInstabilityCount',
+                MetricKey::USES,
+                MetricKey::USES_COUNT,
+                MetricKey::USES_IN_PROJECT,
+                MetricKey::USES_FOR_INSTABILITY,
+                MetricKey::USED_BY,
+                MetricKey::USED_BY_COUNT,
+                MetricKey::USES_IN_PROJECT_COUNT,
+                MetricKey::USES_FOR_INSTABILITY_COUNT,
             ]
         );
 
-        foreach ($metricValues as $key => &$value) {
-            if (str_ends_with($key, 'Count')) {
-                $value = $value?->getValue() ?? 0;
-                continue;
-            }
-
-            $value = $value?->getValue() ?? [];
-        }
+        $usesCount = $metricValues[MetricKey::USES_COUNT]?->asInt() ?? 0;
+        $usesInProjectCount = $metricValues[MetricKey::USES_IN_PROJECT_COUNT]?->asInt() ?? 0;
+        $usesForInstabilityCount = $metricValues[MetricKey::USES_FOR_INSTABILITY_COUNT]?->asInt() ?? 0;
+        $usedByCount = $metricValues[MetricKey::USED_BY_COUNT]?->asInt() ?? 0;
+        $uses = $metricValues[MetricKey::USES]?->asArray() ?? [];
+        $usesInProject = $metricValues[MetricKey::USES_IN_PROJECT]?->asArray() ?? [];
+        $usesForInstability = $metricValues[MetricKey::USES_FOR_INSTABILITY]?->asArray() ?? [];
+        $usedBy = $metricValues[MetricKey::USED_BY]?->asArray() ?? [];
 
         [$this->abstractClasses, $this->concreteClasses] = $this->packageCalculator->handlePackage($identifierString, $className);
 
@@ -179,105 +193,132 @@ class CouplingCalculator implements CalculatorInterface
             'dependencies'
         );
 
-        foreach ($dependencyCollection as $dependency) {
-            if ($className === $dependency) {
-                continue;
-            }
-
-            ++ $metricValues['usesCount'];
-            $metricValues['uses'][] = $dependency;
-
-            $checkArray = array_merge(
-                $this->collectionMap['classes']->getAsArray(),
-                $this->collectionMap['interfaces']->getAsArray(),
-                $this->collectionMap['traits']->getAsArray(),
-                $this->collectionMap['enums']->getAsArray()
-            );
-
-            $isTrait = true;
-
-            if (in_array($dependency, $checkArray)) {
-                // Counts only dependencies inside current project
-                ++ $metricValues['usesInProjectCount'];
-                $metricValues['usesInProject'][] = $dependency;
-
-                if (! in_array($dependency, $this->collectionMap['traits']->getAsArray())) {
-                    $isTrait = false;
-                    ++ $metricValues['usesForInstabilityCount'];
+        if ($dependencyCollection instanceof CollectionInterface) {
+            foreach ($dependencyCollection as $dependency) {
+                if (!is_string($dependency) || $className === $dependency) {
+                    continue;
                 }
+
+                ++$usesCount;
+                $uses[] = $dependency;
+
+                $classesArray = $this->collectionMap['classes'] instanceof CollectionInterface
+                    ? $this->collectionMap['classes']->getAsArray()
+                    : [];
+                $interfacesArray = $this->collectionMap['interfaces'] instanceof CollectionInterface
+                    ? $this->collectionMap['interfaces']->getAsArray()
+                    : [];
+                $traitsArray = $this->collectionMap['traits'] instanceof CollectionInterface
+                    ? $this->collectionMap['traits']->getAsArray()
+                    : [];
+                $enumsArray = $this->collectionMap['enums'] instanceof CollectionInterface
+                    ? $this->collectionMap['enums']->getAsArray()
+                    : [];
+
+                $checkArray = array_merge($classesArray, $interfacesArray, $traitsArray, $enumsArray);
+
+                $isTrait = true;
+
+                if (in_array($dependency, $checkArray, true)) {
+                    // Counts only dependencies inside current project
+                    ++$usesInProjectCount;
+                    $usesInProject[] = $dependency;
+
+                    if (!in_array($dependency, $traitsArray, true)) {
+                        $isTrait = false;
+                        ++$usesForInstabilityCount;
+                        $usesForInstability[] = $dependency;
+                    }
+                }
+
+                $classIdentifierString = array_search($dependency, $checkArray, true);
+
+                if (!is_string($classIdentifierString)) {
+                    continue;
+                }
+
+                $this->packageCalculator->handleDependency($dependency, $classIdentifierString, $isTrait);
+
+                $usedByMetricValues = $this->metricsController->getMetricValuesByIdentifierString(
+                    $classIdentifierString,
+                    [
+                        MetricKey::USED_BY,
+                        MetricKey::USED_BY_COUNT,
+                    ],
+                );
+
+                $classUsedBy = $usedByMetricValues[MetricKey::USED_BY]?->asArray() ?? [];
+                $classUsedByCount = $usedByMetricValues[MetricKey::USED_BY_COUNT]?->asInt() ?? 0;
+
+                $classUsedBy[] = $className;
+                ++$classUsedByCount;
+
+                $this->metricsController->setMetricValuesByIdentifierString(
+                    $classIdentifierString,
+                    [
+                        MetricKey::USED_BY => $classUsedBy,
+                        MetricKey::USED_BY_COUNT => $classUsedByCount,
+                    ]
+                );
             }
-
-            $classIdentifierString = array_search($dependency, $checkArray);
-
-            if (! $classIdentifierString) {
-                continue;
-            }
-
-            $this->packageCalculator->handleDependency($dependency, $classIdentifierString, $isTrait);
-
-            $usedByMetricValues = $this->metricsController->getMetricValuesByIdentifierString(
-                $classIdentifierString,
-                [
-                    'usedBy',
-                    'usedByCount',
-                ],
-            );
-
-            $classUsedBy = $usedByMetricValues['usedBy']?->getValue() ?? [];
-            $classUsedByCount = $usedByMetricValues['usedByCount']?->getValue() ?? 0;
-
-            $classUsedBy[] = $className;
-            ++ $classUsedByCount;
-
-            $this->metricsController->setMetricValuesByIdentifierString(
-                $classIdentifierString,
-                [
-                    'usedBy' => $classUsedBy,
-                    'usedByCount' => $classUsedByCount,
-                ]
-            );
         }
 
-        return $metricValues;
+        return [
+            MetricKey::USES => $uses,
+            MetricKey::USES_COUNT => $usesCount,
+            MetricKey::USES_IN_PROJECT => $usesInProject,
+            MetricKey::USES_FOR_INSTABILITY => $usesForInstability,
+            MetricKey::USED_BY => $usedBy,
+            MetricKey::USED_BY_COUNT => $usedByCount,
+            MetricKey::USES_IN_PROJECT_COUNT => $usesInProjectCount,
+            MetricKey::USES_FOR_INSTABILITY_COUNT => $usesForInstabilityCount,
+        ];
     }
 
-    private function handleFile(string $identifierString, string $name): ?array
+    /** @return array<string, mixed> */
+    private function handleFile(string $identifierString, string $name): array
     {
-        return $this->handleMetric($identifierString, 'usedFromOutside', 'usedFromOutsideCount', $name);
+        return $this->handleMetric($identifierString, MetricKey::USED_FROM_OUTSIDE, MetricKey::USED_FROM_OUTSIDE_COUNT, $name);
     }
 
-    private function handleFunction(string $identifierString, string $name): ?array
+    /** @return array<string, mixed> */
+    private function handleFunction(string $identifierString, string $name): array
     {
-        return $this->handleMetric($identifierString, 'usedByFunction', 'usedByFunctionCount', $name);
+        return $this->handleMetric($identifierString, MetricKey::USED_BY_FUNCTION, MetricKey::USED_BY_FUNCTION_COUNT, $name);
     }
 
-    private function handleMetric(string $identifierString, string $usedByKey, string $usedByCountKey, string $name): ?array
+    /** @return array<string, mixed> */
+    private function handleMetric(string $identifierString, string $usedByKey, string $usedByCountKey, string $name): array
     {
         $usedBy = $this->metricsController->getMetricValueByIdentifierString(
             $identifierString,
             $usedByKey
-        );
+        )?->asArray() ?? [];
 
         $usedByCount = $this->metricsController->getMetricValueByIdentifierString(
             $identifierString,
             $usedByCountKey
-        );
+        )?->asInt() ?? 0;
 
         $dependencyCollection = $this->metricsController->getCollectionByIdentifierString(
             $identifierString,
             'dependencies'
-        ) ?? [];
+        );
 
-        $classList = $this->collectionMap['classes']->getAsArray();
+        $classList = $this->collectionMap['classes'] instanceof CollectionInterface
+            ? $this->collectionMap['classes']->getAsArray()
+            : [];
 
-        foreach ($dependencyCollection as $dependency) {
-            $classKey = array_search($dependency, $classList);
-            if (!$classKey) {
-                continue;
+        if ($dependencyCollection instanceof CollectionInterface) {
+            foreach ($dependencyCollection as $dependency) {
+                $classKey = array_search($dependency, $classList, true);
+                if (!$classKey) {
+                    continue;
+                }
+
+                $usedBy[] = $name;
+                ++$usedByCount;
             }
-
-            $usedBy[] = $name;
-            ++ $usedByCount;
         }
 
         return [

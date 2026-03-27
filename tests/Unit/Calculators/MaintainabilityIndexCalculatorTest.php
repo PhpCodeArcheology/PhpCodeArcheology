@@ -67,7 +67,7 @@ it('returns defaults for empty code (volume=0)', function () {
     $this->calculator->calculate($collection);
 
     expect($collection->get('maintainabilityIndex')->getValue())->toBe(171)
-        ->and($collection->get('maintainabilityIndexWithoutComments')->getValue())->toBe(50)
+        ->and($collection->get('maintainabilityIndexWithoutComments')->getValue())->toBe(171)
         ->and($collection->get('commentWeight')->getValue())->toBe(0);
 });
 

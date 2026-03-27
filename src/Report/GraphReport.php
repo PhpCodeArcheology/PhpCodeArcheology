@@ -16,15 +16,16 @@ class GraphReport implements ReportInterface
     use ReportTrait;
 
     public function __construct(
-        private readonly Config $config,
+        Config $config,
         private readonly DataProviderFactory $dataProviderFactory,
-        private readonly false|\DateTimeImmutable $historyDate,
+        protected readonly false|\DateTimeImmutable $historyDate,
         protected readonly FilesystemLoader $twigLoader,
         protected readonly Environment $twig,
         private readonly CliOutput $output)
     {
         $this->reportSubDirName = 'graph';
-        $this->outputDir = $config->get('reportDir') . DIRECTORY_SEPARATOR . $this->getReportSubDir() . DIRECTORY_SEPARATOR;
+        $reportDir = $config->get('reportDir');
+        $this->outputDir = (is_string($reportDir) ? $reportDir : '').DIRECTORY_SEPARATOR.$this->getReportSubDir().DIRECTORY_SEPARATOR;
 
         if (!is_dir($this->outputDir)) {
             mkdir(directory: $this->outputDir, recursive: true);
@@ -48,7 +49,7 @@ class GraphReport implements ReportInterface
         ];
 
         $json = json_encode($output, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-        file_put_contents($this->outputDir . 'graph.json', $json);
+        file_put_contents($this->outputDir.'graph.json', $json);
 
         $formatter = $this->output->getFormatter() ?? new CliFormatter();
         $this->output->outNl($formatter->success('Graph report written to graph/graph.json'));

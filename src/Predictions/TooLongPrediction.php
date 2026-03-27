@@ -6,6 +6,7 @@ namespace PhpCodeArch\Predictions;
 
 use PhpCodeArch\Application\Config;
 use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
 use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
@@ -27,29 +28,33 @@ class TooLongPrediction implements PredictionInterface
         $problemCount = 0;
 
         foreach ($metricsController->getAllCollections() as $metric) {
-            if (is_array($metric)
-                || $metric instanceof ProjectMetricsCollection
+            if ($metric instanceof ProjectMetricsCollection
                 || $metric instanceof PackageMetricsCollection) {
                 continue;
             }
 
-            $maxLloc = match(true) {
+            $maxLloc = match (true) {
                 $metric instanceof FileMetricsCollection => $this->threshold('tooLong.file', 400),
                 $metric instanceof ClassMetricsCollection => $this->threshold('tooLong.class', 300),
                 $metric instanceof FunctionMetricsCollection => $this->threshold('tooLong.function', 40),
+                default => null,
             };
 
-            $lloc = $metric->get('lloc')?->getValue() ?? 0;
+            if (null === $maxLloc) {
+                continue;
+            }
+
+            $lloc = $metric->get(MetricKey::LLOC)?->asInt() ?? 0;
             $isTooLong = $lloc > $maxLloc;
 
             $metricsController->setMetricValueByIdentifierString(
                 (string) $metric->getIdentifier(),
-                'predictionTooLong',
+                MetricKey::PREDICTION_TOO_LONG,
                 $isTooLong
             );
 
             if ($isTooLong) {
-                ++ $problemCount;
+                ++$problemCount;
 
                 $problem = TooLongProblem::ofProblemLevelAndMessage(
                     problemLevel: $this->getLevel(),
@@ -58,12 +63,12 @@ class TooLongPrediction implements PredictionInterface
 
                 $metricsController->setProblemByIdentifierString(
                     identifierString: (string) $metric->getIdentifier(),
-                    key: 'lloc',
+                    key: MetricKey::LLOC,
                     problem: $problem
                 );
             }
 
-            if (! $metric instanceof ClassMetricsCollection) {
+            if (!$metric instanceof ClassMetricsCollection) {
                 continue;
             }
 
@@ -72,25 +77,33 @@ class TooLongPrediction implements PredictionInterface
                 'methods'
             );
 
+            if (null === $methodCollection) {
+                continue;
+            }
+
             foreach ($methodCollection as $methodIdString => $methodName) {
-                $lloc = $metricsController->getMetricValueByIdentifierString(
-                    $methodIdString,
-                    'lloc'
-                );
-
-                $isTooLong = $lloc->getValue() > $this->threshold('tooLong.method', 30);
-
-                $metricsController->setMetricValueByIdentifierString(
-                    $methodIdString,
-                    'predictionTooLong',
-                    $isTooLong
-                );
-
-                if (! $isTooLong) {
+                if (!is_string($methodIdString)) {
                     continue;
                 }
 
-                ++ $problemCount;
+                $lloc = $metricsController->getMetricValueByIdentifierString(
+                    $methodIdString,
+                    MetricKey::LLOC
+                );
+
+                $isTooLong = ($lloc?->asInt() ?? 0) > $this->threshold('tooLong.method', 30);
+
+                $metricsController->setMetricValueByIdentifierString(
+                    $methodIdString,
+                    MetricKey::PREDICTION_TOO_LONG,
+                    $isTooLong
+                );
+
+                if (!$isTooLong) {
+                    continue;
+                }
+
+                ++$problemCount;
 
                 $problem = TooLongProblem::ofProblemLevelAndMessage(
                     problemLevel: $this->getLevel(),
@@ -99,7 +112,7 @@ class TooLongPrediction implements PredictionInterface
 
                 $metricsController->setProblemByIdentifierString(
                     identifierString: $methodIdString,
-                    key: 'lloc',
+                    key: MetricKey::LLOC,
                     problem: $problem
                 );
 
@@ -110,10 +123,9 @@ class TooLongPrediction implements PredictionInterface
 
                 $metricsController->setProblemByIdentifierString(
                     identifierString: (string) $metric->getIdentifier(),
-                    key: 'lloc',
+                    key: MetricKey::LLOC,
                     problem: $problem
                 );
-
             }
         }
 

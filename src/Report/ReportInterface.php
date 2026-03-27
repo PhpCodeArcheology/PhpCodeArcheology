@@ -13,12 +13,12 @@ use Twig\Loader\FilesystemLoader;
 interface ReportInterface
 {
     public function __construct(
-        Config              $config,
-        DataProviderFactory  $reportDataFactory,
+        Config $config,
+        DataProviderFactory $reportDataFactory,
         false|\DateTimeImmutable $historyDate,
-        FilesystemLoader    $twigLoader,
-        Environment         $twig,
-        CliOutput           $output);
+        FilesystemLoader $twigLoader,
+        Environment $twig,
+        CliOutput $output);
 
     public function generate(): void;
 }

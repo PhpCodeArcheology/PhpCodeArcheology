@@ -13,14 +13,20 @@ namespace PhpCodeArch\Calculators\Helpers;
 class TarjanSccAlgorithm
 {
     private int $index = 0;
+    /** @var list<string> */
     private array $stack = [];
+    /** @var array<string, bool> */
     private array $onStack = [];
+    /** @var array<string, int> */
     private array $indices = [];
+    /** @var array<string, int> */
     private array $lowLinks = [];
+    /** @var list<list<string>> */
     private array $sccs = [];
 
     /**
      * @param array<string, string[]> $adjacencyList node → [neighbor, ...]
+     *
      * @return array<array<string>> Array of SCCs (each SCC is array of node IDs)
      */
     public function findSccs(array $adjacencyList): array
@@ -31,9 +37,6 @@ class TarjanSccAlgorithm
         $this->indices = [];
         $this->lowLinks = [];
         $this->sccs = [];
-
-        // Ensure all nodes are in the adjacency list
-        $allNodes = array_keys($adjacencyList);
         foreach ($adjacencyList as $neighbors) {
             foreach ($neighbors as $neighbor) {
                 if (!isset($adjacencyList[$neighbor])) {
@@ -54,17 +57,26 @@ class TarjanSccAlgorithm
     /**
      * @return array<array<string>> Only SCCs with more than one node (actual cycles)
      */
+    /**
+     * @param array<string, string[]> $adjacencyList
+     *
+     * @return array<array<string>> Only SCCs with more than one node (actual cycles)
+     */
     public function findCycles(array $adjacencyList): array
     {
         $sccs = $this->findSccs($adjacencyList);
-        return array_values(array_filter($sccs, fn(array $scc) => count($scc) > 1));
+
+        return array_values(array_filter($sccs, fn (array $scc): bool => count($scc) > 1));
     }
 
+    /**
+     * @param array<string, string[]> $adjacencyList
+     */
     private function strongConnect(string $node, array &$adjacencyList): void
     {
         $this->indices[$node] = $this->index;
         $this->lowLinks[$node] = $this->index;
-        $this->index++;
+        ++$this->index;
         $this->stack[] = $node;
         $this->onStack[$node] = true;
 
@@ -81,7 +93,7 @@ class TarjanSccAlgorithm
         if ($this->lowLinks[$node] === $this->indices[$node]) {
             $scc = [];
             do {
-                $w = array_pop($this->stack);
+                $w = array_pop($this->stack) ?? '';
                 $this->onStack[$w] = false;
                 $scc[] = $w;
             } while ($w !== $node);

@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace PhpCodeArch\Predictions;
 
 use PhpCodeArch\Application\Config;
+use PhpCodeArch\Application\Service\TestScanResult;
 use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Predictions\Problems\UntestedComplexCodeProblem;
 
@@ -23,8 +25,8 @@ class UntestedComplexCodePrediction implements PredictionInterface
         $frameworkDetection = $this->getFrameworkDetection();
         $testScanResult = $this->config?->get('testScanResult');
 
-        $hasTestInfrastructure = ($frameworkDetection !== null && $frameworkDetection->hasTestFramework())
-            || ($testScanResult !== null && !empty($testScanResult->testDirectories ?? []));
+        $hasTestInfrastructure = ($frameworkDetection instanceof \PhpCodeArch\Application\Service\FrameworkDetectionResult && $frameworkDetection->hasTestFramework())
+            || ($testScanResult instanceof TestScanResult && !empty($testScanResult->testDirectories));
 
         if (!$hasTestInfrastructure) {
             return 0;
@@ -37,17 +39,17 @@ class UntestedComplexCodePrediction implements PredictionInterface
                 continue;
             }
 
-            $isInterface = $metric->get('interface')?->getValue() === true;
-            $isTrait = $metric->get('trait')?->getValue() === true;
-            $isEnum = $metric->get('enum')?->getValue() === true;
-            $isAbstract = $metric->get('abstract')?->getValue() === true;
+            $isInterface = $metric->get(MetricKey::INTERFACE)?->asBool() ?? false;
+            $isTrait = $metric->get(MetricKey::TRAIT)?->asBool() ?? false;
+            $isEnum = $metric->get(MetricKey::ENUM)?->asBool() ?? false;
+            $isAbstract = $metric->get(MetricKey::ABSTRACT)?->asBool() ?? false;
 
             if ($isInterface || $isTrait || $isEnum || $isAbstract) {
                 continue;
             }
 
-            $hasTest = $metric->get('hasTest')?->getValue() ?? false;
-            $cc = $metric->get('cc')?->getValue() ?? 0;
+            $hasTest = $metric->get(MetricKey::HAS_TEST)?->asBool() ?? false;
+            $cc = $metric->get(MetricKey::CC)?->asInt() ?? 0;
 
             if ($hasTest) {
                 continue;
@@ -70,7 +72,7 @@ class UntestedComplexCodePrediction implements PredictionInterface
 
             $metricsController->setProblemByIdentifierString(
                 identifierString: (string) $metric->getIdentifier(),
-                key: 'hasTest',
+                key: MetricKey::HAS_TEST,
                 problem: $problem
             );
 

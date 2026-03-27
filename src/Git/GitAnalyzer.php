@@ -13,26 +13,34 @@ use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 
 class GitAnalyzer
 {
-    private GitLogParser $parser;
-    private string $since;
+    private readonly GitLogParser $parser;
+    private readonly string $since;
 
     public function __construct(
         private readonly Config $config,
         private readonly MetricsController $metricsController,
         private readonly CliOutput $output,
     ) {
-        $gitConfig = $this->config->get('git') ?? [];
-        $this->since = $gitConfig['since'] ?? '6 months ago';
+        $gitConfig = $this->config->get('git');
+        if (!is_array($gitConfig)) {
+            $gitConfig = [];
+        }
 
-        $gitRoot = $gitConfig['root'] ?? null;
-        if ($gitRoot !== null) {
+        $rawSince = $gitConfig['since'] ?? null;
+        $this->since = is_string($rawSince) ? $rawSince : '6 months ago';
+
+        $rawRoot = $gitConfig['root'] ?? null;
+        $gitRoot = is_string($rawRoot) ? $rawRoot : null;
+
+        if (null !== $gitRoot) {
             $resolved = realpath($gitRoot);
-            if ($resolved === false) {
+            if (false === $resolved) {
                 throw new \RuntimeException("Git root directory '$gitRoot' does not exist.");
             }
             $projectRoot = $resolved;
         } else {
-            $projectRoot = $this->config->get('runningDir') ?? getcwd();
+            $runningDir = $this->config->get('runningDir');
+            $projectRoot = is_string($runningDir) ? $runningDir : (getcwd() ?: '');
         }
 
         $this->parser = new GitLogParser($projectRoot);
@@ -41,9 +49,10 @@ class GitAnalyzer
     public function analyze(): void
     {
         if (!$this->parser->isGitRepository()) {
-            $formatter = $this->output->getFormatter() ?? new \PhpCodeArch\Application\CliFormatter();
+            $formatter = $this->output->getFormatter() ?? new CliFormatter();
             $this->output->outNl($formatter->warning('No Git repository detected — skipping Git analysis.'));
             $this->setDefaults();
+
             return;
         }
 
@@ -52,13 +61,17 @@ class GitAnalyzer
 
         $changes = $this->parser->getFileChanges($this->since);
 
+        $totalCommits = $changes['totalCommits'];
+        $authors = $changes['authors'];
+        $files = $changes['files'];
+
         // Project-level metrics
         $this->metricsController->setMetricValues(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             [
-                'gitTotalCommits' => $changes['totalCommits'],
-                'gitActiveAuthors' => count($changes['authors']),
+                'gitTotalCommits' => $totalCommits,
+                'gitActiveAuthors' => count($authors),
                 'gitAnalysisPeriod' => $this->since,
             ]
         );
@@ -67,7 +80,7 @@ class GitAnalyzer
         $fileCollections = [];
         foreach ($this->metricsController->getAllCollections() as $collection) {
             if ($collection instanceof \PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection
-                && $collection->getPath() !== '') {
+                && '' !== $collection->getPath()) {
                 $fileCollections[] = $collection;
             }
         }
@@ -81,33 +94,34 @@ class GitAnalyzer
             $progress->advance();
 
             $filePath = $collection->getPath();
-            $fileData = $changes['files'][$filePath] ?? null;
+            $fileData = $files[$filePath] ?? null;
 
-            if ($fileData !== null) {
-                $authors = array_keys($fileData['authors']);
+            if (null !== $fileData) {
+                $fileAuthors = array_keys($fileData['authors']);
                 $lastModified = $fileData['lastModified'];
+                $commits = $fileData['commits'];
                 $ageDays = $lastModified > 0 ? (int) round(($now - $lastModified) / 86400) : 0;
 
                 $this->metricsController->setMetricValuesByIdentifierString(
                     (string) $collection->getIdentifier(),
                     [
-                        'gitChurnCount' => $fileData['commits'],
+                        'gitChurnCount' => $commits,
                         'gitLastModified' => $lastModified > 0 ? date('Y-m-d', $lastModified) : '',
                         'gitCodeAgeDays' => $ageDays,
-                        'gitAuthorCount' => count($authors),
-                        'gitAuthors' => $authors,
+                        'gitAuthorCount' => count($fileAuthors),
+                        'gitAuthors' => $fileAuthors,
                     ]
                 );
             } else {
                 // File wasn't changed in the timeframe — get last modified from git
                 $lastModified = $this->parser->getFileLastModified($filePath);
-                $ageDays = $lastModified !== null ? (int) round(($now - $lastModified) / 86400) : 0;
+                $ageDays = null !== $lastModified ? (int) round(($now - $lastModified) / 86400) : 0;
 
                 $this->metricsController->setMetricValuesByIdentifierString(
                     (string) $collection->getIdentifier(),
                     [
                         'gitChurnCount' => 0,
-                        'gitLastModified' => $lastModified !== null ? date('Y-m-d', $lastModified) : '',
+                        'gitLastModified' => null !== $lastModified ? date('Y-m-d', $lastModified) : '',
                         'gitCodeAgeDays' => $ageDays,
                         'gitAuthorCount' => 0,
                         'gitAuthors' => [],
@@ -119,8 +133,8 @@ class GitAnalyzer
         $progress->finish();
 
         $this->output->outNl(
-            'Git analysis: ' . $formatter->success((string) $changes['totalCommits']) . ' commits by ' .
-            $formatter->success((string) count($changes['authors'])) . ' authors (since ' . $this->since . ').'
+            'Git analysis: '.$formatter->success((string) $totalCommits).' commits by '.
+            $formatter->success((string) count($authors)).' authors (since '.$this->since.').'
         );
     }
 

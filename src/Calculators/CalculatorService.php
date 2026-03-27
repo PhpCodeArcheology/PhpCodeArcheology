@@ -8,7 +8,6 @@ use PhpCodeArch\Application\CliFormatter;
 use PhpCodeArch\Application\CliOutput;
 use PhpCodeArch\Application\ProgressBar;
 use PhpCodeArch\Metrics\Controller\MetricsController;
-use PhpCodeArch\Metrics\Model\MetricsContainer;
 
 readonly class CalculatorService
 {
@@ -16,12 +15,9 @@ readonly class CalculatorService
         /**
          * @var CalculatorInterface[]
          */
-        private array             $calculators,
-        /**
-         * @var MetricsContainer
-         */
+        private array $calculators,
         private MetricsController $metricsController,
-        private CliOutput         $output)
+        private CliOutput $output)
     {
     }
 
@@ -49,7 +45,7 @@ readonly class CalculatorService
     private function maybeCallMethod(string $method): void
     {
         foreach ($this->calculators as $calculator) {
-            if (! method_exists($calculator, $method)) {
+            if (!method_exists($calculator, $method)) {
                 continue;
             }
 

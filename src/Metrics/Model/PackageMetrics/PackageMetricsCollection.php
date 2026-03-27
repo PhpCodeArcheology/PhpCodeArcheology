@@ -19,8 +19,7 @@ class PackageMetricsCollection implements MetricsCollectionInterface
 
     public function __construct(
         private readonly string $name,
-    )
-    {
+    ) {
         $this->identifier = PackageIdentifier::ofNamespace($name);
         $this->path = $name;
     }
@@ -32,6 +31,6 @@ class PackageMetricsCollection implements MetricsCollectionInterface
 
     public function getIdentifier(): IdentifierInterface
     {
-       return $this->identifier;
+        return $this->identifier;
     }
 }

@@ -11,30 +11,35 @@ use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
 use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
+use PhpCodeArch\Metrics\Model\MetricValue;
 use PhpCodeArch\Metrics\Model\PackageMetrics\PackageMetricsCollection;
-use PhpCodeArch\Report\Data\ReportDataCollection;
-use PhpCodeArch\Report\Data\ReportDataContainer;
 
 /**
- * MetricsSplitter
+ * MetricsSplitter.
  *
  * Splits files, functions and classes into data arrays.
  */
 readonly class MetricsSplitter
 {
     public function __construct(
-        private MetricsController    $metricsController,
-        private ReportDataContainer $dataContainer,
-        private CliOutput            $output)
+        private MetricsController $metricsController,
+        private CliOutput $output)
     {
     }
 
-    public function split(): void
+    /**
+     * @return array{files: array<string, array<string, mixed>>, classes: array<string, array<string, mixed>>, functions: array<string, array<string, mixed>>, packages: array<string, array<string, mixed>>}
+     */
+    public function split(): array
     {
-        $fileCollection = new ReportDataCollection();
-        $classCollection = new ReportDataCollection();
-        $functionCollection = new ReportDataCollection();
-        $packageCollection = new ReportDataCollection();
+        /** @var array<string, array<string, mixed>> $fileCollection */
+        $fileCollection = [];
+        /** @var array<string, array<string, mixed>> $classCollection */
+        $classCollection = [];
+        /** @var array<string, array<string, mixed>> $functionCollection */
+        $functionCollection = [];
+        /** @var array<string, array<string, mixed>> $packageCollection */
+        $packageCollection = [];
 
         $formatter = $this->output->getFormatter() ?? new CliFormatter();
         $allCollections = $this->metricsController->getAllCollections();
@@ -43,40 +48,39 @@ readonly class MetricsSplitter
         foreach ($allCollections as $metric) {
             $progressBar->advance();
 
+            $id = (string) $metric->getIdentifier();
+
             switch (true) {
                 case $metric instanceof PackageMetricsCollection:
-                    $data = $metric->getAll();
-                    $data['id'] = (string) $metric->getIdentifier();
+                    $data = $this->metricValuesToArray($metric->getAll());
+                    $data['id'] = $id;
                     $data['name'] = $metric->getName();
-
-                    $packageCollection->set($data, $data['id']);
+                    $packageCollection[$id] = $data;
                     break;
 
                 case $metric instanceof FileMetricsCollection:
-                    $data = $metric->getAll();
-                    $data['id'] = (string) $metric->getIdentifier();
+                    $data = $this->metricValuesToArray($metric->getAll());
+                    $data['id'] = $id;
                     $data['name'] = $metric->getName();
-
-                    $fileCollection->set($data, $data['id']);
+                    $fileCollection[$id] = $data;
                     break;
 
                 case $metric instanceof FunctionMetricsCollection:
-                    $data = $metric->getAll();
-                    $data['id'] = (string) $metric->getIdentifier();
+                    $data = $this->metricValuesToArray($metric->getAll());
+                    $data['id'] = $id;
                     $data['path'] = $metric->getPath();
                     $data['name'] = $metric->getName();
-
-                    $functionCollection->set($data, $data['id']);
+                    $functionCollection[$id] = $data;
                     break;
 
                 case $metric instanceof ClassMetricsCollection:
-                    $data = $metric->getAll();
-                    $data['id'] = (string) $metric->getIdentifier();
+                    $data = $this->metricValuesToArray($metric->getAll());
+                    $data['id'] = $id;
                     $data['path'] = $metric->getPath();
                     $data['name'] = $metric->getName();
                     $data['internal'] = true;
-                    $data['classUses'] = $metric->getCollection('usedClasses')->getAsArray();
-                    $classCollection->set($data, $data['id']);
+                    $data['classUses'] = $metric->getCollection('usedClasses')?->getAsArray() ?? [];
+                    $classCollection[$id] = $data;
                     break;
             }
         }
@@ -85,28 +89,45 @@ readonly class MetricsSplitter
 
         $fileProgressBar = new ProgressBar($this->output, $formatter, count($fileCollection), 'Setting up files');
 
-        foreach ($fileCollection as &$data) {
+        foreach ($fileCollection as $id => &$data) {
             $fileProgressBar->advance();
 
-            $path = $data['name'];
+            $path = is_string($data['name'] ?? null) ? $data['name'] : '';
 
-            $classesInFile = array_filter($classCollection->getAll(), function($class) use ($path) {
-                return $path === $class['path'];
-            });
+            $data['classes'] = array_filter(
+                $classCollection,
+                fn (array $class): bool => $path === ($class['path'] ?? null)
+            );
 
-            $functionsInFile = array_filter($functionCollection->getAll(), function($function) use ($path) {
-                return $path === $function['path'];
-            });
-
-            $data['classes'] = $classesInFile;
-            $data['functions'] = $functionsInFile;
+            $data['functions'] = array_filter(
+                $functionCollection,
+                fn (array $function): bool => $path === ($function['path'] ?? null)
+            );
         }
+        unset($data);
 
         $fileProgressBar->finish();
 
-        $this->dataContainer->set('files', $fileCollection);
-        $this->dataContainer->set('classes', $classCollection);
-        $this->dataContainer->set('functions', $functionCollection);
-        $this->dataContainer->set('packages', $packageCollection);
+        return [
+            'files' => $fileCollection,
+            'classes' => $classCollection,
+            'functions' => $functionCollection,
+            'packages' => $packageCollection,
+        ];
+    }
+
+    /**
+     * @param array<string, MetricValue> $metricValues
+     *
+     * @return array<string, mixed>
+     */
+    private function metricValuesToArray(array $metricValues): array
+    {
+        $result = [];
+        foreach ($metricValues as $key => $metricValue) {
+            $result[$key] = $metricValue->getValue();
+        }
+
+        return $result;
     }
 }

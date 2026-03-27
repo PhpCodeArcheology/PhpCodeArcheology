@@ -23,16 +23,14 @@ trait ReportTrait
 
     protected function clearReportDir(): void
     {
-        if ($this->outputDir === '' || $this->outputDir === '/' || $this->outputDir === DIRECTORY_SEPARATOR) {
+        if ('' === $this->outputDir || '/' === $this->outputDir || DIRECTORY_SEPARATOR === $this->outputDir) {
             throw new \RuntimeException('Refusing to delete root directory. reportDir is not set correctly.');
         }
 
         // Safety: reportDir must be at least 3 levels deep (e.g. /a/b/c)
         $resolved = realpath($this->outputDir);
-        if ($resolved !== false && substr_count(rtrim($resolved, '/'), '/') < 3) {
-            throw new \RuntimeException(
-                "Refusing to delete directory '{$resolved}': path is too close to filesystem root."
-            );
+        if (false !== $resolved && substr_count(rtrim($resolved, '/'), '/') < 3) {
+            throw new \RuntimeException("Refusing to delete directory '{$resolved}': path is too close to filesystem root.");
         }
 
         $this->deleteDirContents($this->outputDir);
@@ -44,11 +42,11 @@ trait ReportTrait
             $dir .= '/';
         }
 
-        if ($dir === '/' || $dir === '//') {
+        if ('/' === $dir || '//' === $dir) {
             throw new \RuntimeException('Refusing to delete root directory.');
         }
 
-        $files = glob($dir . '*', GLOB_MARK);
+        $files = glob($dir.'*', GLOB_MARK) ?: [];
         foreach ($files as $file) {
             if (str_ends_with($file, 'history.json') || str_ends_with($file, 'history.jsonl')) {
                 continue;
@@ -68,15 +66,15 @@ trait ReportTrait
      * @throws RuntimeError
      * @throws LoaderError
      */
+    /** @param array<string, mixed> $data */
     protected function renderTemplate(string $template, array $data, string $outputFile): void
     {
         $templateWrapper = $this->twig->load($template);
 
-        $data['hasHistory'] = $this->historyDate !== false;
+        $data['hasHistory'] = false !== $this->historyDate;
         $data['historyDate'] = $this->historyDate;
 
-        ob_start();
-        echo $templateWrapper->render($data);
-        file_put_contents($this->outputDir . $outputFile, ob_get_clean());
+        $content = $templateWrapper->render($data);
+        file_put_contents($this->outputDir.$outputFile, $content);
     }
 }

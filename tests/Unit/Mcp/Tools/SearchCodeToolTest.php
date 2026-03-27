@@ -22,7 +22,7 @@ function makeSearchTool(array $collections): SearchCodeTool
 
     $factory = Mockery::mock(DataProviderFactory::class)->shouldIgnoreMissing();
 
-    return new SearchCodeTool($factory, $mc);
+    return new SearchCodeTool($mc);
 }
 
 it('finds a class by name', function () {
@@ -123,7 +123,7 @@ it('returns an error string when an exception is thrown', function () {
 
     $factory = Mockery::mock(DataProviderFactory::class)->shouldIgnoreMissing();
 
-    $result = (new SearchCodeTool($factory, $mc))->searchCode('anything');
+    $result = (new SearchCodeTool($mc))->searchCode('anything');
 
-    expect($result)->toBe('Error searching code: mc error');
+    expect($result)->toBe('An error occurred while searching code.');
 });

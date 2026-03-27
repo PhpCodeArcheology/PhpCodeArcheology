@@ -7,7 +7,7 @@ namespace PhpCodeArch\Application\Service;
 use PhpParser\NodeTraverser;
 use PhpParser\Parser;
 
-final class TestCoversParser
+final readonly class TestCoversParser
 {
     private const EXCLUDED_PREFIXES = [
         'PHPUnit\\', 'Pest\\', 'Codeception\\',
@@ -16,7 +16,9 @@ final class TestCoversParser
 
     private const EXCLUDED_SUFFIXES = ['TestCase', 'MockObject'];
 
-    public function __construct(private readonly Parser $parser) {}
+    public function __construct(private Parser $parser)
+    {
+    }
 
     /**
      * Parse test files to extract @covers annotations and use-statements.
@@ -30,7 +32,7 @@ final class TestCoversParser
 
         foreach ($testFiles as $file) {
             $code = @file_get_contents($file);
-            if ($code === false) {
+            if (false === $code) {
                 continue;
             }
 
@@ -40,7 +42,7 @@ final class TestCoversParser
                 continue;
             }
 
-            if ($ast === null) {
+            if (null === $ast) {
                 continue;
             }
 
@@ -50,12 +52,12 @@ final class TestCoversParser
             $traverser->traverse($ast);
 
             $covers = $visitor->getCovers();
-            if (!empty($covers)) {
+            if ([] !== $covers) {
                 $coversMap[$file] = $covers;
             }
 
             $filtered = $this->filterProductionUses($visitor->getUseStatements());
-            if (!empty($filtered)) {
+            if ([] !== $filtered) {
                 $useStatementsMap[$file] = $filtered;
             }
         }
@@ -65,22 +67,36 @@ final class TestCoversParser
 
     /**
      * Filter out test infrastructure imports, keeping only production class references.
+     *
+     * @param string[] $fqcns
+     *
+     * @return string[]
      */
     private function filterProductionUses(array $fqcns): array
     {
-        return array_values(array_filter($fqcns, function (string $fqcn): bool {
+        $result = [];
+        foreach ($fqcns as $fqcn) {
+            $excluded = false;
             foreach (self::EXCLUDED_PREFIXES as $prefix) {
                 if (str_starts_with($fqcn, $prefix)) {
-                    return false;
+                    $excluded = true;
+                    break;
                 }
             }
-            $shortName = basename(str_replace('\\', '/', $fqcn));
-            foreach (self::EXCLUDED_SUFFIXES as $suffix) {
-                if (str_ends_with($shortName, $suffix)) {
-                    return false;
+            if (!$excluded) {
+                $shortName = basename(str_replace('\\', '/', $fqcn));
+                foreach (self::EXCLUDED_SUFFIXES as $suffix) {
+                    if (str_ends_with($shortName, $suffix)) {
+                        $excluded = true;
+                        break;
+                    }
                 }
             }
-            return true;
-        }));
+            if (!$excluded) {
+                $result[] = $fqcn;
+            }
+        }
+
+        return $result;
     }
 }

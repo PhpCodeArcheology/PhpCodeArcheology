@@ -5,17 +5,15 @@ declare(strict_types=1);
 namespace PhpCodeArch\Application\ConfigFile;
 
 use PhpCodeArch\Application\Config;
-use PhpCodeArch\Application\ConfigFile\Exceptions\ReportDirNotFoundException;
 
 class ConfigFileParserJson implements ConfigFileParserInterface
 {
-    public function __construct(private string $file)
+    public function __construct(private readonly string $file)
     {
     }
 
     public function parse(Config $config): void
     {
-
     }
 
     public function parseJson(string $json, Config $config): void
@@ -23,6 +21,10 @@ class ConfigFileParserJson implements ConfigFileParserInterface
         $data = json_decode($json, true);
 
         $config->set('configFileDir', dirname($this->file));
+
+        if (!is_array($data)) {
+            return;
+        }
 
         if (isset($data['include'])) {
             $config->set('files', $data['include']);
@@ -46,11 +48,13 @@ class ConfigFileParserJson implements ConfigFileParserInterface
         }
 
         if (isset($data['reportDir'])) {
-            $reportDir = $data['reportDir'];
+            $reportDirValue = $data['reportDir'];
+            $reportDir = is_scalar($reportDirValue) ? (string) $reportDirValue : '';
 
             // Resolve relative paths against runningDir
             if (!str_starts_with($reportDir, DIRECTORY_SEPARATOR)) {
-                $reportDir = $config->get('runningDir') . DIRECTORY_SEPARATOR . $reportDir;
+                $runningDir = $config->get('runningDir');
+                $reportDir = (is_string($runningDir) ? $runningDir : '').DIRECTORY_SEPARATOR.$reportDir;
             }
 
             if (!is_dir($reportDir)) {
@@ -59,18 +63,20 @@ class ConfigFileParserJson implements ConfigFileParserInterface
 
             // Use realpath only after the directory exists, with safe fallback
             $resolved = realpath($reportDir);
-            $config->set('reportDir', $resolved !== false ? $resolved : $reportDir);
+            $config->set('reportDir', false !== $resolved ? $resolved : $reportDir);
         }
 
-        if (isset($data['git'])) {
+        if (isset($data['git']) && is_array($data['git'])) {
             if (isset($data['git']['root'])) {
-                $root = $data['git']['root'];
+                $rootValue = $data['git']['root'];
+                $root = is_scalar($rootValue) ? (string) $rootValue : '';
                 $resolved = realpath($root);
-                if ($resolved === false) {
+                if (false === $resolved) {
                     // Try relative to runningDir
-                    $resolved = realpath($config->get('runningDir') . DIRECTORY_SEPARATOR . $root);
+                    $runningDir = $config->get('runningDir');
+                    $resolved = realpath((is_string($runningDir) ? $runningDir : '').DIRECTORY_SEPARATOR.$root);
                 }
-                if ($resolved !== false) {
+                if (false !== $resolved) {
                     $data['git']['root'] = $resolved;
                 }
                 // If still unresolved, keep original — GitAnalyzer will report the error
@@ -96,6 +102,10 @@ class ConfigFileParserJson implements ConfigFileParserInterface
 
         if (isset($data['framework'])) {
             $config->set('framework', $data['framework']);
+        }
+
+        if (isset($data['acknowledgedVersion']) && is_scalar($data['acknowledgedVersion'])) {
+            $config->set('acknowledgedVersion', (string) $data['acknowledgedVersion']);
         }
     }
 }

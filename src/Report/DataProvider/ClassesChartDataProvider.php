@@ -10,7 +10,6 @@ class ClassesChartDataProvider implements ReportDataProviderInterface
 {
     use ReportDataProviderTrait;
 
-
     public function gatherData(): void
     {
         $classes = $this->metricsController->getMetricCollectionsByCollectionKeys(
@@ -23,10 +22,10 @@ class ClassesChartDataProvider implements ReportDataProviderInterface
         $usedClassesOfClass = [];
 
         foreach ($classes as $classId => $class) {
-            $classPath = explode('\\', $class->getName());
+            $classPath = explode('\\', (string) $class->getName());
             $className = array_pop($classPath);
             $namespace = implode('', $classPath);
-            if (empty($namespace)) {
+            if ('' === $namespace || '0' === $namespace) {
                 $namespace = 'global';
             }
 
@@ -39,10 +38,13 @@ class ClassesChartDataProvider implements ReportDataProviderInterface
             $usedClasses = $class->getCollection('usedClasses')?->getAsArray() ?? [];
 
             foreach ($usedClasses as $usedClass) {
+                if (!is_string($usedClass)) {
+                    continue;
+                }
                 $classPath = explode('\\', $usedClass);
                 $className = array_pop($classPath);
                 $namespace = implode('', $classPath);
-                if (empty($namespace)) {
+                if ('' === $namespace || '0' === $namespace) {
                     $namespace = 'global';
                 }
 
@@ -54,7 +56,7 @@ class ClassesChartDataProvider implements ReportDataProviderInterface
                     $namespaces[$namespace][] = $className;
                 }
 
-                if (! isset($usedClassesOfClass[$classId])) {
+                if (!isset($usedClassesOfClass[$classId])) {
                     $usedClassesOfClass[$classId] = [];
                 }
                 $usedClassesOfClass[$classId][] = $className;

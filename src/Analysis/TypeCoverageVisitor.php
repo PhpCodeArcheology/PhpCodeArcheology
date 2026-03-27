@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PhpCodeArch\Analysis;
 
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
+use PhpCodeArch\Metrics\MetricKey;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
 
@@ -12,7 +13,9 @@ class TypeCoverageVisitor implements NodeVisitor, VisitorInterface
 {
     use VisitorTrait;
 
+    /** @var array<int, string> */
     private array $currentClassName = [];
+    /** @var array<int, string> */
     private array $currentFunctionName = [];
 
     // File-level counters
@@ -24,20 +27,30 @@ class TypeCoverageVisitor implements NodeVisitor, VisitorInterface
     private int $fileTotalProperties = 0;
 
     // Class-level counters
+    /** @var array<string, int> */
     private array $classTypedParams = [];
+    /** @var array<string, int> */
     private array $classTotalParams = [];
+    /** @var array<string, int> */
     private array $classTypedReturns = [];
+    /** @var array<string, int> */
     private array $classTotalReturns = [];
+    /** @var array<string, int> */
     private array $classTypedProperties = [];
+    /** @var array<string, int> */
     private array $classTotalProperties = [];
 
     // Function/Method-level counters
+    /** @var array<string, int> */
     private array $funcTypedParams = [];
+    /** @var array<string, int> */
     private array $funcTotalParams = [];
+    /** @var array<string, int> */
     private array $funcTypedReturns = [];
+    /** @var array<string, int> */
     private array $funcTotalReturns = [];
 
-    public function beforeTraverse(array $nodes): void
+    public function beforeTraverse(array $nodes): ?array
     {
         $this->currentClassName = [];
         $this->currentFunctionName = [];
@@ -57,9 +70,11 @@ class TypeCoverageVisitor implements NodeVisitor, VisitorInterface
         $this->funcTotalParams = [];
         $this->funcTypedReturns = [];
         $this->funcTotalReturns = [];
+
+        return null;
     }
 
-    public function enterNode(Node $node): void
+    public function enterNode(Node $node): int|Node|null
     {
         switch (true) {
             case $node instanceof Node\Stmt\Class_:
@@ -91,16 +106,18 @@ class TypeCoverageVisitor implements NodeVisitor, VisitorInterface
                     $this->classTotalProperties[$className] += $propCount;
                     $this->fileTotalProperties += $propCount;
 
-                    if ($node->type !== null) {
+                    if ($node->type instanceof Node) {
                         $this->classTypedProperties[$className] += $propCount;
                         $this->fileTypedProperties += $propCount;
                     }
                 }
                 break;
         }
+
+        return null;
     }
 
-    public function leaveNode(Node $node): void
+    public function leaveNode(Node $node): int|Node|array|null
     {
         switch (true) {
             case $node instanceof Node\Stmt\Class_:
@@ -108,6 +125,9 @@ class TypeCoverageVisitor implements NodeVisitor, VisitorInterface
             case $node instanceof Node\Stmt\Trait_:
             case $node instanceof Node\Stmt\Enum_:
                 $className = array_pop($this->currentClassName);
+                if (null === $className) {
+                    break;
+                }
                 $coverage = $this->calculateCoverage(
                     $this->classTypedParams[$className],
                     $this->classTotalParams[$className],
@@ -121,13 +141,13 @@ class TypeCoverageVisitor implements NodeVisitor, VisitorInterface
                     MetricCollectionTypeEnum::ClassCollection,
                     ['path' => $this->path, 'name' => $className],
                     [
-                        'typeCoverage' => $coverage,
-                        'typedParamCount' => $this->classTypedParams[$className],
-                        'totalParamCount' => $this->classTotalParams[$className],
-                        'typedReturnCount' => $this->classTypedReturns[$className],
-                        'totalReturnCount' => $this->classTotalReturns[$className],
-                        'typedPropertyCount' => $this->classTypedProperties[$className],
-                        'totalPropertyCount' => $this->classTotalProperties[$className],
+                        MetricKey::TYPE_COVERAGE => $coverage,
+                        MetricKey::TYPED_PARAM_COUNT => $this->classTypedParams[$className],
+                        MetricKey::TOTAL_PARAM_COUNT => $this->classTotalParams[$className],
+                        MetricKey::TYPED_RETURN_COUNT => $this->classTypedReturns[$className],
+                        MetricKey::TOTAL_RETURN_COUNT => $this->classTotalReturns[$className],
+                        MetricKey::TYPED_PROPERTY_COUNT => $this->classTypedProperties[$className],
+                        MetricKey::TOTAL_PROPERTY_COUNT => $this->classTotalProperties[$className],
                     ]
                 );
                 break;
@@ -140,9 +160,11 @@ class TypeCoverageVisitor implements NodeVisitor, VisitorInterface
                 $this->handleFunctionLeave(false);
                 break;
         }
+
+        return null;
     }
 
-    public function afterTraverse(array $nodes): void
+    public function afterTraverse(array $nodes): ?array
     {
         $coverage = $this->calculateCoverage(
             $this->fileTypedParams,
@@ -157,24 +179,31 @@ class TypeCoverageVisitor implements NodeVisitor, VisitorInterface
             MetricCollectionTypeEnum::FileCollection,
             ['path' => $this->path],
             [
-                'typeCoverage' => $coverage,
-                'typedParamCount' => $this->fileTypedParams,
-                'totalParamCount' => $this->fileTotalParams,
-                'typedReturnCount' => $this->fileTypedReturns,
-                'totalReturnCount' => $this->fileTotalReturns,
-                'typedPropertyCount' => $this->fileTypedProperties,
-                'totalPropertyCount' => $this->fileTotalProperties,
+                MetricKey::TYPE_COVERAGE => $coverage,
+                MetricKey::TYPED_PARAM_COUNT => $this->fileTypedParams,
+                MetricKey::TOTAL_PARAM_COUNT => $this->fileTotalParams,
+                MetricKey::TYPED_RETURN_COUNT => $this->fileTypedReturns,
+                MetricKey::TOTAL_RETURN_COUNT => $this->fileTotalReturns,
+                MetricKey::TYPED_PROPERTY_COUNT => $this->fileTypedProperties,
+                MetricKey::TOTAL_PROPERTY_COUNT => $this->fileTotalProperties,
             ]
         );
+
+        return null;
     }
 
     private function handleFunctionEnter(Node\Stmt\ClassMethod|Node\Stmt\Function_ $node, bool $isMethod): void
     {
         if ($isMethod) {
             $className = end($this->currentClassName);
-            $funcKey = $className . '::' . (string) $node->name;
+            if (false === $className) {
+                return;
+            }
+            $funcKey = $className.'::'.$node->name;
         } else {
-            $funcKey = (string) $node->namespacedName;
+            $funcKey = $node instanceof Node\Stmt\Function_
+                ? (string) $node->namespacedName
+                : (string) $node->name;
         }
 
         $this->currentFunctionName[] = $funcKey;
@@ -184,16 +213,16 @@ class TypeCoverageVisitor implements NodeVisitor, VisitorInterface
         $this->funcTotalReturns[$funcKey] = 1; // Every function has a return type slot
 
         // Return type
-        if ($node->returnType !== null) {
+        if ($node->returnType instanceof Node) {
             $this->funcTypedReturns[$funcKey] = 1;
-            $this->fileTypedReturns++;
+            ++$this->fileTypedReturns;
             if ($isMethod && count($this->currentClassName) > 0) {
-                $this->classTypedReturns[end($this->currentClassName)]++;
+                ++$this->classTypedReturns[end($this->currentClassName)];
             }
         }
-        $this->fileTotalReturns++;
+        ++$this->fileTotalReturns;
         if ($isMethod && count($this->currentClassName) > 0) {
-            $this->classTotalReturns[end($this->currentClassName)]++;
+            ++$this->classTotalReturns[end($this->currentClassName)];
         }
 
         // Parameters
@@ -201,26 +230,29 @@ class TypeCoverageVisitor implements NodeVisitor, VisitorInterface
             // PHP 8 promoted properties: count as property, not parameter
             if ($param->flags > 0 && $isMethod) {
                 $className = end($this->currentClassName);
-                $this->classTotalProperties[$className]++;
-                $this->fileTotalProperties++;
-                if ($param->type !== null) {
-                    $this->classTypedProperties[$className]++;
-                    $this->fileTypedProperties++;
+                if (false === $className) {
+                    continue;
+                }
+                ++$this->classTotalProperties[$className];
+                ++$this->fileTotalProperties;
+                if (null !== $param->type) {
+                    ++$this->classTypedProperties[$className];
+                    ++$this->fileTypedProperties;
                 }
                 continue;
             }
 
-            $this->funcTotalParams[$funcKey]++;
-            $this->fileTotalParams++;
+            ++$this->funcTotalParams[$funcKey];
+            ++$this->fileTotalParams;
             if ($isMethod && count($this->currentClassName) > 0) {
-                $this->classTotalParams[end($this->currentClassName)]++;
+                ++$this->classTotalParams[end($this->currentClassName)];
             }
 
-            if ($param->type !== null) {
-                $this->funcTypedParams[$funcKey]++;
-                $this->fileTypedParams++;
+            if (null !== $param->type) {
+                ++$this->funcTypedParams[$funcKey];
+                ++$this->fileTypedParams;
                 if ($isMethod && count($this->currentClassName) > 0) {
-                    $this->classTypedParams[end($this->currentClassName)]++;
+                    ++$this->classTypedParams[end($this->currentClassName)];
                 }
             }
         }
@@ -229,6 +261,9 @@ class TypeCoverageVisitor implements NodeVisitor, VisitorInterface
     private function handleFunctionLeave(bool $isMethod): void
     {
         $funcKey = array_pop($this->currentFunctionName);
+        if (null === $funcKey) {
+            return;
+        }
 
         $coverage = $this->calculateCoverage(
             $this->funcTypedParams[$funcKey],
@@ -242,16 +277,16 @@ class TypeCoverageVisitor implements NodeVisitor, VisitorInterface
             $parts = explode('::', $funcKey, 2);
             $this->metricsController->setMetricValue(
                 MetricCollectionTypeEnum::MethodCollection,
-                ['path' => $parts[0], 'name' => $parts[1]],
+                ['path' => $parts[0], 'name' => $parts[1] ?? ''],
                 $coverage,
-                'typeCoverage'
+                MetricKey::TYPE_COVERAGE
             );
         } else {
             $this->metricsController->setMetricValue(
                 MetricCollectionTypeEnum::FunctionCollection,
                 ['path' => $this->path, 'name' => $funcKey],
                 $coverage,
-                'typeCoverage'
+                MetricKey::TYPE_COVERAGE
             );
         }
     }
@@ -259,10 +294,10 @@ class TypeCoverageVisitor implements NodeVisitor, VisitorInterface
     private function calculateCoverage(
         int $typedParams, int $totalParams,
         int $typedReturns, int $totalReturns,
-        int $typedProperties, int $totalProperties
+        int $typedProperties, int $totalProperties,
     ): float {
         $totalElements = $totalParams + $totalReturns + $totalProperties;
-        if ($totalElements === 0) {
+        if (0 === $totalElements) {
             return 100.0;
         }
 
@@ -272,7 +307,7 @@ class TypeCoverageVisitor implements NodeVisitor, VisitorInterface
         $propertyCoverage = $totalProperties > 0 ? $typedProperties / $totalProperties : 1.0;
 
         // If no properties exist, redistribute weight to params and returns
-        if ($totalProperties === 0) {
+        if (0 === $totalProperties) {
             $coverage = $paramCoverage * 0.4167 + $returnCoverage * 0.5833; // 25/60 and 35/60
         } else {
             $coverage = $paramCoverage * 0.25 + $returnCoverage * 0.35 + $propertyCoverage * 0.40;

@@ -11,7 +11,7 @@ class ProjectDataProvider implements ReportDataProviderInterface
 {
     use ReportDataProviderTrait;
 
-    function gatherData(): void
+    public function gatherData(): void
     {
         $projectMetrics = $this->metricsController->getMetricCollection(
             MetricCollectionTypeEnum::ProjectCollection,

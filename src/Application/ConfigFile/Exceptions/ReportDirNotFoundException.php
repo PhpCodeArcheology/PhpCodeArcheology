@@ -6,5 +6,4 @@ namespace PhpCodeArch\Application\ConfigFile\Exceptions;
 
 class ReportDirNotFoundException extends \Exception
 {
-
 }

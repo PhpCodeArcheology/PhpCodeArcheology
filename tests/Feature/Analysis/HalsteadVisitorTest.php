@@ -13,7 +13,10 @@ use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
 
 require_once __DIR__ . '/test_helpers.php';
 
-$halsteadTests = require __DIR__ . '/fileprovider/test-halstead-provider.php';
+$halsteadTests = array_merge(
+    require __DIR__ . '/fileprovider/test-halstead-provider.php',
+    require __DIR__ . '/fileprovider/test-hand-halstead-provider.php',
+);
 
 function getHalVisitors(): array
 {

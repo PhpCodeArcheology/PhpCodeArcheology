@@ -16,7 +16,10 @@ use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
 
 require_once __DIR__ . '/test_helpers.php';
 
-$maintainabilityTests = require __DIR__ . '/fileprovider/test-maintain-provider.php';
+$maintainabilityTests = array_merge(
+    require __DIR__ . '/fileprovider/test-maintain-provider.php',
+    require __DIR__ . '/fileprovider/test-hand-mi-provider.php',
+);
 
 function getMaintainabilityVisitors(): array
 {

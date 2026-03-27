@@ -83,5 +83,5 @@ it('returns an error string when an exception is thrown', function () {
 
     $result = (new GraphTool($factory))->getGraph();
 
-    expect($result)->toBe('Error retrieving graph: graph error');
+    expect($result)->toBe('An error occurred while retrieving the graph.');
 });

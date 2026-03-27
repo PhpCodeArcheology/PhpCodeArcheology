@@ -5,21 +5,25 @@ declare(strict_types=1);
 namespace PhpCodeArch\Application;
 
 use PhpCodeArch\Analysis\CognitiveComplexityVisitor;
+use PhpCodeArch\Analysis\ConfigAwareVisitorInterface;
 use PhpCodeArch\Analysis\CyclomaticComplexityVisitor;
 use PhpCodeArch\Analysis\DeadCodeVisitor;
-use PhpCodeArch\Analysis\DocumentationCoverageVisitor;
-use PhpCodeArch\Analysis\RuntimeComplexityVisitor;
-use PhpCodeArch\Analysis\SecuritySmellVisitor;
-use PhpCodeArch\Analysis\TypeCoverageVisitor;
 use PhpCodeArch\Analysis\DependencyVisitor;
+use PhpCodeArch\Analysis\DocumentationCoverageVisitor;
 use PhpCodeArch\Analysis\GlobalsVisitor;
 use PhpCodeArch\Analysis\HalsteadMetricsVisitor;
 use PhpCodeArch\Analysis\IdentifyVisitor;
+use PhpCodeArch\Analysis\InitializableVisitorInterface;
 use PhpCodeArch\Analysis\LcomVisitor;
 use PhpCodeArch\Analysis\LocVisitor;
 use PhpCodeArch\Analysis\PackageVisitor;
+use PhpCodeArch\Analysis\RuntimeComplexityVisitor;
+use PhpCodeArch\Analysis\SecuritySmellVisitor;
+use PhpCodeArch\Analysis\TypeCoverageVisitor;
+use PhpCodeArch\Analysis\VisitorInterface;
 use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
+use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\Collections\ErrorCollection;
 use PhpCodeArch\Metrics\Model\Collections\FileNameCollection;
 use PhpParser\Error;
@@ -30,13 +34,12 @@ use PhpParser\Parser;
 readonly class Analyzer
 {
     public function __construct(
-        private Config            $config,
-        private Parser            $parser,
-        private NodeTraverser     $traverser,
+        private Config $config,
+        private Parser $parser,
+        private NodeTraverser $traverser,
         private MetricsController $metricsController,
-        private CliOutput         $output,
-    )
-    {
+        private CliOutput $output,
+    ) {
     }
 
     public function analyze(FileList $fileList): void
@@ -50,15 +53,13 @@ readonly class Analyzer
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             [
-                'overallFiles' => $fileCount,
-                'overallFileErrors' => $projectFileErrors,
+                MetricKey::OVERALL_FILES => $fileCount,
+                MetricKey::OVERALL_FILE_ERRORS => $projectFileErrors,
             ]
         );
     }
 
-    /**
-     * @return array
-     */
+    /** @return array<class-string<VisitorInterface&\PhpParser\NodeVisitor>> */
     private function getVisitorClassList(): array
     {
         if ($this->config->get('quickMode')) {
@@ -88,6 +89,7 @@ readonly class Analyzer
         ];
     }
 
+    /** @return array<VisitorInterface&\PhpParser\NodeVisitor> */
     private function getVisitorObjects(): array
     {
         $visitorList = $this->getVisitorClassList();
@@ -100,11 +102,11 @@ readonly class Analyzer
                 metricsController: $this->metricsController
             );
 
-            if (method_exists($visitorObject, 'init')) {
+            if ($visitorObject instanceof InitializableVisitorInterface) {
                 $visitorObject->init();
             }
 
-            if (method_exists($visitorObject, 'injectConfig')) {
+            if ($visitorObject instanceof ConfigAwareVisitorInterface) {
                 $visitorObject->injectConfig($this->config);
             }
 
@@ -115,6 +117,7 @@ readonly class Analyzer
         return $visitorObjects;
     }
 
+    /** @param array<VisitorInterface&\PhpParser\NodeVisitor> $visitorObjects */
     private function traverseFiles(FileList $fileList, array $visitorObjects): int
     {
         $fileCount = count($fileList->getFiles());
@@ -124,7 +127,8 @@ readonly class Analyzer
         $progressBar = new ProgressBar($this->output, $formatter, $fileCount, 'Analysing');
 
         $fileNameCollection = new FileNameCollection();
-        $shortOpenTags = ($this->config->get('php') ?? [])['shortOpenTags'] ?? false;
+        $phpConfig = $this->config->get('php');
+        $shortOpenTags = is_array($phpConfig) ? ($phpConfig['shortOpenTags'] ?? false) : false;
         $errorFiles = [];
 
         foreach ($fileList->getFiles() as $count => $file) {
@@ -136,8 +140,8 @@ readonly class Analyzer
 
             $phpCode = @file_get_contents($file);
 
-            if ($shortOpenTags && $phpCode !== false) {
-                $phpCode = preg_replace('/<\?(?!php|=)/', '<?php ', $phpCode);
+            if ($shortOpenTags && is_string($phpCode)) {
+                $phpCode = preg_replace('/<\?(?!php|=)/', '<?php ', $phpCode) ?? $phpCode;
             }
 
             $fileErrorCollection = new ErrorCollection();
@@ -156,7 +160,7 @@ readonly class Analyzer
                 'errors'
             );
 
-            if ($phpCode === false) {
+            if (!is_string($phpCode)) {
                 $fileErrorCollection->set("Could not read file: $file");
                 $errorFiles[] = [$file, 'Could not read file'];
                 ++$projectFileErrors;
@@ -164,8 +168,11 @@ readonly class Analyzer
             }
 
             $encoding = mb_detect_encoding($phpCode, 'UTF-8, ISO-8859-1, Windows-1252', true);
-            if ($encoding !== false && $encoding !== 'UTF-8') {
-                $phpCode = mb_convert_encoding($phpCode, 'UTF-8', $encoding);
+            if (false !== $encoding && 'UTF-8' !== $encoding) {
+                $converted = mb_convert_encoding($phpCode, 'UTF-8', $encoding);
+                if (false !== $converted) {
+                    $phpCode = $converted;
+                }
             }
 
             $ast = null;
@@ -180,14 +187,14 @@ readonly class Analyzer
 
             unset($phpCode);
 
-            if (! $ast) {
+            if (!$ast) {
                 continue;
             }
 
             $this->traverser->traverse($ast);
             unset($ast);
 
-            if ($count % 100 === 0) {
+            if (0 === $count % 100) {
                 gc_collect_cycles();
             }
         }
@@ -205,18 +212,20 @@ readonly class Analyzer
             $this->output->outNl(
                 $formatter->warning("Warning: $projectFileErrors file(s) had errors and were skipped:")
             );
-            $commonPath = $this->config->get('files')[0] ?? '';
+            $filesConfig = $this->config->get('files');
+            $firstFile = is_array($filesConfig) ? ($filesConfig[0] ?? '') : '';
+            $commonPath = is_string($firstFile) ? $firstFile : '';
             foreach ($errorFiles as [$errorFile, $errorMessage]) {
-                $displayPath = str_starts_with($errorFile, $commonPath)
-                    ? substr($errorFile, strlen($commonPath) + 1)
+                $displayPath = str_starts_with((string) $errorFile, $commonPath)
+                    ? substr((string) $errorFile, strlen($commonPath) + 1)
                     : $errorFile;
-                $this->output->outNl('  ' . $formatter->dim($displayPath) . ': ' . $errorMessage);
+                $this->output->outNl('  '.$formatter->dim($displayPath).': '.$errorMessage);
             }
         }
 
         $this->output->outNl(
-            'Analysed ' . $formatter->success((string) ($fileCount - $projectFileErrors)) .
-            ' of ' . $formatter->success((string) $fileCount) . ' files successfully.'
+            'Analysed '.$formatter->success((string) ($fileCount - $projectFileErrors)).
+            ' of '.$formatter->success((string) $fileCount).' files successfully.'
         );
 
         return $projectFileErrors;

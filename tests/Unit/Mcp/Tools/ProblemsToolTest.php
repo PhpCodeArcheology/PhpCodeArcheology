@@ -113,5 +113,5 @@ it('returns an error string when an exception is thrown', function () {
 
     $result = (new ProblemsTool($factory))->getProblems();
 
-    expect($result)->toBe('Error retrieving problems: db error');
+    expect($result)->toBe('An error occurred while retrieving problems.');
 });

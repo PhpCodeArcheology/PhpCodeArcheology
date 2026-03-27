@@ -13,16 +13,13 @@ use PhpParser\Node\Name\FullyQualified;
 use PhpParser\Node\NullableType;
 use PhpParser\PrettyPrinter\Standard;
 
-/**
- * @param mixed $node
- * @return string|null
- */
 function getNodeName(mixed $node): ?string
 {
     $prettyPrinter = new Standard();
 
     if ($node instanceof NullableType) {
         $returnType = 'null|';
+
         return $returnType.getNodeName($node->type);
     }
 
@@ -39,39 +36,39 @@ function getNodeName(mixed $node): ?string
     }
 
     if ($node instanceof Concat) {
-        return '{' . $prettyPrinter->prettyPrint([$node]) . '}';
+        return '{'.$prettyPrinter->prettyPrint([$node]).'}';
     }
 
-    if (isset($node->class)) {
+    if (is_object($node) && isset($node->class)) {
         return getNodeName($node->class);
     }
 
     if ($node instanceof Name) {
-        return implode($node->getParts());
+        return implode('', $node->getParts());
+    }
+
+    if (!is_object($node)) {
+        return null;
     }
 
     if (isset($node->name) && $node->name instanceof Variable) {
         return getNodeName($node->name);
     }
 
-    if (isset($node->name) && ! is_string($node->name)) {
+    if (isset($node->name) && !is_string($node->name)) {
         return getNodeName($node->name);
     }
 
-    if (isset($node->name) && null === $node->name) {
-        return 'anonymous@' . spl_object_hash($node);
-    }
-
     if (isset($node->name)) {
-        return (string) $node->name;
+        return is_string($node->name) ? $node->name : null;
     }
 
     return null;
 }
 
-function incrementOr1IfNull(mixed $value): mixed
+function incrementOr1IfNull(mixed $value): int
 {
-    if (! $value) {
+    if (!is_int($value) || !$value) {
         return 1;
     }
 

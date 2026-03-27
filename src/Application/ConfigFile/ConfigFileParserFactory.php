@@ -17,6 +17,7 @@ class ConfigFileParserFactory
         switch (pathinfo($file, PATHINFO_EXTENSION)) {
             case 'yaml':
                 $yaml = new Yaml();
+
                 return new ConfigFileParserYaml($file, $yaml);
             default:
                 throw new ConfigFileExtensionNotSupportedException("The file $file has the wrong format.");

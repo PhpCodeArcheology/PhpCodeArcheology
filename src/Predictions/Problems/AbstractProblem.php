@@ -7,12 +7,12 @@ namespace PhpCodeArch\Predictions\Problems;
 abstract readonly class AbstractProblem implements ProblemInterface
 {
     protected function __construct(
-        private int    $problemLevel,
+        private int $problemLevel,
         private string $message)
     {
     }
 
-    abstract static function ofProblemLevelAndMessage(int $problemLevel, string $message): ProblemInterface;
+    abstract public static function ofProblemLevelAndMessage(int $problemLevel, string $message): ProblemInterface;
 
     public function getProblemLevel(): int
     {

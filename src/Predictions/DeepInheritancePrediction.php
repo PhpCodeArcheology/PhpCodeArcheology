@@ -6,6 +6,7 @@ namespace PhpCodeArch\Predictions;
 
 use PhpCodeArch\Application\Config;
 use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Predictions\Problems\DeepInheritanceProblem;
 
@@ -27,7 +28,7 @@ class DeepInheritancePrediction implements PredictionInterface
                 continue;
             }
 
-            $dit = $metric->get('dit')?->getValue() ?? 0;
+            $dit = $metric->get(MetricKey::DIT)?->asInt() ?? 0;
 
             if ($dit >= $this->threshold('deepInheritance.warning', 4)) {
                 ++$problemCount;
@@ -41,7 +42,7 @@ class DeepInheritancePrediction implements PredictionInterface
 
                 $metricsController->setProblemByIdentifierString(
                     identifierString: (string) $metric->getIdentifier(),
-                    key: 'dit',
+                    key: MetricKey::DIT,
                     problem: $problem
                 );
             }

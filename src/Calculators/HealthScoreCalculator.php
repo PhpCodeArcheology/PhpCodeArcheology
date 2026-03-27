@@ -6,6 +6,7 @@ namespace PhpCodeArch\Calculators;
 
 use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
+use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
 use PhpCodeArch\Metrics\Model\ProjectMetrics\ProjectMetricsCollection;
 
@@ -28,71 +29,74 @@ class HealthScoreCalculator implements CalculatorInterface
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             [
-                'healthScore' => round($result['healthScore'], 1),
-                'healthScoreGrade' => $this->scoreToGrade($result['healthScore']),
-                'healthScoreVersion' => 2,
-                'overallHtmlRatio' => $result['overallHtmlRatio'],
-                'overallPublicMethodRatio' => $result['overallPublicMethodRatio'],
-                'overallStaticMethodRatio' => $result['overallStaticMethodRatio'],
-                'overallEncapsulationScore' => $result['overallEncapsulationScore'],
+                MetricKey::HEALTH_SCORE => round($result['healthScore'], 1),
+                MetricKey::HEALTH_SCORE_GRADE => $this->scoreToGrade($result['healthScore']),
+                MetricKey::HEALTH_SCORE_VERSION => 2,
+                MetricKey::OVERALL_HTML_RATIO => $result['overallHtmlRatio'],
+                MetricKey::OVERALL_PUBLIC_METHOD_RATIO => $result['overallPublicMethodRatio'],
+                MetricKey::OVERALL_STATIC_METHOD_RATIO => $result['overallStaticMethodRatio'],
+                MetricKey::OVERALL_ENCAPSULATION_SCORE => $result['overallEncapsulationScore'],
             ]
         );
     }
 
+    /**
+     * @return array{healthScore: float, overallHtmlRatio: float, overallPublicMethodRatio: float, overallStaticMethodRatio: float, overallEncapsulationScore: float}
+     */
     private function computeScore(ProjectMetricsCollection $metrics): array
     {
         $scores = [];
         $weights = [];
 
-        // 1. Maintainability Index (15%) — realistic scale: MI 40=0, MI 120+=100
-        $avgMI = $metrics->get('overallAvgMI')?->getValue() ?? 0;
+        // 1. Maintainability Index (13%) — realistic scale: MI 40=0, MI 120+=100
+        $avgMI = $metrics->getFloat(MetricKey::OVERALL_AVG_MI);
         $miScore = min(100, max(0, ($avgMI - 40) * 1.25));
         $scores[] = $miScore;
         $weights[] = 0.13;
 
-        // 2. Problem density (10%) — logarithmic decay for graceful degradation
-        $errors = $metrics->get('overallErrorCount')?->getValue() ?? 0;
-        $warnings = $metrics->get('overallWarningCount')?->getValue() ?? 0;
-        $classes = $metrics->get('overallClasses')?->getValue() ?? 1;
-        $files = $metrics->get('overallFiles')?->getValue() ?? 1;
+        // 2. Problem density (9%) — logarithmic decay for graceful degradation
+        $errors = $metrics->getInt(MetricKey::OVERALL_ERROR_COUNT);
+        $warnings = $metrics->getInt(MetricKey::OVERALL_WARNING_COUNT);
+        $classes = $metrics->getInt(MetricKey::OVERALL_CLASSES);
+        $files = $metrics->getInt(MetricKey::OVERALL_FILES);
         $totalEntities = max($classes + $files, 1);
         $problemDensity = ($errors + $warnings) / $totalEntities;
         $problemScore = max(0, 100 - 30 * log(1 + $problemDensity));
         $scores[] = $problemScore;
         $weights[] = 0.09;
 
-        // 3. Cyclomatic Complexity (10%) — lower is better
-        $avgCC = $metrics->get('overallAvgCC')?->getValue() ?? 0;
+        // 3. Cyclomatic Complexity (9%) — lower is better
+        $avgCC = $metrics->getFloat(MetricKey::OVERALL_AVG_CC);
         $ccScore = max(0, min(100, 100 - ($avgCC - 1) * 5));
         $scores[] = $ccScore;
         $weights[] = 0.09;
 
-        // 4. Coupling — Distance from main sequence (10%) — lower is better
-        $avgDistance = abs($metrics->get('overallDistanceFromMainline')?->getValue() ?? 0);
+        // 4. Coupling — Distance from main sequence (9%) — lower is better
+        $avgDistance = abs($metrics->getFloat(MetricKey::OVERALL_DISTANCE_FROM_MAINLINE));
         $couplingScore = max(0, min(100, (1 - $avgDistance) * 100));
         $scores[] = $couplingScore;
         $weights[] = 0.09;
 
         // 5. Code structure balance (5%) — LLOC outside classes/functions should be low
-        $lloc = $metrics->get('overallLloc')?->getValue() ?? 1;
-        $llocOutside = $metrics->get('overallLlocOutside')?->getValue() ?? 0;
+        $lloc = $metrics->getInt(MetricKey::OVERALL_LLOC) ?: 1;
+        $llocOutside = $metrics->getInt(MetricKey::OVERALL_LLOC_OUTSIDE);
         $outsideRatio = $lloc > 0 ? $llocOutside / $lloc : 0;
         $structureScore = max(0, (1 - $outsideRatio) * 100);
         $scores[] = $structureScore;
         $weights[] = 0.05;
 
-        // 6. HTML-in-PHP ratio (15%) — cubic decay: punishes heavy HTML mixing
-        $htmlLoc = $metrics->get('overallHtmlLoc')?->getValue() ?? 0;
-        $totalLoc = $metrics->get('overallLoc')?->getValue() ?? 1;
+        // 6. HTML-in-PHP ratio (13%) — cubic decay: punishes heavy HTML mixing
+        $htmlLoc = $metrics->getInt(MetricKey::OVERALL_HTML_LOC);
+        $totalLoc = $metrics->getInt(MetricKey::OVERALL_LOC) ?: 1;
         $htmlRatio = $totalLoc > 0 ? $htmlLoc / $totalLoc : 0;
-        $htmlScore = 100 * pow(1 - $htmlRatio, 3);
+        $htmlScore = 100 * (1 - $htmlRatio) ** 3;
         $scores[] = $htmlScore;
         $weights[] = 0.13;
 
-        // 7. Encapsulation quality (15%) — visibility distribution + static method ratio
-        $totalMethods = $metrics->get('overallMethodsCount')?->getValue() ?? 0;
-        $publicMethods = $metrics->get('overallPublicMethodsCount')?->getValue() ?? 0;
-        $staticMethods = $metrics->get('overallStaticMethodsCount')?->getValue() ?? 0;
+        // 7. Encapsulation quality (13%) — visibility distribution + static method ratio
+        $totalMethods = $metrics->getInt(MetricKey::OVERALL_METHODS_COUNT);
+        $publicMethods = $metrics->getInt(MetricKey::OVERALL_PUBLIC_METHODS_COUNT);
+        $staticMethods = $metrics->getInt(MetricKey::OVERALL_STATIC_METHODS_COUNT);
 
         if ($totalMethods > 0) {
             $privateRatio = ($totalMethods - $publicMethods) / $totalMethods;
@@ -115,13 +119,13 @@ class HealthScoreCalculator implements CalculatorInterface
         $scores[] = $encapsulationScore;
         $weights[] = 0.13;
 
-        // 8. Dependency health (10%) — penalizes cycle breadth and count
-        $classesInCycles = $metrics->get('overallClassesInCycles')?->getValue() ?? 0;
-        $depCycles = $metrics->get('overallDependencyCycles')?->getValue() ?? 0;
+        // 8. Dependency health (9%) — penalizes cycle breadth and count
+        $classesInCycles = $metrics->getInt(MetricKey::OVERALL_CLASSES_IN_CYCLES);
+        $depCycles = $metrics->getInt(MetricKey::OVERALL_DEPENDENCY_CYCLES);
 
         if ($classes > 0) {
             $cycleRatio = $classesInCycles / $classes;
-            $depScore = max(0, min(100, 100 * pow(1 - $cycleRatio, 2) - $depCycles * 5));
+            $depScore = max(0, min(100, 100 * (1 - $cycleRatio) ** 2 - $depCycles * 5));
         } else {
             $depScore = 100;
         }
@@ -130,36 +134,30 @@ class HealthScoreCalculator implements CalculatorInterface
         $weights[] = 0.09;
 
         // 9. Abstractness (10%) — projects need interfaces/abstract classes
-        $abstractness = abs($metrics->get('overallAbstractness')?->getValue() ?? 0);
+        $abstractness = abs($metrics->getFloat(MetricKey::OVERALL_ABSTRACTNESS));
         // Reaches 100 at 10% abstractness (interfaces + abstract classes / total)
         $abstractScore = min(100, $abstractness * 1000);
         $scores[] = $abstractScore;
         $weights[] = 0.10;
 
         // 10. Test coverage (10%) — prefer Clover XML line coverage, fall back to class ratio
-        $coveragePercent = $metrics->get('overallCoveragePercent')?->getValue() ?? null;
-        $testedClassRatio = $metrics->get('overallTestedClassRatio')?->getValue() ?? null;
-        $testFileCount = $metrics->get('overallTestFileCount')?->getValue() ?? 0;
+        $coveragePercentValue = $metrics->get(MetricKey::OVERALL_COVERAGE_PERCENT);
+        $testedClassRatioValue = $metrics->get(MetricKey::OVERALL_TESTED_CLASS_RATIO);
+        $testFileCount = $metrics->getInt(MetricKey::OVERALL_TEST_FILE_COUNT);
 
-        if ($coveragePercent !== null) {
-            $testScore = min(100, $coveragePercent);
+        if (null !== $coveragePercentValue) {
+            $testScore = min(100.0, $coveragePercentValue->asFloat());
             $scores[] = $testScore;
             $weights[] = 0.10;
-        } elseif ($testedClassRatio !== null && $testFileCount > 0) {
-            $testScore = min(100, $testedClassRatio);
+        } elseif (null !== $testedClassRatioValue && $testFileCount > 0) {
+            $testScore = min(100.0, $testedClassRatioValue->asFloat());
             $scores[] = $testScore;
             $weights[] = 0.10;
         }
         // If no test data: don't add the factor at all — remaining weights auto-normalize
 
         // Weighted average
-        $totalWeight = array_sum($weights);
-        $weightedSum = 0;
-        for ($i = 0; $i < count($scores); $i++) {
-            $weightedSum += $scores[$i] * $weights[$i];
-        }
-
-        $healthScore = $totalWeight > 0 ? $weightedSum / $totalWeight : 0;
+        $healthScore = $this->weightedAverage($scores, $weights);
 
         return [
             'healthScore' => $healthScore,
@@ -168,6 +166,23 @@ class HealthScoreCalculator implements CalculatorInterface
             'overallStaticMethodRatio' => round($staticMethodRatio * 100, 1),
             'overallEncapsulationScore' => round($encapsulationScore, 1),
         ];
+    }
+
+    /**
+     * @param float[] $scores
+     * @param float[] $weights
+     */
+    private function weightedAverage(array $scores, array $weights): float
+    {
+        $totalWeight = 0.0;
+        $weightedSum = 0.0;
+        foreach ($scores as $i => $score) {
+            $weight = $weights[$i] ?? 0.0;
+            $totalWeight += $weight;
+            $weightedSum += $score * $weight;
+        }
+
+        return $totalWeight > 0.0 ? $weightedSum / $totalWeight : 0.0;
     }
 
     private function scoreToGrade(float $score): string

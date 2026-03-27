@@ -36,7 +36,7 @@ return [
                                 'operators' => 3,
                                 'operands' => 6,
                                 'uniqueOperators' => 3,
-                                'uniqueOperands' => 3,
+                                'uniqueOperands' => 4,
                             ],
                         ],
                         'testMethod2' => [
@@ -44,7 +44,7 @@ return [
                                 'operators' => 3,
                                 'operands' => 7,
                                 'uniqueOperators' => 2,
-                                'uniqueOperands' => 3,
+                                'uniqueOperands' => 6,
                             ],
                         ],
                     ],
@@ -79,7 +79,7 @@ return [
                                 'operators' => 3,
                                 'operands' => 6,
                                 'uniqueOperators' => 3,
-                                'uniqueOperands' => 3,
+                                'uniqueOperands' => 4,
                             ],
                         ],
                         'testMethod2' => [
@@ -87,7 +87,7 @@ return [
                                 'operators' => 5,
                                 'operands' => 6,
                                 'uniqueOperators' => 5,
-                                'uniqueOperands' => 3,
+                                'uniqueOperands' => 4,
                             ],
                         ],
                     ],
@@ -105,7 +105,7 @@ return [
                                 'operators' => 4,
                                 'operands' => 7,
                                 'uniqueOperators' => 2,
-                                'uniqueOperands' => 3,
+                                'uniqueOperands' => 6,
                             ],
                         ],
                     ],
@@ -164,6 +164,31 @@ return [
                     ],
                 ],
             ],
+        ],
+    ],
+
+    [
+        __DIR__ . '/../testfiles/hand-calc-minimal.php',
+        [
+            'file' => [
+                'counted' => [
+                    'operators' => 4,
+                    'operands' => 4,
+                    'uniqueOperators' => 3,
+                    'uniqueOperands' => 3,
+                ],
+            ],
+            'functions' => [
+                'minimalIf' => [
+                    'counted' => [
+                        'operators' => 4,
+                        'operands' => 4,
+                        'uniqueOperators' => 3,
+                        'uniqueOperands' => 3,
+                    ],
+                ],
+            ],
+            'classes' => [],
         ],
     ],
 ];

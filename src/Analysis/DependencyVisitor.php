@@ -5,90 +5,67 @@ declare(strict_types=1);
 namespace PhpCodeArch\Analysis;
 
 use PhpCodeArch\Application\Config;
+
+use function PhpCodeArch\getNodeName;
+
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
-use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\Collections\ClassNameCollection;
 use PhpCodeArch\Metrics\Model\Collections\InterfaceNameCollection;
 use PhpCodeArch\Metrics\Model\Collections\MethodCallCollection;
 use PhpCodeArch\Metrics\Model\Collections\TraitNameCollection;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
-use function PhpCodeArch\getNodeName;
 
-class DependencyVisitor implements NodeVisitor, VisitorInterface
+class DependencyVisitor implements NodeVisitor, VisitorInterface, ConfigAwareVisitorInterface, PathAwareVisitorInterface
 {
     use VisitorTrait;
 
     /**
-     * @var string[]
+     * @var array<int, string>
      */
     private array $currentClassName = [];
 
-    /**
-     * @var bool
-     */
     private bool $insideFunction = false;
 
-    /**
-     * @var bool
-     */
     private bool $insideMethod = false;
 
-    /**
-     * @var ClassMetricsCollection[]
-     */
-    private array $currentClassMetrics = [];
-
-    /**
-     * @var array
-     */
+    /** @var array<string, list<string>> */
     private array $classDependencies = [];
 
     /**
-     * Directly used classes (not in extend or implement)
-     * @var array
+     * Directly used classes (not in extend or implement).
+     *
+     * @var array<string, list<string>>
      */
     private array $classUses = [];
 
-
-    /**
-     * @var array
-     */
+    /** @var array<string, list<string>> */
     private array $classTraits = [];
 
-    /**
-     * @var array
-     */
+    /** @var list<string> */
     private array $functionDependencies = [];
 
-    /**
-     * @var array
-     */
+    /** @var array<string, list<string>> */
     private array $methodDependencies = [];
 
-    /**
-     * @var array
-     */
+    /** @var list<string> */
     private array $outsideDependencies = [];
 
     /**
-     * @var string[]
+     * @var array<int, string>
      */
     private array $currentMethodName = [];
 
     /**
-     * Cross-class method call edges: [className][methodName][] = ['targetClass' => ..., 'targetMethod' => ...]
-     * @var array
+     * Cross-class method call edges: [className][methodName][] = ['targetClass' => ..., 'targetMethod' => ...].
+     *
+     * @var array<string, array<string, list<array{targetClass: string, targetMethod: string}>>>
      */
     private array $methodCallEdges = [];
 
     private bool $trackMethodCalls = true;
 
-    /**
-     * @param Node $node
-     * @return void
-     */
-    public function enterNode(Node $node): void
+    public function enterNode(Node $node): int|Node|null
     {
         switch (true) {
             case $node instanceof Node\Stmt\Function_:
@@ -107,13 +84,11 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface
                 $this->setupClassMetrics($node);
                 break;
         }
+
+        return null;
     }
 
-    /**
-     * @param Node $node
-     * @return void
-     */
-    public function leaveNode(Node $node): void
+    public function leaveNode(Node $node): int|Node|array|null
     {
         switch (true) {
             case $node instanceof Node\Stmt\Class_:
@@ -159,13 +134,11 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface
                 }
                 break;
         }
+
+        return null;
     }
 
-    /**
-     * @param array $nodes
-     * @return void
-     */
-    public function afterTraverse(array $nodes): void
+    public function afterTraverse(array $nodes): ?array
     {
         $dependencyCollection = new ClassNameCollection($this->outsideDependencies);
 
@@ -175,17 +148,15 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface
             $dependencyCollection,
             'dependencies'
         );
+
+        return null;
     }
 
-    /**
-     * @param mixed $dependency
-     * @return string|null
-     */
     private function setDependency(mixed $dependency): ?string
     {
         $dependency = $this->checkDependency($dependency);
 
-        if ($dependency === false) {
+        if (false === $dependency) {
             return null;
         }
 
@@ -221,23 +192,18 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface
                 break;
         }
 
-
         return $dependency;
     }
 
-    /**
-     * @param mixed $dependency
-     * @return void
-     */
     private function setUses(mixed $dependency): void
     {
         $dependency = $this->checkDependency($dependency);
 
-        if ($dependency === false) {
+        if (false === $dependency) {
             return;
         }
 
-        if (count($this->currentClassName) === 0) {
+        if (0 === count($this->currentClassName)) {
             return;
         }
 
@@ -250,19 +216,18 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface
         $this->classUses[$className][] = $dependency;
     }
 
-    /**
-     * @param mixed $dependency
-     * @return void
-     */
     private function setTrait(mixed $dependency): void
     {
         $dependency = $this->checkDependency($dependency);
 
-        if ($dependency === false) {
+        if (false === $dependency) {
             return;
         }
 
         $className = end($this->currentClassName);
+        if (false === $className) {
+            return;
+        }
 
         if (in_array($dependency, $this->classTraits[$className])) {
             return;
@@ -271,37 +236,28 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface
         $this->classTraits[$className][] = $dependency;
     }
 
-    /**
-     * @param mixed $dependency
-     * @return string|false
-     */
     private function checkDependency(mixed $dependency): string|false
     {
         $dependency = getNodeName($dependency);
 
-        if (! $dependency) {
+        if (!$dependency) {
             return false;
         }
 
-        $dependencyLowercase = strtolower((string) $dependency);
+        $dependencyLowercase = strtolower($dependency);
 
-        if ($dependencyLowercase === 'self' || $dependencyLowercase === 'parent') {
+        if ('self' === $dependencyLowercase || 'parent' === $dependencyLowercase) {
             return false;
         }
 
         return $dependency;
     }
 
-    /**
-     * @param Node\Stmt\Function_|Node\Stmt\ClassMethod $stmt
-     * @return void
-     */
     private function createFunctionDependencies(Node\Stmt\Function_|Node\Stmt\ClassMethod $stmt): void
     {
-
         foreach ($stmt->getParams() as $parameter) {
-            if (! isset($parameter->type)
-                || ! $parameter->type instanceof Node\Name\FullyQualified) {
+            if (!isset($parameter->type)
+                || !$parameter->type instanceof Node\Name\FullyQualified) {
                 continue;
             }
 
@@ -310,23 +266,15 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface
 
         if (isset($stmt->returnType)
             && $stmt->returnType instanceof Node\Name\FullyQualified) {
-
             $this->setDependency($stmt->returnType);
         }
     }
 
-    /**
-     * @return void
-     */
-    private function afterSetPath(): void
+    public function afterSetPath(string $path): void
     {
         $this->outsideDependencies = [];
     }
 
-    /**
-     * @param Node\Stmt\Class_|Node\Stmt\Trait_|Node\Stmt\Enum_|Node\Stmt\Interface_ $node
-     * @return void
-     */
     private function setupClassMetrics(Node\Stmt\Class_|Node\Stmt\Trait_|Node\Stmt\Enum_|Node\Stmt\Interface_ $node): void
     {
         $className = ClassName::ofNode($node)->__toString();
@@ -337,29 +285,22 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface
         $this->currentClassName[] = $className;
     }
 
-    /**
-     * @return void
-     */
     private function setupFunctionMetrics(): void
     {
         $this->insideFunction = true;
         $this->functionDependencies = [];
     }
 
-    /**
-     * @return void
-     */
     private function setupMethodMetrics(): void
     {
         $className = end($this->currentClassName);
+        if (false === $className) {
+            return;
+        }
         $this->insideMethod = true;
         $this->methodDependencies[$className] = [];
     }
 
-    /**
-     * @param Node\Stmt\Class_|Node\Stmt\Trait_|Node\Stmt\Enum_|Node\Stmt\Interface_ $node
-     * @return void
-     */
     private function createClassDependencies(Node\Stmt\Class_|Node\Stmt\Trait_|Node\Stmt\Enum_|Node\Stmt\Interface_ $node): void
     {
         $extends = [];
@@ -384,11 +325,14 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface
         }
 
         $className = array_pop($this->currentClassName);
+        if (null === $className) {
+            return;
+        }
 
         $collections = [
-            'dependencies' => new ClassNameCollection($this->classDependencies[$className]),
-            'usedClasses' => new ClassNameCollection($this->classUses[$className]),
-            'traits' => new TraitNameCollection($this->classTraits[$className]),
+            'dependencies' => new ClassNameCollection($this->classDependencies[$className] ?? []),
+            'usedClasses' => new ClassNameCollection($this->classUses[$className] ?? []),
+            'traits' => new TraitNameCollection($this->classTraits[$className] ?? []),
             'interfaces' => new InterfaceNameCollection($interfaces),
             'extends' => new ClassNameCollection($extends),
         ];
@@ -398,7 +342,7 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface
                 MetricCollectionTypeEnum::ClassCollection,
                 [
                     'path' => $this->path,
-                    'name' => $className
+                    'name' => $className,
                 ],
                 $collection,
                 $collectionKey
@@ -406,10 +350,6 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface
         }
     }
 
-    /**
-     * @param Node\Stmt\Function_ $node
-     * @return void
-     */
     private function saveFunctionDependencies(Node\Stmt\Function_ $node): void
     {
         $functionName = (string) $node->namespacedName;
@@ -427,13 +367,14 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface
         $this->insideFunction = false;
     }
 
-    /**
-     * @param Node\Stmt\ClassMethod $node
-     * @return void
-     */
     private function saveMethodDependencies(Node\Stmt\ClassMethod $node): void
     {
         $className = end($this->currentClassName);
+        if (false === $className) {
+            $this->insideMethod = false;
+
+            return;
+        }
         $methodName = (string) $node->name;
 
         $this->metricsController->setCollection(
@@ -442,7 +383,7 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface
                 'path' => $className,
                 'name' => $methodName,
             ],
-            new ClassNameCollection($this->methodDependencies[$className]),
+            new ClassNameCollection($this->methodDependencies[$className] ?? []),
             'dependencies'
         );
 
@@ -450,15 +391,11 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface
     }
 
     /**
-     * Unused here
-     *
-     * @param array $nodes
-     * @return void
+     * Unused here.
      */
-    public function beforeTraverse(array $nodes): void
+    public function beforeTraverse(array $nodes): ?array
     {
         $this->currentClassName = [];
-        $this->currentClassMetrics = [];
         $this->classDependencies = [];
         $this->classUses = [];
         $this->classTraits = [];
@@ -469,12 +406,17 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface
         $this->currentMethodName = [];
         $this->insideFunction = false;
         $this->insideMethod = false;
+
+        return null;
     }
 
     public function injectConfig(Config $config): void
     {
-        $graphConfig = $config->get('graph') ?? [];
-        $this->trackMethodCalls = $graphConfig['methodCalls'] ?? true;
+        $graphConfig = $config->get('graph');
+        if (is_array($graphConfig)) {
+            $methodCalls = $graphConfig['methodCalls'] ?? true;
+            $this->trackMethodCalls = is_bool($methodCalls) ? $methodCalls : true;
+        }
     }
 
     private function recordMethodCall(string $targetClass, string $targetMethod): void
@@ -486,7 +428,7 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface
         $className = end($this->currentClassName);
         $methodName = end($this->currentMethodName);
 
-        if (!$className || !$methodName) {
+        if (false === $className || false === $methodName) {
             return;
         }
 
@@ -509,7 +451,7 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface
         }
 
         $targetClassLower = strtolower($targetClass);
-        if ($targetClassLower === 'self' || $targetClassLower === 'static' || $targetClassLower === 'parent') {
+        if ('self' === $targetClassLower || 'static' === $targetClassLower || 'parent' === $targetClassLower) {
             return;
         }
 
@@ -534,6 +476,9 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface
         }
 
         $className = end($this->currentClassName);
+        if (false === $className) {
+            return;
+        }
         $methodName = (string) $node->name;
         $calls = $this->methodCallEdges[$className][$methodName] ?? [];
 

@@ -6,7 +6,7 @@ namespace PhpCodeArch\Predictions\Problems;
 
 readonly class HotspotProblem extends AbstractProblem
 {
-    static function ofProblemLevelAndMessage(int $problemLevel, string $message): HotspotProblem
+    public static function ofProblemLevelAndMessage(int $problemLevel, string $message): HotspotProblem
     {
         return new HotspotProblem($problemLevel, $message);
     }

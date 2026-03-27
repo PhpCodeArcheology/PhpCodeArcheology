@@ -27,7 +27,7 @@ class CliOutput
 
     public function outNl(string $message = ''): static
     {
-        $this->out(PHP_EOL . $message);
+        $this->out(PHP_EOL.$message);
 
         return $this;
     }
@@ -42,19 +42,19 @@ class CliOutput
 
     public function prompt(string $question, string $default = ''): string
     {
-        $defaultHint = $default !== '' ? " [$default]" : '';
-        $this->out($question . $defaultHint . ': ');
+        $defaultHint = '' !== $default ? " [$default]" : '';
+        $this->out($question.$defaultHint.': ');
 
         $input = trim((string) fgets(STDIN));
 
-        return $input !== '' ? $input : $default;
+        return '' !== $input ? $input : $default;
     }
 
     public function outWithMemory(string $string): static
     {
         $memory = (string) memory_get_usage();
 
-        $this->out($string . ' ' . $this->humanReadableBytes($memory, 2) . " of memory");
+        $this->out($string.' '.$this->humanReadableBytes($memory, 2).' of memory');
 
         return $this;
     }
@@ -62,15 +62,12 @@ class CliOutput
     private function humanReadableBytes(string $bytes, int $decimals = 0): string
     {
         $size = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
-        $factor = floor((strlen($bytes) - 1) / 3);
+        $factor = (int) floor((strlen($bytes) - 1) / 3);
 
-        if ($factor > 0) {
-            $unit = $size[$factor];
-        }
-        else {
-            $unit = $size[0];
-        }
+        $unit = $factor > 0 ? $size[$factor] : $size[0];
+        $divisor = 1024 ** $factor;
+        $value = $divisor > 0 ? ((int) $bytes) / $divisor : 0;
 
-        return sprintf("%.{$decimals}f", $bytes / pow(1024, $factor)) . ' ' . $unit;
+        return sprintf("%.{$decimals}f", $value).' '.$unit;
     }
 }

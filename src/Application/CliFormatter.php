@@ -6,15 +6,11 @@ namespace PhpCodeArch\Application;
 
 class CliFormatter
 {
-    private bool $colorEnabled;
+    private readonly bool $colorEnabled;
 
     public function __construct(?bool $colorEnabled = null)
     {
-        if ($colorEnabled !== null) {
-            $this->colorEnabled = $colorEnabled;
-        } else {
-            $this->colorEnabled = $this->detectColorSupport();
-        }
+        $this->colorEnabled = $colorEnabled ?? $this->detectColorSupport();
     }
 
     public function isColorEnabled(): bool
@@ -63,7 +59,7 @@ class CliFormatter
 
     private function detectColorSupport(): bool
     {
-        if (getenv('NO_COLOR') !== false) {
+        if (false !== getenv('NO_COLOR')) {
             return false;
         }
 

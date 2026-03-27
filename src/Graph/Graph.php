@@ -6,10 +6,13 @@ namespace PhpCodeArch\Graph;
 
 class Graph implements GraphInterface
 {
+    /** @var array<string, Node> */
     private array $nodes = [];
 
+    /** @var Edge[] */
     private array $edges = [];
 
+    /** @var array<string, bool> */
     private array $edgesMap = [];
 
     public function insert(Node $node): void
@@ -35,6 +38,7 @@ class Graph implements GraphInterface
         foreach ($this->getEdges() as $edge) {
             $string .= sprintf("%s;\n", $edge);
         }
+
         return $string;
     }
 
@@ -45,7 +49,7 @@ class Graph implements GraphInterface
 
     public function addEdge(Node $from, Node $to): void
     {
-        $key = $from->getUniqueId() . '->' . $to->getUniqueId();
+        $key = $from->getUniqueId().'->'.$to->getUniqueId();
 
         if (isset($this->edgesMap[$key])) {
             return;
@@ -61,11 +65,13 @@ class Graph implements GraphInterface
         $this->edges[] = $edge;
     }
 
+    /** @return Edge[] */
     private function getEdges(): array
     {
         return $this->edges;
     }
 
+    /** @return array<string, Node> */
     public function getNodes(): array
     {
         return $this->nodes;

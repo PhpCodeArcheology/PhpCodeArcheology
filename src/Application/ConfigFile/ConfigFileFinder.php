@@ -20,7 +20,8 @@ readonly class ConfigFileFinder
      */
     public function checkRunningDir(): bool
     {
-        if (count($this->config->get('files')) !== 1) {
+        $filesRaw = $this->config->get('files');
+        if (!is_array($filesRaw) || 1 !== count($filesRaw)) {
             return false;
         }
 
@@ -28,27 +29,33 @@ readonly class ConfigFileFinder
 
         $configFile = sprintf(
             '%s%s%s.*',
-            rtrim($path, DIRECTORY_SEPARATOR),
+            rtrim(is_string($path) ? $path : '', DIRECTORY_SEPARATOR),
             DIRECTORY_SEPARATOR,
             'php-codearch-config'
         );
 
         $foundFiles = glob($configFile);
 
+        if (false === $foundFiles) {
+            return false;
+        }
+
         if (count($foundFiles) > 1) {
             throw new MultipleConfigFilesException('Multiple config files detected.');
         }
 
-        if (count($foundFiles) === 0) {
+        if (0 === count($foundFiles)) {
             return false;
         }
 
         $this->loadFile($foundFiles[0]);
+
         return true;
     }
 
-    public function checkFile()
-    {}
+    public function checkFile(): void
+    {
+    }
 
     /**
      * @throws ConfigFileExtensionNotSupportedException

@@ -11,7 +11,12 @@ use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
 
 require_once __DIR__ . '/test_helpers.php';
 
-use function Test\Feature\Analysis\getMetrics;
+use function Test\Feature\Analysis\getMetricsForVisitors;
+
+$cognitiveTests = array_merge(
+    require __DIR__ . '/fileprovider/test-cognitive-provider.php',
+    require __DIR__ . '/fileprovider/test-hand-cogc-provider.php',
+);
 
 function getCogCVisitors(): array
 {
@@ -22,9 +27,8 @@ function getCogCVisitors(): array
     ];
 }
 
-it('calculates cognitive complexity for functions and classes', function () {
-    $testFile = __DIR__ . '/testfiles/cognitive-complexity-1.php';
-    $metricsController = getMetrics($testFile, getCogCVisitors());
+it('calculates cognitive complexity for functions and classes', function ($testFile, $expects) {
+    $metricsController = getMetricsForVisitors($testFile, getCogCVisitors());
 
     $functionCogC = [];
     $methodCogC = [];
@@ -51,21 +55,23 @@ it('calculates cognitive complexity for functions and classes', function () {
         }
     }
 
-    // Functions
-    expect($functionCogC['simpleFunction'])->toBe(1)
-        ->and($functionCogC['nestedFunction'])->toBe(3)
-        ->and($functionCogC['booleanSequence'])->toBe(2)
-        ->and($functionCogC['mixedBoolean'])->toBe(3)
-        ->and($functionCogC['loopWithNesting'])->toBe(4);
+    // Verify functions
+    foreach ($expects['functions'] as $funcName => $expectedCogC) {
+        expect($functionCogC[$funcName] ?? null)->toBe($expectedCogC['cogc']);
+    }
 
-    // Methods
-    expect($methodCogC['deeplyNested'])->toBe(6)
-        ->and($methodCogC['simpleSwitch'])->toBe(1)
-        ->and($methodCogC['tryCatch'])->toBe(3);
+    // Verify methods
+    foreach ($expects['classes'] as $className => $classData) {
+        foreach ($classData['methods'] ?? [] as $methodName => $expectedCogC) {
+            expect($methodCogC[$methodName] ?? null)->toBe($expectedCogC['cogc']);
+        }
 
-    // Class = sum of methods: 6 + 1 + 3 = 10
-    expect($classCogC)->toBe(10);
+        if (isset($classData['cogc'])) {
+            expect($classCogC)->toBe($classData['cogc']);
+        }
+    }
 
-    // File = sum of all: 1 + 3 + 2 + 3 + 4 + 10 = 23
-    expect($fileCogC)->toBe(23);
-});
+    // Verify file
+    expect($fileCogC)->toBe($expects['file']['cogc']);
+
+})->with($cognitiveTests);

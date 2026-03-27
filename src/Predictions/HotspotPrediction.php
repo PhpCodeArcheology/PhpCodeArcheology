@@ -6,6 +6,7 @@ namespace PhpCodeArch\Predictions;
 
 use PhpCodeArch\Application\Config;
 use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
 use PhpCodeArch\Predictions\Problems\HotspotProblem;
 
@@ -27,8 +28,8 @@ class HotspotPrediction implements PredictionInterface
                 continue;
             }
 
-            $churn = $metric->get('gitChurnCount')?->getValue() ?? 0;
-            $cc = $metric->get('cc')?->getValue() ?? 0;
+            $churn = $metric->get(MetricKey::GIT_CHURN_COUNT)?->asInt() ?? 0;
+            $cc = $metric->get(MetricKey::CC)?->asInt() ?? 0;
 
             $minChurn = $this->threshold('hotspot.minChurn', 10);
             $minCc = $this->threshold('hotspot.minCc', 15);
@@ -46,7 +47,7 @@ class HotspotPrediction implements PredictionInterface
 
                 $metricsController->setProblemByIdentifierString(
                     identifierString: (string) $metric->getIdentifier(),
-                    key: 'gitChurnCount',
+                    key: MetricKey::GIT_CHURN_COUNT,
                     problem: $problem
                 );
             }

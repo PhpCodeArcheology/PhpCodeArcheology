@@ -105,5 +105,5 @@ it('returns an error string when an exception is thrown', function () {
 
     $result = (new GetTestCoverageTool($factory))->getTestCoverage();
 
-    expect($result)->toBe('Error retrieving test coverage: provider failed');
+    expect($result)->toBe('An error occurred while retrieving test coverage.');
 });

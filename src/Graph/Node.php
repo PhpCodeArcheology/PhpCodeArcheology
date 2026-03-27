@@ -6,6 +6,7 @@ namespace PhpCodeArch\Graph;
 
 class Node
 {
+    /** @var list<Edge> */
     private array $edges = [];
 
     private bool $visited = false;
@@ -39,6 +40,7 @@ class Node
         $this->visited = true;
     }
 
+    /** @return array<string, Node> */
     public function getAdjacents(): array
     {
         $adjacents = [];
@@ -50,6 +52,7 @@ class Node
                 $adjacents[$edge->getTo()->getKey()] = $edge->getTo();
             }
         }
+
         return $adjacents;
     }
 }

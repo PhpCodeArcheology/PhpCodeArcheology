@@ -10,7 +10,10 @@ use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 
 require_once __DIR__ . '/test_helpers.php';
 
-$lcomTests = require __DIR__ . '/fileprovider/test-lcom-provider.php';
+$lcomTests = array_merge(
+    require __DIR__ . '/fileprovider/test-lcom-provider.php',
+    require __DIR__ . '/fileprovider/test-hand-lcom-provider.php'
+);
 
 function getLcomVisitors(): array
 {

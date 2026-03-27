@@ -6,6 +6,7 @@ namespace PhpCodeArch\Predictions;
 
 use PhpCodeArch\Application\Config;
 use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
 use PhpCodeArch\Predictions\Problems\TooDependentProblem;
@@ -32,19 +33,20 @@ class TooDependentPrediction implements PredictionInterface
                         : $this->threshold('tooDependent.class', 20);
 
                     // Framework-aware: raise threshold for Symfony/Laravel controllers
+                    $frameworkDetection = $this->getFrameworkDetection();
                     if ($metric instanceof ClassMetricsCollection
                         && $this->isFrameworkAdjustmentEnabled('controllerThresholds')
-                        && ($this->isSymfonyDetected() || $this->getFrameworkDetection()?->laravelDetected)
+                        && ($this->isSymfonyDetected() || (null !== $frameworkDetection && $frameworkDetection->laravelDetected))
                         && fnmatch('*Controller', $metric->getName())
                     ) {
                         $maxDependency = $this->threshold('tooDependent.controller', 35);
                     }
 
-                    $tooDependent = ($metric->get('usesCount')?->getValue() ?? 0) > $maxDependency;
+                    $tooDependent = ($metric->get(MetricKey::USES_COUNT)?->asInt() ?? 0) > $maxDependency;
 
                     $metricsController->setMetricValueByIdentifierString(
                         (string) $metric->getIdentifier(),
-                        'predictionTooDependent',
+                        MetricKey::PREDICTION_TOO_DEPENDENT,
                         $tooDependent
                     );
 
@@ -52,18 +54,19 @@ class TooDependentPrediction implements PredictionInterface
                         break;
                     }
 
+                    $maxDependencyStr = is_scalar($maxDependency) ? strval($maxDependency) : '?';
                     $problem = TooDependentProblem::ofProblemLevelAndMessage(
                         problemLevel: $this->getLevel(),
-                        message: 'The element maybe is too dependent, exceeding ' . $maxDependency . ' dependencies.'
+                        message: 'The element maybe is too dependent, exceeding '.$maxDependencyStr.' dependencies.'
                     );
 
                     $metricsController->setProblemByIdentifierString(
                         identifierString: (string) $metric->getIdentifier(),
-                        key: 'uses',
+                        key: MetricKey::USES,
                         problem: $problem
                     );
 
-                    ++ $problemCount;
+                    ++$problemCount;
                     break;
             }
         }

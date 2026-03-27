@@ -7,13 +7,15 @@ namespace PhpCodeArch\Predictions;
 use PhpCodeArch\Application\Config;
 use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
+use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
 use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
+use PhpCodeArch\Predictions\Problems\AbstractProblem;
 use PhpCodeArch\Predictions\Problems\TooComplexProblem;
 
 /**
- * Predict, if an element is too complex
+ * Predict, if an element is too complex.
  *
  * CC: 10 - 20
  * Difficulty: 15 - 20
@@ -40,17 +42,17 @@ class TooComplexPrediction implements PredictionInterface
                     $methodCollection = $metricsController->getCollectionByIdentifierString(
                         (string) $metric->getIdentifier(),
                         'methods'
-                    )->getAsArray();
+                    )?->getAsArray() ?? [];
 
-                    $problemCount += $this->handleStandardComplexity($metricsController, (string) $metric->getIdentifier(), get_class($metric));
-                    $problemCount += $this->handleLcom($metricsController, (string) $metric->getIdentifier(), get_class($metric), $metric);
+                    $problemCount += $this->handleStandardComplexity($metricsController, (string) $metric->getIdentifier(), $metric::class);
+                    $problemCount += $this->handleLcom($metricsController, (string) $metric->getIdentifier(), $metric::class, $metric);
 
                     $methodCc = 0;
                     foreach ($methodCollection as $methodKey => $methodName) {
                         $ccValue = $metricsController->getMetricValueByIdentifierString(
                             $methodKey,
-                            'cc'
-                        )->getValue();
+                            MetricKey::CC
+                        )?->asInt() ?? 0;
 
                         $methodCc += $ccValue;
 
@@ -64,8 +66,8 @@ class TooComplexPrediction implements PredictionInterface
                     foreach ($methodCollection as $methodKey => $methodName) {
                         $cogCValue = $metricsController->getMetricValueByIdentifierString(
                             $methodKey,
-                            'cognitiveComplexity'
-                        )?->getValue() ?? 0;
+                            MetricKey::COGNITIVE_COMPLEXITY
+                        )?->asInt() ?? 0;
 
                         $methodCogC += $cogCValue;
 
@@ -78,7 +80,7 @@ class TooComplexPrediction implements PredictionInterface
                             );
                             $metricsController->setProblemByIdentifierString(
                                 identifierString: $methodKey,
-                                key: 'cognitiveComplexity',
+                                key: MetricKey::COGNITIVE_COMPLEXITY,
                                 problem: $problem
                             );
                         }
@@ -88,7 +90,7 @@ class TooComplexPrediction implements PredictionInterface
                     $classTooComplex = $avgMethodCc > $this->threshold('tooComplex.avgMethodCc', 10);
 
                     if ($classTooComplex) {
-                        ++ $problemCount;
+                        ++$problemCount;
 
                         $problem = TooComplexProblem::ofProblemLevelAndMessage(
                             problemLevel: $this->getLevel(),
@@ -97,7 +99,7 @@ class TooComplexPrediction implements PredictionInterface
 
                         $metricsController->setProblemByIdentifierString(
                             identifierString: (string) $metric->getIdentifier(),
-                            key: 'cc',
+                            key: MetricKey::CC,
                             problem: $problem
                         );
                     }
@@ -105,30 +107,18 @@ class TooComplexPrediction implements PredictionInterface
                     $metricsController->setMetricValuesByIdentifierString(
                         (string) $metric->getIdentifier(),
                         [
-                            'avgMethodCc' => $avgMethodCc,
-                            'avgMethodCogC' => $avgMethodCogC,
-                            'predictionTooComplex' => $classTooComplex,
+                            MetricKey::AVG_METHOD_CC => $avgMethodCc,
+                            MetricKey::AVG_METHOD_COG_C => $avgMethodCogC,
+                            MetricKey::PREDICTION_TOO_COMPLEX => $classTooComplex,
                         ],
                     );
 
-                    if ($avgMethodCc > $this->threshold('tooComplex.avgMethodCc', 10)) {
-                        $problem = TooComplexProblem::ofProblemLevelAndMessage(
-                            problemLevel: $this->getLevel(),
-                            message: 'Avg. method complexity is too high.'
-                        );
-
-                        $metricsController->setProblemByIdentifierString(
-                            identifierString: (string) $metric->getIdentifier(),
-                            key: 'avgMethodCc',
-                            problem: $problem
-                        );
-                    }
                     break;
 
                 case $metric instanceof FileMetricsCollection:
                 case $metric instanceof FunctionMetricsCollection:
-                    $problemCount += $this->handleStandardComplexity($metricsController, (string) $metric->getIdentifier(), get_class($metric));
-                break;
+                    $problemCount += $this->handleStandardComplexity($metricsController, (string) $metric->getIdentifier(), $metric::class);
+                    break;
             }
         }
 
@@ -140,6 +130,11 @@ class TooComplexPrediction implements PredictionInterface
         return PredictionInterface::ERROR;
     }
 
+    /**
+     * @param string[] $metricKeys
+     *
+     * @return array<string, float|int>
+     */
     private function getMetricValues(MetricsController $metricsController, string $identifierString, array $metricKeys): array
     {
         $metricValues = $metricsController->getMetricValuesByIdentifierString(
@@ -150,7 +145,7 @@ class TooComplexPrediction implements PredictionInterface
         $values = [];
 
         foreach ($metricKeys as $key) {
-            $values[$key] = $metricValues[$key]?->getValue() ?? 0;
+            $values[$key] = $metricValues[$key]?->asFloat() ?? 0;
         }
 
         return $values;
@@ -158,13 +153,13 @@ class TooComplexPrediction implements PredictionInterface
 
     private function handleLcom(MetricsController $metricsController, string $identifierString, string $metricClass, ?ClassMetricsCollection $classMetric = null): int
     {
-        if ($classMetric !== null && $this->shouldSkipLcom($metricsController, $classMetric)) {
+        if ($classMetric instanceof ClassMetricsCollection && $this->shouldSkipLcom($metricsController, $classMetric)) {
             return 0;
         }
 
         $className = basename(str_replace('\\', '/', $metricClass));
         $values = $this->getMetricValues($metricsController, $identifierString, [
-            'lcom',
+            MetricKey::LCOM,
         ]);
 
         $problemCount = 0;
@@ -173,25 +168,25 @@ class TooComplexPrediction implements PredictionInterface
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             sprintf('overall%sAvgLcom', $className)
-        )->getValue();
+        )?->asFloat() ?? 0.0;
 
-        $lcomTolerance = $this->threshold('tooComplex.lcomRelativeTolerance', 0.30);
+        $rawLcomTol = $this->threshold('tooComplex.lcomRelativeTolerance', 0.30);
+        $lcomTolerance = is_numeric($rawLcomTol) ? (float) $rawLcomTol : 0.30;
 
-        $problemCount += $this->check(
-            'lcom',
-            $values['lcom'],
-            function($value) use ($avgLcom, $lcomTolerance) {
-                $max = $avgLcom + $avgLcom * $lcomTolerance;
+        return $problemCount + $this->check(
+            MetricKey::LCOM,
+            $values[MetricKey::LCOM],
+            function ($value) use ($avgLcom, $lcomTolerance): bool {
+                $max = max(1, $avgLcom) + max(1, $avgLcom) * $lcomTolerance;
+
                 return $value > $max;
             },
             $metricsController,
             $identifierString,
             TooComplexProblem::class,
             self::WARNING,
-            'LCOM is more than ' . ($lcomTolerance * 100) . '% above average LCOM (' . number_format($avgLcom,3) . ').'
+            'LCOM is more than '.($lcomTolerance * 100).'% above average LCOM ('.number_format($avgLcom, 3).').'
         );
-
-        return $problemCount;
     }
 
     private function handleStandardComplexity(MetricsController $metricsController, string $identifierString, string $metricClass): int
@@ -199,11 +194,11 @@ class TooComplexPrediction implements PredictionInterface
         $className = basename(str_replace('\\', '/', $metricClass));
 
         $values = $this->getMetricValues($metricsController, $identifierString, [
-            'lloc',
-            'cc',
-            'difficulty',
-            'effort',
-            'maintainabilityIndex',
+            MetricKey::LLOC,
+            MetricKey::CC,
+            MetricKey::DIFFICULTY,
+            MetricKey::EFFORT,
+            MetricKey::MAINTAINABILITY_INDEX,
         ]);
 
         $problemCount = 0;
@@ -212,12 +207,13 @@ class TooComplexPrediction implements PredictionInterface
             && ($this->isSymfonyDetected() || $this->getFrameworkDetection()?->laravelDetected);
 
         $problemCount += $this->check(
-            'cc',
-            $values['cc'],
-            function($value) use ($values) {
-                $maxComplexity = $values['lloc'] > 20
+            MetricKey::CC,
+            $values[MetricKey::CC],
+            function ($value) use ($values): bool {
+                $maxComplexity = $values[MetricKey::LLOC] > 20
                     ? $this->threshold('tooComplex.ccLargeCode', 20)
                     : $this->threshold('tooComplex.cc', 10);
+
                 return $value > $maxComplexity;
             },
             $metricsController,
@@ -232,12 +228,13 @@ class TooComplexPrediction implements PredictionInterface
             : $this->threshold('tooComplex.difficulty', 20);
 
         $problemCount += $this->check(
-            'difficulty',
-            $values['difficulty'],
-            function($value) use ($values, $maxDifficulty) {
-                if ($values['lloc'] <= $this->threshold('tooComplex.trivialLloc', 5)) {
+            MetricKey::DIFFICULTY,
+            $values[MetricKey::DIFFICULTY],
+            function ($value) use ($values, $maxDifficulty): bool {
+                if ($values[MetricKey::LLOC] <= $this->threshold('tooComplex.trivialLloc', 5)) {
                     return false;
                 }
+
                 return $value > $maxDifficulty;
             },
             $metricsController,
@@ -251,17 +248,18 @@ class TooComplexPrediction implements PredictionInterface
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             sprintf('overall%sAvgEffort', $className)
-        )->getValue();
+        )?->asFloat() ?? 0.0;
 
-        $effortTolerance = $isFrameworkProject
+        $rawEffortTol = $isFrameworkProject
             ? $this->threshold('tooComplex.effortRelativeToleranceFramework', 0.50)
             : $this->threshold('tooComplex.effortRelativeTolerance', 0.30);
+        $effortTolerance = is_numeric($rawEffortTol) ? (float) $rawEffortTol : ($isFrameworkProject ? 0.50 : 0.30);
 
         $problemCount += $this->check(
-            'effort',
-            $values['effort'],
-            function($value) use ($values, $avgEffort, $effortTolerance) {
-                if ($values['lloc'] <= $this->threshold('tooComplex.trivialLloc', 5)) {
+            MetricKey::EFFORT,
+            $values[MetricKey::EFFORT],
+            function ($value) use ($values, $avgEffort, $effortTolerance): bool {
+                if ($values[MetricKey::LLOC] <= $this->threshold('tooComplex.trivialLloc', 5)) {
                     return false;
                 }
                 $max = $avgEffort + $avgEffort * $effortTolerance;
@@ -272,34 +270,37 @@ class TooComplexPrediction implements PredictionInterface
             $identifierString,
             TooComplexProblem::class,
             self::WARNING,
-            'Effort more than ' . ($effortTolerance * 100) . '% above average effort (' . number_format($avgEffort) . ').'
+            'Effort more than '.($effortTolerance * 100).'% above average effort ('.number_format($avgEffort).').'
         );
 
         $avgMi = $metricsController->getMetricValue(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             sprintf('overall%sAvgMaintainabilityIndex', $className)
-        )->getValue();
+        )?->asFloat() ?? 0.0;
 
         // Dynamic MI threshold: be more lenient for well-typed code
         // (high type coverage compensates for fewer comments in MI formula)
         $typeCoverage = $metricsController->getMetricValueByIdentifierString(
-            $identifierString, 'typeCoverage'
-        )?->getValue() ?? null;
+            $identifierString, MetricKey::TYPE_COVERAGE
+        )?->asFloat();
 
-        $miTolerance = $this->threshold('tooComplex.miRelativeTolerance', 0.20);
-        if ($typeCoverage !== null && $typeCoverage > 80) {
-            $miTolerance = max($miTolerance, $this->threshold('tooComplex.miRelativeToleranceTyped', 0.30));
+        $rawMiTol = $this->threshold('tooComplex.miRelativeTolerance', 0.20);
+        $miTolerance = is_numeric($rawMiTol) ? (float) $rawMiTol : 0.20;
+        if (null !== $typeCoverage && $typeCoverage > 80) {
+            $rawMiTolTyped = $this->threshold('tooComplex.miRelativeToleranceTyped', 0.30);
+            $miTolerance = max($miTolerance, is_numeric($rawMiTolTyped) ? (float) $rawMiTolTyped : 0.30);
         }
         if ($isFrameworkProject) {
-            $miTolerance = max($miTolerance, $this->threshold('tooComplex.miRelativeToleranceFramework', 0.35));
+            $rawMiTolFramework = $this->threshold('tooComplex.miRelativeToleranceFramework', 0.35);
+            $miTolerance = max($miTolerance, is_numeric($rawMiTolFramework) ? (float) $rawMiTolFramework : 0.35);
         }
 
-        $problemCount += $this->check(
-            'maintainabilityIndex',
-            $values['maintainabilityIndex'],
-            function($value) use ($values, $avgMi, $miTolerance) {
-                if ($values['lloc'] <= $this->threshold('tooComplex.trivialLloc', 5)) {
+        return $problemCount + $this->check(
+            MetricKey::MAINTAINABILITY_INDEX,
+            $values[MetricKey::MAINTAINABILITY_INDEX],
+            function ($value) use ($values, $avgMi, $miTolerance): bool {
+                if ($values[MetricKey::LLOC] <= $this->threshold('tooComplex.trivialLloc', 5)) {
                     return false;
                 }
                 $min = $avgMi - $avgMi * $miTolerance;
@@ -310,15 +311,16 @@ class TooComplexPrediction implements PredictionInterface
             $identifierString,
             TooComplexProblem::class,
             self::WARNING,
-            'Maintainability index is more than ' . ($miTolerance * 100) . '% below average MI (' . number_format($avgMi) . ').'
+            'Maintainability index is more than '.($miTolerance * 100).'% below average MI ('.number_format($avgMi).').'
         );
-
-        return $problemCount;
     }
 
-    public function check(string $key, mixed $value, string|\Closure $callback, MetricsController $metricsController, string $identifierString, string $problemClass, int $problemLevel, string $problemMessage): int
+    /**
+     * @param class-string<AbstractProblem> $problemClass
+     */
+    public function check(string $key, mixed $value, \Closure $callback, MetricsController $metricsController, string $identifierString, string $problemClass, int $problemLevel, string $problemMessage): int
     {
-        $isProblem = call_user_func($callback, $value);
+        $isProblem = $callback($value);
 
         if (!$isProblem) {
             return 0;
@@ -335,5 +337,4 @@ class TooComplexPrediction implements PredictionInterface
 
         return 1;
     }
-
 }

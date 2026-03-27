@@ -8,6 +8,7 @@ use PhpCodeArch\Application\CliFormatter;
 use PhpCodeArch\Application\CliOutput;
 use PhpCodeArch\Application\Config;
 use PhpCodeArch\Application\ProgressBar;
+use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
 use PhpCodeArch\Report\DataProvider\DataProviderFactory;
 use PhpCodeArch\Report\Helper\FileCopier;
 use Twig\Environment;
@@ -20,24 +21,22 @@ class HtmlReport implements ReportInterface
 {
     use ReportTrait;
 
-    private string $assetDir;
-
     public function __construct(
-        private readonly Config             $config,
-        private readonly DataProviderFactory  $dataProviderFactory,
-        private readonly false|\DateTimeImmutable $historyDate,
+        private readonly Config $config,
+        private readonly DataProviderFactory $dataProviderFactory,
+        protected readonly false|\DateTimeImmutable $historyDate,
         protected readonly FilesystemLoader $twigLoader,
-        protected readonly Environment      $twig,
-        private readonly CliOutput          $output)
+        protected readonly Environment $twig,
+        private readonly CliOutput $output)
     {
         $this->reportSubDirName = 'html';
-        $this->outputDir = $config->get('reportDir') . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR;
+        $reportDir = $config->get('reportDir');
+        $this->outputDir = (is_string($reportDir) ? $reportDir : '').DIRECTORY_SEPARATOR.'html'.DIRECTORY_SEPARATOR;
 
-        $this->templateDir = dirname(__DIR__, 2) . '/templates/html' . DIRECTORY_SEPARATOR;
-        $this->assetDir = $this->templateDir . 'assets';
+        $this->templateDir = dirname(__DIR__, 2).'/templates/html'.DIRECTORY_SEPARATOR;
 
         $this->twigLoader->setPaths($this->templateDir);
-        $this->twigLoader->addPath($this->templateDir . 'parts', 'Parts');
+        $this->twigLoader->addPath($this->templateDir.'parts', 'Parts');
         $this->twig->setCache(false);
     }
 
@@ -49,17 +48,17 @@ class HtmlReport implements ReportInterface
 
         $this->clearReportDir();
 
-        mkdir(directory: $this->outputDir . 'assets', recursive: true);
-        mkdir($this->outputDir . 'files');
-        mkdir($this->outputDir . 'classes');
-        mkdir($this->outputDir . 'functions');
-        mkdir($this->outputDir . 'methods');
+        mkdir(directory: $this->outputDir.'assets', recursive: true);
+        mkdir($this->outputDir.'files');
+        mkdir($this->outputDir.'classes');
+        mkdir($this->outputDir.'functions');
+        mkdir($this->outputDir.'methods');
 
         $fc = new FileCopier();
         $fc->setFiles([
-            $this->templateDir . 'assets',
+            $this->templateDir.'assets',
         ]);
-        $fc->copyFilesTo(rtrim($this->outputDir . '/assets', DIRECTORY_SEPARATOR));
+        $fc->copyFilesTo(rtrim($this->outputDir.'/assets', DIRECTORY_SEPARATOR));
 
         $this->generateReportFiles();
     }
@@ -67,19 +66,19 @@ class HtmlReport implements ReportInterface
     protected function generateReportFiles(): void
     {
         $createMethods = [
-            [$this, 'generateIndexPage'],
-            [$this, 'generateFilePage'],
-            [$this, 'generateClassPage'],
-            [$this, 'generateClassCouplingPage'],
-            [$this, 'generateClassChartPage'],
-            [$this, 'generatePackagesPage'],
-            [$this, 'generateFunctionPage'],
-            [$this, 'generateProblemsPage'],
-            [$this, 'generateRefactoringRoadmapPage'],
-            [$this, 'generateGitPage'],
-            [$this, 'generateTestsPage'],
-            [$this, 'generateKnowledgeGraphPage'],
-            [$this, 'generateGlossaryPage'],
+            $this->generateIndexPage(...),
+            $this->generateFilePage(...),
+            $this->generateClassPage(...),
+            $this->generateClassCouplingPage(...),
+            $this->generateClassChartPage(...),
+            $this->generatePackagesPage(...),
+            $this->generateFunctionPage(...),
+            $this->generateProblemsPage(...),
+            $this->generateRefactoringRoadmapPage(...),
+            $this->generateGitPage(...),
+            $this->generateTestsPage(...),
+            $this->generateKnowledgeGraphPage(...),
+            $this->generateGlossaryPage(...),
         ];
 
         $formatter = $this->output->getFormatter() ?? new CliFormatter();
@@ -96,18 +95,18 @@ class HtmlReport implements ReportInterface
     }
 
     /**
-     * @param mixed $functionData
-     * @param string $folder
-     * @return void
      * @throws LoaderError
      * @throws RuntimeError
      * @throws SyntaxError
      */
-    public function createFunctionFile(mixed $functionData, string $folder): void
+    /** @param array<string, mixed> $functionData */
+    public function createFunctionFile(array $functionData, string $folder): void
     {
-        $outputFile = $folder . '/' . $functionData['function']->getIdentifier() . '.html';
+        $function = $functionData['function'];
+        $identifier = $function instanceof MetricsCollectionInterface ? $function->getIdentifier() : null;
+        $outputFile = $folder.'/'.(null !== $identifier ? (string) $identifier : '').'.html';
 
-        $functionData['pageTitle'] = $functionData['isMethod'] ? 'Method metrics' : 'Function metrics';
+        $functionData['pageTitle'] = ($functionData['isMethod'] ?? false) ? 'Method metrics' : 'Function metrics';
         $functionData['currentPage'] = $outputFile;
         $functionData['isSubdir'] = true;
 
@@ -132,10 +131,12 @@ class HtmlReport implements ReportInterface
 
         // Add refactoring priorities for dashboard
         $refactoringData = $this->dataProviderFactory->getRefactoringPriorityDataProvider()->getTemplateData();
-        $data['topRefactoringPriorities'] = array_slice($refactoringData['refactoringPriorities'] ?? [], 0, 5);
+        $refPriorities = $refactoringData['refactoringPriorities'] ?? null;
+        $data['topRefactoringPriorities'] = array_slice(is_array($refPriorities) ? $refPriorities : [], 0, 5);
 
         // Add trend data from history
-        $historyFile = $this->config->get('reportDir') . DIRECTORY_SEPARATOR . 'history.jsonl';
+        $reportDirVal = $this->config->get('reportDir');
+        $historyFile = (is_string($reportDirVal) ? $reportDirVal : '').DIRECTORY_SEPARATOR.'history.jsonl';
         $historyData = $this->dataProviderFactory->getHistoryDataProvider($historyFile)->getTemplateData();
         $data['trendData'] = $historyData['trendData'] ?? '{}';
         $data['hasMultipleRuns'] = $historyData['hasMultipleRuns'] ?? false;
@@ -144,37 +145,48 @@ class HtmlReport implements ReportInterface
         // Knowledge Graph stats for dashboard widget
         $graphProvider = $this->dataProviderFactory->getGraphDataProvider();
         $graphTemplateData = $graphProvider->getTemplateData();
-        $graphData = $graphTemplateData['graphData'] ?? ['nodes' => [], 'edges' => [], 'cycles' => []];
+        $graphDataRaw = $graphTemplateData['graphData'] ?? null;
+        $graphData = is_array($graphDataRaw) ? $graphDataRaw : [];
+        $graphNodes = is_array($graphData['nodes'] ?? null) ? $graphData['nodes'] : [];
+        $graphEdges = is_array($graphData['edges'] ?? null) ? $graphData['edges'] : [];
+        $graphCycles = is_array($graphData['cycles'] ?? null) ? $graphData['cycles'] : [];
 
-        $data['kgNodeCount'] = count($graphData['nodes']);
-        $data['kgEdgeCount'] = count($graphData['edges']);
-        $data['kgCycleCount'] = count($graphData['cycles']);
-        $data['kgPackageCount'] = count(array_filter($graphData['nodes'], fn(array $n) => $n['type'] === 'package'));
+        $data['kgNodeCount'] = count($graphNodes);
+        $data['kgEdgeCount'] = count($graphEdges);
+        $data['kgCycleCount'] = count($graphCycles);
+        $data['kgPackageCount'] = count(array_filter($graphNodes, fn (mixed $n): bool => is_array($n) && 'package' === ($n['type'] ?? '')));
 
         // Count ERROR-level cycle problems (framework-pattern cycles are INFO, not counted)
         $errorCycleCount = 0;
-        foreach ($data['classProblems'] ?? [] as $classProblemData) {
-            foreach ($classProblemData['problems'] ?? [] as $problem) {
+        $classProblemsData = $data['classProblems'];
+        foreach (is_array($classProblemsData) ? $classProblemsData : [] as $classProblemData) {
+            $problemList = is_array($classProblemData) ? ($classProblemData['problems'] ?? null) : null;
+            foreach (is_array($problemList) ? $problemList : [] as $problem) {
                 if ($problem instanceof \PhpCodeArch\Predictions\Problems\DependencyCycleProblem
-                    && $problem->getProblemLevel() === \PhpCodeArch\Predictions\PredictionInterface::ERROR) {
-                    $errorCycleCount++;
+                    && \PhpCodeArch\Predictions\PredictionInterface::ERROR === $problem->getProblemLevel()) {
+                    ++$errorCycleCount;
                 }
             }
         }
         $data['errorCycleCount'] = $errorCycleCount;
 
         // Top 5 most-connected classes
-        $classNodes = array_filter($graphData['nodes'], fn(array $n) => $n['type'] === 'class');
+        $classNodes = array_filter($graphNodes, fn (mixed $n): bool => is_array($n) && 'class' === ($n['type'] ?? ''));
         $classConnections = [];
         foreach ($classNodes as $node) {
-            $connections = ($node['metrics']['afferentCoupling'] ?? 0) + ($node['metrics']['efferentCoupling'] ?? 0);
+            $metrics = is_array($node['metrics'] ?? null) ? $node['metrics'] : [];
+            $afferent = $metrics['afferentCoupling'] ?? 0;
+            $efferent = $metrics['efferentCoupling'] ?? 0;
+            $connections = (is_int($afferent) ? $afferent : 0) + (is_int($efferent) ? $efferent : 0);
+            $nodeId = is_string($node['id'] ?? null) ? $node['id'] : '';
+            $nodeName = is_string($node['name'] ?? null) ? $node['name'] : '';
             $classConnections[] = [
-                'id' => str_replace('class:', '', $node['id']),
-                'name' => $node['name'],
+                'id' => str_replace('class:', '', $nodeId),
+                'name' => $nodeName,
                 'connections' => $connections,
             ];
         }
-        usort($classConnections, fn($a, $b) => $b['connections'] - $a['connections']);
+        usort($classConnections, fn (array $a, array $b): int => $b['connections'] - $a['connections']);
         $data['kgTopConnected'] = array_slice($classConnections, 0, 5);
 
         $data['pageTitle'] = 'Dashboard';
@@ -191,11 +203,11 @@ class HtmlReport implements ReportInterface
         $data['currentPage'] = 'files.html';
         $this->renderTemplate('files.html.twig', $data, 'files.html');
 
-        $files = $data['files'];
+        $filesData = $data['files'];
         unset($data['files']);
 
-        foreach ($files as $fileKey => $fileData) {
-            $outputFile = 'files/' . $fileKey . '.html';
+        foreach (is_array($filesData) ? $filesData : [] as $fileKey => $fileData) {
+            $outputFile = 'files/'.$fileKey.'.html';
 
             $templateData = $data;
             $templateData['file'] = $fileData;
@@ -205,7 +217,7 @@ class HtmlReport implements ReportInterface
 
             $this->renderTemplate('single-file.html.twig', $templateData, $outputFile);
         }
-        unset($data, $files);
+        unset($data, $filesData);
     }
 
     protected function generateClassPage(): void
@@ -216,11 +228,11 @@ class HtmlReport implements ReportInterface
         $data['currentPage'] = 'classes-list.html';
         $this->renderTemplate('classes.html.twig', $data, 'classes-list.html');
 
-        $classes = $data['classes'];
+        $classesData = $data['classes'];
         unset($data['classes']);
 
-        foreach ($classes as $classKey => $classData) {
-            $outputFile = 'classes/' . $classKey . '.html';
+        foreach (is_array($classesData) ? $classesData : [] as $classKey => $classData) {
+            $outputFile = 'classes/'.$classKey.'.html';
 
             $templateData = $data;
             $templateData['class'] = $classData;
@@ -230,7 +242,7 @@ class HtmlReport implements ReportInterface
 
             $this->renderTemplate('single-class.html.twig', $templateData, $outputFile);
         }
-        unset($data, $classes);
+        unset($data, $classesData);
     }
 
     protected function generateFunctionPage(): void
@@ -241,30 +253,30 @@ class HtmlReport implements ReportInterface
         $data['currentPage'] = 'functions-list.html';
         $this->renderTemplate('functions-list.html.twig', $data, 'functions-list.html');
 
-        $functions = $data['functions'];
-        $methods = $data['methods'];
+        $functionsData = $data['functions'];
+        $methodsData = $data['methods'];
         unset($data['functions'], $data['methods']);
 
-        foreach ($functions as $functionData) {
+        foreach (is_array($functionsData) ? $functionsData : [] as $functionData) {
             $templateData = $data;
             $templateData['isMethod'] = false;
             $templateData['function'] = $functionData;
             $this->createFunctionFile($templateData, 'functions');
         }
-        unset($functions);
+        unset($functionsData);
 
-        foreach ($methods as $functionData) {
+        foreach (is_array($methodsData) ? $methodsData : [] as $functionData) {
             $templateData = $data;
             $templateData['isMethod'] = true;
             $templateData['function'] = $functionData;
             $this->createFunctionFile($templateData, 'methods');
         }
-        unset($data, $methods);
+        unset($data, $methodsData);
     }
 
     protected function generatePackagesPage(): void
     {
-        $templateData = $this->dataProviderFactory->getPackagDataProvider();
+        $templateData = $this->dataProviderFactory->getPackageDataProvider();
         $data = $templateData->getTemplateData();
         $data['pageTitle'] = 'Project metrics';
         $data['currentPage'] = 'packages-list.html';
@@ -336,7 +348,7 @@ class HtmlReport implements ReportInterface
     {
         $graphProvider = $this->dataProviderFactory->getGraphDataProvider();
         $data = $graphProvider->getTemplateData();
-        $data['graphJson'] = json_encode($data['graphData'] ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $data['graphJson'] = json_encode($data['graphData'] ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP);
         unset($data['graphData']);
         $data['pageTitle'] = 'Knowledge Graph';
         $data['currentPage'] = 'knowledge-graph.html';
@@ -349,12 +361,18 @@ class HtmlReport implements ReportInterface
 
         // Build glossary from metric data files
         $glossary = [];
-        $metricFiles = glob(dirname(__DIR__, 2) . '/data/metrics/*.php');
+        $metricFiles = glob(dirname(__DIR__, 2).'/data/metrics/*.php') ?: [];
         foreach ($metricFiles as $file) {
-            $metrics = require $file;
+            $metricsRaw = require $file;
+            if (!is_array($metricsRaw)) {
+                continue;
+            }
             $category = basename($file, '.php');
 
-            foreach ($metrics as $metric) {
+            foreach ($metricsRaw as $metric) {
+                if (!is_array($metric)) {
+                    continue;
+                }
                 if (!isset($metric['name']) || ($metric['type'] ?? '') === 'storage') {
                     continue;
                 }
@@ -362,12 +380,14 @@ class HtmlReport implements ReportInterface
                     continue;
                 }
 
+                $valueType = $metric['valueType'] ?? null;
+                $better = $metric['better'] ?? null;
                 $glossary[$category][] = [
                     'key' => $metric['key'],
                     'name' => $metric['name'],
                     'description' => $metric['description'] ?? '',
-                    'valueType' => ($metric['valueType'] ?? null)?->name ?? 'Unknown',
-                    'better' => ($metric['better'] ?? null)?->name ?? 'Irrelevant',
+                    'valueType' => is_object($valueType) ? ($valueType->name ?? 'Unknown') : 'Unknown',
+                    'better' => is_object($better) ? ($better->name ?? 'Irrelevant') : 'Irrelevant',
                 ];
             }
         }

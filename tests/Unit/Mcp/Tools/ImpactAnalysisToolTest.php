@@ -123,5 +123,5 @@ it('returns error string on exception', function () {
 
     $result = (new ImpactAnalysisTool($factory))->getImpactAnalysis('Foo');
 
-    expect($result)->toBe('Error performing impact analysis: graph data unavailable');
+    expect($result)->toBe('An error occurred while performing impact analysis.');
 });

@@ -82,5 +82,5 @@ it('returns an error string when an exception is thrown', function () {
 
     $result = (new HealthScoreTool($factory))->getHealthScore();
 
-    expect($result)->toBe('Error retrieving health score: connection failed');
+    expect($result)->toBe('An error occurred while retrieving the health score.');
 });

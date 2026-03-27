@@ -8,6 +8,7 @@ final class Config
 {
     private const VALID_REPORT_TYPES = ['html', 'markdown', 'json', 'sarif', 'ai-summary', 'graph'];
 
+    /** @var array<string, mixed> */
     private array $config = [];
 
     public function get(string $key): mixed
@@ -32,29 +33,35 @@ final class Config
     {
         $errors = $this->collectValidationErrors();
 
-        if (!empty($errors)) {
+        if ([] !== $errors) {
             $message = "Configuration errors:\n";
             foreach ($errors as $i => $error) {
-                $message .= '  ' . ($i + 1) . '. ' . $error . "\n";
+                $message .= '  '.($i + 1).'. '.$error."\n";
             }
             throw new ConfigException($message);
         }
     }
 
+    /** @return string[] */
     private function collectValidationErrors(): array
     {
         $errors = [];
 
         if (!$this->has('files') || empty($this->config['files'])) {
             $errors[] = 'No files or directories to analyze.';
+
             return $errors;
         }
 
-        foreach ($this->get('files') as $file) {
+        $files = $this->get('files');
+        foreach (is_array($files) ? $files : [] as $file) {
+            if (!is_string($file)) {
+                continue;
+            }
             if (!file_exists($file)) {
                 $suggestion = $this->suggestAlternative($file);
                 $msg = "Path '$file' does not exist.";
-                if ($suggestion !== null) {
+                if (null !== $suggestion) {
                     $msg .= " Did you mean '$suggestion'?";
                 }
                 $errors[] = $msg;
@@ -62,12 +69,15 @@ final class Config
         }
 
         if ($this->has('reportType')) {
-            $reportTypes = $this->get('reportType');
-            $reportTypes = is_array($reportTypes) ? $reportTypes : [$reportTypes];
+            $rawReportTypes = $this->get('reportType');
+            $reportTypes = is_array($rawReportTypes) ? $rawReportTypes : [$rawReportTypes];
             foreach ($reportTypes as $reportType) {
+                if (!is_string($reportType)) {
+                    continue;
+                }
                 $reportType = strtolower($reportType);
                 if (!in_array($reportType, self::VALID_REPORT_TYPES, true)) {
-                    $errors[] = "Unknown report type '$reportType'. Valid types: " . implode(', ', self::VALID_REPORT_TYPES) . '.';
+                    $errors[] = "Unknown report type '$reportType'. Valid types: ".implode(', ', self::VALID_REPORT_TYPES).'.';
                 }
             }
         }
@@ -75,7 +85,8 @@ final class Config
         if ($this->has('packageSize')) {
             $packageSize = $this->get('packageSize');
             if (!is_int($packageSize) || $packageSize < 1) {
-                $errors[] = "packageSize must be a positive integer, got '$packageSize'.";
+                $displayValue = is_scalar($packageSize) ? (string) $packageSize : gettype($packageSize);
+                $errors[] = "packageSize must be a positive integer, got '$displayValue'.";
             }
         }
 
@@ -87,16 +98,16 @@ final class Config
         $dir = dirname($path);
         $base = basename($path);
 
-        if ($dir === '.' || $dir === '') {
-            $dir = getcwd();
+        if ('.' === $dir || '' === $dir) {
+            $dir = getcwd() ?: '';
         }
 
-        if (!is_dir($dir)) {
+        if ('' === $dir || !is_dir($dir)) {
             return null;
         }
 
         $candidates = @scandir($dir);
-        if ($candidates === false) {
+        if (false === $candidates) {
             return null;
         }
 
@@ -104,11 +115,11 @@ final class Config
         $bestDistance = PHP_INT_MAX;
 
         foreach ($candidates as $candidate) {
-            if ($candidate === '.' || $candidate === '..') {
+            if ('.' === $candidate || '..' === $candidate) {
                 continue;
             }
 
-            if (!is_dir($dir . DIRECTORY_SEPARATOR . $candidate)) {
+            if (!is_dir($dir.DIRECTORY_SEPARATOR.$candidate)) {
                 continue;
             }
 

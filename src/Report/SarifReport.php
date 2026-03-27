@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Report;
 
+use PhpCodeArch\Application\Application;
 use PhpCodeArch\Application\CliOutput;
 use PhpCodeArch\Application\Config;
-use PhpCodeArch\Application\Application;
+use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection as ClassCollection;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
+use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection as FunctionCollection;
 use PhpCodeArch\Predictions\PredictionInterface;
 use PhpCodeArch\Predictions\Problems\ProblemInterface as ProblemModel;
 use PhpCodeArch\Report\DataProvider\DataProviderFactory;
@@ -16,17 +18,18 @@ use Twig\Loader\FilesystemLoader;
 
 class SarifReport implements ReportInterface
 {
-    private string $outputDir;
+    private readonly string $outputDir;
 
     public function __construct(
-        private readonly Config              $config,
+        Config $config,
         private readonly DataProviderFactory $dataProviderFactory,
-        private readonly false|\DateTimeImmutable $historyDate,
-        protected readonly FilesystemLoader  $twigLoader,
-        protected readonly Environment       $twig,
-        private readonly CliOutput           $output)
+        false|\DateTimeImmutable $historyDate,
+        protected readonly FilesystemLoader $twigLoader,
+        protected readonly Environment $twig,
+        private readonly CliOutput $output)
     {
-        $this->outputDir = $config->get('reportDir') . DIRECTORY_SEPARATOR . 'sarif' . DIRECTORY_SEPARATOR;
+        $reportDirRaw = $config->get('reportDir');
+        $this->outputDir = (is_string($reportDirRaw) ? $reportDirRaw : '').DIRECTORY_SEPARATOR.'sarif'.DIRECTORY_SEPARATOR;
 
         if (!is_dir($this->outputDir)) {
             mkdir(directory: $this->outputDir, recursive: true);
@@ -50,25 +53,40 @@ class SarifReport implements ReportInterface
         ];
 
         foreach ($categoryMap as $key => $category) {
-            foreach ($problemData[$key] ?? [] as $entityId => $entityProblems) {
+            $categoryProblems = $problemData[$key] ?? [];
+            if (!is_array($categoryProblems)) {
+                continue;
+            }
+            foreach ($categoryProblems as $entityProblems) {
+                if (!is_array($entityProblems)) {
+                    continue;
+                }
                 $data = $entityProblems['data'] ?? null;
                 $filePath = '';
                 $line = 1;
 
                 if ($data instanceof FileMetricsCollection) {
                     $filePath = $data->getName();
-                } elseif (method_exists($data, 'getPath')) {
+                } elseif ($data instanceof ClassCollection || $data instanceof FunctionCollection) {
                     $filePath = $data->getPath();
                 }
 
-                if (method_exists($data, 'get')) {
+                if ($data instanceof FileMetricsCollection || $data instanceof ClassCollection || $data instanceof FunctionCollection) {
                     $startLine = $data->get('startLine');
-                    if ($startLine !== null) {
-                        $line = (int) $startLine->getValue();
+                    if ($startLine instanceof \PhpCodeArch\Metrics\Model\MetricValue) {
+                        $startLineVal = $startLine->getValue();
+                        $line = is_numeric($startLineVal) ? (int) $startLineVal : 1;
                     }
                 }
 
-                foreach ($entityProblems['problems'] ?? [] as $problem) {
+                $problemsList = $entityProblems['problems'] ?? [];
+                if (!is_array($problemsList)) {
+                    continue;
+                }
+                foreach ($problemsList as $problem) {
+                    if (!$problem instanceof ProblemModel) {
+                        continue;
+                    }
                     $ruleId = $this->generateRuleId($problem, $category);
 
                     if (!isset($ruleIndex[$ruleId])) {
@@ -84,7 +102,7 @@ class SarifReport implements ReportInterface
                         ];
 
                         $recommendation = $problem->getRecommendation();
-                        if ($recommendation !== '') {
+                        if ('' !== $recommendation) {
                             $rules[count($rules) - 1]['help'] = [
                                 'text' => $recommendation,
                             ];
@@ -100,7 +118,7 @@ class SarifReport implements ReportInterface
                         ],
                     ];
 
-                    if ($filePath !== '') {
+                    if ('' !== $filePath) {
                         $result['locations'] = [
                             [
                                 'physicalLocation' => [
@@ -140,7 +158,7 @@ class SarifReport implements ReportInterface
         ];
 
         $json = json_encode($sarif, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-        file_put_contents($this->outputDir . 'report.sarif.json', $json);
+        file_put_contents($this->outputDir.'report.sarif.json', $json);
 
         $formatter = $this->output->getFormatter() ?? new \PhpCodeArch\Application\CliFormatter();
         $this->output->outNl($formatter->success('SARIF report written to report.sarif.json'));
@@ -163,14 +181,14 @@ class SarifReport implements ReportInterface
 
         // Extract a stable rule ID from the message pattern
         $ruleId = preg_replace('/[^a-zA-Z0-9]/', '-', $message);
-        $ruleId = preg_replace('/-+/', '-', $ruleId);
-        $ruleId = trim($ruleId, '-');
+        $ruleId = preg_replace('/-+/', '-', (string) $ruleId);
+        $ruleId = trim((string) $ruleId, '-');
 
         // Keep it short but unique
         if (strlen($ruleId) > 60) {
             $ruleId = substr($ruleId, 0, 60);
         }
 
-        return 'PCA/' . $category . '/' . $ruleId;
+        return 'PCA/'.$category.'/'.$ruleId;
     }
 }

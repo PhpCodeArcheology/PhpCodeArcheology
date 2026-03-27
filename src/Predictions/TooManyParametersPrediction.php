@@ -6,8 +6,8 @@ namespace PhpCodeArch\Predictions;
 
 use PhpCodeArch\Application\Config;
 use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
-use PhpCodeArch\Metrics\Model\MethodMetrics\MethodMetricsCollection;
 use PhpCodeArch\Predictions\Problems\TooManyParametersProblem;
 
 class TooManyParametersPrediction implements PredictionInterface
@@ -24,11 +24,11 @@ class TooManyParametersPrediction implements PredictionInterface
         $problemCount = 0;
 
         foreach ($metricsController->getAllCollections() as $metric) {
-            if (!$metric instanceof FunctionMetricsCollection && !$metric instanceof MethodMetricsCollection) {
+            if (!$metric instanceof FunctionMetricsCollection) {
                 continue;
             }
 
-            $paramCount = $metric->get('parameterCount')?->getValue() ?? 0;
+            $paramCount = $metric->get(MetricKey::PARAMETER_COUNT)?->asInt() ?? 0;
 
             if ($paramCount > $this->threshold('tooManyParameters.warning', 4)) {
                 ++$problemCount;
@@ -42,7 +42,7 @@ class TooManyParametersPrediction implements PredictionInterface
 
                 $metricsController->setProblemByIdentifierString(
                     identifierString: (string) $metric->getIdentifier(),
-                    key: 'parameterCount',
+                    key: MetricKey::PARAMETER_COUNT,
                     problem: $problem
                 );
             }

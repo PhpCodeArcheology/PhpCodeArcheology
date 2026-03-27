@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PhpCodeArch\Calculators;
 
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
+use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
 use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
@@ -14,49 +15,50 @@ class LimitsAndAveragesCalculator implements CalculatorInterface
 {
     use CalculatorTrait;
 
-    const METRIC_KEYS = [
+    public const METRIC_KEYS = [
         FileMetricsCollection::class => [
-            'cc',
-            'maintainabilityIndex',
-            'difficulty',
-            'effort',
+            MetricKey::CC,
+            MetricKey::MAINTAINABILITY_INDEX,
+            MetricKey::DIFFICULTY,
+            MetricKey::EFFORT,
         ],
         FunctionMetricsCollection::class => [
-            'cc',
-            'maintainabilityIndex',
-            'difficulty',
-            'effort',
+            MetricKey::CC,
+            MetricKey::MAINTAINABILITY_INDEX,
+            MetricKey::DIFFICULTY,
+            MetricKey::EFFORT,
         ],
         ClassMetricsCollection::class => [
-            'cc',
-            'maintainabilityIndex',
-            'difficulty',
-            'effort',
-            'lcom',
-            'instability',
+            MetricKey::CC,
+            MetricKey::MAINTAINABILITY_INDEX,
+            MetricKey::DIFFICULTY,
+            MetricKey::EFFORT,
+            MetricKey::LCOM,
+            MetricKey::INSTABILITY,
         ],
     ];
 
+    /** @var array<string, array<string, array<string, int|float>>> */
     private array $data = [];
 
     public function calculate(MetricsCollectionInterface $metrics): void
     {
-        if (!isset(self::METRIC_KEYS[get_class($metrics)])) {
+        if (!isset(self::METRIC_KEYS[$metrics::class])) {
             return;
         }
 
-        if (!isset($this->data[get_class($metrics)])) {
+        if (!isset($this->data[$metrics::class])) {
             $this->initValues($metrics);
         }
 
-        foreach (self::METRIC_KEYS[get_class($metrics)] as $key) {
-            $value = $metrics->get($key)?->getValue() ?? 0;
+        foreach (self::METRIC_KEYS[$metrics::class] as $key) {
+            $value = $metrics->getFloat($key);
 
-            $this->data[get_class($metrics)]['max'][$key] = max($value, $this->data[get_class($metrics)]['max'][$key]);
-            $this->data[get_class($metrics)]['min'][$key] = min($value, $this->data[get_class($metrics)]['min'][$key]);
-            $this->data[get_class($metrics)]['sum'][$key] += $value;
-            $this->data[get_class($metrics)]['cnt'][$key] ++;
-            $this->data[get_class($metrics)]['avg'][$key] = $this->data[get_class($metrics)]['sum'][$key] / $this->data[get_class($metrics)]['cnt'][$key];
+            $this->data[$metrics::class]['max'][$key] = max($value, $this->data[$metrics::class]['max'][$key]);
+            $this->data[$metrics::class]['min'][$key] = min($value, $this->data[$metrics::class]['min'][$key]);
+            $this->data[$metrics::class]['sum'][$key] += $value;
+            ++$this->data[$metrics::class]['cnt'][$key];
+            $this->data[$metrics::class]['avg'][$key] = $this->data[$metrics::class]['sum'][$key] / $this->data[$metrics::class]['cnt'][$key];
         }
     }
 
@@ -71,7 +73,7 @@ class LimitsAndAveragesCalculator implements CalculatorInterface
                 $className = basename(str_replace('\\', '/', $metricClass));
 
                 foreach ($data as $key => $value) {
-                    $projectKey = 'overall' . $className .  ucfirst($valueType) . ucfirst($key);
+                    $projectKey = 'overall'.$className.ucfirst((string) $valueType).ucfirst((string) $key);
 
                     $this->metricsController->setMetricValue(
                         MetricCollectionTypeEnum::ProjectCollection,
@@ -84,13 +86,9 @@ class LimitsAndAveragesCalculator implements CalculatorInterface
         }
     }
 
-    /**
-     * @param MetricsCollectionInterface $metrics
-     * @return void
-     */
     private function initValues(MetricsCollectionInterface $metrics): void
     {
-        $this->data[get_class($metrics)] = [
+        $this->data[$metrics::class] = [
             'max' => [],
             'min' => [],
             'avg' => [],
@@ -98,12 +96,12 @@ class LimitsAndAveragesCalculator implements CalculatorInterface
             'cnt' => [],
         ];
 
-        foreach (self::METRIC_KEYS[get_class($metrics)] as $key) {
-            $this->data[get_class($metrics)]['max'][$key] = 0;
-            $this->data[get_class($metrics)]['min'][$key] = PHP_INT_MAX;
-            $this->data[get_class($metrics)]['avg'][$key] = 0;
-            $this->data[get_class($metrics)]['sum'][$key] = 0;
-            $this->data[get_class($metrics)]['cnt'][$key] = 0;
+        foreach (self::METRIC_KEYS[$metrics::class] as $key) {
+            $this->data[$metrics::class]['max'][$key] = 0;
+            $this->data[$metrics::class]['min'][$key] = PHP_INT_MAX;
+            $this->data[$metrics::class]['avg'][$key] = 0;
+            $this->data[$metrics::class]['sum'][$key] = 0;
+            $this->data[$metrics::class]['cnt'][$key] = 0;
         }
     }
 }

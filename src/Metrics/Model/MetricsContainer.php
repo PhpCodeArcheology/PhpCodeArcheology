@@ -9,45 +9,32 @@ use PhpCodeArch\Metrics\Model\Collections\CollectionInterface;
 class MetricsContainer
 {
     /**
-     * @var MetricsCollectionInterface[]
+     * @var array<string, MetricsCollectionInterface>
      */
     private array $metrics = [];
 
     /**
-     * @var CollectionInterface[] $collections
+     * @var CollectionInterface[]
      */
     private array $collections = [];
 
-    /**
-     * @param string $key
-     * @return MetricsCollectionInterface
-     */
     public function get(string $key): MetricsCollectionInterface
     {
         return $this->metrics[$key];
     }
 
-    /**
-     * @param string $key
-     * @param MetricsCollectionInterface $value
-     * @return void
-     */
     public function set(string $key, MetricsCollectionInterface $value): void
     {
         $this->metrics[$key] = $value;
     }
 
-    /**
-     * @param string $key
-     * @return bool
-     */
     public function has(string $key): bool
     {
         return isset($this->metrics[$key]);
     }
 
     /**
-     * @return MetricsCollectionInterface[]
+     * @return array<string, MetricsCollectionInterface>
      */
     public function getAll(): array
     {
@@ -62,20 +49,11 @@ class MetricsContainer
         return array_keys($this->metrics);
     }
 
-    /**
-     * @param string $key
-     * @param CollectionInterface $collection
-     * @return void
-     */
     public function setCollection(string $key, CollectionInterface $collection): void
     {
         $this->collections[] = $collection;
     }
 
-    /**
-     * @param string $key
-     * @return bool
-     */
     public function hasCollection(string $key): bool
     {
         return isset($this->collections[$key]);
@@ -85,7 +63,6 @@ class MetricsContainer
     {
         return $this->has($key) ? $this->collections[$key] : null;
     }
-
 
     public function push(MetricsCollectionInterface $metrics): void
     {

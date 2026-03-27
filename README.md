@@ -434,6 +434,16 @@ For live rebuilding during development:
 npm run watch:css
 ```
 
+## A Note on Metric Accuracy (v2.7.0)
+
+I use PhpCodeArcheology extensively on my own projects to track code quality over time. While doing so, I noticed that some metric values didn't quite add up — method-level Halstead difficulty seemed too high, certain classes were flagged as God Classes when they shouldn't have been, and error counts felt inflated.
+
+After a thorough review, I found and fixed several calculation bugs that had been present since earlier versions. The most impactful was a Halstead operand tracking bug at the method level, along with double-counting in complexity predictions, false positives in God Class detection, and a few other issues.
+
+I sincerely apologize for the inaccuracy. A code analysis tool must be trustworthy above all else, and these bugs undermined that. Version 2.7.0 corrects all known calculation issues, and I've added hand-calculated test fixtures to ensure the formulas stay correct going forward.
+
+**What this means for you:** If you're upgrading from an earlier version, your analysis results will change — most notably, error counts will decrease by ~30-40% and Health Scores will improve slightly. The tool will show a one-time notice on first run. See [`docs/metrics-formulas.md`](docs/metrics-formulas.md) for a detailed breakdown of every change and its expected impact.
+
 ## Author
 
 Marcus Kober — [GitHub](https://github.com/marcuskober)

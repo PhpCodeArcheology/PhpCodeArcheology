@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PhpCodeArch\Predictions;
 
 use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
 use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
@@ -25,18 +26,18 @@ class SecuritySmellPrediction implements PredictionInterface
                 continue;
             }
 
-            $smellCount = $metric->get('securitySmellCount')?->getValue() ?? 0;
-            if ($smellCount === 0) {
+            $smellCount = $metric->get(MetricKey::SECURITY_SMELL_COUNT)?->asInt() ?? 0;
+            if (0 === $smellCount) {
                 continue;
             }
 
-            $smells = $metric->get('securitySmells')?->getValue() ?? [];
+            $smells = $metric->get(MetricKey::SECURITY_SMELLS)?->asArray() ?? [];
 
             // Determine severity: if any dangerous function → ERROR, else WARNING
             $hasError = false;
             foreach ($smells as $smell) {
                 foreach (self::ERROR_PATTERNS as $pattern) {
-                    if (str_contains($smell, rtrim($pattern, '()'))) {
+                    if (is_string($smell) && str_contains($smell, rtrim($pattern, '()'))) {
                         $hasError = true;
                         break 2;
                     }
@@ -47,12 +48,12 @@ class SecuritySmellPrediction implements PredictionInterface
 
             $problem = SecuritySmellProblem::ofProblemLevelAndMessage(
                 problemLevel: $level,
-                message: sprintf('%d security smell(s): %s', $smellCount, implode('; ', array_slice($smells, 0, 3)))
+                message: sprintf('%d security smell(s): %s', $smellCount, implode('; ', array_map(fn (mixed $v): string => is_scalar($v) ? strval($v) : '', array_slice($smells, 0, 3))))
             );
 
             $metricsController->setProblemByIdentifierString(
                 identifierString: (string) $metric->getIdentifier(),
-                key: 'securitySmellCount',
+                key: MetricKey::SECURITY_SMELL_COUNT,
                 problem: $problem
             );
 

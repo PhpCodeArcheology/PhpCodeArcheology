@@ -6,6 +6,7 @@ namespace PhpCodeArch\Calculators;
 
 use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
+use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
 use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
@@ -28,7 +29,7 @@ class TechnicalDebtCalculator implements CalculatorInterface
             return;
         }
 
-        $lloc = $metrics->get('lloc')?->getValue() ?? 0;
+        $lloc = $metrics->getInt(MetricKey::LLOC);
         $debtPoints = 0;
 
         foreach ($metrics->getAll() as $metricValue) {
@@ -46,7 +47,7 @@ class TechnicalDebtCalculator implements CalculatorInterface
 
         $this->metricsController->setMetricValueByIdentifierString(
             (string) $metrics->getIdentifier(),
-            'technicalDebtScore',
+            MetricKey::TECHNICAL_DEBT_SCORE,
             $debtPerHundredLines
         );
 
@@ -62,7 +63,7 @@ class TechnicalDebtCalculator implements CalculatorInterface
         $this->metricsController->setMetricValues(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
-            ['overallTechnicalDebtScore' => $overallDebt]
+            [MetricKey::OVERALL_TECHNICAL_DEBT_SCORE => $overallDebt]
         );
     }
 }

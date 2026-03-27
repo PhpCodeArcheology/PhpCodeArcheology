@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Calculators;
 
-use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
+use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
 use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
 
@@ -18,7 +18,7 @@ class CodeDuplicationCalculator implements CalculatorInterface
     /** @var array<string, string> fileIdentifier → filePath */
     private array $filePaths = [];
 
-    /** @var array<string, array> fileIdentifier → [hash => [startLine, ...]] */
+    /** @var array<string, array<string, list<int>>> fileIdentifier → [hash → [startLines]] */
     private array $fileHashes = [];
 
     private int $totalDuplicatedLines = 0;
@@ -39,9 +39,9 @@ class CodeDuplicationCalculator implements CalculatorInterface
         }
 
         $identifierString = (string) $metrics->getIdentifier();
-        $filePath = $metrics->get('filePath')?->getValue() ?? null;
+        $filePath = $metrics->getString(MetricKey::FILE_PATH);
 
-        if ($filePath === null || !file_exists($filePath)) {
+        if (!$filePath || !file_exists($filePath)) {
             return;
         }
 
@@ -49,14 +49,11 @@ class CodeDuplicationCalculator implements CalculatorInterface
 
         // Tokenize and normalize
         $code = @file_get_contents($filePath);
-        if ($code === false) {
+        if (false === $code) {
             return;
         }
 
         $tokens = @token_get_all($code);
-        if ($tokens === false) {
-            return;
-        }
 
         $normalized = $this->normalizeTokens($tokens);
         if (count($normalized) < self::MIN_TOKENS) {
@@ -65,7 +62,7 @@ class CodeDuplicationCalculator implements CalculatorInterface
 
         // Rolling hash: windows of MIN_TOKENS normalized tokens
         $hashes = [];
-        for ($i = 0; $i <= count($normalized) - self::MIN_TOKENS; $i++) {
+        for ($i = 0; $i <= count($normalized) - self::MIN_TOKENS; ++$i) {
             $window = array_slice($normalized, $i, self::MIN_TOKENS);
             $hash = $this->hashWindow($window);
             if (!isset($hashes[$hash])) {
@@ -91,7 +88,7 @@ class CodeDuplicationCalculator implements CalculatorInterface
         }
 
         // Find duplicates: hashes that appear in 2+ files or 2+ locations
-        $duplicateHashes = array_filter($globalHashes, fn($files) => count($files) > 1);
+        $duplicateHashes = array_filter($globalHashes, fn ($files): bool => count($files) > 1);
 
         // Calculate duplication per file
         foreach ($this->filePaths as $fileId => $filePath) {
@@ -112,8 +109,8 @@ class CodeDuplicationCalculator implements CalculatorInterface
             $this->metricsController->setMetricValuesByIdentifierString(
                 $fileId,
                 [
-                    'duplicationRate' => $rate,
-                    'duplicatedLines' => $duplicatedLines,
+                    MetricKey::DUPLICATION_RATE => $rate,
+                    MetricKey::DUPLICATED_LINES => $duplicatedLines,
                 ]
             );
 
@@ -122,11 +119,11 @@ class CodeDuplicationCalculator implements CalculatorInterface
         }
 
         // Set defaults for files without enough tokens
-        foreach ($this->filePaths as $fileId => $filePath) {
+        foreach (array_keys($this->filePaths) as $fileId) {
             if (!isset($this->fileHashes[$fileId])) {
                 $this->metricsController->setMetricValuesByIdentifierString(
                     $fileId,
-                    ['duplicationRate' => 0.0, 'duplicatedLines' => 0]
+                    [MetricKey::DUPLICATION_RATE => 0.0, MetricKey::DUPLICATED_LINES => 0]
                 );
             }
         }
@@ -140,12 +137,17 @@ class CodeDuplicationCalculator implements CalculatorInterface
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             [
-                'overallDuplicationRate' => $overallRate,
-                'overallDuplicatedLines' => $this->totalDuplicatedLines,
+                MetricKey::OVERALL_DUPLICATION_RATE => $overallRate,
+                MetricKey::OVERALL_DUPLICATED_LINES => $this->totalDuplicatedLines,
             ]
         );
     }
 
+    /**
+     * @param list<array{int, string, int}|string> $tokens
+     *
+     * @return list<array{type: string, line: int}>
+     */
     private function normalizeTokens(array $tokens): array
     {
         $normalized = [];
@@ -177,14 +179,18 @@ class CodeDuplicationCalculator implements CalculatorInterface
         return $normalized;
     }
 
+    /**
+     * @param list<array{type: string, line: int}> $window
+     */
     private function hashWindow(array $window): string
     {
         $str = implode('|', array_column($window, 'type'));
+
         return md5($str);
     }
 
     private function getFileLoc(string $fileId): int
     {
-        return $this->metricsController->getMetricValueByIdentifierString($fileId, 'loc')?->getValue() ?? 0;
+        return $this->metricsController->getMetricValueByIdentifierString($fileId, MetricKey::LOC)?->asInt() ?? 0;
     }
 }

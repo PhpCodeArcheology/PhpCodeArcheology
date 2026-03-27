@@ -18,17 +18,21 @@ class MetricCollectionFactory
     {
     }
 
+    /**
+     * @param array{path?: string, name?: string, files?: string[]} $identifierData
+     */
     public function create(MetricCollectionTypeEnum $metricsType, array $identifierData): MetricsCollectionInterface
     {
         return match ($metricsType) {
-            MetricCollectionTypeEnum::ProjectCollection => $this->createProject($identifierData['files']),
-            MetricCollectionTypeEnum::FileCollection => $this->createFile($identifierData['path']),
-            MetricCollectionTypeEnum::ClassCollection => $this->createClass($identifierData['path'], $identifierData['name']),
-            MetricCollectionTypeEnum::PackageCollection => $this->createPackage($identifierData['name']),
-            MetricCollectionTypeEnum::MethodCollection, MetricCollectionTypeEnum::FunctionCollection => $this->createFunction($identifierData['path'], $identifierData['name']),
+            MetricCollectionTypeEnum::ProjectCollection => $this->createProject($identifierData['files'] ?? []),
+            MetricCollectionTypeEnum::FileCollection => $this->createFile($identifierData['path'] ?? ''),
+            MetricCollectionTypeEnum::ClassCollection => $this->createClass($identifierData['path'] ?? '', $identifierData['name'] ?? ''),
+            MetricCollectionTypeEnum::PackageCollection => $this->createPackage($identifierData['name'] ?? ''),
+            MetricCollectionTypeEnum::MethodCollection, MetricCollectionTypeEnum::FunctionCollection => $this->createFunction($identifierData['path'] ?? '', $identifierData['name'] ?? ''),
         };
     }
 
+    /** @param string[] $files */
     public function createProject(array $files): ProjectMetricsCollection
     {
         $projectMetrics = new ProjectMetricsCollection(implode(',', $files));
@@ -51,7 +55,7 @@ class MetricCollectionFactory
         return $fileMetrics;
     }
 
-    private function createClass(mixed $path, string $name): ClassMetricsCollection
+    private function createClass(string $path, string $name): ClassMetricsCollection
     {
         $classMetrics = new ClassMetricsCollection($path, $name);
         $this->metricsContainer->set(

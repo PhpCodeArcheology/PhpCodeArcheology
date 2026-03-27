@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Calculators;
 
-use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
+use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
 
@@ -48,8 +48,13 @@ class LayerViolationCalculator implements CalculatorInterface
                 null,
                 $collectionKey
             );
-            if ($items === null) continue;
+            if (!$items instanceof \PhpCodeArch\Metrics\Model\Collections\CollectionInterface) {
+                continue;
+            }
             foreach ($items->getAsArray() as $id => $name) {
+                if (!is_string($id) || !is_string($name)) {
+                    continue;
+                }
                 $this->nameToId[$name] = $id;
             }
         }
@@ -62,7 +67,7 @@ class LayerViolationCalculator implements CalculatorInterface
         }
 
         $identifierString = (string) $metrics->getIdentifier();
-        $namespace = $metrics->get('namespace')?->getValue() ?? '';
+        $namespace = $metrics->getString(MetricKey::NAMESPACE);
         $layer = $this->detectLayer($namespace);
         $this->classLayers[$identifierString] = $layer;
     }
@@ -70,19 +75,19 @@ class LayerViolationCalculator implements CalculatorInterface
     public function afterTraverse(): void
     {
         foreach ($this->classLayers as $classId => $layer) {
-            if ($layer === '') {
+            if ('' === $layer) {
                 $this->metricsController->setMetricValuesByIdentifierString(
                     $classId,
-                    ['layerViolationCount' => 0, 'layerViolations' => []]
+                    [MetricKey::LAYER_VIOLATION_COUNT => 0, MetricKey::LAYER_VIOLATIONS => []]
                 );
                 continue;
             }
 
             $layerIndex = self::LAYER_ORDER[$layer] ?? -1;
-            if ($layerIndex <= 0) {
+            if ($layerIndex < 0) {
                 $this->metricsController->setMetricValuesByIdentifierString(
                     $classId,
-                    ['layerViolationCount' => 0, 'layerViolations' => []]
+                    [MetricKey::LAYER_VIOLATION_COUNT => 0, MetricKey::LAYER_VIOLATIONS => []]
                 );
                 continue;
             }
@@ -91,10 +96,13 @@ class LayerViolationCalculator implements CalculatorInterface
             $usedClasses = $this->metricsController->getCollectionByIdentifierString($classId, 'usedClasses');
             $violations = [];
 
-            if ($usedClasses !== null) {
+            if ($usedClasses instanceof \PhpCodeArch\Metrics\Model\Collections\CollectionInterface) {
                 foreach ($usedClasses->getAsArray() as $usedClassName) {
+                    if (!is_string($usedClassName)) {
+                        continue;
+                    }
                     $usedId = $this->nameToId[$usedClassName] ?? null;
-                    if ($usedId === null || !isset($this->classLayers[$usedId])) {
+                    if (null === $usedId || !isset($this->classLayers[$usedId])) {
                         continue;
                     }
 
@@ -112,8 +120,8 @@ class LayerViolationCalculator implements CalculatorInterface
             $this->metricsController->setMetricValuesByIdentifierString(
                 $classId,
                 [
-                    'layerViolationCount' => count($violations),
-                    'layerViolations' => $violations,
+                    MetricKey::LAYER_VIOLATION_COUNT => count($violations),
+                    MetricKey::LAYER_VIOLATIONS => $violations,
                 ]
             );
         }
@@ -127,6 +135,7 @@ class LayerViolationCalculator implements CalculatorInterface
                 return $part;
             }
         }
+
         return '';
     }
 }

@@ -1,11 +1,25 @@
+# Dependencies
 /node_modules/
+/vendor/
+
+# Build & Output
 /report/
 /tmp/
-/vendor/
-/tasks/
-.DS_Store
-debug.txt
+
+# Config (user-specific)
 php-codearch-config.yaml
 .claude/settings.local.json
-composer.lock
+
+# Static Analysis & Code Style
+.php-cs-fixer.cache
+.phpunit.result.cache
+.rector_cache/
+
+# Coverage
 clover.xml
+
+# OS & IDE
+.DS_Store
+
+# Debug
+debug.txt

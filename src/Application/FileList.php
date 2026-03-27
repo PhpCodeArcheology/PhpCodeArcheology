@@ -6,45 +6,56 @@ namespace PhpCodeArch\Application;
 
 final class FileList
 {
+    /** @var string[] */
     private array $files = [];
 
     public function __construct(
-        private readonly Config $config
-    )
-    {}
+        private readonly Config $config,
+    ) {
+    }
 
     public function fetch(): void
     {
-        $excludeRaw = $this->config->has('exclude') ? $this->config->get('exclude') : [];
+        $excludeRawValue = $this->config->has('exclude') ? $this->config->get('exclude') : [];
+        $excludeRaw = is_array($excludeRawValue) ? $excludeRawValue : [];
         $exclude = [];
         foreach ($excludeRaw as $path) {
+            if (!is_string($path)) {
+                continue;
+            }
             $resolved = realpath($path);
-            if ($resolved !== false) {
-                $exclude[] = rtrim($resolved, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+            if (false !== $resolved) {
+                $exclude[] = rtrim($resolved, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
             }
         }
 
-        foreach ($this->config->get('files') as $file) {
+        $filesConfig = $this->config->get('files');
+        foreach (is_array($filesConfig) ? $filesConfig : [] as $file) {
+            if (!is_string($file)) {
+                continue;
+            }
             $file = realpath($file);
 
-            if ($file === false) {
+            if (false === $file) {
                 continue;
             }
 
             if (is_dir($file)) {
-                $file = rtrim($file, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+                $file = rtrim($file, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
 
                 try {
                     $dir = new \RecursiveDirectoryIterator($file);
                     $iterator = new \RecursiveIteratorIterator($dir);
-                } catch (\UnexpectedValueException $e) {
+                } catch (\UnexpectedValueException) {
                     continue;
                 }
 
-                $extensions = $this->config->get('extensions') ?? ['php'];
-                $extensionPattern = array_map(function($extension) {
-                    $extension = ltrim($extension, '.');
-                    return '\.' . $extension;
+                $extensionsConfig = $this->config->get('extensions');
+                $extensions = is_array($extensionsConfig) ? $extensionsConfig : ['php'];
+                $extensionPattern = array_map(function ($extension): string {
+                    $ext = is_string($extension) ? $extension : '';
+
+                    return '\.'.ltrim($ext, '.');
                 }, $extensions);
 
                 $pattern = sprintf(
@@ -54,7 +65,10 @@ final class FileList
                 );
 
                 foreach ($iterator as $currentFile) {
-                    $filePath = (string) $currentFile;
+                    if (!$currentFile instanceof \SplFileInfo) {
+                        continue;
+                    }
+                    $filePath = $currentFile->getPathname();
 
                     if (!preg_match($pattern, $filePath)) {
                         continue;
@@ -66,8 +80,7 @@ final class FileList
 
                     $this->files[] = $filePath;
                 }
-            }
-            elseif (is_file($file)) {
+            } elseif (is_file($file)) {
                 if (!$this->isExcluded($file, $exclude)) {
                     $this->files[] = $file;
                 }
@@ -75,10 +88,11 @@ final class FileList
         }
     }
 
+    /** @param string[] $excludePaths */
     private function isExcluded(string $filePath, array $excludePaths): bool
     {
         foreach ($excludePaths as $excludePath) {
-            if (str_starts_with($filePath, $excludePath)) {
+            if (str_starts_with($filePath, (string) $excludePath)) {
                 return true;
             }
         }
@@ -86,9 +100,7 @@ final class FileList
         return false;
     }
 
-    /**
-     * @return array
-     */
+    /** @return string[] */
     public function getFiles(): array
     {
         return $this->files;

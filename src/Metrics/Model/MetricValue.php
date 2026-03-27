@@ -7,7 +7,7 @@ namespace PhpCodeArch\Metrics\Model;
 use PhpCodeArch\Metrics\Model\Enums\MetricValueType;
 use PhpCodeArch\Predictions\Problems\ProblemInterface;
 
-class MetricValue
+class MetricValue implements \Stringable
 {
     /**
      * @var ProblemInterface[]
@@ -27,16 +27,16 @@ class MetricValue
 
     public static function ofValueAndTypeKey(mixed $value, string $typeKey): MetricValue
     {
-        return new static($value, $typeKey);
+        return new self($value, $typeKey);
     }
 
     public function getValueFormatted(): mixed
     {
         return match ($this->type->getValueType()) {
-            MetricValueType::Array => implode(', ', $this->value),
-            MetricValueType::Count => count($this->value),
-            MetricValueType::Float => round($this->value, 2),
-            MetricValueType::Percentage => number_format($this->value, 2) . '%',
+            MetricValueType::Array => implode(', ', array_map(fn (mixed $v): string => is_scalar($v) ? strval($v) : '', $this->asArray())),
+            MetricValueType::Count => count($this->asArray()),
+            MetricValueType::Float => round($this->asFloat(), 2),
+            MetricValueType::Percentage => number_format($this->asFloat(), 2).'%',
             default => $this->value,
         };
     }
@@ -46,26 +46,58 @@ class MetricValue
         return $this->value;
     }
 
+    public function asInt(): int
+    {
+        return is_scalar($this->value) || is_array($this->value) ? intval($this->value) : 0;
+    }
+
+    public function asFloat(): float
+    {
+        return is_scalar($this->value) || is_array($this->value) ? floatval($this->value) : 0.0;
+    }
+
+    public function asBool(): bool
+    {
+        return (bool) $this->value;
+    }
+
+    public function asString(): string
+    {
+        if (is_scalar($this->value)) {
+            return strval($this->value);
+        }
+
+        return '';
+    }
+
+    /**
+     * @return array<mixed>
+     */
+    public function asArray(): array
+    {
+        return (array) $this->value;
+    }
+
     public function getSortValue(): mixed
     {
-        return match($this->type->getValueType()) {
+        return match ($this->type->getValueType()) {
             MetricValueType::Int, MetricValueType::Float, MetricValueType::Percentage => $this->value,
-            MetricValueType::String => strval($this->value),
-            MetricValueType::Array, MetricValueType::Count => count($this->value),
+            MetricValueType::String => $this->asString(),
+            MetricValueType::Array, MetricValueType::Count => count($this->asArray()),
             default => $this->value,
         };
     }
 
     public function __toString(): string
     {
-        return match($this->type->getValueType()) {
-            MetricValueType::Int => number_format($this->value, 0),
-            MetricValueType::Float => number_format($this->value, 2),
-            MetricValueType::String => strval($this->value),
-            MetricValueType::Array => implode(', ', $this->value),
-            MetricValueType::Percentage => number_format($this->value, 2) . '%',
-            MetricValueType::Count => strval(count($this->value)),
-            default => strval($this->value),
+        return match ($this->type->getValueType()) {
+            MetricValueType::Int => number_format($this->asFloat(), 0),
+            MetricValueType::Float => number_format($this->asFloat(), 2),
+            MetricValueType::String => $this->asString(),
+            MetricValueType::Array => implode(', ', array_map(fn (mixed $v): string => is_scalar($v) ? strval($v) : '', $this->asArray())),
+            MetricValueType::Percentage => number_format($this->asFloat(), 2).'%',
+            MetricValueType::Count => strval(count($this->asArray())),
+            default => (is_scalar($this->value) ? strval($this->value) : ''),
         };
     }
 
@@ -95,14 +127,17 @@ class MetricValue
         foreach ($this->problems as $problem) {
             $maxProblemLevel = max($maxProblemLevel, $problem->getProblemLevel());
         }
+
         return $maxProblemLevel;
     }
 
+    /** @return string[] */
     public function getProblemMessages(): array
     {
-        return array_map(fn($problem) => $problem->getMessage(), $this->problems);
+        return array_map(fn (ProblemInterface $problem): string => $problem->getMessage(), $this->problems);
     }
 
+    /** @return ProblemInterface[] */
     public function getProblems(): array
     {
         return $this->problems;

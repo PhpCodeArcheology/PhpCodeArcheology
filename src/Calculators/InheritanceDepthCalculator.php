@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Calculators;
 
-use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
+use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
 
@@ -41,11 +41,14 @@ class InheritanceDepthCalculator implements CalculatorInterface
                 $collectionKey
             );
 
-            if ($items === null) {
+            if (!$items instanceof \PhpCodeArch\Metrics\Model\Collections\CollectionInterface) {
                 continue;
             }
 
             foreach ($items->getAsArray() as $id => $name) {
+                if (!is_string($id) || !is_string($name)) {
+                    continue;
+                }
                 $this->nameToId[$name] = $id;
                 $this->nocCount[$id] = 0;
             }
@@ -66,7 +69,7 @@ class InheritanceDepthCalculator implements CalculatorInterface
             'extends'
         );
 
-        if ($extends === null) {
+        if (!$extends instanceof \PhpCodeArch\Metrics\Model\Collections\CollectionInterface) {
             return;
         }
 
@@ -77,12 +80,12 @@ class InheritanceDepthCalculator implements CalculatorInterface
 
         // PHP only allows single inheritance, take first
         $parentName = reset($extendsList);
-        if ($parentName === null || $parentName === '') {
+        if (!is_string($parentName) || '' === $parentName) {
             return;
         }
         $parentId = $this->nameToId[$parentName] ?? null;
 
-        if ($parentId !== null) {
+        if (null !== $parentId) {
             $this->parentMap[$identifierString] = $parentId;
             $this->nocCount[$parentId] = ($this->nocCount[$parentId] ?? 0) + 1;
         } else {
@@ -94,14 +97,14 @@ class InheritanceDepthCalculator implements CalculatorInterface
     public function afterTraverse(): void
     {
         // Compute DIT for each class
-        foreach ($this->nameToId as $name => $id) {
+        foreach ($this->nameToId as $id) {
             $dit = $this->computeDit($id);
 
             $this->metricsController->setMetricValuesByIdentifierString(
                 $id,
                 [
-                    'dit' => $dit,
-                    'noc' => $this->nocCount[$id] ?? 0,
+                    MetricKey::DIT => $dit,
+                    MetricKey::NOC => $this->nocCount[$id] ?? 0,
                 ]
             );
         }
@@ -115,13 +118,15 @@ class InheritanceDepthCalculator implements CalculatorInterface
 
         if (!isset($this->parentMap[$id])) {
             $this->ditCache[$id] = 0;
+
             return 0;
         }
 
         $parentId = $this->parentMap[$id];
 
-        if ($parentId === '__external__') {
+        if ('__external__' === $parentId) {
             $this->ditCache[$id] = 1;
+
             return 1;
         }
 

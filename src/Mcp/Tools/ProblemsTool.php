@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace PhpCodeArch\Mcp\Tools;
 
 use PhpCodeArch\Predictions\PredictionInterface;
+use PhpCodeArch\Predictions\Problems\ProblemInterface;
 use PhpCodeArch\Report\DataProvider\DataProviderFactory;
 
 class ProblemsTool
 {
     public function __construct(
-        private readonly DataProviderFactory $factory
+        private readonly DataProviderFactory $factory,
     ) {
     }
 
@@ -29,23 +30,33 @@ class ProblemsTool
             $problems = [];
 
             foreach (['files' => 'fileProblems', 'classes' => 'classProblems', 'functions' => 'functionProblems'] as $category => $key) {
-                foreach ($data[$key] ?? [] as $id => $entry) {
+                $problemSet = $data[$key] ?? [];
+                if (!is_array($problemSet)) {
+                    continue;
+                }
+                foreach ($problemSet as $id => $entry) {
+                    if (!is_array($entry) || !isset($entry['problems']) || !is_array($entry['problems'])) {
+                        continue;
+                    }
                     foreach ($entry['problems'] as $problem) {
+                        if (!$problem instanceof ProblemInterface) {
+                            continue;
+                        }
                         $level = $problem->getProblemLevel();
 
-                        if ($severityLevel !== null && $level !== $severityLevel) {
+                        if (null !== $severityLevel && $level !== $severityLevel) {
                             continue;
                         }
 
                         $message = $problem->getMessage();
 
-                        if ($type !== '' && stripos($message, $type) === false) {
+                        if ('' !== $type && false === stripos($message, $type)) {
                             continue;
                         }
 
                         $problems[] = [
                             'category' => $category,
-                            'id' => $id,
+                            'id' => (string) $id,
                             'level' => match ($level) {
                                 PredictionInterface::ERROR => 'error',
                                 PredictionInterface::WARNING => 'warning',
@@ -61,21 +72,21 @@ class ProblemsTool
             $total = count($problems);
             $problems = array_slice($problems, 0, $limit);
 
-            $lines = ["# Problems ({$total} total, showing " . count($problems) . ")", ""];
+            $lines = ["# Problems ({$total} total, showing ".count($problems).')', ''];
 
             foreach ($problems as $p) {
                 $lines[] = "[{$p['level']}] [{$p['category']}] {$p['id']}";
                 $lines[] = "  {$p['message']}";
-                $lines[] = "";
+                $lines[] = '';
             }
 
-            if ($total === 0) {
-                $lines[] = "No problems found.";
+            if (0 === $total) {
+                $lines[] = 'No problems found.';
             }
 
             return implode("\n", $lines);
         } catch (\Throwable $e) {
-            return "Error retrieving problems: " . $e->getMessage();
+            return 'An error occurred while retrieving problems.';
         }
     }
 }

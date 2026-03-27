@@ -6,6 +6,7 @@ namespace PhpCodeArch\Report\DataProvider;
 
 use PhpCodeArch\Metrics\Identity\FunctionAndClassIdentifier;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
+use PhpCodeArch\Metrics\MetricKey;
 
 class FunctionDataProvider implements ReportDataProviderInterface
 {
@@ -28,9 +29,11 @@ class FunctionDataProvider implements ReportDataProviderInterface
         // Build className → classId map from method classInfo
         $classNameToId = [];
         foreach ($methods as $method) {
-            $classInfo = $method->get('classInfo')?->getValue() ?? [];
-            if (isset($classInfo['name'], $classInfo['id'])) {
-                $classNameToId[$classInfo['name']] = $classInfo['id'];
+            $classInfo = $method->getArray(MetricKey::CLASS_INFO);
+            $className = $classInfo['name'] ?? null;
+            $classId = $classInfo['id'] ?? null;
+            if (is_string($className) && is_string($classId)) {
+                $classNameToId[$className] = $classId;
             }
         }
 
@@ -40,11 +43,11 @@ class FunctionDataProvider implements ReportDataProviderInterface
 
         $functionsAndMethods = array_merge($functions, $methods);
 
-        array_walk($functionsAndMethods, function($function, $key) use (&$parameters, &$dependencies, &$methodCalls, $classNameToId) {
+        array_walk($functionsAndMethods, function ($function, string $key) use (&$parameters, &$dependencies, &$methodCalls, $classNameToId): void {
             $parameterCollection = $this->metricsController->getCollectionByIdentifierString(
                 $key,
                 'parameters'
-            )->getAsArray();
+            )?->getAsArray() ?? [];
 
             $dependencyCollection = $this->metricsController->getCollectionByIdentifierString(
                 $key,
@@ -58,14 +61,19 @@ class FunctionDataProvider implements ReportDataProviderInterface
 
             // Enrich method calls with target IDs for linking
             $enrichedCalls = null;
-            if ($methodCallsCollection !== null) {
+            if (null !== $methodCallsCollection) {
                 $enrichedCalls = [];
                 foreach ($methodCallsCollection as $call) {
+                    if (!is_array($call)) {
+                        continue;
+                    }
+                    $targetMethod = is_string($call['targetMethod'] ?? null) ? $call['targetMethod'] : '';
+                    $targetClass = is_string($call['targetClass'] ?? null) ? $call['targetClass'] : '';
                     $call['targetMethodId'] = (string) FunctionAndClassIdentifier::ofNameAndPath(
-                        $call['targetMethod'],
-                        $call['targetClass']
+                        $targetMethod,
+                        $targetClass
                     );
-                    $call['targetClassId'] = $classNameToId[$call['targetClass']] ?? '';
+                    $call['targetClassId'] = $classNameToId[$targetClass] ?? '';
                     $enrichedCalls[] = $call;
                 }
             }
@@ -95,31 +103,35 @@ class FunctionDataProvider implements ReportDataProviderInterface
         $calledBy = [];
         foreach ($methods as $sourceMethodId => $sourceMethod) {
             $calls = $methodCalls[$sourceMethodId] ?? null;
-            if ($calls === null) {
+            if (null === $calls) {
                 continue;
             }
 
-            $classInfo = $sourceMethod->get('classInfo')?->getValue() ?? [];
-            $sourceClassName = $classInfo['name'] ?? '';
-            $sourceClassId = $classInfo['id'] ?? '';
-            $sourceMethodName = $sourceMethod->getName();
+            $classInfo = $sourceMethod->getArray(MetricKey::CLASS_INFO);
+            $rawSourceClassName = $classInfo['name'] ?? null;
+            $sourceClassName = is_string($rawSourceClassName) ? $rawSourceClassName : '';
+            $rawSourceClassId = $classInfo['id'] ?? null;
+            $sourceClassId = is_string($rawSourceClassId) ? $rawSourceClassId : '';
+            $sourceMethodName = $sourceMethod->getString(MetricKey::SINGLE_NAME);
 
             $seen = [];
             foreach ($calls as $call) {
+                $callTargetMethod = is_string($call['targetMethod'] ?? null) ? $call['targetMethod'] : '';
+                $callTargetClass = is_string($call['targetClass'] ?? null) ? $call['targetClass'] : '';
                 $targetMethodId = (string) FunctionAndClassIdentifier::ofNameAndPath(
-                    $call['targetMethod'],
-                    $call['targetClass']
+                    $callTargetMethod,
+                    $callTargetClass
                 );
                 $targetClassId = (string) FunctionAndClassIdentifier::ofNameAndPath(
-                    $call['targetClass'],
+                    $callTargetClass,
                     $sourceMethod->getPath()
                 );
 
-                $callKey = $sourceClassName . '::' . $sourceMethodName;
-                if (isset($seen[$targetMethodId . $callKey])) {
+                $callKey = $sourceClassName.'::'.$sourceMethodName;
+                if (isset($seen[$targetMethodId.$callKey])) {
                     continue;
                 }
-                $seen[$targetMethodId . $callKey] = true;
+                $seen[$targetMethodId.$callKey] = true;
 
                 $calledBy[$targetMethodId][] = [
                     'sourceClass' => $sourceClassName,
@@ -137,21 +149,11 @@ class FunctionDataProvider implements ReportDataProviderInterface
             'parameters' => $parameters,
             'methodCalls' => $methodCalls,
             'calledBy' => $calledBy,
-            'functionTableHeaders' => array_map(function($metricType) {
-                return $metricType->__toArray();
-            }, $listMetrics),
-            'methodTableHeaders' => array_map(function($metricType) {
-                return $metricType->__toArray();
-            }, $methodListMetrics),
-            'listMetricKeys' => array_map(function($metricType) {
-                return $metricType->getKey();
-            }, $listMetrics),
-            'functionDetailMetricKeys' => array_map(function($metricType) {
-                return $metricType->getKey();
-            }, $detailMetrics),
-            'methodDetailMetricKeys' => array_map(function($metricType) {
-                return $metricType->getKey();
-            }, $methodDetailMetrics),
+            'functionTableHeaders' => array_map(fn ($metricType) => $metricType->__toArray(), $listMetrics),
+            'methodTableHeaders' => array_map(fn ($metricType) => $metricType->__toArray(), $methodListMetrics),
+            'listMetricKeys' => array_map(fn ($metricType) => $metricType->getKey(), $listMetrics),
+            'functionDetailMetricKeys' => array_map(fn ($metricType) => $metricType->getKey(), $detailMetrics),
+            'methodDetailMetricKeys' => array_map(fn ($metricType) => $metricType->getKey(), $methodDetailMetrics),
         ];
 
         $this->templateData = array_merge($this->templateData, $templateData);

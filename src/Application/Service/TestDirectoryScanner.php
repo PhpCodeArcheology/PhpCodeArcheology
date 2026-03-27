@@ -7,7 +7,7 @@ namespace PhpCodeArch\Application\Service;
 class TestDirectoryScanner
 {
     public function __construct(
-        private readonly ?FrameworkDetectionResult $frameworkDetection = null
+        private readonly ?FrameworkDetectionResult $frameworkDetection = null,
     ) {
     }
 
@@ -44,34 +44,38 @@ class TestDirectoryScanner
 
     private function resolveComposerRoot(string $projectRoot): string
     {
-        if ($this->frameworkDetection?->composerJsonPath !== '') {
+        if ('' !== $this->frameworkDetection?->composerJsonPath) {
             return dirname((string) $this->frameworkDetection?->composerJsonPath);
         }
+
         return $projectRoot;
     }
 
+    /**
+     * @return string[]
+     */
     private function findTestDirectories(string $projectRoot, string $composerRoot): array
     {
         $dirs = [];
 
         // Primary: use PSR-4 autoload-dev directories from composer.json
-        if ($this->frameworkDetection !== null && !empty($this->frameworkDetection->psr4AutoloadDev)) {
+        if ($this->frameworkDetection instanceof FrameworkDetectionResult && [] !== $this->frameworkDetection->psr4AutoloadDev) {
             foreach ($this->frameworkDetection->psr4AutoloadDev as $relPath) {
-                $absPath = $composerRoot . DIRECTORY_SEPARATOR . $relPath;
+                $absPath = $composerRoot.DIRECTORY_SEPARATOR.$relPath;
                 $real = realpath($absPath);
-                if ($real !== false && is_dir($real)) {
+                if (false !== $real && is_dir($real)) {
                     $dirs[] = $real;
                 }
             }
         }
 
         // Fallback: scan for common test directory names
-        if (empty($dirs)) {
+        if ([] === $dirs) {
             foreach (['tests', 'test', 'spec'] as $dirName) {
                 foreach (array_unique([$projectRoot, $composerRoot]) as $base) {
-                    $candidate = $base . DIRECTORY_SEPARATOR . $dirName;
+                    $candidate = $base.DIRECTORY_SEPARATOR.$dirName;
                     $real = realpath($candidate);
-                    if ($real !== false && is_dir($real)) {
+                    if (false !== $real && is_dir($real)) {
                         $dirs[] = $real;
                     }
                 }
@@ -81,6 +85,9 @@ class TestDirectoryScanner
         return array_values(array_unique($dirs));
     }
 
+    /**
+     * @return string[]
+     */
     private function findTestFilesInDirectory(string $dir): array
     {
         $files = [];
@@ -90,14 +97,14 @@ class TestDirectoryScanner
         );
 
         foreach ($iterator as $file) {
-            if (!$file->isFile()) {
+            if (!$file instanceof \SplFileInfo || !$file->isFile()) {
                 continue;
             }
             $filename = $file->getFilename();
             if (
-                str_ends_with($filename, 'Test.php') ||
-                str_ends_with($filename, 'Spec.php') ||
-                str_ends_with($filename, 'Cest.php')
+                str_ends_with((string) $filename, 'Test.php')
+                || str_ends_with((string) $filename, 'Spec.php')
+                || str_ends_with((string) $filename, 'Cest.php')
             ) {
                 $files[] = $file->getPathname();
             }
@@ -109,9 +116,10 @@ class TestDirectoryScanner
     private function hasClassDeclaration(string $filePath): bool
     {
         $content = @file_get_contents($filePath);
-        if ($content === false) {
+        if (false === $content) {
             return false;
         }
+
         return (bool) preg_match('/\bclass\s+\w+/', $content);
     }
 

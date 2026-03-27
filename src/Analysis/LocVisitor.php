@@ -1,16 +1,13 @@
-<?php /** @noinspection ALL */
+<?php
+
+/** @noinspection ALL */
 
 declare(strict_types=1);
 
 namespace PhpCodeArch\Analysis;
 
-use PhpCodeArch\Metrics\Identity\FileIdentifier;
-use PhpCodeArch\Metrics\Identity\FunctionAndClassIdentifier;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
-use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
-use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsFactory;
-use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
-use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsFactory;
+use PhpCodeArch\Metrics\MetricKey;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
 use PhpParser\PrettyPrinter;
@@ -20,65 +17,53 @@ class LocVisitor implements NodeVisitor, VisitorInterface
     use VisitorTrait;
 
     /**
-     * @var string[]
+     * @var array<int, string>
      */
     private array $currentFunctionName = [];
 
     /**
-     * @var string[]
+     * @var array<int, string>
      */
     private array $currentClassName = [];
 
     /**
-     * @var string[]
+     * @var array<int, string>
      */
     private array $currentMethodName = [];
 
     /**
-     * @var Node[]
+     * @var array<string, array<int, Node\Stmt>>
      */
     private array $functionNodes = [];
 
-    /**
-     * @var int
-     */
+    private PrettyPrinter\Standard $prettyPrinter;
+
     private int $insideLloc = 0;
 
-    /**
-     * @var int
-     */
     private int $insideFunctionLloc = 0;
 
-    /**
-     * @var int
-     */
     private int $insideMethodLloc = 0;
 
-    /**
-     * @var int
-     */
     private int $fileHtmlLoc = 0;
 
     /**
-     * @var int[]
+     * @var array<string, int>
      */
     private array $classHtmlLoc = [];
 
     /**
-     * @var int[]
+     * @var array<string, int>
      */
     private array $functionHtmlLoc = [];
 
     /**
-     * @var int[]
+     * @var array<string, array<string, int>>
      */
     private array $methodHtmlLoc = [];
 
-    /**
-     * @inheritDoc
-     */
-    public function beforeTraverse(array $nodes): void
+    public function beforeTraverse(array $nodes): ?array
     {
+        $this->prettyPrinter = new PrettyPrinter\Standard();
         $this->insideLloc = 0;
         $this->insideFunctionLloc = 0;
         $this->insideMethodLloc = 0;
@@ -95,32 +80,29 @@ class LocVisitor implements NodeVisitor, VisitorInterface
         $cloc = 0;
         $lloc = 0;
 
-        if (array_key_last($nodes) !== null) {
+        if (null !== array_key_last($nodes)) {
             $lastNode = $nodes[array_key_last($nodes)];
-            $loc = $lastNode ? $lastNode->getEndLine() : 0;
+            $loc = $lastNode->getEndLine();
         }
 
         if ($loc > 0) {
-            $nodesWithoutHtml = array_filter($nodes, function($node) {
-                return !$node instanceof Node\Stmt\InlineHTML;
-            });
+            $nodesWithoutHtml = array_filter($nodes, fn (Node $node) => !$node instanceof Node\Stmt\InlineHTML);
 
-            $prettyPrinter = new PrettyPrinter\Standard();
-            $code = $prettyPrinter->prettyPrint($nodesWithoutHtml);
+            $code = $this->prettyPrinter->prettyPrint($nodesWithoutHtml);
 
             [$cloc, $lloc] = $this->getClocAndLloc($code);
         }
 
         $fileMetricData = [
-            'loc' => $loc,
-            'cloc' => $cloc,
-            'lloc' => $lloc,
+            MetricKey::LOC => $loc,
+            MetricKey::CLOC => $cloc,
+            MetricKey::LLOC => $lloc,
         ];
 
         $projectMetricKeys = [
-            'overallLoc' => 'loc',
-            'overallCloc' => 'cloc',
-            'overallLloc' => 'lloc',
+            MetricKey::OVERALL_LOC => MetricKey::LOC,
+            MetricKey::OVERALL_CLOC => MetricKey::CLOC,
+            MetricKey::OVERALL_LLOC => MetricKey::LLOC,
         ];
 
         $this->metricsController->setMetricValues(
@@ -136,18 +118,18 @@ class LocVisitor implements NodeVisitor, VisitorInterface
                 MetricCollectionTypeEnum::ProjectCollection,
                 null,
                 $projectMetricKey,
-                function ($value) use ($fileMetricValue) {
-                    $value = $value ?? 0;
+                function (float|int|null $value) use ($fileMetricValue): float|int {
+                    $value ??= 0;
+
                     return $value + $fileMetricValue;
                 }
             );
         }
+
+        return null;
     }
 
-    /**
-     * @inheritDoc
-     */
-    public function enterNode(Node $node): void
+    public function enterNode(Node $node): int|Node|null
     {
         switch (true) {
             case $node instanceof Node\Stmt\Function_:
@@ -162,8 +144,8 @@ class LocVisitor implements NodeVisitor, VisitorInterface
             case $node instanceof Node\Stmt\Interface_:
             case $node instanceof Node\Stmt\Enum_:
                 $className = ClassName::ofNode($node)->__toString();
-                if (! $className) {
-                    $className = 'anonymous@' . spl_object_hash($node);
+                if ('' === $className || '0' === $className) {
+                    $className = 'anonymous@'.spl_object_hash($node);
                 }
 
                 $this->currentClassName[] = $className;
@@ -173,22 +155,24 @@ class LocVisitor implements NodeVisitor, VisitorInterface
             case $node instanceof Node\Stmt\ClassMethod:
                 $currentClassName = end($this->currentClassName);
 
-                if (! isset($this->methodHtmlLoc[$currentClassName])) {
+                if (false === $currentClassName) {
+                    break;
+                }
+                if (!isset($this->methodHtmlLoc[$currentClassName])) {
                     $this->methodHtmlLoc[$currentClassName] = [];
                 }
                 $this->methodHtmlLoc[$currentClassName][(string) $node->name] = 0;
                 $this->currentMethodName[] = (string) $node->name;
                 break;
         }
+
+        return null;
     }
 
-    /**
-     * @inheritDoc
-     */
-    public function leaveNode(Node $node): void
+    public function leaveNode(Node $node): int|Node|array|null
     {
         switch (true) {
-            case$node instanceof Node\Stmt\Function_:
+            case $node instanceof Node\Stmt\Function_:
                 $this->handleFunctionNode($node);
                 break;
 
@@ -208,27 +192,30 @@ class LocVisitor implements NodeVisitor, VisitorInterface
                 break;
 
             case count($this->currentFunctionName) > 0 && str_starts_with($node->getType(), 'Stmt_'):
-                $this->functionNodes[end($this->currentFunctionName)][] = $node;
+                $fnName = end($this->currentFunctionName);
+                if ($node instanceof Node\Stmt) {
+                    $this->functionNodes[$fnName][] = $node;
+                }
                 break;
         }
+
+        return null;
     }
 
-    /**
-     * @inheritDoc
-     */
-    public function afterTraverse(array $nodes): void
+    public function afterTraverse(array $nodes): ?array
     {
-        $llocFile = $this->metricsController->getMetricValue(
+        $metricValue = $this->metricsController->getMetricValue(
             MetricCollectionTypeEnum::FileCollection,
             ['path' => $this->path],
-            'lloc'
-        )->getValue();
+            MetricKey::LLOC
+        );
+        $llocFile = null !== $metricValue ? $metricValue->asInt() : 0;
 
         $llocFileOutside = $llocFile - $this->insideLloc;
 
         $fileMetrics = [
-            'llocOutside' => $llocFileOutside,
-            'htmlLoc' => $this->fileHtmlLoc,
+            MetricKey::LLOC_OUTSIDE => $llocFileOutside,
+            MetricKey::HTML_LOC => $this->fileHtmlLoc,
         ];
 
         $this->metricsController->setMetricValues(
@@ -238,10 +225,10 @@ class LocVisitor implements NodeVisitor, VisitorInterface
         );
 
         $projectMetricIncrements = [
-            'overallLlocOutside' => $fileMetrics['llocOutside'],
-            'overallInsideMethodLloc' => $this->insideMethodLloc,
-            'overallInsideFuntionLloc' => $this->insideFunctionLloc,
-            'overallHtmlLoc' => $this->fileHtmlLoc,
+            MetricKey::OVERALL_LLOC_OUTSIDE => $fileMetrics[MetricKey::LLOC_OUTSIDE],
+            MetricKey::OVERALL_INSIDE_METHOD_LLOC => $this->insideMethodLloc,
+            MetricKey::OVERALL_INSIDE_FUNCTION_LLOC => $this->insideFunctionLloc,
+            MetricKey::OVERALL_HTML_LOC => $this->fileHtmlLoc,
         ];
 
         foreach ($projectMetricIncrements as $key => $increment) {
@@ -249,39 +236,46 @@ class LocVisitor implements NodeVisitor, VisitorInterface
                 MetricCollectionTypeEnum::ProjectCollection,
                 null,
                 $key,
-                function($value) use ($increment) {
-                    $value = $value ?? 0;
+                function (float|int|null $value) use ($increment): float|int {
+                    $value ??= 0;
+
                     return $value + $increment;
                 }
             );
         }
+
+        return null;
     }
 
+    /**
+     * @return array<string, int>
+     */
     private function getLinesOfCodeFunction(Node\Stmt\Function_ $node, string $functionName): array
     {
         $loc = $node->getEndLine() - $node->getStartLine() + 1;
 
         // Get cloc and lloc from function body
-        $prettyPrinter = new PrettyPrinter\Standard();
-
         $fnNodes = $this->functionNodes[$functionName] ?? [];
-        $functionBodyCode = $prettyPrinter->prettyPrint($fnNodes);
+        $functionBodyCode = $this->prettyPrinter->prettyPrint($fnNodes);
         [$cloc, $lloc] = $this->getClocAndLloc($functionBodyCode);
 
         // Get lloc of whole function (with function declaration and ending curly brackets
-        $wholeFunction = $prettyPrinter->prettyPrint([$node]);
+        $wholeFunction = $this->prettyPrinter->prettyPrint([$node]);
         [$wCloc, $wLloc] = $this->getClocAndLloc($wholeFunction);
 
         $this->insideLloc += $wLloc;
         $this->insideFunctionLloc += $wLloc;
 
         return [
-            'loc' => $loc,
-            'cloc' => $cloc,
-            'lloc' => $lloc,
+            MetricKey::LOC => $loc,
+            MetricKey::CLOC => $cloc,
+            MetricKey::LLOC => $lloc,
         ];
     }
 
+    /**
+     * @return array{int, int}
+     */
     private function getClocAndLloc(string $code): array
     {
         $cloc = 0;
@@ -289,36 +283,38 @@ class LocVisitor implements NodeVisitor, VisitorInterface
         // count and remove multi lines comments
         if (preg_match_all('!/\*.*?\*/!s', $code, $matches)) {
             foreach ($matches[0] as $match) {
-                $cloc += max(1, count(preg_split('/\r\n|\r|\n/', $match)));
+                $parts = preg_split('/\r\n|\r|\n/', $match);
+                $cloc += max(1, is_array($parts) ? count($parts) : 1);
             }
         }
         $code = preg_replace('!/\*.*?\*/!s', '', $code);
 
         // count and remove single line comments
-        $code = preg_replace_callback('!(\'[^\']*\'|"[^"]*")|((?:#|//).*$)!m', function (array $matches) use (&$cloc) {
+        $code = preg_replace_callback('!(\'[^\']*\'|"[^"]*")|((?:#|//).*$)!m', function (array $matches) use (&$cloc): string {
             if (isset($matches[2])) {
-                $cloc += 1;
+                ++$cloc;
             }
+
             return $matches[1];
-        }, $code, -1);
+        }, (string) $code, -1);
 
-        $code = trim(preg_replace('!(^\s*[\r\n])!sm', '', $code));
+        $code = trim((string) preg_replace('!(^\s*[\r\n])!sm', '', (string) $code));
 
-        $lloc = count(preg_split('/\r\n|\r|\n/', $code));
+        $parts = preg_split('/\r\n|\r|\n/', $code);
+        $lloc = is_array($parts) ? count($parts) : 0;
 
         return [$cloc, $lloc];
     }
 
-    /**
-     * @param Node\Stmt\Function_ $node
-     * @return void
-     */
     public function handleFunctionNode(Node\Stmt\Function_ $node): void
     {
         $functionName = array_pop($this->currentFunctionName);
+        if (null === $functionName) {
+            return;
+        }
 
         $functionMetrics = $this->getLinesOfCodeFunction($node, $functionName);
-        $functionMetrics['htmlLoc'] = $this->functionHtmlLoc[$functionName];
+        $functionMetrics[MetricKey::HTML_LOC] = $this->functionHtmlLoc[$functionName];
 
         $this->functionNodes[$functionName] = [];
 
@@ -332,25 +328,23 @@ class LocVisitor implements NodeVisitor, VisitorInterface
         );
     }
 
-    /**
-     * @param Node\Stmt\Trait_|Node\Stmt\Enum_|Node\Stmt\Interface_|Node\Stmt\Class_ $node
-     * @return void
-     */
     public function handleClassNode(Node\Stmt\Trait_|Node\Stmt\Enum_|Node\Stmt\Interface_|Node\Stmt\Class_ $node): void
     {
         $className = array_pop($this->currentClassName);
+        if (null === $className) {
+            return;
+        }
 
         $loc = $node->getEndLine() - $node->getStartLine() + 1;
 
-        $prettyPrinter = new PrettyPrinter\Standard();
-        $classCode = $prettyPrinter->prettyPrint([$node]);
+        $classCode = $this->prettyPrinter->prettyPrint([$node]);
         [$cloc, $lloc] = $this->getClocAndLloc($classCode);
 
         $classMetrics = [
-            'loc' => $loc,
-            'cloc' => $cloc,
-            'lloc' => $lloc,
-            'htmlLoc' => $this->classHtmlLoc[$className],
+            MetricKey::LOC => $loc,
+            MetricKey::CLOC => $cloc,
+            MetricKey::LLOC => $lloc,
+            MetricKey::HTML_LOC => $this->classHtmlLoc[$className],
         ];
 
         $this->metricsController->setMetricValues(
@@ -366,35 +360,32 @@ class LocVisitor implements NodeVisitor, VisitorInterface
         $this->insideMethodLloc += $lloc;
     }
 
-    /**
-     * @param Node\Stmt\ClassMethod $node
-     * @return void
-     */
     public function handleClassMethodNode(Node\Stmt\ClassMethod $node): void
     {
         $className = end($this->currentClassName);
         $methodName = array_pop($this->currentMethodName);
-
-        $prettyPrinter = new PrettyPrinter\Standard();
+        if (false === $className || null === $methodName) {
+            return;
+        }
 
         $methodLoc = $node->getEndLine() - $node->getStartLine() + 1;
-        $methodBodyNodes = $node->stmts ? $node->stmts : [];
-        $methodBodyCode = $prettyPrinter->prettyPrint($methodBodyNodes);
+        $methodBodyNodes = $node->stmts ?: [];
+        $methodBodyCode = $this->prettyPrinter->prettyPrint($methodBodyNodes);
 
         [$methodCloc, $methodLloc] = $this->getClocAndLloc($methodBodyCode);
 
         $methodMetrics = [
-            'lloc' => $methodLloc,
-            'cloc' => $methodCloc,
+            MetricKey::LLOC => $methodLloc,
+            MetricKey::CLOC => $methodCloc,
         ];
 
-        if (count($methodBodyNodes) === 0) {
-            $methodMetrics['lloc'] = 0;
-            $methodMetrics['cloc'] = 0;
+        if (0 === count($methodBodyNodes)) {
+            $methodMetrics[MetricKey::LLOC] = 0;
+            $methodMetrics[MetricKey::CLOC] = 0;
         }
 
-        $methodMetrics['loc'] = $methodLoc;
-        $methodMetrics['htmlLoc'] = $this->methodHtmlLoc[$className][$methodName];
+        $methodMetrics[MetricKey::LOC] = $methodLoc;
+        $methodMetrics[MetricKey::HTML_LOC] = $this->methodHtmlLoc[$className][$methodName];
 
         $this->metricsController->setMetricValues(
             MetricCollectionTypeEnum::MethodCollection,
@@ -406,10 +397,6 @@ class LocVisitor implements NodeVisitor, VisitorInterface
         );
     }
 
-    /**
-     * @param Node\Stmt\InlineHTML $node
-     * @return void
-     */
     public function countInlineHtml(Node\Stmt\InlineHTML $node): void
     {
         $htmlLoc = $node->getEndLine() - $node->getStartLine();
@@ -420,7 +407,6 @@ class LocVisitor implements NodeVisitor, VisitorInterface
             $this->classHtmlLoc[$className] += $htmlLoc;
 
             if (count($this->currentMethodName)) {
-
                 $this->methodHtmlLoc[$className][end($this->currentMethodName)] += $htmlLoc;
             }
         } elseif (count($this->currentFunctionName) > 0) {

@@ -91,5 +91,5 @@ it('returns an error string when an exception is thrown', function () {
 
     $result = (new RefactoringTool($factory))->getRefactoringPriorities();
 
-    expect($result)->toBe('Error retrieving refactoring priorities: unavailable');
+    expect($result)->toBe('An error occurred while retrieving refactoring priorities.');
 });

@@ -9,7 +9,7 @@ use PhpCodeArch\Report\DataProvider\DataProviderFactory;
 class GraphTool
 {
     public function __construct(
-        private readonly DataProviderFactory $factory
+        private readonly DataProviderFactory $factory,
     ) {
     }
 
@@ -27,13 +27,13 @@ class GraphTool
             if ($summary_only) {
                 $nodeTypes = [];
                 foreach ($graphData['nodes'] as $node) {
-                    $t = $node['type'] ?? 'unknown';
+                    $t = is_string($node['type'] ?? null) ? $node['type'] : 'unknown';
                     $nodeTypes[$t] = ($nodeTypes[$t] ?? 0) + 1;
                 }
 
                 $edgeTypes = [];
                 foreach ($graphData['edges'] as $edge) {
-                    $t = $edge['type'] ?? 'unknown';
+                    $t = is_string($edge['type'] ?? null) ? $edge['type'] : 'unknown';
                     $edgeTypes[$t] = ($edgeTypes[$t] ?? 0) + 1;
                 }
 
@@ -66,7 +66,7 @@ class GraphTool
 
             return json_encode($graphData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) ?: '{}';
         } catch (\Throwable $e) {
-            return 'Error retrieving graph: ' . $e->getMessage();
+            return 'An error occurred while retrieving the graph.';
         }
     }
 }

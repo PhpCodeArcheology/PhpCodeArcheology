@@ -230,3 +230,123 @@ it('calculates instability correctly', function() {
         expect($classMetrics->get('instability')->getValue())->toBe($class['expected']['instability']);
     });
 });
+
+/**
+ * Hand-calculated scenario: ServiceA → ServiceB
+ *
+ * Instability formula: I = Ce / (Ca + Ce)
+ *   Ce = efferent coupling (classes this class depends on, "fan-out")
+ *   Ca = afferent coupling (classes that depend on this class, "fan-in")
+ *
+ * ServiceA ──depends on──▶ ServiceB
+ *
+ *   ServiceA: Ce=1, Ca=0  →  I = 1 / (0 + 1) = 1.0  (maximally unstable)
+ *   ServiceB: Ce=0, Ca=1  →  I = 0 / (1 + 0) = 0.0  (maximally stable)
+ *
+ * See: tests/Feature/Analysis/testfiles/hand-calculated-coupling.php
+ */
+describe('hand-calculated ServiceA → ServiceB', function() {
+    beforeEach(function() {
+        $metrics = new MetricsContainer();
+        $this->metricsController = new MetricsController($metrics);
+        $this->metricsController->createProjectMetricsCollection(['']);
+        $this->metricsController->createMetricCollection(
+            MetricCollectionTypeEnum::FileCollection,
+            ['path' => '']
+        );
+
+        // ServiceA: Ce=1 (depends on ServiceB), Ca=0
+        // I = 1/(0+1) = 1.0
+        $this->handCalcClasses = [
+            [
+                'name' => 'HandCalcServiceA',
+                'dependencies' => ['HandCalcServiceB'],
+                'expected' => [
+                    'usesForInstabilityCount' => 1,
+                    'usedByCount' => 0,
+                    'instability' => 1,   // PHP: 1/1 = int(1), not float(1.0)
+                ],
+            ],
+            // ServiceB: Ce=0, Ca=1 (used by ServiceA)
+            // I = 0/(1+0) = 0   (PHP: 0/1 = int(0))
+            [
+                'name' => 'HandCalcServiceB',
+                'dependencies' => [],
+                'expected' => [
+                    'usesForInstabilityCount' => 0,
+                    'usedByCount' => 1,
+                    'instability' => 0,   // PHP: 0/1 = int(0), not float(0.0)
+                ],
+            ],
+        ];
+
+        $classes = [];
+
+        array_walk($this->handCalcClasses, function(&$class) use (&$classes) {
+            $classMetrics = $this->metricsController->createMetricCollection(
+                MetricCollectionTypeEnum::ClassCollection,
+                ['path' => '', 'name' => $class['name']]
+            );
+
+            $id = (string) $classMetrics->getIdentifier();
+            $classes[$id] = $classMetrics->getName();
+            $class['id'] = $id;
+
+            $depCollection = new ClassNameCollection($class['dependencies']);
+            $classMetrics->setCollection('dependencies', $depCollection);
+
+            foreach (['realClass' => true, 'abstract' => false, 'interface' => false, 'package' => '_global'] as $key => $value) {
+                $classMetrics->set($key, MetricValue::ofValueAndTypeKey($value, $key));
+            }
+
+            foreach (['interfaces' => [], 'extends' => []] as $key => $value) {
+                $classMetrics->setCollection($key, new ClassNameCollection($value));
+            }
+        });
+
+        $this->metricsController->setCollection(
+            MetricCollectionTypeEnum::ProjectCollection,
+            null,
+            new ClassNameCollection($classes),
+            'classes'
+        );
+
+        foreach (['interfaces' => InterfaceNameCollection::class, 'traits' => TraitNameCollection::class, 'enums' => EnumNameCollection::class, 'packages' => PackageNameCollection::class] as $key => $collClass) {
+            $this->metricsController->setCollection(
+                MetricCollectionTypeEnum::ProjectCollection,
+                null,
+                new $collClass([]),
+                $key
+            );
+        }
+
+        $packageIACalc = new PackageInstabilityAbstractnessCalculator($this->metricsController);
+        $couplingCalculator = new CouplingCalculator($this->metricsController, $packageIACalc);
+
+        $couplingCalculator->beforeTraverse();
+        foreach ($this->metricsController->getAllCollections() as $metric) {
+            $couplingCalculator->calculate($metric);
+        }
+        $couplingCalculator->afterTraverse();
+    });
+
+    it('calculates usesForInstabilityCount and usedByCount correctly', function() {
+        array_walk($this->handCalcClasses, function($class) {
+            $classMetrics = $this->metricsController->getMetricCollectionByIdentifierString($class['id']);
+
+            expect($classMetrics->get('usesForInstabilityCount')->getValue())
+                ->toBe($class['expected']['usesForInstabilityCount'])
+                ->and($classMetrics->get('usedByCount')->getValue())
+                ->toBe($class['expected']['usedByCount']);
+        });
+    });
+
+    it('calculates instability correctly for hand-calculated scenario', function() {
+        array_walk($this->handCalcClasses, function($class) {
+            $classMetrics = $this->metricsController->getMetricCollectionByIdentifierString($class['id']);
+
+            expect($classMetrics->get('instability')->getValue())
+                ->toBe($class['expected']['instability']);
+        });
+    });
+});

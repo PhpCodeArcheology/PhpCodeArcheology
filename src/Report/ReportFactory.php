@@ -6,9 +6,7 @@ namespace PhpCodeArch\Report;
 
 use PhpCodeArch\Application\CliOutput;
 use PhpCodeArch\Application\Config;
-use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Report\DataProvider\DataProviderFactory;
-use PhpCodeArch\Report\DataProvider\ReportDataProviderInterface;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
 
@@ -16,19 +14,21 @@ class ReportFactory
 {
     /**
      * @return ReportInterface[]
+     *
      * @throws ReportTypeNotSupported
      */
     public static function createMultiple(
-        Config              $config,
+        Config $config,
         DataProviderFactory $reportDataFactory,
         false|\DateTimeImmutable $historyDate,
-        FilesystemLoader    $twigLoader,
-        Environment         $twig,
-        CliOutput           $output
-    ): array
-    {
-        $types = $config->get('reportType') ?? 'html';
-        $types = is_array($types) ? array_unique($types) : [$types];
+        FilesystemLoader $twigLoader,
+        Environment $twig,
+        CliOutput $output,
+    ): array {
+        $rawTypes = $config->get('reportType') ?? 'html';
+        $types = is_array($rawTypes)
+            ? array_values(array_unique(array_filter(array_map(fn (mixed $v): string => is_scalar($v) ? (string) $v : '', $rawTypes))))
+            : [is_string($rawTypes) ? $rawTypes : 'html'];
 
         $reports = [];
         foreach ($types as $type) {
@@ -44,15 +44,15 @@ class ReportFactory
      * @throws ReportTypeNotSupported
      */
     public static function create(
-        Config              $config,
-        DataProviderFactory   $reportDataFactory,
+        Config $config,
+        DataProviderFactory $reportDataFactory,
         false|\DateTimeImmutable $historyDate,
-        FilesystemLoader    $twigLoader,
-        Environment         $twig,
-        CliOutput           $output
-    ): ReportInterface
-    {
-        $type = strtolower($config->get('reportType') ?? 'markdown');
+        FilesystemLoader $twigLoader,
+        Environment $twig,
+        CliOutput $output,
+    ): ReportInterface {
+        $rawType = $config->get('reportType');
+        $type = strtolower(is_string($rawType) ? $rawType : 'markdown');
 
         return match ($type) {
             'markdown' => new MarkdownReport($config, $reportDataFactory, $historyDate, $twigLoader, $twig, $output),

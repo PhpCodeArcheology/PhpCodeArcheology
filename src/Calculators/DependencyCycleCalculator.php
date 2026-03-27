@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace PhpCodeArch\Calculators;
 
 use PhpCodeArch\Calculators\Helpers\TarjanSccAlgorithm;
-use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
+use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
 
@@ -37,11 +37,14 @@ class DependencyCycleCalculator implements CalculatorInterface
                 $collectionKey
             );
 
-            if ($items === null) {
+            if (!$items instanceof \PhpCodeArch\Metrics\Model\Collections\CollectionInterface) {
                 continue;
             }
 
             foreach ($items->getAsArray() as $id => $name) {
+                if (!is_string($id) || !is_string($name)) {
+                    continue;
+                }
                 $this->idToName[$id] = $name;
                 $this->nameToId[$name] = $id;
                 $this->adjacencyList[$id] = [];
@@ -63,13 +66,16 @@ class DependencyCycleCalculator implements CalculatorInterface
             'usedClasses'
         );
 
-        if ($usedClasses === null) {
+        if (!$usedClasses instanceof \PhpCodeArch\Metrics\Model\Collections\CollectionInterface) {
             return;
         }
 
         foreach ($usedClasses->getAsArray() as $usedClassName) {
+            if (!is_string($usedClassName)) {
+                continue;
+            }
             $usedId = $this->nameToId[$usedClassName] ?? null;
-            if ($usedId !== null && $usedId !== $identifierString) {
+            if (null !== $usedId && $usedId !== $identifierString) {
                 $this->adjacencyList[$identifierString][] = $usedId;
             }
         }
@@ -85,34 +91,34 @@ class DependencyCycleCalculator implements CalculatorInterface
 
         foreach ($cycles as $cycle) {
             $cycleNames = array_map(
-                fn(string $id) => $this->idToName[$id] ?? $id,
+                fn (string $id) => $this->idToName[$id] ?? $id,
                 $cycle
             );
             $cycleLength = count($cycle);
 
             foreach ($cycle as $classId) {
-                $classesInCycles++;
+                ++$classesInCycles;
                 $this->metricsController->setMetricValuesByIdentifierString(
                     $classId,
                     [
-                        'inDependencyCycle' => true,
-                        'dependencyCycleLength' => $cycleLength,
-                        'dependencyCycleClasses' => $cycleNames,
+                        MetricKey::IN_DEPENDENCY_CYCLE => true,
+                        MetricKey::DEPENDENCY_CYCLE_LENGTH => $cycleLength,
+                        MetricKey::DEPENDENCY_CYCLE_CLASSES => $cycleNames,
                     ]
                 );
             }
         }
 
         // Set default values for classes NOT in cycles
-        foreach ($this->idToName as $id => $name) {
-            $existing = $this->metricsController->getMetricValueByIdentifierString($id, 'inDependencyCycle');
-            if ($existing === null || $existing->getValue() === null) {
+        foreach (array_keys($this->idToName) as $id) {
+            $existing = $this->metricsController->getMetricValueByIdentifierString($id, MetricKey::IN_DEPENDENCY_CYCLE);
+            if (!$existing instanceof \PhpCodeArch\Metrics\Model\MetricValue || null === $existing->getValue()) {
                 $this->metricsController->setMetricValuesByIdentifierString(
                     $id,
                     [
-                        'inDependencyCycle' => false,
-                        'dependencyCycleLength' => 0,
-                        'dependencyCycleClasses' => [],
+                        MetricKey::IN_DEPENDENCY_CYCLE => false,
+                        MetricKey::DEPENDENCY_CYCLE_LENGTH => 0,
+                        MetricKey::DEPENDENCY_CYCLE_CLASSES => [],
                     ]
                 );
             }
@@ -123,8 +129,8 @@ class DependencyCycleCalculator implements CalculatorInterface
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             [
-                'overallDependencyCycles' => $totalCycles,
-                'overallClassesInCycles' => $classesInCycles,
+                MetricKey::OVERALL_DEPENDENCY_CYCLES => $totalCycles,
+                MetricKey::OVERALL_CLASSES_IN_CYCLES => $classesInCycles,
             ]
         );
     }

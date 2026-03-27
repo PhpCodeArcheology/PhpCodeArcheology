@@ -6,28 +6,28 @@ namespace PhpCodeArch\Report;
 
 use PhpCodeArch\Application\CliOutput;
 use PhpCodeArch\Application\Config;
-use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
-use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
-use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
+use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
 use PhpCodeArch\Metrics\Model\MetricValue;
 use PhpCodeArch\Predictions\PredictionInterface;
+use PhpCodeArch\Predictions\Problems\ProblemInterface;
 use PhpCodeArch\Report\DataProvider\DataProviderFactory;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
 
 class JsonReport implements ReportInterface
 {
-    private string $outputDir;
+    private readonly string $outputDir;
 
     public function __construct(
-        private readonly Config              $config,
+        Config $config,
         private readonly DataProviderFactory $dataProviderFactory,
-        private readonly false|\DateTimeImmutable $historyDate,
-        protected readonly FilesystemLoader  $twigLoader,
-        protected readonly Environment       $twig,
-        private readonly CliOutput           $output)
+        false|\DateTimeImmutable $historyDate,
+        FilesystemLoader $twigLoader,
+        Environment $twig,
+        private readonly CliOutput $output)
     {
-        $this->outputDir = $config->get('reportDir') . DIRECTORY_SEPARATOR . 'json' . DIRECTORY_SEPARATOR;
+        $reportDir = $config->get('reportDir');
+        $this->outputDir = (is_string($reportDir) ? $reportDir : '').DIRECTORY_SEPARATOR.'json'.DIRECTORY_SEPARATOR;
 
         if (!is_dir($this->outputDir)) {
             mkdir(directory: $this->outputDir, recursive: true);
@@ -57,22 +57,28 @@ class JsonReport implements ReportInterface
         ];
 
         $json = json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-        file_put_contents($this->outputDir . 'report.json', $json);
+        file_put_contents($this->outputDir.'report.json', $json);
 
         $formatter = $this->output->getFormatter() ?? new \PhpCodeArch\Application\CliFormatter();
         $this->output->outNl($formatter->success('JSON report written to report.json'));
         $this->output->outNl();
     }
 
+    /**
+     * @param array<string, mixed> $projectData
+     *
+     * @return array<string, mixed>
+     */
     private function buildProjectSection(array $projectData): array
     {
         $project = [
             'commonPath' => $projectData['commonPath'] ?? '',
         ];
 
-        foreach ($projectData['elements'] ?? [] as $key => $metricValue) {
+        $elements = $projectData['elements'] ?? null;
+        foreach (is_array($elements) ? $elements : [] as $key => $metricValue) {
             if ($metricValue instanceof MetricValue) {
-                $project['metrics'][$key] = [
+                $project['metrics'][(string) $key] = [
                     'value' => $metricValue->getValueFormatted(),
                     'name' => $metricValue->getMetricType()->getName(),
                 ];
@@ -82,43 +88,50 @@ class JsonReport implements ReportInterface
         return $project;
     }
 
+    /** @return array<int, array<string, mixed>> */
     private function buildFilesSection(): array
     {
         $filesData = $this->dataProviderFactory->getFilesDataProvider()->getTemplateData();
         $files = [];
 
-        foreach ($filesData['files'] ?? [] as $fileKey => $fileCollection) {
-            $files[] = $this->collectionToArray($fileKey, $fileCollection);
+        $filesRaw = $filesData['files'] ?? null;
+        foreach (is_array($filesRaw) ? $filesRaw : [] as $fileKey => $fileCollection) {
+            $files[] = $this->collectionToArray((string) $fileKey, $fileCollection);
         }
 
         return $files;
     }
 
+    /** @return array<int, array<string, mixed>> */
     private function buildClassesSection(): array
     {
         $classData = $this->dataProviderFactory->getClassDataProvider()->getTemplateData();
         $classes = [];
 
-        foreach ($classData['classes'] ?? [] as $classKey => $classCollection) {
-            $classes[] = $this->collectionToArray($classKey, $classCollection);
+        $classesRaw = $classData['classes'] ?? null;
+        foreach (is_array($classesRaw) ? $classesRaw : [] as $classKey => $classCollection) {
+            $classes[] = $this->collectionToArray((string) $classKey, $classCollection);
         }
 
         return $classes;
     }
 
+    /** @return array<int, array<string, mixed>> */
     private function buildFunctionsSection(): array
     {
         $funcData = $this->dataProviderFactory->getFunctionDataProvider()->getTemplateData();
         $functions = [];
 
-        foreach ($funcData['functions'] ?? [] as $funcKey => $funcCollection) {
-            $entry = $this->collectionToArray($funcKey, $funcCollection);
+        $functionsRaw = $funcData['functions'] ?? null;
+        foreach (is_array($functionsRaw) ? $functionsRaw : [] as $funcKey => $funcCollection) {
+            $entry = $this->collectionToArray((string) $funcKey, $funcCollection);
             $entry['type'] = 'function';
             $functions[] = $entry;
         }
 
-        foreach ($funcData['methods'] ?? [] as $methodKey => $methodCollection) {
-            $entry = $this->collectionToArray($methodKey, $methodCollection);
+        $methodsRaw = $funcData['methods'] ?? null;
+        foreach (is_array($methodsRaw) ? $methodsRaw : [] as $methodKey => $methodCollection) {
+            $entry = $this->collectionToArray((string) $methodKey, $methodCollection);
             $entry['type'] = 'method';
             $functions[] = $entry;
         }
@@ -126,6 +139,11 @@ class JsonReport implements ReportInterface
         return $functions;
     }
 
+    /**
+     * @param array<string, mixed> $problemData
+     *
+     * @return array<int, array<string, mixed>>
+     */
     private function buildProblemsSection(array $problemData): array
     {
         $problems = [];
@@ -137,8 +155,16 @@ class JsonReport implements ReportInterface
         ];
 
         foreach ($categoryMap as $key => $category) {
-            foreach ($problemData[$key] ?? [] as $entityId => $entityProblems) {
-                foreach ($entityProblems['problems'] ?? [] as $problem) {
+            $categoryData = $problemData[$key] ?? null;
+            foreach (is_array($categoryData) ? $categoryData : [] as $entityId => $entityProblems) {
+                if (!is_array($entityProblems)) {
+                    continue;
+                }
+                $problemList = $entityProblems['problems'] ?? null;
+                foreach (is_array($problemList) ? $problemList : [] as $problem) {
+                    if (!$problem instanceof ProblemInterface) {
+                        continue;
+                    }
                     $problems[] = [
                         'category' => $category,
                         'entityId' => $entityId,
@@ -159,19 +185,35 @@ class JsonReport implements ReportInterface
         return $problems;
     }
 
+    /**
+     * @param array<string, mixed> $gitData
+     *
+     * @return array<string, mixed>
+     */
     private function buildGitSection(array $gitData): array
     {
+        $hotspotsRaw = $gitData['hotspots'] ?? null;
+
         return [
             'totalCommits' => $gitData['gitTotalCommits'] ?? 0,
             'activeAuthors' => $gitData['gitActiveAuthors'] ?? 0,
             'analysisPeriod' => $gitData['gitAnalysisPeriod'] ?? 'N/A',
-            'hotspots' => array_slice($gitData['hotspots'] ?? [], 0, 50),
+            'hotspots' => array_slice(is_array($hotspotsRaw) ? $hotspotsRaw : [], 0, 50),
         ];
     }
 
+    /**
+     * @param array<string, mixed> $testsData
+     *
+     * @return array<string, mixed>
+     */
     private function buildTestsSection(array $testsData): array
     {
-        $stats = $testsData['stats'] ?? [];
+        $statsRaw = $testsData['stats'] ?? null;
+        $stats = is_array($statsRaw) ? $statsRaw : [];
+
+        $coverageGapsRaw = $testsData['coverageGaps'] ?? null;
+
         return [
             'testRatio' => $stats['testRatio'] ?? 0,
             'testFileCount' => $stats['testFileCount'] ?? 0,
@@ -181,24 +223,25 @@ class JsonReport implements ReportInterface
             'testedClassRatio' => $stats['testedClassRatio'] ?? 0,
             'coveragePercent' => $stats['overallCoveragePercent'] ?? null,
             'detectedTestFrameworks' => $stats['detectedTestFrameworks'] ?? '',
-            'coverageGaps' => $testsData['coverageGaps'] ?? [],
+            'coverageGaps' => is_array($coverageGapsRaw) ? $coverageGapsRaw : [],
         ];
     }
 
+    /** @return array<string, mixed> */
     private function collectionToArray(string $key, mixed $collection): array
     {
+        if (!is_object($collection)) {
+            return ['id' => $key, 'name' => $key, 'metrics' => []];
+        }
+
         $entry = [
             'id' => $key,
-            'name' => method_exists($collection, 'getName') ? $collection->getName() : $key,
+            'name' => $collection instanceof MetricsCollectionInterface ? $collection->getName() : $key,
             'metrics' => [],
         ];
 
-        if (method_exists($collection, 'getAll')) {
+        if ($collection instanceof MetricsCollectionInterface) {
             foreach ($collection->getAll() as $metricKey => $metricValue) {
-                if (!$metricValue instanceof MetricValue) {
-                    continue;
-                }
-
                 $entry['metrics'][$metricKey] = $metricValue->getValueFormatted();
             }
         }

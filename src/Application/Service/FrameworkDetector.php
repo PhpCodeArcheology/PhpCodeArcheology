@@ -10,12 +10,12 @@ class FrameworkDetector
     {
         $composerJsonPath = $this->findComposerJson($projectRoot);
 
-        if ($composerJsonPath === null) {
+        if (null === $composerJsonPath) {
             return new FrameworkDetectionResult();
         }
 
         $content = @file_get_contents($composerJsonPath);
-        if ($content === false) {
+        if (false === $content) {
             return new FrameworkDetectionResult(composerJsonPath: $composerJsonPath);
         }
 
@@ -24,23 +24,25 @@ class FrameworkDetector
             return new FrameworkDetectionResult(composerJsonPath: $composerJsonPath);
         }
 
-        $allDeps = array_merge(
-            array_keys($data['require'] ?? []),
-            array_keys($data['require-dev'] ?? [])
-        );
-
-        $devDeps = array_keys($data['require-dev'] ?? []);
+        $require = is_array($data['require'] ?? null) ? $data['require'] : [];
+        $requireDev = is_array($data['require-dev'] ?? null) ? $data['require-dev'] : [];
+        $allDeps = array_merge(array_keys($require), array_keys($requireDev));
+        $devDeps = array_keys($requireDev);
 
         $hasDoctrine = false;
         foreach ($allDeps as $dep) {
-            if (str_starts_with($dep, 'doctrine/')) {
+            if (str_starts_with((string) $dep, 'doctrine/')) {
                 $hasDoctrine = true;
                 break;
             }
         }
 
-        $psr4Autoload = $this->parsePsr4Section($data['autoload']['psr-4'] ?? []);
-        $psr4AutoloadDev = $this->parsePsr4Section($data['autoload-dev']['psr-4'] ?? []);
+        $autoload = is_array($data['autoload'] ?? null) ? $data['autoload'] : [];
+        $autoloadDev = is_array($data['autoload-dev'] ?? null) ? $data['autoload-dev'] : [];
+        $psr4Data = is_array($autoload['psr-4'] ?? null) ? $autoload['psr-4'] : [];
+        $psr4DataDev = is_array($autoloadDev['psr-4'] ?? null) ? $autoloadDev['psr-4'] : [];
+        $psr4Autoload = $this->parsePsr4Section($psr4Data);
+        $psr4AutoloadDev = $this->parsePsr4Section($psr4DataDev);
 
         return new FrameworkDetectionResult(
             doctrineDetected: $hasDoctrine,
@@ -59,8 +61,8 @@ class FrameworkDetector
     {
         $dir = realpath($startDir) ?: $startDir;
 
-        for ($i = 0; $i < 10; $i++) {
-            $candidate = $dir . DIRECTORY_SEPARATOR . 'composer.json';
+        for ($i = 0; $i < 10; ++$i) {
+            $candidate = $dir.DIRECTORY_SEPARATOR.'composer.json';
             if (is_file($candidate)) {
                 return $candidate;
             }
@@ -75,20 +77,29 @@ class FrameworkDetector
         return null;
     }
 
+    /**
+     * @param array<mixed> $psr4Data
+     *
+     * @return array<string, string>
+     */
     private function parsePsr4Section(array $psr4Data): array
     {
         $result = [];
         foreach ($psr4Data as $namespace => $paths) {
-            $namespace = rtrim((string) $namespace, '\\') . '\\';
+            $namespace = rtrim((string) $namespace, '\\').'\\';
             if (is_string($paths)) {
                 $paths = [$paths];
             }
             if (is_array($paths)) {
                 foreach ($paths as $path) {
-                    $result[$namespace] = rtrim((string) $path, '/');
+                    if (!is_string($path)) {
+                        continue;
+                    }
+                    $result[$namespace] = rtrim($path, '/');
                 }
             }
         }
+
         return $result;
     }
 }

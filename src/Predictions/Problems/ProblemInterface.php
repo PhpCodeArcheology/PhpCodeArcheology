@@ -9,7 +9,10 @@ interface ProblemInterface
     public static function ofProblemLevelAndMessage(int $problemLevel, string $message): ProblemInterface;
 
     public function getProblemLevel(): int;
+
     public function getMessage(): string;
+
     public function getRecommendation(): string;
+
     public function getConfidence(): float;
 }

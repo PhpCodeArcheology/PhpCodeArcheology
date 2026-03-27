@@ -6,8 +6,10 @@ namespace PhpCodeArch\Report\Helper;
 
 class FileCopier
 {
+    /** @var list<string> */
     private array $files = [];
 
+    /** @param list<string> $files */
     public function setFiles(array $files): void
     {
         $this->files = $files;
@@ -16,11 +18,11 @@ class FileCopier
     public function copyFilesTo(string $destination): void
     {
         foreach ($this->files as $sourceFile) {
-            if (! file_exists($sourceFile)) {
+            if (!file_exists($sourceFile)) {
                 continue;
             }
 
-            if (! is_dir($sourceFile)) {
+            if (!is_dir($sourceFile)) {
                 $this->copy($sourceFile, $destination);
                 continue;
             }
@@ -31,22 +33,22 @@ class FileCopier
 
     private function copy(string $source, string $destination): void
     {
-        if (! is_dir($source)) {
+        if (!is_dir($source)) {
             return;
         }
 
-        if (! is_dir($destination)) {
+        if (!is_dir($destination)) {
             mkdir($destination, 0755, true);
         }
 
         $files = scandir($source);
 
         foreach ($files as $file) {
-            if ($file === '.' || $file === '..') {
+            if ('.' === $file || '..' === $file) {
                 continue;
             }
-            $sourcePath = $source . '/' . $file;
-            $destinationPath = $destination . '/' . $file;
+            $sourcePath = $source.'/'.$file;
+            $destinationPath = $destination.'/'.$file;
 
             if (is_dir($sourcePath)) {
                 $this->copy($sourcePath, $destinationPath);

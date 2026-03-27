@@ -6,7 +6,7 @@ namespace PhpCodeArch\Predictions\Problems;
 
 readonly class UntestedComplexCodeProblem extends AbstractProblem
 {
-    static function ofProblemLevelAndMessage(int $problemLevel, string $message): UntestedComplexCodeProblem
+    public static function ofProblemLevelAndMessage(int $problemLevel, string $message): UntestedComplexCodeProblem
     {
         return new UntestedComplexCodeProblem($problemLevel, $message);
     }

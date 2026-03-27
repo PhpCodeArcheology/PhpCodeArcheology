@@ -10,12 +10,14 @@ class CloverXmlParser
      * Parse a Clover XML coverage file.
      *
      * @return array<string, array{linerate: float, statements: int, coveredStatements: int}>
-     *         Keyed by normalized file path (relative to project root)
+     *                                                                                        Keyed by normalized file path (relative to project root)
      */
     public function parse(string $cloverFilePath, string $projectRoot): array
     {
-        $xml = @simplexml_load_file($cloverFilePath);
-        if ($xml === false) {
+        $previousErrors = libxml_use_internal_errors(true);
+        $xml = simplexml_load_file($cloverFilePath, options: LIBXML_NONET);
+        libxml_use_internal_errors($previousErrors);
+        if (false === $xml) {
             return [];
         }
 
@@ -25,7 +27,7 @@ class CloverXmlParser
             $absPath = (string) $file['name'];
             $metrics = $file->metrics ?? null;
 
-            if ($metrics === null) {
+            if (null === $metrics) {
                 continue;
             }
 
@@ -49,7 +51,7 @@ class CloverXmlParser
         $path = str_replace('\\', '/', $path);
         $projectRoot = rtrim(str_replace('\\', '/', $projectRoot), '/');
 
-        if (str_starts_with($path, $projectRoot . '/')) {
+        if (str_starts_with($path, $projectRoot.'/')) {
             $path = substr($path, strlen($projectRoot) + 1);
         }
 

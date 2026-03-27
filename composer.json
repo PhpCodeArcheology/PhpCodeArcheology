@@ -44,7 +44,10 @@
   },
   "require-dev": {
     "pestphp/pest": "^3.0",
-    "mockery/mockery": "^1.6"
+    "mockery/mockery": "^1.6",
+    "phpstan/phpstan": "^2.1",
+    "friendsofphp/php-cs-fixer": "^3.94",
+    "rector/rector": "^2.3"
   },
   "config": {
     "allow-plugins": {
@@ -61,5 +64,14 @@
   },
   "bin": [
     "bin/phpcodearcheology"
-  ]
+  ],
+  "scripts": {
+    "post-install-cmd": "git config core.hooksPath .githooks || true",
+    "post-update-cmd": "git config core.hooksPath .githooks || true",
+    "test": "vendor/bin/pest",
+    "analyse": "vendor/bin/phpstan analyse --memory-limit=1G",
+    "cs-check": "vendor/bin/php-cs-fixer fix --dry-run --allow-risky=yes src/",
+    "cs-fix": "vendor/bin/php-cs-fixer fix --allow-risky=yes src/",
+    "check": ["@test", "@cs-check", "@analyse"]
+  }
 }

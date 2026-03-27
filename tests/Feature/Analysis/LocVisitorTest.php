@@ -13,7 +13,10 @@ use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
 
 require_once __DIR__ . '/test_helpers.php';
 
-$locTests = require __DIR__ . '/fileprovider/test-loc-provider.php';
+$locTests = array_merge(
+    require __DIR__ . '/fileprovider/test-loc-provider.php',
+    require __DIR__ . '/fileprovider/test-hand-loc-provider.php',
+);
 
 function getLocVisitors(): array
 {

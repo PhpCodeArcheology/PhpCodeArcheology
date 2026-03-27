@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace PhpCodeArch\Analysis;
 
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
+use PhpCodeArch\Metrics\MetricKey;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
 
 /**
- * Calculate cyclomatic complexity
+ * Calculate cyclomatic complexity.
  *
  * Formula:
  *
@@ -28,54 +29,47 @@ use PhpParser\NodeVisitor;
  *
  * @see https://en.wikipedia.org/wiki/Cyclomatic_complexity
  */
-
 class CyclomaticComplexityVisitor implements NodeVisitor, VisitorInterface
 {
     use VisitorTrait;
 
     /**
-     * @var string[]
+     * @var array<int, string>
      */
     private array $currentClassName = [];
 
     /**
-     * @var string[]
+     * @var array<int, string>
      */
     private array $currentFunctionName = [];
 
-    /**
-     * @var int
-     */
     private int $fileCc = 1;
 
-    /**
-     * @var array
-     */
+    /** @var array<string, int> */
     private array $classCc = [];
 
-    /**
-     * @var array
-     */
+    /** @var array<string, int> */
     private array $functionCc = [];
 
+    /** @var array<string, array<string, int>> */
+    private array $methodCc = [];
+
     /**
-     * @param Node[] $nodes
-     * @return void
+     * @param array<int, Node> $nodes
      */
-    public function beforeTraverse(array $nodes): void
+    public function beforeTraverse(array $nodes): ?array
     {
         $this->fileCc = 1;
         $this->classCc = [];
         $this->functionCc = [];
+        $this->methodCc = [];
         $this->currentClassName = [];
         $this->currentFunctionName = [];
+
+        return null;
     }
 
-    /**
-     * @param Node $node
-     * @return void
-     */
-    public function enterNode(Node $node): void
+    public function enterNode(Node $node): int|Node|null
     {
         switch (true) {
             case $node instanceof Node\Stmt\Class_:
@@ -89,10 +83,13 @@ class CyclomaticComplexityVisitor implements NodeVisitor, VisitorInterface
 
             case $node instanceof Node\Stmt\ClassMethod:
                 $className = end($this->currentClassName);
+                if (false === $className) {
+                    break;
+                }
                 $methodName = (string) $node->name;
 
                 $this->currentFunctionName[] = $methodName;
-                $this->functionCc[$className][$methodName] = 1;
+                $this->methodCc[$className][$methodName] = 1;
                 break;
 
             case $node instanceof Node\Stmt\Function_:
@@ -102,13 +99,11 @@ class CyclomaticComplexityVisitor implements NodeVisitor, VisitorInterface
                 $this->functionCc[$functionName] = 1;
                 break;
         }
+
+        return null;
     }
 
-    /**
-     * @param Node $node
-     * @return void
-     */
-    public function leaveNode(Node $node): void
+    public function leaveNode(Node $node): int|Node|array|null
     {
         switch (true) {
             case $node instanceof Node\Stmt\Class_:
@@ -116,6 +111,9 @@ class CyclomaticComplexityVisitor implements NodeVisitor, VisitorInterface
             case $node instanceof Node\Stmt\Trait_:
             case $node instanceof Node\Stmt\Enum_:
                 $className = array_pop($this->currentClassName);
+                if (null === $className) {
+                    break;
+                }
 
                 $this->metricsController->setMetricValue(
                     MetricCollectionTypeEnum::ClassCollection,
@@ -123,14 +121,17 @@ class CyclomaticComplexityVisitor implements NodeVisitor, VisitorInterface
                         'path' => $this->path,
                         'name' => $className,
                     ],
-                    $this->classCc[$className],
-                    'cc'
+                    $this->classCc[$className] ?? 1,
+                    MetricKey::CC
                 );
                 break;
 
             case $node instanceof Node\Stmt\ClassMethod:
                 $className = end($this->currentClassName);
                 $methodName = array_pop($this->currentFunctionName);
+                if (false === $className || null === $methodName) {
+                    break;
+                }
 
                 $this->metricsController->setMetricValue(
                     MetricCollectionTypeEnum::MethodCollection,
@@ -138,13 +139,16 @@ class CyclomaticComplexityVisitor implements NodeVisitor, VisitorInterface
                         'path' => $className,
                         'name' => $methodName,
                     ],
-                    $this->functionCc[$className][$methodName],
-                    'cc'
+                    $this->methodCc[$className][$methodName] ?? 1,
+                    MetricKey::CC
                 );
                 break;
 
             case $node instanceof Node\Stmt\Function_:
                 $functionName = array_pop($this->currentFunctionName);
+                if (null === $functionName) {
+                    break;
+                }
 
                 $this->metricsController->setMetricValue(
                     MetricCollectionTypeEnum::FunctionCollection,
@@ -152,8 +156,8 @@ class CyclomaticComplexityVisitor implements NodeVisitor, VisitorInterface
                         'path' => $this->path,
                         'name' => $functionName,
                     ],
-                    $this->functionCc[$functionName],
-                    'cc'
+                    $this->functionCc[$functionName] ?? 1,
+                    MetricKey::CC
                 );
                 break;
 
@@ -168,10 +172,10 @@ class CyclomaticComplexityVisitor implements NodeVisitor, VisitorInterface
 
                     if (count($this->currentFunctionName) > 0) {
                         $methodName = end($this->currentFunctionName);
-                        if (!isset($this->functionCc[$className][$methodName])) {
-                            $this->functionCc[$className][$methodName] = 1;
+                        if (!isset($this->methodCc[$className][$methodName])) {
+                            $this->methodCc[$className][$methodName] = 1;
                         }
-                        $this->functionCc[$className][$methodName] += $increase;
+                        $this->methodCc[$className][$methodName] += $increase;
                     }
 
                     break;
@@ -183,27 +187,27 @@ class CyclomaticComplexityVisitor implements NodeVisitor, VisitorInterface
                 }
                 break;
         }
+
+        return null;
     }
 
     /**
-     * @param Node[] $nodes
-     * @return void
+     * @param array<int, Node> $nodes
      */
-    public function afterTraverse(array $nodes): void
+    public function afterTraverse(array $nodes): ?array
     {
         $this->metricsController->setMetricValue(
             MetricCollectionTypeEnum::FileCollection,
             ['path' => $this->path],
             $this->fileCc,
-            'cc'
+            MetricKey::CC
         );
+
+        return null;
     }
 
     /**
-     * Actual calculation of complexity
-     *
-     * @param Node $node
-     * @return int
+     * Actual calculation of complexity.
      */
     private function getIncreaseForNode(Node $node): int
     {
@@ -224,15 +228,14 @@ class CyclomaticComplexityVisitor implements NodeVisitor, VisitorInterface
 
             case $node instanceof Node\Stmt\Case_:
             case $node instanceof Node\Expr\Match_:
-                if ($node->cond !== null) {
+                if ($node->cond instanceof Node\Expr) {
                     $inc = 1;
                 }
                 break;
 
             case $node instanceof Node\Expr\BinaryOp\Spaceship:
-                $inc = 2;
+                $inc = 1;
                 break;
-
         }
 
         return $inc;

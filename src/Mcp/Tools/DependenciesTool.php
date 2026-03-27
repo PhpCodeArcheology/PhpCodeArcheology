@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Mcp\Tools;
 
+use PhpCodeArch\Metrics\MetricKey;
+use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
 use PhpCodeArch\Report\DataProvider\DataProviderFactory;
 
 class DependenciesTool
 {
     public function __construct(
-        private readonly DataProviderFactory $factory
+        private readonly DataProviderFactory $factory,
     ) {
     }
 
@@ -17,35 +19,39 @@ class DependenciesTool
     {
         try {
             $data = $this->factory->getClassCouplingDataProvider()->getTemplateData();
-            $classes = $data['classes'] ?? [];
+            $classesRaw = $data['classes'] ?? [];
+            $classes = is_array($classesRaw) ? $classesRaw : [];
 
             $found = null;
             foreach ($classes as $collection) {
-                $name = $collection->getName();
-                $singleName = $collection->get('singleName')?->getValue() ?? '';
+                if (!$collection instanceof MetricsCollectionInterface) {
+                    continue;
+                }
+                $name = $collection->getString(MetricKey::FULL_NAME);
+                $singleName = $collection->getString(MetricKey::SINGLE_NAME);
 
                 if (
-                    strcasecmp($name, $class_name) === 0
-                    || strcasecmp($singleName, $class_name) === 0
-                    || stripos($name, $class_name) !== false
-                    || stripos($singleName, $class_name) !== false
+                    0 === strcasecmp($name, $class_name)
+                    || 0 === strcasecmp($singleName, $class_name)
+                    || false !== stripos($name, $class_name)
+                    || false !== stripos($singleName, $class_name)
                 ) {
                     $found = $collection;
                     break;
                 }
             }
 
-            if ($found === null) {
+            if (null === $found) {
                 return "Class '{$class_name}' not found.";
             }
 
-            $fullName = $found->getName();
-            $singleName = $found->get('singleName')?->getValue() ?? $fullName;
-            $usesCount = $found->get('usesCount')?->getValue() ?? 0;
-            $usedByCount = $found->get('usedByCount')?->getValue() ?? 0;
-            $instability = $found->get('instability')?->getValue() ?? 0;
-            $usesInProject = $found->get('usesInProject')?->getValue() ?? [];
-            $usedBy = $found->get('usedBy')?->getValue() ?? [];
+            $fullName = $found->getString(MetricKey::FULL_NAME);
+            $singleName = $found->getString(MetricKey::SINGLE_NAME) ?: $fullName;
+            $usesCount = $found->getInt(MetricKey::USES_COUNT);
+            $usedByCount = $found->getInt(MetricKey::USED_BY_COUNT);
+            $instability = $found->getFloat(MetricKey::INSTABILITY);
+            $usesInProject = $found->getArray(MetricKey::USES_IN_PROJECT);
+            $usedBy = $found->getArray(MetricKey::USED_BY);
 
             $lines = [
                 "# Dependencies: {$singleName}",
@@ -54,31 +60,33 @@ class DependenciesTool
                 '## Coupling Metrics',
                 "Outgoing dependencies (uses):   {$usesCount}",
                 "Incoming dependencies (usedBy): {$usedByCount}",
-                'Instability:                    ' . round((float) $instability, 4),
+                'Instability:                    '.round($instability, 4),
                 '',
             ];
 
-            if ($direction === 'outgoing' || $direction === 'both') {
+            if ('outgoing' === $direction || 'both' === $direction) {
                 $count = count($usesInProject);
                 $lines[] = "## Outgoing Dependencies (in-project: {$count})";
                 if (empty($usesInProject)) {
                     $lines[] = '  (none)';
                 } else {
                     foreach ($usesInProject as $dep) {
-                        $lines[] = "  - {$dep}";
+                        $depStr = is_scalar($dep) ? (string) $dep : '';
+                        $lines[] = "  - {$depStr}";
                     }
                 }
                 $lines[] = '';
             }
 
-            if ($direction === 'incoming' || $direction === 'both') {
+            if ('incoming' === $direction || 'both' === $direction) {
                 $count = count($usedBy);
                 $lines[] = "## Incoming Dependencies (used by: {$count})";
                 if (empty($usedBy)) {
                     $lines[] = '  (none)';
                 } else {
                     foreach ($usedBy as $dep) {
-                        $lines[] = "  - {$dep}";
+                        $depStr = is_scalar($dep) ? (string) $dep : '';
+                        $lines[] = "  - {$depStr}";
                     }
                 }
                 $lines[] = '';
@@ -86,7 +94,7 @@ class DependenciesTool
 
             return implode("\n", $lines);
         } catch (\Throwable $e) {
-            return 'Error retrieving dependencies: ' . $e->getMessage();
+            return 'An error occurred while retrieving dependencies.';
         }
     }
 }

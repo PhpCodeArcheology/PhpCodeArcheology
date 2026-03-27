@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Calculators;
 
-use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
+use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
 
@@ -24,8 +24,11 @@ class SolidViolationCalculator implements CalculatorInterface
             'interfaces'
         );
 
-        if ($interfaces !== null) {
+        if ($interfaces instanceof \PhpCodeArch\Metrics\Model\Collections\CollectionInterface) {
             foreach ($interfaces->getAsArray() as $id => $name) {
+                if (!is_string($id) || !is_string($name)) {
+                    continue;
+                }
                 $this->interfaceIds[$name] = $id;
             }
         }
@@ -41,16 +44,16 @@ class SolidViolationCalculator implements CalculatorInterface
         $violations = [];
 
         // --- SRP Check ---
-        $methodCount = $metrics->get('methodCount')?->getValue() ?? 0;
-        $lcom = $metrics->get('lcom')?->getValue() ?? 0;
-        $usesCount = count($metrics->get('uses')?->getValue() ?? []);
+        $methodCount = $metrics->getInt(MetricKey::METHOD_COUNT);
+        $lcom = $metrics->getInt(MetricKey::LCOM);
+        $usesCount = count($metrics->getArray(MetricKey::USES));
 
         if ($methodCount > 15 && $lcom > 2 && $usesCount > 8) {
             $violations[] = 'SRP';
         }
 
         // --- ISP Check (only for interfaces) ---
-        $isInterface = $metrics->get('interface')?->getValue() ?? false;
+        $isInterface = $metrics->getBool(MetricKey::INTERFACE);
         if ($isInterface && $methodCount > 10) {
             $violations[] = 'ISP';
         }
@@ -64,12 +67,15 @@ class SolidViolationCalculator implements CalculatorInterface
         $interfaceDeps = 0;
         $concreteDeps = 0;
 
-        if ($usedClasses !== null) {
+        if ($usedClasses instanceof \PhpCodeArch\Metrics\Model\Collections\CollectionInterface) {
             foreach ($usedClasses->getAsArray() as $usedClassName) {
+                if (!is_string($usedClassName)) {
+                    continue;
+                }
                 if (isset($this->interfaceIds[$usedClassName])) {
-                    $interfaceDeps++;
+                    ++$interfaceDeps;
                 } else {
-                    $concreteDeps++;
+                    ++$concreteDeps;
                 }
             }
         }
@@ -80,11 +86,11 @@ class SolidViolationCalculator implements CalculatorInterface
         $this->metricsController->setMetricValuesByIdentifierString(
             $identifierString,
             [
-                'solidViolations' => $violations,
-                'solidViolationCount' => count($violations),
-                'srpViolation' => in_array('SRP', $violations),
-                'ispViolation' => in_array('ISP', $violations),
-                'dipScore' => $dipScore,
+                MetricKey::SOLID_VIOLATIONS => $violations,
+                MetricKey::SOLID_VIOLATION_COUNT => count($violations),
+                MetricKey::SRP_VIOLATION => in_array('SRP', $violations),
+                MetricKey::ISP_VIOLATION => in_array('ISP', $violations),
+                MetricKey::DIP_SCORE => $dipScore,
             ]
         );
     }

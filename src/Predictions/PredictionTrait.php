@@ -7,12 +7,18 @@ namespace PhpCodeArch\Predictions;
 use PhpCodeArch\Application\Config;
 use PhpCodeArch\Application\Service\FrameworkDetectionResult;
 use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
+use PhpCodeArch\Predictions\Problems\AbstractProblem;
 
 trait PredictionTrait
 {
     private ?Config $config = null;
 
+    /**
+     * @param list<string>|string           $keys
+     * @param class-string<AbstractProblem> $problemClass
+     */
     private function createProblem(string $identifierString, string|array $keys, string $problemClass, int $level, string $message, MetricsController $metricsController): void
     {
         if (is_string($keys)) {
@@ -38,9 +44,9 @@ trait PredictionTrait
         $id = (string) $metric->getIdentifier();
 
         // Hard rules: types where LCOM is structurally meaningless
-        $isEnum = $metric->get('enum')?->getValue() === true;
-        $isInterface = $metric->get('interface')?->getValue() === true;
-        $isTrait = $metric->get('trait')?->getValue() === true;
+        $isEnum = $metric->get(MetricKey::ENUM)?->asBool() ?? false;
+        $isInterface = $metric->get(MetricKey::INTERFACE)?->asBool() ?? false;
+        $isTrait = $metric->get(MetricKey::TRAIT)?->asBool() ?? false;
 
         if ($isEnum || $isInterface || $isTrait) {
             return true;
@@ -48,7 +54,7 @@ trait PredictionTrait
 
         // Classes with 0-1 methods: LCOM is meaningless
         $methodCollection = $metricsController->getCollectionByIdentifierString($id, 'methods');
-        if ($methodCollection === null || count($methodCollection->getAsArray()) <= 1) {
+        if (!$methodCollection instanceof \PhpCodeArch\Metrics\Model\Collections\CollectionInterface || count($methodCollection->getAsArray()) <= 1) {
             return true;
         }
 
@@ -59,7 +65,7 @@ trait PredictionTrait
         $patterns = is_array($configPatterns) ? $configPatterns : $defaultPatterns;
 
         foreach ($patterns as $pattern) {
-            if (fnmatch($pattern, $className)) {
+            if (is_string($pattern) && fnmatch($pattern, $className)) {
                 return true;
             }
         }
@@ -70,14 +76,14 @@ trait PredictionTrait
         $interfacePatterns = is_array($configInterfaces) ? $configInterfaces : $defaultInterfaces;
 
         $implementedInterfaces = $metricsController->getCollectionByIdentifierString($id, 'interfaces');
-        if ($implementedInterfaces !== null) {
+        if ($implementedInterfaces instanceof \PhpCodeArch\Metrics\Model\Collections\CollectionInterface) {
             foreach ($implementedInterfaces->getAsArray() as $ifaceName) {
-                if (!is_string($ifaceName) || $ifaceName === '') {
+                if (!is_string($ifaceName) || '' === $ifaceName) {
                     continue;
                 }
                 $shortName = substr(strrchr($ifaceName, '\\') ?: $ifaceName, 1) ?: $ifaceName;
                 foreach ($interfacePatterns as $pattern) {
-                    if (fnmatch($pattern, $shortName) || fnmatch($pattern, $ifaceName)) {
+                    if (is_string($pattern) && (fnmatch($pattern, $shortName) || fnmatch($pattern, $ifaceName))) {
                         return true;
                     }
                 }
@@ -120,28 +126,40 @@ trait PredictionTrait
     protected function getFrameworkDetection(): ?FrameworkDetectionResult
     {
         $detection = $this->config?->get('frameworkDetection');
+
         return $detection instanceof FrameworkDetectionResult ? $detection : null;
     }
 
     protected function isDoctrineDetected(): bool
     {
-        return $this->getFrameworkDetection()?->doctrineDetected ?? false;
+        $detection = $this->getFrameworkDetection();
+
+        return null !== $detection && $detection->doctrineDetected;
     }
 
     protected function isSymfonyDetected(): bool
     {
-        return $this->getFrameworkDetection()?->symfonyDetected ?? false;
+        $detection = $this->getFrameworkDetection();
+
+        return null !== $detection && $detection->symfonyDetected;
     }
 
     protected function isFrameworkAdjustmentEnabled(string $adjustment): bool
     {
-        if ($this->getFrameworkDetection() === null) {
+        if (null === $this->getFrameworkDetection()) {
             return false;
         }
 
-        $frameworkConfig = $this->config?->get('framework') ?? [];
+        $frameworkConfig = $this->config?->get('framework');
+        if (!is_array($frameworkConfig)) {
+            return true;
+        }
         $adjustments = $frameworkConfig['adjustments'] ?? [];
+        if (!is_array($adjustments)) {
+            return true;
+        }
+        $value = $adjustments[$adjustment] ?? true;
 
-        return $adjustments[$adjustment] ?? true;
+        return is_bool($value) ? $value : true;
     }
 }

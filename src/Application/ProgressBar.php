@@ -6,16 +6,16 @@ namespace PhpCodeArch\Application;
 
 class ProgressBar
 {
-    private float $startTime;
+    private readonly float $startTime;
     private int $current = 0;
+    private int $terminalWidth = 0;
 
     public function __construct(
-        private readonly CliOutput    $output,
+        private readonly CliOutput $output,
         private readonly CliFormatter $formatter,
-        private readonly int          $total,
-        private readonly string       $label = '',
-    )
-    {
+        private readonly int $total,
+        private readonly string $label = '',
+    ) {
         $this->startTime = microtime(true);
     }
 
@@ -45,14 +45,14 @@ class ProgressBar
         $filled = (int) round($barWidth * $percent);
         $empty = $barWidth - $filled;
 
-        $bar = str_repeat("\u{2588}", $filled) . str_repeat("\u{2591}", $empty);
+        $bar = str_repeat("\u{2588}", $filled).str_repeat("\u{2591}", $empty);
 
         $eta = $this->calculateEta();
         $memory = $this->getMemory();
 
-        $counter = number_format($this->current) . '/' . number_format($this->total);
+        $counter = number_format($this->current).'/'.number_format($this->total);
 
-        $percentStr = str_pad($percentInt . '%', 4, ' ', STR_PAD_LEFT);
+        $percentStr = str_pad($percentInt.'%', 4, ' ', STR_PAD_LEFT);
 
         $line = sprintf(
             '%s [%s] %s %s %s %s',
@@ -60,7 +60,7 @@ class ProgressBar
             $bar,
             $this->formatter->info($percentStr),
             $this->formatter->dim($counter),
-            $eta !== '' ? $this->formatter->dim('ETA: ' . $eta) : '',
+            '' !== $eta ? $this->formatter->dim('ETA: '.$eta) : '',
             $this->formatter->dim($memory),
         );
 
@@ -69,7 +69,7 @@ class ProgressBar
 
     private function calculateEta(): string
     {
-        if ($this->current === 0) {
+        if (0 === $this->current) {
             return '';
         }
 
@@ -81,13 +81,14 @@ class ProgressBar
         }
 
         if ($remaining < 60) {
-            return (int) $remaining . 's';
+            return (int) $remaining.'s';
         }
 
         $remainingInt = (int) $remaining;
         $minutes = (int) ($remainingInt / 60);
         $seconds = $remainingInt % 60;
-        return $minutes . 'm ' . $seconds . 's';
+
+        return $minutes.'m '.$seconds.'s';
     }
 
     private function getMemory(): string
@@ -97,25 +98,23 @@ class ProgressBar
         $factor = floor(log(max($bytes, 1), 1024));
         $factor = min($factor, count($units) - 1);
 
-        return sprintf('%.1f %s', $bytes / pow(1024, $factor), $units[(int) $factor]);
+        return sprintf('%.1f %s', $bytes / 1024 ** $factor, $units[(int) $factor]);
     }
 
     private function getTerminalWidth(): int
     {
-        static $width = null;
-
-        if ($width !== null) {
-            return $width;
+        if ($this->terminalWidth > 0) {
+            return $this->terminalWidth;
         }
 
-        $width = 80;
+        $this->terminalWidth = 80;
         if (function_exists('exec')) {
             $cols = @exec('tput cols 2>/dev/null');
-            if ($cols !== false && is_numeric($cols) && (int) $cols > 0) {
-                $width = (int) $cols;
+            if (false !== $cols && is_numeric($cols) && (int) $cols > 0) {
+                $this->terminalWidth = (int) $cols;
             }
         }
 
-        return $width;
+        return $this->terminalWidth;
     }
 }

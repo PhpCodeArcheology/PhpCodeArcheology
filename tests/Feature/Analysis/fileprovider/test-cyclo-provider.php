@@ -5,11 +5,11 @@ return [
         __DIR__ . '/../testfiles/cyclomatic-complexity-1.php',
         [
             'file' => [
-                'cc' => 10,
+                'cc' => 9,
             ],
             'function' => [
                 'cycloTest' => [
-                    'cc' => 4,
+                    'cc' => 3,
                 ],
             ],
             'classes' => [
@@ -79,6 +79,21 @@ return [
                 'cc' => 5,
             ],
             'function' => [
+            ],
+            'classes' => [],
+        ],
+    ],
+
+    [
+        __DIR__ . '/../testfiles/hand-calc-minimal.php',
+        [
+            'file' => [
+                'cc' => 2,
+            ],
+            'function' => [
+                'minimalIf' => [
+                    'cc' => 2,
+                ],
             ],
             'classes' => [],
         ],

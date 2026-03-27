@@ -76,5 +76,5 @@ it('returns an error string when an exception is thrown', function () {
 
     $result = (new HotspotsTool($factory))->getHotspots();
 
-    expect($result)->toBe('Error retrieving hotspots: git not found');
+    expect($result)->toBe('An error occurred while retrieving hotspots.');
 });

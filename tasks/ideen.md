@@ -1,0 +1,8 @@
+- [ ] Alle Schwellenwerte auf Plausibilität prüfen. → integriert in Phase 7 Prio 5 (Batch D)
+- [ ] Kommentare: diese sind wohl weniger wichtig, wenn Typehints gegeben sind - hier den Schwellenwert vielleicht dynamisieren. → integriert in Phase 7 Prio 2+5 (Batch D)
+- [ ] Wir brauchen für alles Erklärungen. Einen kompletten Erklärungsbereich, was welcher Wert bedeutet und wie er zu lesen ist. Und auch als Kurzbeschreibung als Tooltip. → integriert in Phase 7 Prio 4 (Batch D)
+- [ ] Der Markdown-Bereich muss an alle Änderungen angepasst und vermutlich auch verbessert werden. → integriert in Phase 7 Prio 4 (Batch D)
+- [ ] Performance — Caching, inkrementelle Analyse → spätere Phase (Voraussetzung für --watch)
+- [ ] Plugin-System — Erweiterbarkeit durch externe Plugins → spätere Phase
+- [ ] Konfigurierbarkeit — Schwellwerte, Custom Rules, .editorconfig-ähnliche Konfiguration → Schwellwerte in Phase 7 Prio 2 (Batch D), Custom Rules spätere Phase
+- [ ] Wenn sich bei einem Run keine Daten geändert haben, keine History schreiben, evtl. einfach nur die Zeit anpassen. → integriert in Phase 7 Prio 5 (Batch D)

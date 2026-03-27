@@ -7,19 +7,22 @@ namespace PhpCodeArch\Git;
 class GitLogParser
 {
     public function __construct(
-        private readonly string $projectRoot
+        private readonly string $projectRoot,
     ) {
     }
 
     public function isGitRepository(): bool
     {
         $output = $this->exec('git rev-parse --is-inside-work-tree 2>/dev/null');
-        return trim($output) === 'true';
+
+        return 'true' === trim($output);
     }
 
     /**
      * Get all file changes in the given timeframe.
-     * Returns: ['totalCommits' => int, 'authors' => [...], 'files' => [path => ['commits' => int, 'authors' => [...], 'lastModified' => timestamp]]]
+     * Returns: ['totalCommits' => int, 'authors' => [...], 'files' => [path => ['commits' => int, 'authors' => [...], 'lastModified' => timestamp]]].
+     *
+     * @return array{totalCommits: int, authors: list<string>, files: array<string, array{commits: int, authors: array<string, true>, lastModified: int}>}
      */
     public function getFileChanges(string $since): array
     {
@@ -29,7 +32,7 @@ class GitLogParser
         );
 
         $output = $this->exec($cmd);
-        if (empty($output)) {
+        if ('' === $output || '0' === $output) {
             return ['totalCommits' => 0, 'authors' => [], 'files' => []];
         }
 
@@ -43,15 +46,15 @@ class GitLogParser
 
         foreach ($lines as $line) {
             $line = trim($line);
-            if (empty($line)) {
+            if ('' === $line || '0' === $line) {
                 continue;
             }
 
             // Commit header line: hash|author|timestamp
             if (str_contains($line, '|')) {
                 $parts = explode('|', $line, 3);
-                if (count($parts) === 3) {
-                    $totalCommits++;
+                if (3 === count($parts)) {
+                    ++$totalCommits;
                     $currentAuthor = $parts[1];
                     $currentTimestamp = (int) $parts[2];
                     $allAuthors[$currentAuthor] = true;
@@ -61,7 +64,7 @@ class GitLogParser
 
             // File path line
             $filePath = $line;
-            $absolutePath = $this->projectRoot . DIRECTORY_SEPARATOR . $filePath;
+            $absolutePath = $this->projectRoot.DIRECTORY_SEPARATOR.$filePath;
 
             if (!isset($files[$absolutePath])) {
                 $files[$absolutePath] = [
@@ -71,7 +74,7 @@ class GitLogParser
                 ];
             }
 
-            $files[$absolutePath]['commits']++;
+            ++$files[$absolutePath]['commits'];
             $files[$absolutePath]['authors'][$currentAuthor] = true;
 
             if ($currentTimestamp > $files[$absolutePath]['lastModified']) {
@@ -98,11 +101,14 @@ class GitLogParser
         );
 
         $output = trim($this->exec($cmd));
-        return $output !== '' ? (int) $output : null;
+
+        return '' !== $output ? (int) $output : null;
     }
 
     /**
      * Get commit timeline data (commits per week).
+     *
+     * @return array<string, int>
      */
     public function getCommitTimeline(string $since): array
     {
@@ -112,11 +118,11 @@ class GitLogParser
         );
 
         $output = $this->exec($cmd);
-        if (empty(trim($output))) {
+        if (in_array(trim($output), ['', '0'], true)) {
             return [];
         }
 
-        $timestamps = array_filter(array_map('intval', explode("\n", trim($output))));
+        $timestamps = array_filter(array_map(intval(...), explode("\n", trim($output))));
         $weeks = [];
 
         foreach ($timestamps as $ts) {
@@ -136,7 +142,8 @@ class GitLogParser
         );
 
         $result = @shell_exec($fullCommand);
-        return $result ?? '';
+
+        return is_string($result) ? $result : '';
     }
 
     private function toRelativePath(string $absolutePath): string
@@ -144,6 +151,7 @@ class GitLogParser
         if (str_starts_with($absolutePath, $this->projectRoot)) {
             return ltrim(substr($absolutePath, strlen($this->projectRoot)), DIRECTORY_SEPARATOR);
         }
+
         return $absolutePath;
     }
 }

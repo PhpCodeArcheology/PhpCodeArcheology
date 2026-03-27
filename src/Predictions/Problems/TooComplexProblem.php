@@ -6,7 +6,7 @@ namespace PhpCodeArch\Predictions\Problems;
 
 readonly class TooComplexProblem extends AbstractProblem
 {
-    static function ofProblemLevelAndMessage(int $problemLevel, string $message): ProblemInterface
+    public static function ofProblemLevelAndMessage(int $problemLevel, string $message): ProblemInterface
     {
         return new TooComplexProblem($problemLevel, $message);
     }

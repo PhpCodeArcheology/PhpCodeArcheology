@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace PhpCodeArch\Report\DataProvider;
 
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
+use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\Enums\MetricVisibility;
 
 class ClassCouplingDataProvider implements ReportDataProviderInterface
 {
     use ReportDataProviderTrait;
-
 
     public function gatherData(): void
     {
@@ -20,9 +20,7 @@ class ClassCouplingDataProvider implements ReportDataProviderInterface
             'classes'
         );
 
-        $classes = array_filter($classes, function($class) {
-            return $class->get('realClass')->getValue() === true;
-        });
+        $classes = array_filter($classes, fn ($class) => $class->getBool(MetricKey::REAL_CLASS));
 
         $metrics = $this->metricsController->getMetricsByCollectionTypeAndVisibility(
             MetricCollectionTypeEnum::ClassCollection,
@@ -30,16 +28,12 @@ class ClassCouplingDataProvider implements ReportDataProviderInterface
             false
         );
 
-//        $classes = $this->setDataFromMetricTypesAndArrayToArrayKey($classes, $metrics, 'listData');
+        //        $classes = $this->setDataFromMetricTypesAndArrayToArrayKey($classes, $metrics, 'listData');
 
         $templateData = [
             'classes' => $classes,
-            'tableHeaders' => array_map(function($metricType) {
-                return $metricType->__toArray();
-            }, $metrics),
-             'listMetricKeys' => array_map(function($metricType) {
-                return $metricType->getKey();
-            }, $metrics),
+            'tableHeaders' => array_map(fn ($metricType) => $metricType->__toArray(), $metrics),
+            'listMetricKeys' => array_map(fn ($metricType) => $metricType->getKey(), $metrics),
         ];
 
         $this->templateData = array_merge($this->templateData, $templateData);

@@ -9,11 +9,15 @@ use PhpCodeArch\Application\Service\TestCoversParseResult;
 use PhpCodeArch\Application\Service\TestScanResult;
 use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
+use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
 
 class TestMappingCalculator implements CalculatorInterface
 {
+    /**
+     * @param array<string, array{linerate: float, statements: int}>|null $coverageData
+     */
     public function __construct(
         private readonly MetricsController $metricsController,
         private readonly ?FrameworkDetectionResult $frameworkDetection = null,
@@ -31,14 +35,20 @@ class TestMappingCalculator implements CalculatorInterface
 
     public function afterTraverse(): void
     {
-        $totalTestFiles = count($this->testScanResult?->classBasedTestFiles ?? [])
-            + count($this->testScanResult?->functionBasedTestFiles ?? []);
-
-        if ($this->testScanResult === null || $totalTestFiles === 0) {
+        if (!$this->testScanResult instanceof TestScanResult) {
             $this->setZeroProjectMetrics();
+
             return;
         }
 
+        $totalTestFiles = count($this->testScanResult->classBasedTestFiles)
+            + count($this->testScanResult->functionBasedTestFiles);
+
+        if (0 === $totalTestFiles) {
+            $this->setZeroProjectMetrics();
+
+            return;
+        }
 
         [$shortNameIndex, $fqcnIndex, $productionIds, $abstractIds] = $this->buildProductionIndex();
 
@@ -65,28 +75,28 @@ class TestMappingCalculator implements CalculatorInterface
         foreach ($productionIds as $id) {
             $hasTest = isset($classTestCount[$id]);
             if ($hasTest) {
-                $testedCount++;
+                ++$testedCount;
             } elseif (!isset($abstractIds[$id])) {
                 // Abstract classes are excluded from the "untested" count
-                $untestedCount++;
+                ++$untestedCount;
             }
 
-            $metrics = [
-                'hasTest' => $hasTest,
-                'testFileCount' => $classTestCount[$id] ?? 0,
-                'testType' => $classTestType[$id] ?? 'unknown',
+            $classMetrics = [
+                MetricKey::HAS_TEST => $hasTest,
+                MetricKey::TEST_FILE_COUNT => $classTestCount[$id] ?? 0,
+                MetricKey::TEST_TYPE => $classTestType[$id] ?? 'unknown',
             ];
 
-            if (!empty($this->coverageData)) {
+            if (null !== $this->coverageData && [] !== $this->coverageData) {
                 $covEntry = $this->lookupCoverage($id);
-                if ($covEntry !== null) {
-                    $metrics['lineCoverage'] = round($covEntry['linerate'] * 100, 2);
+                if (null !== $covEntry) {
+                    $classMetrics[MetricKey::LINE_COVERAGE] = round($covEntry['linerate'] * 100, 2);
                     $totalWeightedLinerate += $covEntry['linerate'] * $covEntry['statements'];
                     $totalStatements += $covEntry['statements'];
                 }
             }
 
-            $this->metricsController->setMetricValuesByIdentifierString($id, $metrics);
+            $this->metricsController->setMetricValuesByIdentifierString($id, $classMetrics);
         }
 
         $productionCount = count($productionIds);
@@ -100,18 +110,18 @@ class TestMappingCalculator implements CalculatorInterface
             : 0.0;
 
         $projectMetrics = [
-            'overallTestFileCount' => $totalTestFiles,
-            'overallProductionFileCount' => $productionCount,
-            'overallTestRatio' => $testRatio,
-            'overallTestedClassCount' => $testedCount,
-            'overallUntestedClassCount' => $untestedCount,
-            'overallTestedClassRatio' => $testedClassRatio,
-            'overallFunctionBasedTestFileCount' => $functionBasedCount,
-            'detectedTestFrameworks' => $this->frameworkDetection?->getTestFrameworkSummary() ?? '',
+            MetricKey::OVERALL_TEST_FILE_COUNT => $totalTestFiles,
+            MetricKey::OVERALL_PRODUCTION_FILE_COUNT => $productionCount,
+            MetricKey::OVERALL_TEST_RATIO => $testRatio,
+            MetricKey::OVERALL_TESTED_CLASS_COUNT => $testedCount,
+            MetricKey::OVERALL_UNTESTED_CLASS_COUNT => $untestedCount,
+            MetricKey::OVERALL_TESTED_CLASS_RATIO => $testedClassRatio,
+            MetricKey::OVERALL_FUNCTION_BASED_TEST_FILE_COUNT => $functionBasedCount,
+            MetricKey::DETECTED_TEST_FRAMEWORKS => $this->frameworkDetection?->getTestFrameworkSummary() ?? '',
         ];
 
         if ($totalStatements > 0) {
-            $projectMetrics['overallCoveragePercent'] = round($totalWeightedLinerate / $totalStatements * 100, 2);
+            $projectMetrics[MetricKey::OVERALL_COVERAGE_PERCENT] = round($totalWeightedLinerate / $totalStatements * 100, 2);
         }
 
         $this->metricsController->setMetricValues(
@@ -125,7 +135,7 @@ class TestMappingCalculator implements CalculatorInterface
      * Build indexes for production class lookup.
      *
      * @return array{array<string,string>, array<string,string>, string[], array<string,true>}
-     *         [shortNameIndex, fqcnIndex, productionIds, abstractIds]
+     *                                                                                         [shortNameIndex, fqcnIndex, productionIds, abstractIds]
      */
     private function buildProductionIndex(): array
     {
@@ -134,7 +144,7 @@ class TestMappingCalculator implements CalculatorInterface
         $productionIds = [];   // all non-interface/trait/enum identifier strings
         $abstractIds = [];     // identifierString → true, for abstract classes
 
-        $testFilePaths = $this->testScanResult !== null
+        $testFilePaths = $this->testScanResult instanceof TestScanResult
             ? array_flip($this->testScanResult->classBasedTestFiles)
             : [];
 
@@ -143,20 +153,20 @@ class TestMappingCalculator implements CalculatorInterface
                 continue;
             }
 
-            $filePath = $this->metricsController->getMetricValueByIdentifierString($identifierString, 'filePath')?->getValue();
+            $filePath = $this->metricsController->getMetricValueByIdentifierString($identifierString, MetricKey::FILE_PATH)?->asString();
             if (is_string($filePath) && isset($testFilePaths[$filePath])) {
                 continue;
             }
 
-            $isInterface = (bool) ($this->metricsController->getMetricValueByIdentifierString($identifierString, 'interface')?->getValue() ?? false);
-            $isTrait = (bool) ($this->metricsController->getMetricValueByIdentifierString($identifierString, 'trait')?->getValue() ?? false);
-            $isEnum = (bool) ($this->metricsController->getMetricValueByIdentifierString($identifierString, 'enum')?->getValue() ?? false);
+            $isInterface = $this->metricsController->getMetricValueByIdentifierString($identifierString, MetricKey::INTERFACE)?->asBool() ?? false;
+            $isTrait = $this->metricsController->getMetricValueByIdentifierString($identifierString, MetricKey::TRAIT)?->asBool() ?? false;
+            $isEnum = $this->metricsController->getMetricValueByIdentifierString($identifierString, MetricKey::ENUM)?->asBool() ?? false;
 
             if ($isInterface || $isTrait || $isEnum) {
                 continue;
             }
 
-            $isAbstract = (bool) ($this->metricsController->getMetricValueByIdentifierString($identifierString, 'abstract')?->getValue() ?? false);
+            $isAbstract = $this->metricsController->getMetricValueByIdentifierString($identifierString, MetricKey::ABSTRACT)?->asBool() ?? false;
 
             $fqcn = $collection->getName();
             $shortName = basename(str_replace('\\', '/', $fqcn));
@@ -176,11 +186,16 @@ class TestMappingCalculator implements CalculatorInterface
     /**
      * Resolve 0-N production class identifiers for a test file.
      * Priority: @covers > use-statements (integration) > naming convention.
+     *
+     * @param array<string, string> $shortNameIndex
+     * @param array<string, string> $fqcnIndex
+     *
+     * @return string[]
      */
     private function resolveProductionClasses(string $testFile, array $shortNameIndex, array $fqcnIndex): array
     {
         // Priority 1: @covers/@coversClass annotations
-        if ($this->coversParseResult !== null) {
+        if ($this->coversParseResult instanceof TestCoversParseResult) {
             $covers = $this->coversParseResult->coversMap[$testFile] ?? [];
             if (!empty($covers)) {
                 return $this->resolveFqcnsToIds($covers, $shortNameIndex, $fqcnIndex);
@@ -189,11 +204,11 @@ class TestMappingCalculator implements CalculatorInterface
 
         // Priority 2: use-statements for integration/feature tests
         $testType = $this->testScanResult->testFileToType[$testFile] ?? 'unknown';
-        if ($testType === 'integration' && $this->coversParseResult !== null) {
+        if ('integration' === $testType && $this->coversParseResult instanceof TestCoversParseResult) {
             $uses = $this->coversParseResult->useStatementsMap[$testFile] ?? [];
             if (!empty($uses)) {
                 $resolved = $this->resolveFqcnsToIds($uses, $shortNameIndex, $fqcnIndex);
-                if (!empty($resolved)) {
+                if ([] !== $resolved) {
                     return $resolved;
                 }
             }
@@ -201,9 +216,17 @@ class TestMappingCalculator implements CalculatorInterface
 
         // Priority 3: existing single-class fallback
         $single = $this->resolveProductionClass($testFile, $shortNameIndex, $fqcnIndex);
-        return $single !== null ? [$single] : [];
+
+        return null !== $single ? [$single] : [];
     }
 
+    /**
+     * @param string[]              $names
+     * @param array<string, string> $shortNameIndex
+     * @param array<string, string> $fqcnIndex
+     *
+     * @return string[]
+     */
     private function resolveFqcnsToIds(array $names, array $shortNameIndex, array $fqcnIndex): array
     {
         $result = [];
@@ -214,24 +237,30 @@ class TestMappingCalculator implements CalculatorInterface
                 $result[] = $shortNameIndex[$name];
             }
         }
+
         return array_values(array_unique($result));
     }
 
     private function bestTestType(?string $existing, string $new): string
     {
         $priority = ['unit' => 3, 'integration' => 2, 'unknown' => 1];
-        if ($existing === null) {
+        if (null === $existing) {
             return $new;
         }
+
         return ($priority[$new] ?? 0) > ($priority[$existing] ?? 0) ? $new : $existing;
     }
 
+    /**
+     * @param array<string, string> $shortNameIndex
+     * @param array<string, string> $fqcnIndex
+     */
     private function resolveProductionClass(string $testFile, array $shortNameIndex, array $fqcnIndex): ?string
     {
         // Strategy 1: PSR-4 namespace mapping
-        if ($this->frameworkDetection !== null) {
+        if ($this->frameworkDetection instanceof FrameworkDetectionResult) {
             $result = $this->resolveViaPsr4($testFile, $fqcnIndex);
-            if ($result !== null) {
+            if (null !== $result) {
                 return $result;
             }
         }
@@ -246,12 +275,19 @@ class TestMappingCalculator implements CalculatorInterface
         return null;
     }
 
+    /**
+     * @param array<string, string> $fqcnIndex
+     */
     private function resolveViaPsr4(string $testFile, array $fqcnIndex): ?string
     {
-        $psr4Dev = $this->frameworkDetection?->psr4AutoloadDev ?? [];
-        $psr4Prod = $this->frameworkDetection?->psr4Autoload ?? [];
+        if (null === $this->frameworkDetection) {
+            return null;
+        }
 
-        if (empty($psr4Dev) || empty($psr4Prod)) {
+        $psr4Dev = $this->frameworkDetection->psr4AutoloadDev;
+        $psr4Prod = $this->frameworkDetection->psr4Autoload;
+
+        if ([] === $psr4Dev || [] === $psr4Prod) {
             return null;
         }
 
@@ -261,15 +297,15 @@ class TestMappingCalculator implements CalculatorInterface
             $normalizedDevPath = str_replace('\\', '/', rtrim($devPath, '/\\'));
 
             // Locate the PSR-4 root within the file path
-            $pos = strpos($normalizedFile, $normalizedDevPath . '/');
-            if ($pos === false) {
+            $pos = strpos($normalizedFile, $normalizedDevPath.'/');
+            if (false === $pos) {
                 continue;
             }
 
             $relativePart = substr($normalizedFile, $pos + strlen($normalizedDevPath) + 1);
             // Strip .php extension and convert slashes to namespace separators
             $classPath = str_replace('/', '\\', substr($relativePart, 0, -4));
-            $fullTestNamespace = rtrim($devNamespace, '\\') . '\\' . $classPath;
+            $fullTestNamespace = rtrim($devNamespace, '\\').'\\'.$classPath;
 
             // Strip Test/Spec suffix from the class name part
             $parts = explode('\\', $fullTestNamespace);
@@ -282,7 +318,7 @@ class TestMappingCalculator implements CalculatorInterface
             $withoutSuffix = implode('\\', $parts);
 
             // Strip the dev namespace prefix to get the relative class path
-            $devNamespacePrefix = rtrim($devNamespace, '\\') . '\\';
+            $devNamespacePrefix = rtrim($devNamespace, '\\').'\\';
             if (!str_starts_with($withoutSuffix, $devNamespacePrefix)) {
                 continue;
             }
@@ -297,8 +333,8 @@ class TestMappingCalculator implements CalculatorInterface
             }
 
             // Try all production namespace roots
-            foreach ($psr4Prod as $prodNamespace => $prodPath) {
-                $candidate = rtrim($prodNamespace, '\\') . '\\' . $remainingPath;
+            foreach (array_keys($psr4Prod) as $prodNamespace) {
+                $candidate = rtrim($prodNamespace, '\\').'\\'.$remainingPath;
                 if (isset($fqcnIndex[$candidate])) {
                     return $fqcnIndex[$candidate];
                 }
@@ -315,6 +351,7 @@ class TestMappingCalculator implements CalculatorInterface
                 return substr($className, 0, -strlen($suffix));
             }
         }
+
         return $className;
     }
 
@@ -324,14 +361,14 @@ class TestMappingCalculator implements CalculatorInterface
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             [
-                'overallTestFileCount' => 0,
-                'overallProductionFileCount' => 0,
-                'overallTestRatio' => 0.0,
-                'overallTestedClassCount' => 0,
-                'overallUntestedClassCount' => 0,
-                'overallTestedClassRatio' => 0.0,
-                'overallFunctionBasedTestFileCount' => 0,
-                'detectedTestFrameworks' => $this->frameworkDetection?->getTestFrameworkSummary() ?? '',
+                MetricKey::OVERALL_TEST_FILE_COUNT => 0,
+                MetricKey::OVERALL_PRODUCTION_FILE_COUNT => 0,
+                MetricKey::OVERALL_TEST_RATIO => 0.0,
+                MetricKey::OVERALL_TESTED_CLASS_COUNT => 0,
+                MetricKey::OVERALL_UNTESTED_CLASS_COUNT => 0,
+                MetricKey::OVERALL_TESTED_CLASS_RATIO => 0.0,
+                MetricKey::OVERALL_FUNCTION_BASED_TEST_FILE_COUNT => 0,
+                MetricKey::DETECTED_TEST_FRAMEWORKS => $this->frameworkDetection?->getTestFrameworkSummary() ?? '',
             ]
         );
     }
@@ -339,23 +376,25 @@ class TestMappingCalculator implements CalculatorInterface
     /**
      * Look up coverage data for a class by its identifier string.
      * Resolves the absolute filePath metric to a relative path for matching.
+     *
+     * @return array{linerate: float, statements: int}|null
      */
     private function lookupCoverage(string $identifierString): ?array
     {
         $absolutePath = $this->metricsController
-            ->getMetricValueByIdentifierString($identifierString, 'filePath')
-            ?->getValue();
+            ->getMetricValueByIdentifierString($identifierString, MetricKey::FILE_PATH)
+            ?->asString();
 
-        if (!is_string($absolutePath) || $absolutePath === '') {
+        if (!is_string($absolutePath) || '' === $absolutePath) {
             return null;
         }
 
         $normalized = str_replace('\\', '/', $absolutePath);
 
         // Try direct match after stripping projectRoot prefix
-        if ($this->projectRoot !== null) {
+        if (null !== $this->projectRoot) {
             $root = rtrim(str_replace('\\', '/', $this->projectRoot), '/');
-            if (str_starts_with($normalized, $root . '/')) {
+            if (str_starts_with($normalized, $root.'/')) {
                 $relative = substr($normalized, strlen($root) + 1);
                 if (isset($this->coverageData[$relative])) {
                     return $this->coverageData[$relative];
@@ -365,10 +404,10 @@ class TestMappingCalculator implements CalculatorInterface
 
         // Fallback: match by suffix in both directions
         // filePath may be shorter (relative) or longer (absolute) than coverage keys
-        foreach ($this->coverageData as $covPath => $covData) {
+        foreach ($this->coverageData ?? [] as $covPath => $covData) {
             $normalizedCovPath = str_replace('\\', '/', $covPath);
-            if (str_ends_with($normalized, '/' . $normalizedCovPath)
-                || str_ends_with($normalizedCovPath, '/' . $normalized)
+            if (str_ends_with($normalized, '/'.$normalizedCovPath)
+                || str_ends_with($normalizedCovPath, '/'.$normalized)
                 || $normalized === $normalizedCovPath) {
                 return $covData;
             }

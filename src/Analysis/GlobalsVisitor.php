@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PhpCodeArch\Analysis;
 
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
+use PhpCodeArch\Metrics\MetricKey;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
 
@@ -13,9 +14,9 @@ class GlobalsVisitor implements NodeVisitor, VisitorInterface
     use VisitorTrait;
 
     /**
-     * Globals to track
+     * Globals to track.
      */
-    const GLOBALS = [
+    public const GLOBALS = [
         'GLOBALS' => 0,
         '_SERVER' => 0,
         '_GET' => 0,
@@ -28,42 +29,51 @@ class GlobalsVisitor implements NodeVisitor, VisitorInterface
     ];
 
     /**
-     * @var string[]
+     * @var array<int, string>
      */
     private array $currentFunctionName = [];
 
     /**
-     * @var string[]
+     * @var array<int, string>
      */
     private array $currentClassName = [];
 
     /**
-     * @var string[]
+     * @var array<int, string>
      */
     private array $currentMethodName = [];
 
+    /** @var array<string, int> */
     private array $superglobals = [];
 
+    /** @var array<string, array<string, int>> */
     private array $superglobalsFunction = [];
 
+    /** @var array<string, array<string, int>> */
     private array $superglobalsClass = [];
 
+    /** @var array<string, int> */
     private array $variableMap = [];
 
+    /** @var array<string, array<string, int>> */
     private array $functionVariableMap = [];
 
+    /** @var array<string, array<string, int>> */
     private array $classVariableMap = [];
 
+    /** @var array<string, int> */
     private array $constantMap = [];
 
+    /** @var array<string, array<string, int>> */
     private array $functionConstantMap = [];
 
+    /** @var array<string, array<string, int>> */
     private array $classConstantMap = [];
 
     /**
-     * @inheritDoc
+     * @param array<int, Node> $nodes
      */
-    public function beforeTraverse(array $nodes): void
+    public function beforeTraverse(array $nodes): ?array
     {
         $this->superglobals = self::GLOBALS;
         $this->superglobalsFunction = [];
@@ -77,28 +87,29 @@ class GlobalsVisitor implements NodeVisitor, VisitorInterface
         $this->currentClassName = [];
         $this->currentFunctionName = [];
         $this->currentMethodName = [];
+
+        return null;
     }
 
-    /**
-     * @inheritDoc
-     */
-    public function enterNode(Node $node): void
+    public function enterNode(Node $node): int|Node|null
     {
         switch (true) {
             case $node instanceof Node\Stmt\Function_:
-            case $node instanceof Node\Stmt\ClassMethod:
-                $functionName = strval($node->namespacedName ?? $node->name);
+                $functionName = (string) $node->namespacedName;
 
                 $this->superglobalsFunction[$functionName] = self::GLOBALS;
                 $this->functionVariableMap[$functionName] = [];
                 $this->functionConstantMap[$functionName] = [];
+                $this->currentFunctionName[] = $functionName;
+                break;
 
-                if ($node instanceof Node\Stmt\Function_) {
-                    $this->currentFunctionName[] = $functionName;
-                    break;
-                }
+            case $node instanceof Node\Stmt\ClassMethod:
+                $methodName = (string) $node->name;
 
-                $this->currentMethodName[] = $functionName;
+                $this->superglobalsFunction[$methodName] = self::GLOBALS;
+                $this->functionVariableMap[$methodName] = [];
+                $this->functionConstantMap[$methodName] = [];
+                $this->currentMethodName[] = $methodName;
                 break;
 
             case $node instanceof Node\Stmt\Class_:
@@ -114,25 +125,27 @@ class GlobalsVisitor implements NodeVisitor, VisitorInterface
                 $this->currentClassName[] = $className;
                 break;
         }
+
+        return null;
     }
 
-    /**
-     * @inheritDoc
-     */
-    public function leaveNode(Node $node): void
+    public function leaveNode(Node $node): int|Node|array|null
     {
-        $className = end($this->currentClassName);
-        $functionName = end($this->currentFunctionName);
-        $methodName = end($this->currentMethodName);
+        $className = count($this->currentClassName) > 0 ? end($this->currentClassName) : false;
+        $functionName = count($this->currentFunctionName) > 0 ? end($this->currentFunctionName) : false;
+        $methodName = count($this->currentMethodName) > 0 ? end($this->currentMethodName) : false;
 
         $this->countVariableNodes($node, $functionName, false, true);
-        $this->countConstantNodes($node, $functionName, false, true);
+        $this->countConstantNodes($node, $functionName, false);
         $this->countVariableNodes($node, $methodName, $className);
         $this->countConstantNodes($node, $methodName, $className);
 
         switch (true) {
             case $node instanceof Node\Stmt\Function_:
                 $functionName = array_pop($this->currentFunctionName);
+                if (null === $functionName) {
+                    break;
+                }
 
                 $this->metricsController->setMetricValues(
                     MetricCollectionTypeEnum::FunctionCollection,
@@ -141,9 +154,9 @@ class GlobalsVisitor implements NodeVisitor, VisitorInterface
                         'name' => $functionName,
                     ],
                     [
-                        'superglobals' => $this->superglobalsFunction[$functionName],
-                        'variables' => $this->functionVariableMap[$functionName],
-                        'constants' => $this->functionConstantMap[$functionName],
+                        MetricKey::SUPERGLOBALS => $this->superglobalsFunction[$functionName] ?? [],
+                        MetricKey::VARIABLES => $this->functionVariableMap[$functionName] ?? [],
+                        MetricKey::CONSTANTS => $this->functionConstantMap[$functionName] ?? [],
                     ]
                 );
                 break;
@@ -151,6 +164,9 @@ class GlobalsVisitor implements NodeVisitor, VisitorInterface
             case $node instanceof Node\Stmt\ClassMethod:
                 $className = end($this->currentClassName);
                 $methodName = array_pop($this->currentMethodName);
+                if (false === $className || null === $methodName) {
+                    break;
+                }
 
                 $this->metricsController->setMetricValues(
                     MetricCollectionTypeEnum::MethodCollection,
@@ -159,9 +175,9 @@ class GlobalsVisitor implements NodeVisitor, VisitorInterface
                         'name' => $methodName,
                     ],
                     [
-                        'superglobals' => $this->superglobalsFunction[$methodName],
-                        'variables' => $this->functionVariableMap[$methodName],
-                        'constants' => $this->functionConstantMap[$methodName],
+                        MetricKey::SUPERGLOBALS => $this->superglobalsFunction[$methodName] ?? [],
+                        MetricKey::VARIABLES => $this->functionVariableMap[$methodName] ?? [],
+                        MetricKey::CONSTANTS => $this->functionConstantMap[$methodName] ?? [],
                     ]
                 );
                 break;
@@ -171,6 +187,9 @@ class GlobalsVisitor implements NodeVisitor, VisitorInterface
             case $node instanceof Node\Stmt\Trait_:
             case $node instanceof Node\Stmt\Enum_:
                 $className = array_pop($this->currentClassName);
+                if (null === $className) {
+                    break;
+                }
 
                 $this->metricsController->setMetricValues(
                     MetricCollectionTypeEnum::ClassCollection,
@@ -179,54 +198,51 @@ class GlobalsVisitor implements NodeVisitor, VisitorInterface
                         'name' => $className,
                     ],
                     [
-                        'superglobals' => $this->superglobalsClass[$className],
-                        'variables' => $this->classVariableMap[$className],
-                        'constants' => $this->classConstantMap[$className],
+                        MetricKey::SUPERGLOBALS => $this->superglobalsClass[$className] ?? [],
+                        MetricKey::VARIABLES => $this->classVariableMap[$className] ?? [],
+                        MetricKey::CONSTANTS => $this->classConstantMap[$className] ?? [],
                     ]
                 );
                 break;
         }
+
+        return null;
     }
 
     /**
-     * @inheritDoc
+     * @param array<int, Node> $nodes
      */
-    public function afterTraverse(array $nodes): void
+    public function afterTraverse(array $nodes): ?array
     {
         $this->metricsController->setMetricValues(
             MetricCollectionTypeEnum::FileCollection,
             ['path' => $this->path],
             [
-                'superglobals' => $this->superglobals,
-                'variables' => $this->variableMap,
-                'constants' => $this->constantMap,
+                MetricKey::SUPERGLOBALS => $this->superglobals,
+                MetricKey::VARIABLES => $this->variableMap,
+                MetricKey::CONSTANTS => $this->constantMap,
             ]
         );
+
+        return null;
     }
 
-    /**
-     * @param Node $node
-     * @param false|string $functionName
-     * @param false|string $className
-     * @return void
-     */
     public function countVariableNodes(Node $node, false|string $functionName, false|string $className, bool $countGlobal = false): void
     {
         if ($node instanceof Node\Expr\Variable && is_string($node->name)) {
             if (in_array($node->name, array_keys($this->superglobals))) {
-                if ($countGlobal === false) {
+                if (!$countGlobal) {
                     ++$this->superglobals[$node->name];
                 }
 
-                if ($functionName) {
+                if (false !== $functionName) {
                     ++$this->superglobalsFunction[$functionName][$node->name];
                 }
 
-                if ($className) {
+                if (false !== $className) {
                     ++$this->superglobalsClass[$className][$node->name];
                 }
-            }
-            elseif (!in_array($node->name, ['this', 'self'])) {
+            } elseif (!in_array($node->name, ['this', 'self'])) {
                 if ($countGlobal) {
                     if (!isset($this->variableMap[$node->name])) {
                         $this->variableMap[$node->name] = 0;
@@ -234,14 +250,14 @@ class GlobalsVisitor implements NodeVisitor, VisitorInterface
                     ++$this->variableMap[$node->name];
                 }
 
-                if ($functionName) {
+                if (false !== $functionName) {
                     if (!isset($this->functionVariableMap[$functionName][$node->name])) {
                         $this->functionVariableMap[$functionName][$node->name] = 0;
                     }
                     ++$this->functionVariableMap[$functionName][$node->name];
                 }
 
-                if ($className) {
+                if (false !== $className) {
                     if (!isset($this->classVariableMap[$className][$node->name])) {
                         $this->classVariableMap[$className][$node->name] = 0;
                     }
@@ -251,12 +267,6 @@ class GlobalsVisitor implements NodeVisitor, VisitorInterface
         }
     }
 
-    /**
-     * @param Node $node
-     * @param false|string $functionName
-     * @param false|string $className
-     * @return void
-     */
     public function countConstantNodes(Node $node, false|string $functionName, false|string $className): void
     {
         if ($node instanceof Node\Expr\ConstFetch) {
@@ -268,14 +278,14 @@ class GlobalsVisitor implements NodeVisitor, VisitorInterface
                 }
                 ++$this->constantMap[$constantName];
 
-                if ($functionName) {
+                if (false !== $functionName) {
                     if (!isset($this->functionConstantMap[$functionName][$constantName])) {
                         $this->functionConstantMap[$functionName][$constantName] = 0;
                     }
                     ++$this->functionConstantMap[$functionName][$constantName];
                 }
 
-                if ($className) {
+                if (false !== $className) {
                     if (!isset($this->classConstantMap[$className][$constantName])) {
                         $this->classConstantMap[$className][$constantName] = 0;
                     }

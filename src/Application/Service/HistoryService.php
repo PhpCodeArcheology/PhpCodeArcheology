@@ -10,18 +10,20 @@ use PhpCodeArch\Metrics\Model\Enums\BetterDirection;
 use PhpCodeArch\Metrics\Model\Enums\MetricValueType;
 use PhpCodeArch\Metrics\Model\Enums\MetricVisibility;
 use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
+use PhpCodeArch\Metrics\Model\MetricValue;
 
 class HistoryService
 {
     public function setDeltas(MetricsController $metricsController, Config $config): false|\DateTimeImmutable
     {
-        $outputDir = $config->get('reportDir') . DIRECTORY_SEPARATOR;
+        $reportDirRaw = $config->get('reportDir');
+        $outputDir = (is_string($reportDirRaw) ? $reportDirRaw : '').DIRECTORY_SEPARATOR;
 
         // Support both JSONL (new) and JSON (legacy)
-        $historyFile = $outputDir . 'history.jsonl';
+        $historyFile = $outputDir.'history.jsonl';
         $isJsonl = true;
         if (!file_exists($historyFile)) {
-            $historyFile = $outputDir . 'history.json';
+            $historyFile = $outputDir.'history.json';
             $isJsonl = false;
             if (!file_exists($historyFile)) {
                 return false;
@@ -37,41 +39,42 @@ class HistoryService
         // Read last entry (last line for JSONL, whole file for JSON)
         if ($isJsonl) {
             $lastLine = $this->getLastLineOfFile($historyFile);
-            if ($lastLine === null) {
+            if (null === $lastLine) {
                 return false;
             }
-            $historyFileData = json_decode($lastLine);
+            $historyFileData = json_decode($lastLine, true);
         } else {
             $rawData = @file_get_contents($historyFile);
-            if ($rawData === false) {
+            if (false === $rawData) {
                 return false;
             }
-            $historyFileData = json_decode($rawData);
+            $historyFileData = json_decode($rawData, true);
             unset($rawData);
         }
 
-        if ($historyFileData === null || !isset($historyFileData->date)) {
+        if (!is_array($historyFileData) || !isset($historyFileData['date'])) {
             return false;
         }
 
-        $historyDate = \DateTimeImmutable::createFromFormat('Y-m-d-H-i-s', $historyFileData->date);
+        $dateRaw = $historyFileData['date'];
+        $historyDate = \DateTimeImmutable::createFromFormat('Y-m-d-H-i-s', is_string($dateRaw) ? $dateRaw : '');
         unset($historyFileData);
 
         foreach ($this->getHistoryDataFromFile($historyFile, $isJsonl) as $historyData) {
             foreach ($historyData['data'] as $key => $historyValue) {
                 $metricValue = $metricsController->getMetricValueByIdentifierString(
                     $historyData['key'],
-                    $key
+                    (string) $key
                 );
 
-                if (!$metricValue) {
+                if (!$metricValue instanceof MetricValue) {
                     continue;
                 }
 
                 $metricType = $metricValue->getMetricType();
                 $valueType = $metricType->getValueType();
 
-                if ($metricType->getVisibility() === MetricVisibility::ShowNowhere || $metricType->getValueType() === MetricValueType::Storage) {
+                if (MetricVisibility::ShowNowhere === $metricType->getVisibility() || MetricValueType::Storage === $metricType->getValueType()) {
                     continue;
                 }
 
@@ -85,41 +88,43 @@ class HistoryService
 
                 $better = $metricType->getBetter();
 
-                $historyValue = $historyValue ?? 0;
+                $historyValue ??= 0;
 
                 $deltaObject = new class {
                     public int|float $delta = 0;
                     public string $direction = '';
-                    public null|bool $isBetter = null;
+                    public ?bool $isBetter = null;
                 };
 
                 $currentValue = $metricValue->getValue();
-                if ($containsColon) {
+                if ($containsColon && is_string($currentValue) && (is_string($historyValue) || is_numeric($historyValue))) {
                     $currentValue = (int) explode(': ', $currentValue)[1];
-                    $historyValue = (int) explode(': ', $historyValue)[1];
+                    $historyValue = (int) explode(': ', is_string($historyValue) ? $historyValue : (string) $historyValue)[1];
                 }
 
-                $delta = $currentValue - $historyValue;
+                $currentNum = is_numeric($currentValue) ? $currentValue + 0 : 0;
+                $historyNum = is_numeric($historyValue) ? $historyValue + 0 : 0;
+                $delta = $currentNum - $historyNum;
 
                 $direction = 'sideways';
                 $isBetter = null;
                 switch (true) {
-                    case $better === BetterDirection::Low && $delta < 0:
+                    case BetterDirection::Low === $better && $delta < 0:
                         $direction = 'down';
                         $isBetter = true;
                         break;
 
-                    case $better === BetterDirection::Low && $delta > 0:
+                    case BetterDirection::Low === $better && $delta > 0:
                         $direction = 'up';
                         $isBetter = false;
                         break;
 
-                    case $better === BetterDirection::High && $delta > 0:
+                    case BetterDirection::High === $better && $delta > 0:
                         $direction = 'up';
                         $isBetter = true;
                         break;
 
-                    case $better === BetterDirection::High && $delta < 0:
+                    case BetterDirection::High === $better && $delta < 0:
                         $direction = 'down';
                         $isBetter = false;
                         break;
@@ -138,8 +143,9 @@ class HistoryService
 
     public function writeHistory(MetricsController $metricsController, Config $config): void
     {
-        $outputDir = $config->get('reportDir') . DIRECTORY_SEPARATOR;
-        $historyFile = $outputDir . 'history.jsonl';
+        $reportDirRaw = $config->get('reportDir');
+        $outputDir = (is_string($reportDirRaw) ? $reportDirRaw : '').DIRECTORY_SEPARATOR;
+        $historyFile = $outputDir.'history.jsonl';
 
         $metricHistory = [
             'date' => (new \DateTimeImmutable())->format('Y-m-d-H-i-s'),
@@ -147,54 +153,59 @@ class HistoryService
         ];
 
         foreach ($this->getHistoryData($metricsController) as $historyData) {
-            if (!isset($metricHistory['data'][$historyData['collectionKey']])) {
-                $metricHistory['data'][$historyData['collectionKey']] = [];
+            $collectionKey = $historyData['collectionKey'];
+            if (!isset($metricHistory['data'][$collectionKey])) {
+                $metricHistory['data'][$collectionKey] = [];
             }
-            $metricHistory['data'][$historyData['collectionKey']][$historyData['key']] = $historyData['value'];
+            $metricHistory['data'][$collectionKey][$historyData['key']] = $historyData['value'];
         }
 
         // Migrate old history.json → first line of history.jsonl
-        $oldHistoryFile = $outputDir . 'history.json';
+        $oldHistoryFile = $outputDir.'history.json';
         if (file_exists($oldHistoryFile) && !file_exists($historyFile)) {
             $oldData = @file_get_contents($oldHistoryFile);
-            if ($oldData !== false) {
-                file_put_contents($historyFile, trim($oldData) . "\n");
+            if (false !== $oldData) {
+                file_put_contents($historyFile, trim($oldData)."\n");
                 @unlink($oldHistoryFile);
             }
         }
 
         // Skip writing if data hasn't changed since last run
-        $currentDataHash = md5(json_encode($metricHistory['data']));
+        $currentDataHash = md5(json_encode($metricHistory['data']) ?: '');
         $lastLine = $this->getLastLineOfFile($historyFile);
-        if ($lastLine !== null) {
+        if (null !== $lastLine) {
             $lastEntry = json_decode($lastLine, true);
-            if ($lastEntry !== null && isset($lastEntry['data'])) {
-                $lastDataHash = md5(json_encode($lastEntry['data']));
+            if (is_array($lastEntry) && isset($lastEntry['data'])) {
+                $lastDataHash = md5(json_encode($lastEntry['data']) ?: '');
                 if ($currentDataHash === $lastDataHash) {
                     // Data unchanged — update timestamp of last entry instead of appending
                     $lastEntry['date'] = $metricHistory['date'];
                     $lines = @file($historyFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [];
                     $lines[count($lines) - 1] = json_encode($lastEntry);
-                    file_put_contents($historyFile, implode("\n", $lines) . "\n");
+                    file_put_contents($historyFile, implode("\n", $lines)."\n");
+
                     return;
                 }
             }
         }
 
         // Append current run as new line
-        file_put_contents($historyFile, json_encode($metricHistory) . "\n", FILE_APPEND);
+        file_put_contents($historyFile, json_encode($metricHistory)."\n", FILE_APPEND);
     }
 
+    /**
+     * @return \Generator<int, array{collectionKey: string, key: string, value: mixed}>
+     */
     private function getHistoryData(MetricsController $metricsController): \Generator
     {
         foreach ($metricsController->getAllCollections() as $metricCollectionKey => $metricCollection) {
             foreach ($this->getMetricValues($metricCollection) as $metricValue) {
-                if ($metricValue->getMetricType()->getVisibility() === MetricVisibility::ShowNowhere) {
+                if (MetricVisibility::ShowNowhere === $metricValue->getMetricType()->getVisibility()) {
                     continue;
                 }
 
                 yield [
-                    'collectionKey' => $metricCollectionKey,
+                    'collectionKey' => (string) $metricCollectionKey,
                     'key' => $metricValue->getMetricTypeKey(),
                     'value' => $metricValue->getValue(),
                 ];
@@ -202,6 +213,9 @@ class HistoryService
         }
     }
 
+    /**
+     * @return \Generator<int, MetricValue>
+     */
     private function getMetricValues(MetricsCollectionInterface $metricCollection): \Generator
     {
         foreach ($metricCollection->getAll() as $metricValue) {
@@ -209,29 +223,35 @@ class HistoryService
         }
     }
 
+    /**
+     * @return \Generator<int, array{key: string, data: array<array-key, mixed>}>
+     */
     private function getHistoryDataFromFile(string $file, bool $isJsonl = false): \Generator
     {
         if ($isJsonl) {
             $lastLine = $this->getLastLineOfFile($file);
-            if ($lastLine === null) {
+            if (null === $lastLine) {
                 return;
             }
-            $history = json_decode($lastLine);
+            $history = json_decode($lastLine, true);
         } else {
             $jsonData = @file_get_contents($file);
-            if ($jsonData === false) {
+            if (false === $jsonData) {
                 return;
             }
-            $history = json_decode($jsonData);
+            $history = json_decode($jsonData, true);
         }
 
-        if ($history === null || !isset($history->data)) {
+        if (!is_array($history) || !isset($history['data']) || !is_array($history['data'])) {
             return;
         }
 
-        foreach ($history->data as $key => $historyData) {
+        foreach ($history['data'] as $key => $historyData) {
+            if (!is_array($historyData)) {
+                continue;
+            }
             yield [
-                'key' => $key,
+                'key' => (string) $key,
                 'data' => $historyData,
             ];
         }
@@ -240,9 +260,10 @@ class HistoryService
     private function getLastLineOfFile(string $file): ?string
     {
         $lines = @file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-        if ($lines === false || empty($lines)) {
+        if (false === $lines || [] === $lines) {
             return null;
         }
+
         return end($lines);
     }
 }

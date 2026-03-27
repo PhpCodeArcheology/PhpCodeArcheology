@@ -6,5 +6,4 @@ namespace PhpCodeArch\Application\ConfigFile\Exceptions;
 
 class ConfigFileNotFoundException extends \Exception
 {
-
 }

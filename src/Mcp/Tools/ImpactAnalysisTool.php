@@ -9,7 +9,7 @@ use PhpCodeArch\Report\DataProvider\DataProviderFactory;
 class ImpactAnalysisTool
 {
     public function __construct(
-        private readonly DataProviderFactory $factory
+        private readonly DataProviderFactory $factory,
     ) {
     }
 
@@ -21,115 +21,153 @@ class ImpactAnalysisTool
             $edges = $graphData['edges'];
 
             // Build lookup structures
+            /** @var array<string, array<string, mixed>> $nodeById */
             $nodeById = [];
             foreach ($nodes as $node) {
-                $nodeById[$node['id']] = $node;
+                $id = $this->str($node['id'] ?? null);
+                if ('' !== $id) {
+                    $nodeById[$id] = $node;
+                }
             }
 
             // Build declares map: methodId → classId
+            /** @var array<string, string> $methodToClass */
             $methodToClass = [];
             foreach ($edges as $edge) {
-                if ($edge['type'] === 'declares') {
-                    $methodToClass[$edge['target']] = $edge['source'];
+                if ('declares' === $this->str($edge['type'] ?? null)) {
+                    $target = $this->str($edge['target'] ?? null);
+                    $source = $this->str($edge['source'] ?? null);
+                    if ('' !== $target && '' !== $source) {
+                        $methodToClass[$target] = $source;
+                    }
                 }
             }
 
             // Build reverse calls index: target → [{source, weight}]
+            /** @var array<string, list<array{source: string, weight: int}>> $reverseCallIndex */
             $reverseCallIndex = [];
             // Build forward calls index: source → [{target, weight}]
+            /** @var array<string, list<array{target: string, weight: int}>> $forwardCallIndex */
             $forwardCallIndex = [];
             foreach ($edges as $edge) {
-                if ($edge['type'] === 'calls') {
-                    $reverseCallIndex[$edge['target']][] = [
-                        'source' => $edge['source'],
-                        'weight' => $edge['weight'],
-                    ];
-                    $forwardCallIndex[$edge['source']][] = [
-                        'target' => $edge['target'],
-                        'weight' => $edge['weight'],
-                    ];
+                if ('calls' === $this->str($edge['type'] ?? null)) {
+                    $edgeSource = $this->str($edge['source'] ?? null);
+                    $edgeTarget = $this->str($edge['target'] ?? null);
+                    $edgeWeight = is_int($edge['weight'] ?? null) ? (int) $edge['weight'] : 1;
+                    if ('' !== $edgeSource && '' !== $edgeTarget) {
+                        $reverseCallIndex[$edgeTarget][] = [
+                            'source' => $edgeSource,
+                            'weight' => $edgeWeight,
+                        ];
+                        $forwardCallIndex[$edgeSource][] = [
+                            'target' => $edgeTarget,
+                            'weight' => $edgeWeight,
+                        ];
+                    }
                 }
             }
 
             // Find matching class node
+            /** @var array<string, mixed>|null $classNode */
             $classNode = null;
             foreach ($nodes as $node) {
-                if ($node['type'] !== 'class') {
+                if ('class' !== $this->str($node['type'] ?? null)) {
                     continue;
                 }
+                $nodeName = $this->str($node['name'] ?? null);
                 if (
-                    strcasecmp($node['name'], $class_name) === 0
-                    || stripos($node['name'], $class_name) !== false
+                    0 === strcasecmp($nodeName, $class_name)
+                    || false !== stripos($nodeName, $class_name)
                 ) {
                     $classNode = $node;
                     break;
                 }
             }
 
-            if ($classNode === null) {
+            if (null === $classNode) {
                 return "Class '{$class_name}' not found.";
             }
 
+            $classNodeId = $this->str($classNode['id'] ?? null);
+            $classNodeName = $this->str($classNode['name'] ?? null);
+
             // Find target method(s)
+            /** @var list<string> $targetMethodIds */
             $targetMethodIds = [];
             foreach ($edges as $edge) {
-                if ($edge['type'] === 'declares' && $edge['source'] === $classNode['id']) {
-                    $methodNode = $nodeById[$edge['target']] ?? null;
-                    if ($methodNode === null) {
-                        continue;
-                    }
+                $edgeType = $this->str($edge['type'] ?? null);
+                $edgeSource = $this->str($edge['source'] ?? null);
+                $edgeTarget = $this->str($edge['target'] ?? null);
 
-                    if ($method_name === '' || strcasecmp($methodNode['name'], $method_name) === 0) {
-                        $targetMethodIds[] = $edge['target'];
-                    }
+                if ('declares' !== $edgeType || $edgeSource !== $classNodeId) {
+                    continue;
+                }
+
+                $methodNode = '' !== $edgeTarget ? ($nodeById[$edgeTarget] ?? null) : null;
+                if (null === $methodNode) {
+                    continue;
+                }
+
+                $methodNodeName = $this->str($methodNode['name'] ?? null);
+                if ('' === $method_name || 0 === strcasecmp($methodNodeName, $method_name)) {
+                    $targetMethodIds[] = $edgeTarget;
                 }
             }
 
-            if (empty($targetMethodIds)) {
-                if ($method_name !== '') {
-                    return "Method '{$method_name}' not found in class '{$classNode['name']}'.";
+            if ([] === $targetMethodIds) {
+                if ('' !== $method_name) {
+                    return "Method '{$method_name}' not found in class '{$classNodeName}'.";
                 }
-                return "No methods found in class '{$classNode['name']}'.";
+
+                return "No methods found in class '{$classNodeName}'.";
             }
 
             $lines = [];
 
             foreach ($targetMethodIds as $methodId) {
-                $methodNode = $nodeById[$methodId];
-                $methodLabel = $classNode['name'] . '::' . $methodNode['name'];
+                $methodNode = $nodeById[$methodId] ?? null;
+                if (null === $methodNode) {
+                    continue;
+                }
+                $methodNodeName = $this->str($methodNode['name'] ?? null);
+                $methodLabel = $classNodeName.'::'.$methodNodeName;
 
                 $lines[] = "# Impact Analysis: {$methodLabel}";
                 $lines[] = '';
 
                 // Forward calls (what does this method call?)
                 $forwardCalls = $forwardCallIndex[$methodId] ?? [];
-                if (!empty($forwardCalls)) {
-                    $lines[] = '## Calls (' . count($forwardCalls) . ')';
+                if ([] !== $forwardCalls) {
+                    $lines[] = '## Calls ('.count($forwardCalls).')';
                     foreach ($forwardCalls as $call) {
                         $targetNode = $nodeById[$call['target']] ?? null;
-                        if ($targetNode === null) {
+                        if (null === $targetNode) {
                             continue;
                         }
                         $targetClassId = $methodToClass[$call['target']] ?? null;
-                        $targetClassName = $targetClassId !== null
-                            ? ($nodeById[$targetClassId]['name'] ?? '?')
+                        $targetClassName = null !== $targetClassId
+                            ? $this->str($nodeById[$targetClassId]['name'] ?? '?')
                             : '?';
+                        $targetNodeName = $this->str($targetNode['name'] ?? null);
                         $weight = $call['weight'] > 1 ? " ({$call['weight']} call-sites)" : '';
-                        $lines[] = "  - {$targetClassName}::{$targetNode['name']}{$weight}";
+                        $lines[] = "  - {$targetClassName}::{$targetNodeName}{$weight}";
                     }
                     $lines[] = '';
                 }
 
                 // BFS for callers (reverse direction)
+                /** @var array<string, true> $visited */
                 $visited = [];
+                /** @var list<array{id: string, weight: int, depth: int, path: list<string>}> $queue */
                 $queue = [];
+                /** @var array<int, list<array{label: string, weight: int, path: list<string>}>> $callersByDepth */
                 $callersByDepth = [];
 
                 foreach ($reverseCallIndex[$methodId] ?? [] as $caller) {
                     $queue[] = ['id' => $caller['source'], 'weight' => $caller['weight'], 'depth' => 1, 'path' => [$methodLabel]];
                 }
 
-                while (!empty($queue)) {
+                while ([] !== $queue) {
                     $current = array_shift($queue);
                     $currentId = $current['id'];
                     $currentDepth = $current['depth'];
@@ -140,17 +178,18 @@ class ImpactAnalysisTool
                     $visited[$currentId] = true;
 
                     $callerNode = $nodeById[$currentId] ?? null;
-                    if ($callerNode === null) {
+                    if (null === $callerNode) {
                         continue;
                     }
 
                     $callerClassId = $methodToClass[$currentId] ?? null;
-                    $callerClassName = $callerClassId !== null
-                        ? ($nodeById[$callerClassId]['name'] ?? '?')
+                    $callerClassName = null !== $callerClassId
+                        ? $this->str($nodeById[$callerClassId]['name'] ?? '?')
                         : '?';
+                    $callerNodeName = $this->str($callerNode['name'] ?? null);
 
                     $callersByDepth[$currentDepth][] = [
-                        'label' => "{$callerClassName}::{$callerNode['name']}",
+                        'label' => "{$callerClassName}::{$callerNodeName}",
                         'weight' => $current['weight'],
                         'path' => $current['path'],
                     ];
@@ -162,7 +201,7 @@ class ImpactAnalysisTool
                                 'id' => $nextCaller['source'],
                                 'weight' => $nextCaller['weight'],
                                 'depth' => $currentDepth + 1,
-                                'path' => array_merge($current['path'], ["{$callerClassName}::{$callerNode['name']}"]),
+                                'path' => array_merge($current['path'], ["{$callerClassName}::{$callerNodeName}"]),
                             ];
                         }
                     }
@@ -170,8 +209,8 @@ class ImpactAnalysisTool
 
                 // Direct callers
                 $directCallers = $callersByDepth[1] ?? [];
-                $lines[] = '## Direct Callers (' . count($directCallers) . ')';
-                if (empty($directCallers)) {
+                $lines[] = '## Direct Callers ('.count($directCallers).')';
+                if ([] === $directCallers) {
                     $lines[] = '  (none — this method is not called by other classes)';
                 } else {
                     foreach ($directCallers as $caller) {
@@ -183,14 +222,14 @@ class ImpactAnalysisTool
 
                 // Transitive callers
                 $transitiveCallers = [];
-                for ($d = 2; $d <= $depth; $d++) {
+                for ($d = 2; $d <= $depth; ++$d) {
                     foreach ($callersByDepth[$d] ?? [] as $caller) {
                         $transitiveCallers[] = $caller;
                     }
                 }
 
-                if (!empty($transitiveCallers)) {
-                    $lines[] = '## Transitive Callers (depth ' . $depth . ', +' . count($transitiveCallers) . ')';
+                if ([] !== $transitiveCallers) {
+                    $lines[] = '## Transitive Callers (depth '.$depth.', +'.count($transitiveCallers).')';
                     foreach ($transitiveCallers as $caller) {
                         $chain = implode(' → ', array_reverse($caller['path']));
                         $lines[] = "  - {$caller['label']} → {$chain}";
@@ -207,19 +246,20 @@ class ImpactAnalysisTool
                 }
 
                 $lines[] = '## Summary';
-                $lines[] = '  Methods directly affected:      ' . count($directCallers);
-                $lines[] = '  Methods transitively affected:  ' . (count($directCallers) + count($transitiveCallers));
-                $lines[] = '  Classes affected:               ' . count($affectedClasses);
+                $lines[] = '  Methods directly affected:      '.count($directCallers);
+                $lines[] = '  Methods transitively affected:  '.(count($directCallers) + count($transitiveCallers));
+                $lines[] = '  Classes affected:               '.count($affectedClasses);
                 $lines[] = '';
-            }
-
-            if (empty($lines)) {
-                return "No call data available. Method call tracking may be disabled (graph.methodCalls: false).";
             }
 
             return implode("\n", $lines);
         } catch (\Throwable $e) {
-            return 'Error performing impact analysis: ' . $e->getMessage();
+            return 'An error occurred while performing impact analysis.';
         }
+    }
+
+    private function str(mixed $value): string
+    {
+        return is_scalar($value) ? strval($value) : '';
     }
 }

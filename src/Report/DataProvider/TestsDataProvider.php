@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PhpCodeArch\Report\DataProvider;
 
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
+use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 
 class TestsDataProvider implements ReportDataProviderInterface
@@ -21,59 +22,58 @@ class TestsDataProvider implements ReportDataProviderInterface
             }
 
             // Skip interfaces, traits, enums
-            if (($collection->get('interface')?->getValue() ?? false)
-                || ($collection->get('trait')?->getValue() ?? false)
-                || ($collection->get('enum')?->getValue() ?? false)) {
+            if ($collection->getBool(MetricKey::INTERFACE)
+                || $collection->getBool(MetricKey::TRAIT)
+                || $collection->getBool(MetricKey::ENUM)) {
                 continue;
             }
 
-            $hasTest = $collection->get('hasTest')?->getValue() ?? false;
-            if ($hasTest) {
+            if ($collection->getBool(MetricKey::HAS_TEST)) {
                 continue;
             }
 
             $coverageGaps[] = [
                 'id' => (string) $collection->getIdentifier(),
-                'name' => $collection->get('singleName')?->getValue() ?? '',
-                'fullName' => $collection->get('fullName')?->getValue() ?? '',
-                'cc' => $collection->get('cc')?->getValue() ?? 0,
-                'lloc' => $collection->get('lloc')?->getValue() ?? 0,
-                'refactoringPriority' => $collection->get('refactoringPriority')?->getValue() ?? 0.0,
-                'lineCoverage' => $collection->get('lineCoverage')?->getValue(),
+                'name' => $collection->getString(MetricKey::SINGLE_NAME),
+                'fullName' => $collection->getString(MetricKey::FULL_NAME),
+                'cc' => $collection->getInt(MetricKey::CC),
+                'lloc' => $collection->getInt(MetricKey::LLOC),
+                'refactoringPriority' => $collection->getFloat(MetricKey::REFACTORING_PRIORITY),
+                'lineCoverage' => $collection->get(MetricKey::LINE_COVERAGE)?->getValue(),
             ];
         }
 
-        usort($coverageGaps, fn($a, $b) => $b['cc'] <=> $a['cc']);
+        usort($coverageGaps, fn (array $a, array $b): int => $b['cc'] <=> $a['cc']);
 
         $this->templateData['coverageGaps'] = array_slice($coverageGaps, 0, 20);
 
         $this->templateData['stats'] = [
-            'testFileCount' => (int) ($this->metricsController->getMetricValue(
-                MetricCollectionTypeEnum::ProjectCollection, null, 'overallTestFileCount'
-            )?->getValue() ?? 0),
-            'productionFileCount' => (int) ($this->metricsController->getMetricValue(
-                MetricCollectionTypeEnum::ProjectCollection, null, 'overallProductionFileCount'
-            )?->getValue() ?? 0),
-            'testRatio' => (float) ($this->metricsController->getMetricValue(
-                MetricCollectionTypeEnum::ProjectCollection, null, 'overallTestRatio'
-            )?->getValue() ?? 0.0),
-            'testedClassCount' => (int) ($this->metricsController->getMetricValue(
-                MetricCollectionTypeEnum::ProjectCollection, null, 'overallTestedClassCount'
-            )?->getValue() ?? 0),
-            'untestedClassCount' => (int) ($this->metricsController->getMetricValue(
-                MetricCollectionTypeEnum::ProjectCollection, null, 'overallUntestedClassCount'
-            )?->getValue() ?? 0),
-            'testedClassRatio' => (float) ($this->metricsController->getMetricValue(
-                MetricCollectionTypeEnum::ProjectCollection, null, 'overallTestedClassRatio'
-            )?->getValue() ?? 0.0),
-            'functionBasedTestFileCount' => (int) ($this->metricsController->getMetricValue(
-                MetricCollectionTypeEnum::ProjectCollection, null, 'overallFunctionBasedTestFileCount'
-            )?->getValue() ?? 0),
-            'detectedTestFrameworks' => (string) ($this->metricsController->getMetricValue(
-                MetricCollectionTypeEnum::ProjectCollection, null, 'detectedTestFrameworks'
-            )?->getValue() ?? ''),
+            'testFileCount' => $this->metricsController->getMetricValue(
+                MetricCollectionTypeEnum::ProjectCollection, null, MetricKey::OVERALL_TEST_FILE_COUNT
+            )?->asInt() ?? 0,
+            'productionFileCount' => $this->metricsController->getMetricValue(
+                MetricCollectionTypeEnum::ProjectCollection, null, MetricKey::OVERALL_PRODUCTION_FILE_COUNT
+            )?->asInt() ?? 0,
+            'testRatio' => $this->metricsController->getMetricValue(
+                MetricCollectionTypeEnum::ProjectCollection, null, MetricKey::OVERALL_TEST_RATIO
+            )?->asFloat() ?? 0.0,
+            'testedClassCount' => $this->metricsController->getMetricValue(
+                MetricCollectionTypeEnum::ProjectCollection, null, MetricKey::OVERALL_TESTED_CLASS_COUNT
+            )?->asInt() ?? 0,
+            'untestedClassCount' => $this->metricsController->getMetricValue(
+                MetricCollectionTypeEnum::ProjectCollection, null, MetricKey::OVERALL_UNTESTED_CLASS_COUNT
+            )?->asInt() ?? 0,
+            'testedClassRatio' => $this->metricsController->getMetricValue(
+                MetricCollectionTypeEnum::ProjectCollection, null, MetricKey::OVERALL_TESTED_CLASS_RATIO
+            )?->asFloat() ?? 0.0,
+            'functionBasedTestFileCount' => $this->metricsController->getMetricValue(
+                MetricCollectionTypeEnum::ProjectCollection, null, MetricKey::OVERALL_FUNCTION_BASED_TEST_FILE_COUNT
+            )?->asInt() ?? 0,
+            'detectedTestFrameworks' => $this->metricsController->getMetricValue(
+                MetricCollectionTypeEnum::ProjectCollection, null, MetricKey::DETECTED_TEST_FRAMEWORKS
+            )?->asString() ?? '',
             'overallCoveragePercent' => $this->metricsController->getMetricValue(
-                MetricCollectionTypeEnum::ProjectCollection, null, 'overallCoveragePercent'
+                MetricCollectionTypeEnum::ProjectCollection, null, MetricKey::OVERALL_COVERAGE_PERCENT
             )?->getValue(),
         ];
     }

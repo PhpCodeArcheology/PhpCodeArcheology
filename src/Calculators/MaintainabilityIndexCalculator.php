@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PhpCodeArch\Calculators;
 
 use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
 use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
@@ -31,27 +32,28 @@ class MaintainabilityIndexCalculator implements CalculatorInterface
         );
     }
 
+    /** @return array<string, mixed> */
     private function calculateIndex(MetricsCollectionInterface $metric): array
     {
-        $volume = $metric->get('volume')?->getValue() ?? 0;
-        $cc = $metric->get('cc')?->getValue() ?? 0;
+        $volume = $metric->getFloat(MetricKey::VOLUME);
+        $cc = $metric->getInt(MetricKey::CC);
 
-        $loc = $metric->get('loc')?->getValue() ?? 0;
-        $cloc = $metric->get('cloc')?->getValue() ?? 0;
-        $lloc = $metric->get('lloc')?->getValue() ?? 0;
+        $loc = $metric->getInt(MetricKey::LOC);
+        $cloc = $metric->getInt(MetricKey::CLOC);
+        $lloc = $metric->getInt(MetricKey::LLOC);
 
-        if ($volume == 0 || $lloc == 0) {
+        if (0 == $volume || 0 == $lloc) {
             return [
-                'maintainabilityIndex' => 171,
-                'maintainabilityIndexWithoutComments' => 50,
-                'commentWeight' => 0,
+                MetricKey::MAINTAINABILITY_INDEX => 171,
+                MetricKey::MAINTAINABILITY_INDEX_WITHOUT_COMMENTS => 171,
+                MetricKey::COMMENT_WEIGHT => 0,
             ];
         }
 
-        $maintainabilityIndexWithoutComments = max((171
+        $maintainabilityIndexWithoutComments = max(171
             - 5.2 * log($volume)
             - 0.23 * $cc
-            - 16.2 * log($lloc)),
+            - 16.2 * log($lloc),
             0
         );
 
@@ -68,9 +70,9 @@ class MaintainabilityIndexCalculator implements CalculatorInterface
         $maintainabilityIndex = $maintainabilityIndexWithoutComments + $commentWeight;
 
         return [
-            'maintainabilityIndex' => $maintainabilityIndex,
-            'maintainabilityIndexWithoutComments' => $maintainabilityIndexWithoutComments,
-            'commentWeight' => $commentWeight,
+            MetricKey::MAINTAINABILITY_INDEX => $maintainabilityIndex,
+            MetricKey::MAINTAINABILITY_INDEX_WITHOUT_COMMENTS => $maintainabilityIndexWithoutComments,
+            MetricKey::COMMENT_WEIGHT => $commentWeight,
         ];
     }
 }

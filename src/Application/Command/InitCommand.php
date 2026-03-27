@@ -19,36 +19,38 @@ class InitCommand
 
     public function execute(Config $config, CliOutput $output, CliFormatter $formatter): int
     {
-        $runningDir = $config->get('runningDir') ?? getcwd();
-        $configPath = $runningDir . DIRECTORY_SEPARATOR . self::CONFIG_FILENAME;
+        $runningDir = $config->get('runningDir');
+        $runningDir = is_string($runningDir) ? $runningDir : (getcwd() ?: '');
+        $configPath = $runningDir.DIRECTORY_SEPARATOR.self::CONFIG_FILENAME;
 
         $output->outNl($formatter->bold('PhpCodeArcheology — Project Setup'));
         $output->outNl();
 
         // Check if config already exists
         if (file_exists($configPath)) {
-            $output->outNl($formatter->warning('Config file already exists: ' . self::CONFIG_FILENAME));
+            $output->outNl($formatter->warning('Config file already exists: '.self::CONFIG_FILENAME));
             $overwrite = $output->prompt('Overwrite? (y/N)', 'N');
-            if (strtolower($overwrite) !== 'y') {
+            if ('y' !== strtolower($overwrite)) {
                 $output->outNl('Aborted.');
+
                 return 0;
             }
         }
 
         // Detect source directories
         $detected = $this->detectSourceDirs($runningDir);
-        $defaultInclude = !empty($detected) ? implode(', ', $detected) : 'src';
+        $defaultInclude = [] === $detected ? 'src' : implode(', ', $detected);
 
-        $output->outNl($formatter->dim('Detected directories: ' . ($detected ? implode(', ', $detected) : 'none')));
+        $output->outNl($formatter->dim('Detected directories: '.([] !== $detected ? implode(', ', $detected) : 'none')));
         $output->outNl();
 
         // Interactive prompts
         $includeInput = $output->prompt('Source directories (comma-separated)', $defaultInclude);
-        $include = array_map('trim', explode(',', $includeInput));
+        $include = array_map(trim(...), explode(',', $includeInput));
 
         $reportDir = $output->prompt('Report directory', 'tmp/report');
 
-        $reportType = $output->prompt('Report type (' . implode('/', self::VALID_REPORT_TYPES) . ')', 'html');
+        $reportType = $output->prompt('Report type ('.implode('/', self::VALID_REPORT_TYPES).')', 'html');
         if (!in_array($reportType, self::VALID_REPORT_TYPES, true)) {
             $output->outNl($formatter->warning("Unknown report type '$reportType', using 'html'."));
             $reportType = 'html';
@@ -79,10 +81,10 @@ class InitCommand
 
         HEADER;
 
-        $content = $header . "\n" . $yaml;
+        $content = $header."\n".$yaml;
 
         // Ensure report directory exists
-        $reportDirPath = $runningDir . DIRECTORY_SEPARATOR . $reportDir;
+        $reportDirPath = $runningDir.DIRECTORY_SEPARATOR.$reportDir;
         if (!is_dir($reportDirPath)) {
             mkdir($reportDirPath, 0755, true);
         }
@@ -90,19 +92,20 @@ class InitCommand
         file_put_contents($configPath, $content);
 
         $output->outNl();
-        $output->outNl($formatter->success('Config written to ' . self::CONFIG_FILENAME));
+        $output->outNl($formatter->success('Config written to '.self::CONFIG_FILENAME));
         $output->outNl($formatter->dim('Run phpcodearcheology to start analysis.'));
         $output->outNl();
 
         return 0;
     }
 
+    /** @return string[] */
     private function detectSourceDirs(string $dir): array
     {
         $found = [];
 
         foreach (self::KNOWN_SOURCE_DIRS as $candidate) {
-            if (is_dir($dir . DIRECTORY_SEPARATOR . $candidate)) {
+            if (is_dir($dir.DIRECTORY_SEPARATOR.$candidate)) {
                 $found[] = $candidate;
             }
         }

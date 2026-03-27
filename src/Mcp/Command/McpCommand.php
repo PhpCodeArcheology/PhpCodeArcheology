@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Mcp\Command;
 
+use Mcp\Server\McpServer;
 use PhpCodeArch\Application\Application;
 use PhpCodeArch\Application\CliFormatter;
 use PhpCodeArch\Application\CliOutput;
@@ -12,22 +13,21 @@ use PhpCodeArch\Application\ConfigException;
 use PhpCodeArch\Mcp\Output\StderrOutput;
 use PhpCodeArch\Mcp\Tools\ClassListTool;
 use PhpCodeArch\Mcp\Tools\DependenciesTool;
+use PhpCodeArch\Mcp\Tools\GetTestCoverageTool;
 use PhpCodeArch\Mcp\Tools\GraphTool;
 use PhpCodeArch\Mcp\Tools\HealthScoreTool;
-use PhpCodeArch\Mcp\Tools\ImpactAnalysisTool;
 use PhpCodeArch\Mcp\Tools\HotspotsTool;
+use PhpCodeArch\Mcp\Tools\ImpactAnalysisTool;
 use PhpCodeArch\Mcp\Tools\MetricsTool;
 use PhpCodeArch\Mcp\Tools\ProblemsTool;
-use PhpCodeArch\Mcp\Tools\GetTestCoverageTool;
 use PhpCodeArch\Mcp\Tools\RefactoringTool;
 use PhpCodeArch\Mcp\Tools\SearchCodeTool;
 use PhpCodeArch\Report\DataProvider\DataProviderFactory;
-use Mcp\Server\McpServer;
 
 class McpCommand
 {
     public function __construct(
-        private readonly Application $application
+        private readonly Application $application,
     ) {
     }
 
@@ -35,17 +35,19 @@ class McpCommand
     {
         // Ensure files are configured (check before running analysis)
         if (!$config->has('files') || empty($config->get('files'))) {
-            $config->set('files', [getcwd() . '/src']);
+            $config->set('files', [getcwd().'/src']);
         }
 
         try {
             $config->validate();
         } catch (ConfigException $e) {
-            fwrite(STDERR, 'Error: ' . $e->getMessage() . PHP_EOL);
+            fwrite(STDERR, 'Error: '.$e->getMessage().PHP_EOL);
+
             return 1;
         }
 
-        $memoryLimit = $config->get('memoryLimit') ?? '1G';
+        $memoryLimitRaw = $config->get('memoryLimit');
+        $memoryLimit = is_string($memoryLimitRaw) ? $memoryLimitRaw : '1G';
         ini_set('memory_limit', $memoryLimit);
 
         // MCP uses STDOUT for JSON-RPC — all application output must go to STDERR
@@ -60,10 +62,10 @@ class McpCommand
         $hotspotsTool = new HotspotsTool($dataProviderFactory);
         $refactoringTool = new RefactoringTool($dataProviderFactory);
         $classListTool = new ClassListTool($dataProviderFactory);
-        $metricsTool = new MetricsTool($dataProviderFactory, $metricsController);
+        $metricsTool = new MetricsTool($metricsController);
         $dependenciesTool = new DependenciesTool($dataProviderFactory);
         $graphTool = new GraphTool($dataProviderFactory);
-        $searchCodeTool = new SearchCodeTool($dataProviderFactory, $metricsController);
+        $searchCodeTool = new SearchCodeTool($metricsController);
         $impactAnalysisTool = new ImpactAnalysisTool($dataProviderFactory);
         $testCoverageTool = new GetTestCoverageTool($dataProviderFactory);
 
