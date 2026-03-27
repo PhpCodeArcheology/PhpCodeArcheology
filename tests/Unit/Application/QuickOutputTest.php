@@ -19,10 +19,9 @@ class CapturingCliOutput extends CliOutput
 {
     private string $captured = '';
 
-    public function out(string $message): static
+    public function out(string $message): void
     {
         $this->captured .= $message;
-        return $this;
     }
 
     public function getCaptured(): string

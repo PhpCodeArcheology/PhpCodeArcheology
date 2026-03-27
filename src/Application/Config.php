@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Application;
 
-final class Config
+final class Config implements AnalysisConfigInterface
 {
     private const VALID_REPORT_TYPES = ['html', 'markdown', 'json', 'sarif', 'ai-summary', 'graph'];
 

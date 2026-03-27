@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Mcp\Tools;
 
-use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\Controller\MetricsReaderInterface;
 use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
@@ -13,7 +13,7 @@ use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
 class MetricsTool
 {
     public function __construct(
-        private readonly MetricsController $metricsController,
+        private readonly MetricsReaderInterface $metricsController,
     ) {
     }
 

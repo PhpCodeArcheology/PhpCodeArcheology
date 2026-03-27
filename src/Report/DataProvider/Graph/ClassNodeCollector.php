@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Report\DataProvider\Graph;
 
-use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\Controller\MetricsReaderInterface;
 use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\Collections\CollectionInterface;
@@ -21,7 +21,7 @@ class ClassNodeCollector
     private array $knownMethodIds = [];
 
     public function __construct(
-        private readonly MetricsController $metricsController,
+        private readonly MetricsReaderInterface $metricsController,
     ) {
     }
 

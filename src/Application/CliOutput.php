@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Application;
 
-class CliOutput
+class CliOutput implements OutputInterface
 {
     private ?CliFormatter $formatter = null;
 
@@ -18,18 +18,14 @@ class CliOutput
         return $this->formatter;
     }
 
-    public function out(string $message): static
+    public function out(string $message): void
     {
         file_put_contents('php://stdout', $message);
-
-        return $this;
     }
 
-    public function outNl(string $message = ''): static
+    public function outNl(string $message = ''): void
     {
         $this->out(PHP_EOL.$message);
-
-        return $this;
     }
 
     public function cls(): static

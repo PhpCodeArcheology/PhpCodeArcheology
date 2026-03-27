@@ -18,7 +18,7 @@ use PhpCodeArch\Metrics\Model\MetricValue;
 use PhpCodeArch\Metrics\Model\ProjectMetrics\ProjectMetricsCollection;
 use PhpCodeArch\Predictions\Problems\ProblemInterface;
 
-class MetricsController
+class MetricsController implements MetricsReaderInterface, MetricsWriterInterface
 {
     private readonly MetricTypeRegistry $typeRegistry;
     private readonly MetricCollectionFactory $collectionFactory;

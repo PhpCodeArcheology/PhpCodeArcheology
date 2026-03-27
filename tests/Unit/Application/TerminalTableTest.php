@@ -14,16 +14,14 @@ beforeEach(function () {
     $this->output = new class extends CliOutput {
         public string $buffer = '';
 
-        public function out(string $message): static
+        public function out(string $message): void
         {
             $this->buffer .= $message;
-            return $this;
         }
 
-        public function outNl(string $message = ''): static
+        public function outNl(string $message = ''): void
         {
             $this->buffer .= PHP_EOL . $message;
-            return $this;
         }
     };
 });

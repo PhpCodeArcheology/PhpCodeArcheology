@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Report\DataProvider\Graph;
 
-use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\Controller\MetricsReaderInterface;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 use PhpCodeArch\Metrics\MetricKey;
 
 class PackageNodeCollector
 {
     public function __construct(
-        private readonly MetricsController $metricsController,
+        private readonly MetricsReaderInterface $metricsController,
     ) {
     }
 

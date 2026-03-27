@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Predictions;
 
-use PhpCodeArch\Application\Config;
+use PhpCodeArch\Application\AnalysisConfigInterface;
 use PhpCodeArch\Application\Service\FrameworkDetectionResult;
 use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\MetricKey;
@@ -13,7 +13,7 @@ use PhpCodeArch\Predictions\Problems\AbstractProblem;
 
 trait PredictionTrait
 {
-    private ?Config $config = null;
+    private ?AnalysisConfigInterface $config = null;
 
     /**
      * @param list<string>|string           $keys

@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace PhpCodeArch\Application\Service;
 
 use PhpCodeArch\Application\CliFormatter;
-use PhpCodeArch\Application\CliOutput;
 use PhpCodeArch\Application\Config;
+use PhpCodeArch\Application\OutputInterface;
 use PhpCodeArch\Application\Version;
 use PhpParser\ParserFactory;
 
@@ -126,7 +126,7 @@ final class BootstrapService
      * Returns true if the user confirmed and the acknowledgement was written,
      * false if the user aborted.
      */
-    public function promptBreakingChanges(Config $config, CliOutput $output, CliFormatter $formatter): bool
+    public function promptBreakingChanges(Config $config, OutputInterface $output, CliFormatter $formatter): bool
     {
         $output->outNl($formatter->warning('Important: Metric calculations have changed in v'.Version::BREAKING_CHANGES.'.'));
         $output->outNl('Several formulas have been corrected (Halstead, Coupling, LCOM, CC, and others).');
