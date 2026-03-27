@@ -6,9 +6,9 @@ namespace PhpCodeArch\Application\Command;
 
 use PhpCodeArch\Application\AnalysisPipelineInterface;
 use PhpCodeArch\Application\CliFormatter;
-use PhpCodeArch\Application\Version;
 use PhpCodeArch\Application\CliOutput;
 use PhpCodeArch\Application\Config;
+use PhpCodeArch\Application\Version;
 use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;

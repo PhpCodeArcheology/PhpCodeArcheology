@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace PhpCodeArch\Report;
 
 use PhpCodeArch\Application\CliOutput;
-use PhpCodeArch\Application\Version;
 use PhpCodeArch\Application\Config;
+use PhpCodeArch\Application\Version;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection as ClassCollection;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
 use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection as FunctionCollection;
