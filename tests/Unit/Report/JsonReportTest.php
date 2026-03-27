@@ -141,7 +141,7 @@ it('includes tests section with stats fields', function () {
     $data = json_decode(file_get_contents($tmpDir . '/json/report.json'), true);
 
     expect($data)->toHaveKey('tests');
-    expect($data['tests'])->toHaveKeys(['testRatio', 'testFileCount', 'productionFileCount']);
+    expect($data['tests'])->toHaveKeys(['testedClassRatio', 'testFileCount', 'productionFileCount']);
 });
 
 it('includes problems section', function () {

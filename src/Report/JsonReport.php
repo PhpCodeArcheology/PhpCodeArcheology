@@ -215,7 +215,6 @@ class JsonReport implements ReportInterface
         $coverageGapsRaw = $testsData['coverageGaps'] ?? null;
 
         return [
-            'testRatio' => $stats['testRatio'] ?? 0,
             'testFileCount' => $stats['testFileCount'] ?? 0,
             'productionFileCount' => $stats['productionFileCount'] ?? 0,
             'testedClassCount' => $stats['testedClassCount'] ?? 0,

@@ -17,12 +17,12 @@
   {# Summary Cards #}
   <div style="display: grid; grid-template-columns: repeat({% if stats.overallCoveragePercent is not null %}5{% else %}4{% endif %}, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
     <div class="rounded-xl border border-cyan-800 bg-cyan-950/45 p-4 text-center">
-      <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Test Ratio</div>
+      <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Tested Class Ratio</div>
       <div style="font-family: 'Oswald', sans-serif; font-size: 2.5rem; font-weight: 500;
         {% if stats.testRatio >= 60 %}color: #86efac{% elseif stats.testRatio >= 30 %}color: #fde68a{% else %}color: #fca5a5{% endif %}">
         {{ stats.testRatio|number_format(1) }}%
       </div>
-      <div style="font-size: 0.7rem; color: rgba(255,255,255,0.4);">{{ stats.testFileCount }} test / {{ stats.productionFileCount }} prod files</div>
+      <div style="font-size: 0.7rem; color: rgba(255,255,255,0.4);">{{ stats.testedClassCount }} / {{ stats.testedClassCount + stats.untestedClassCount }} classes</div>
     </div>
     <div class="rounded-xl border border-cyan-800 bg-cyan-950/45 p-4 text-center">
       <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Tested Classes</div>

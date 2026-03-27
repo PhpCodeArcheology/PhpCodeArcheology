@@ -112,9 +112,6 @@ class TestMappingCalculator implements CalculatorInterface
         $productionCount = count($productionIds);
         $functionBasedCount = count($this->testScanResult->functionBasedTestFiles);
 
-        $testRatio = $productionCount > 0
-            ? round($totalTestFiles / $productionCount * 100, 2)
-            : 0.0;
         $testedClassRatio = $productionCount > 0
             ? round($testedCount / $productionCount * 100, 2)
             : 0.0;
@@ -122,7 +119,7 @@ class TestMappingCalculator implements CalculatorInterface
         $projectMetrics = [
             MetricKey::OVERALL_TEST_FILE_COUNT => $totalTestFiles,
             MetricKey::OVERALL_PRODUCTION_FILE_COUNT => $productionCount,
-            MetricKey::OVERALL_TEST_RATIO => $testRatio,
+            MetricKey::OVERALL_TEST_RATIO => $testedClassRatio,
             MetricKey::OVERALL_TESTED_CLASS_COUNT => $testedCount,
             MetricKey::OVERALL_UNTESTED_CLASS_COUNT => $untestedCount,
             MetricKey::OVERALL_TESTED_CLASS_RATIO => $testedClassRatio,

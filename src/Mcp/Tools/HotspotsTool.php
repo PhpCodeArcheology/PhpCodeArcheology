@@ -31,39 +31,55 @@ class HotspotsTool
             }
 
             $hotspots = array_slice($hotspots, 0, max(1, $limit));
-
-            $lines = [
-                '# Code Hotspots (Churn × Complexity)',
-                '',
-                "Git Analysis Period: {$period}",
-                "Total Commits: {$totalCommits} | Active Authors: {$activeAuthors}",
-                '',
-                sprintf('%-40s %6s %4s %6s %8s %8s', 'File', 'Churn', 'CC', 'LOC', 'Authors', 'Score'),
-                str_repeat('-', 78),
-            ];
+            $lines = $this->buildHotspotsHeader($period, $totalCommits, $activeAuthors);
 
             foreach ($hotspots as $h) {
                 if (!is_array($h)) {
                     continue;
                 }
-                $churn = is_numeric($h['churn'] ?? null) ? (int) $h['churn'] : 0;
-                $cc = is_numeric($h['cc'] ?? null) ? (int) $h['cc'] : 0;
-                $loc = is_numeric($h['loc'] ?? null) ? (int) $h['loc'] : 0;
-                $authors = is_numeric($h['authors'] ?? null) ? (int) $h['authors'] : 0;
-                $score = $churn * $cc;
-                $nameRaw = $h['name'] ?? null;
-                $rawId = $h['id'] ?? null;
-                $idStr = is_scalar($rawId) ? (string) $rawId : '';
-                $name = is_scalar($nameRaw) && '' !== (string) $nameRaw ? (string) $nameRaw : basename($idStr);
-                $shortName = strlen($name) > 38 ? '...'.substr($name, -35) : $name;
-                $lines[] = sprintf('%-40s %6d %4d %6d %8d %8d',
-                    $shortName, $churn, $cc, $loc, $authors, $score
-                );
+                $lines[] = $this->formatHotspotRow($h);
             }
 
             return implode("\n", $lines);
         } catch (\Throwable $e) {
             return 'An error occurred while retrieving hotspots.';
         }
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function buildHotspotsHeader(string $period, int $totalCommits, int $activeAuthors): array
+    {
+        return [
+            '# Code Hotspots (Churn × Complexity)',
+            '',
+            "Git Analysis Period: {$period}",
+            "Total Commits: {$totalCommits} | Active Authors: {$activeAuthors}",
+            '',
+            sprintf('%-40s %6s %4s %6s %8s %8s', 'File', 'Churn', 'CC', 'LOC', 'Authors', 'Score'),
+            str_repeat('-', 78),
+        ];
+    }
+
+    /**
+     * @param array<mixed> $h
+     */
+    private function formatHotspotRow(array $h): string
+    {
+        $churn = is_numeric($h['churn'] ?? null) ? (int) $h['churn'] : 0;
+        $cc = is_numeric($h['cc'] ?? null) ? (int) $h['cc'] : 0;
+        $loc = is_numeric($h['loc'] ?? null) ? (int) $h['loc'] : 0;
+        $authors = is_numeric($h['authors'] ?? null) ? (int) $h['authors'] : 0;
+        $score = $churn * $cc;
+        $nameRaw = $h['name'] ?? null;
+        $rawId = $h['id'] ?? null;
+        $idStr = is_scalar($rawId) ? (string) $rawId : '';
+        $name = is_scalar($nameRaw) && '' !== (string) $nameRaw ? (string) $nameRaw : basename($idStr);
+        $shortName = strlen($name) > 38 ? '...'.substr($name, -35) : $name;
+
+        return sprintf('%-40s %6d %4d %6d %8d %8d',
+            $shortName, $churn, $cc, $loc, $authors, $score
+        );
     }
 }

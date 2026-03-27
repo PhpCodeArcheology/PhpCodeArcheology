@@ -37,7 +37,6 @@ it('returns a formatted test coverage summary', function () {
     expect($result)
         ->toContain('Test Coverage Summary')
         ->toContain('Test Frameworks: Pest')
-        ->toContain('Test Ratio: 33.3%')
         ->toContain('Tested Classes: 3 / 10');
 });
 

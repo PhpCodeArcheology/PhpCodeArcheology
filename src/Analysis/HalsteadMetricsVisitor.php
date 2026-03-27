@@ -255,59 +255,107 @@ class HalsteadMetricsVisitor implements NodeVisitor, VisitorInterface, PathAware
         $this->operands = [];
     }
 
+    private function isControlFlowOperator(Node $node): bool
+    {
+        return $node instanceof Node\Stmt\If_
+            || $node instanceof Node\Stmt\ElseIf_
+            || $node instanceof Node\Stmt\Else_
+            || $node instanceof Node\Stmt\For_
+            || $node instanceof Node\Stmt\Foreach_
+            || $node instanceof Node\Stmt\Switch_
+            || $node instanceof Node\Expr\Match_
+            || $node instanceof Node\Stmt\Return_
+            || $node instanceof Node\Stmt\While_
+            || $node instanceof Node\Stmt\Do_;
+    }
+
+    private function isExpressionOperator(Node $node): bool
+    {
+        return $node instanceof Node\Expr\BinaryOp
+            || $node instanceof Node\Expr\AssignOp
+            || $node instanceof Node\Expr\Assign
+            || $node instanceof Node\Expr\Ternary
+            || $node instanceof Node\Expr\BooleanNot
+            || $node instanceof Node\Expr\BitwiseNot
+            || $node instanceof Node\Expr\Instanceof_;
+    }
+
+    private function isCallOrUnaryOperator(Node $node): bool
+    {
+        return $node instanceof Node\Expr\FuncCall
+            || $node instanceof Node\Expr\MethodCall
+            || $node instanceof Node\Expr\StaticCall
+            || $node instanceof Node\Expr\New_
+            || $node instanceof Node\Expr\UnaryMinus
+            || $node instanceof Node\Expr\UnaryPlus
+            || $node instanceof Node\Expr\PreDec
+            || $node instanceof Node\Expr\PreInc
+            || $node instanceof Node\Expr\PostDec
+            || $node instanceof Node\Expr\PostInc;
+    }
+
+    private function isExceptionOperator(Node $node): bool
+    {
+        return $node instanceof Node\Stmt\Catch_
+            || $node instanceof Node\Stmt\TryCatch
+            || $node instanceof Node\Expr\Throw_;
+    }
+
+    private function addOperatorToContextTrackers(Node $node): void
+    {
+        $this->operators[] = $node::class;
+
+        if (count($this->currentClassName) > 0) {
+            $className = end($this->currentClassName);
+
+            $this->classOperators[$className][] = $node::class;
+
+            if (count($this->currentFunctionName) > 0) {
+                $methodName = end($this->currentFunctionName);
+                $key = sprintf('%s::%s', $className, $methodName);
+
+                if (isset($this->functionOperators[$key])) {
+                    $this->functionOperators[$key][] = $node::class;
+                }
+            }
+        } elseif (count($this->currentFunctionName) > 0) {
+            $functionName = end($this->currentFunctionName);
+            $this->functionOperators[$functionName][] = $node::class;
+        }
+    }
+
     private function countOperators(Node $node): void
     {
-        switch (true) {
-            case $node instanceof Node\Expr\BinaryOp:
-            case $node instanceof Node\Expr\AssignOp:
-            case $node instanceof Node\Stmt\If_:
-            case $node instanceof Node\Stmt\ElseIf_:
-            case $node instanceof Node\Stmt\Else_:
-            case $node instanceof Node\Stmt\For_:
-            case $node instanceof Node\Stmt\Foreach_:
-            case $node instanceof Node\Stmt\Switch_:
-            case $node instanceof Node\Expr\Match_:
-            case $node instanceof Node\Stmt\Catch_:
-            case $node instanceof Node\Stmt\Return_:
-            case $node instanceof Node\Stmt\While_:
-            case $node instanceof Node\Stmt\Do_:
-            case $node instanceof Node\Expr\Assign:
-            case $node instanceof Node\Expr\Ternary:
-            case $node instanceof Node\Expr\BooleanNot:
-            case $node instanceof Node\Expr\BitwiseNot:
-            case $node instanceof Node\Expr\FuncCall:
-            case $node instanceof Node\Expr\MethodCall:
-            case $node instanceof Node\Expr\StaticCall:
-            case $node instanceof Node\Expr\New_:
-            case $node instanceof Node\Expr\Instanceof_:
-            case $node instanceof Node\Expr\UnaryMinus:
-            case $node instanceof Node\Expr\UnaryPlus:
-            case $node instanceof Node\Expr\PreDec:
-            case $node instanceof Node\Expr\PreInc:
-            case $node instanceof Node\Expr\PostDec:
-            case $node instanceof Node\Expr\PostInc:
-            case $node instanceof Node\Stmt\TryCatch:
-            case $node instanceof Node\Expr\Throw_:
-                $this->operators[] = $node::class;
+        if (!$this->isControlFlowOperator($node)
+            && !$this->isExpressionOperator($node)
+            && !$this->isCallOrUnaryOperator($node)
+            && !$this->isExceptionOperator($node)) {
+            return;
+        }
 
-                if (count($this->currentClassName) > 0) {
-                    $className = end($this->currentClassName);
+        $this->addOperatorToContextTrackers($node);
+    }
 
-                    $this->classOperators[$className][] = $node::class;
+    private function addOperandToContextTrackers(mixed $name): void
+    {
+        $this->operands[] = $name;
 
-                    if (count($this->currentFunctionName) > 0) {
-                        $methodName = end($this->currentFunctionName);
-                        $key = sprintf('%s::%s', $className, $methodName);
+        if (count($this->currentClassName) > 0) {
+            $className = end($this->currentClassName);
 
-                        if (isset($this->functionOperators[$key])) {
-                            $this->functionOperators[$key][] = $node::class;
-                        }
-                    }
-                } elseif (count($this->currentFunctionName) > 0) {
-                    $functionName = end($this->currentFunctionName);
-                    $this->functionOperators[$functionName][] = $node::class;
+            $this->classOperands[$className][] = $name;
+
+            if (count($this->currentFunctionName) > 0) {
+                $methodName = end($this->currentFunctionName);
+                $key = sprintf('%s::%s', $className, $methodName);
+
+                if (isset($this->functionOperands[$key])) {
+                    $this->functionOperands[$key][] = $name;
                 }
-                break;
+            }
+        } elseif (count($this->currentFunctionName) > 0) {
+            $functionName = end($this->currentFunctionName);
+            $this->functionOperands[$functionName][] = $name;
         }
     }
 
@@ -326,25 +374,7 @@ class HalsteadMetricsVisitor implements NodeVisitor, VisitorInterface, PathAware
                     $name = $node::class;
                 }
 
-                $this->operands[] = $name;
-
-                if (count($this->currentClassName) > 0) {
-                    $className = end($this->currentClassName);
-
-                    $this->classOperands[$className][] = $name;
-
-                    if (count($this->currentFunctionName) > 0) {
-                        $methodName = end($this->currentFunctionName);
-                        $key = sprintf('%s::%s', $className, $methodName);
-
-                        if (isset($this->functionOperands[$key])) {
-                            $this->functionOperands[$key][] = $name;
-                        }
-                    }
-                } elseif (count($this->currentFunctionName) > 0) {
-                    $functionName = end($this->currentFunctionName);
-                    $this->functionOperands[$functionName][] = $name;
-                }
+                $this->addOperandToContextTrackers($name);
                 break;
         }
     }

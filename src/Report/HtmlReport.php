@@ -120,21 +120,54 @@ class HtmlReport implements ReportInterface
      */
     protected function generateIndexPage(): void
     {
-        $templateData = $this->dataProviderFactory->getProjectDataProvider();
-        $data = $templateData->getTemplateData();
+        $data = $this->dataProviderFactory->getProjectDataProvider()->getTemplateData();
+        $data = $this->addProblemDataToDashboard($data);
+        $data = $this->addRefactoringPrioritiesToDashboard($data);
+        $data = $this->addTrendDataToDashboard($data);
+        $data = $this->addKnowledgeGraphStatsToDashboard($data);
 
-        // Add problem data for dashboard
+        $data['pageTitle'] = 'Dashboard';
+        $data['currentPage'] = 'index.html';
+
+        $this->renderTemplate('index.html.twig', $data, 'index.html');
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     *
+     * @return array<string, mixed>
+     */
+    private function addProblemDataToDashboard(array $data): array
+    {
         $problemData = $this->dataProviderFactory->getProblemDataProvider()->getTemplateData();
         $data['fileProblems'] = $problemData['fileProblems'] ?? [];
         $data['classProblems'] = $problemData['classProblems'] ?? [];
         $data['functionProblems'] = $problemData['functionProblems'] ?? [];
 
-        // Add refactoring priorities for dashboard
+        return $data;
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     *
+     * @return array<string, mixed>
+     */
+    private function addRefactoringPrioritiesToDashboard(array $data): array
+    {
         $refactoringData = $this->dataProviderFactory->getRefactoringPriorityDataProvider()->getTemplateData();
         $refPriorities = $refactoringData['refactoringPriorities'] ?? null;
         $data['topRefactoringPriorities'] = array_slice(is_array($refPriorities) ? $refPriorities : [], 0, 5);
 
-        // Add trend data from history
+        return $data;
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     *
+     * @return array<string, mixed>
+     */
+    private function addTrendDataToDashboard(array $data): array
+    {
         $reportDirVal = $this->config->get('reportDir');
         $historyFile = (is_string($reportDirVal) ? $reportDirVal : '').DIRECTORY_SEPARATOR.'history.jsonl';
         $historyData = $this->dataProviderFactory->getHistoryDataProvider($historyFile)->getTemplateData();
@@ -142,9 +175,17 @@ class HtmlReport implements ReportInterface
         $data['hasMultipleRuns'] = $historyData['hasMultipleRuns'] ?? false;
         $data['runCount'] = $historyData['runCount'] ?? 0;
 
-        // Knowledge Graph stats for dashboard widget
-        $graphProvider = $this->dataProviderFactory->getGraphDataProvider();
-        $graphTemplateData = $graphProvider->getTemplateData();
+        return $data;
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     *
+     * @return array<string, mixed>
+     */
+    private function addKnowledgeGraphStatsToDashboard(array $data): array
+    {
+        $graphTemplateData = $this->dataProviderFactory->getGraphDataProvider()->getTemplateData();
         $graphDataRaw = $graphTemplateData['graphData'] ?? null;
         $graphData = is_array($graphDataRaw) ? $graphDataRaw : [];
         $graphNodes = is_array($graphData['nodes'] ?? null) ? $graphData['nodes'] : [];
@@ -155,11 +196,19 @@ class HtmlReport implements ReportInterface
         $data['kgEdgeCount'] = count($graphEdges);
         $data['kgCycleCount'] = count($graphCycles);
         $data['kgPackageCount'] = count(array_filter($graphNodes, fn (mixed $n): bool => is_array($n) && 'package' === ($n['type'] ?? '')));
+        $data['errorCycleCount'] = $this->countErrorCycles(is_array($data['classProblems']) ? $data['classProblems'] : []);
+        $data['kgTopConnected'] = $this->buildTopConnectedClasses($graphNodes);
 
-        // Count ERROR-level cycle problems (framework-pattern cycles are INFO, not counted)
+        return $data;
+    }
+
+    /**
+     * @param array<mixed> $classProblems
+     */
+    private function countErrorCycles(array $classProblems): int
+    {
         $errorCycleCount = 0;
-        $classProblemsData = $data['classProblems'];
-        foreach (is_array($classProblemsData) ? $classProblemsData : [] as $classProblemData) {
+        foreach ($classProblems as $classProblemData) {
             $problemList = is_array($classProblemData) ? ($classProblemData['problems'] ?? null) : null;
             foreach (is_array($problemList) ? $problemList : [] as $problem) {
                 if ($problem instanceof \PhpCodeArch\Predictions\Problems\DependencyCycleProblem
@@ -168,31 +217,35 @@ class HtmlReport implements ReportInterface
                 }
             }
         }
-        $data['errorCycleCount'] = $errorCycleCount;
 
-        // Top 5 most-connected classes
+        return $errorCycleCount;
+    }
+
+    /**
+     * @param array<mixed> $graphNodes
+     *
+     * @return array<int, array{id: string, name: string, connections: int}>
+     */
+    private function buildTopConnectedClasses(array $graphNodes): array
+    {
         $classNodes = array_filter($graphNodes, fn (mixed $n): bool => is_array($n) && 'class' === ($n['type'] ?? ''));
         $classConnections = [];
+
         foreach ($classNodes as $node) {
             $metrics = is_array($node['metrics'] ?? null) ? $node['metrics'] : [];
             $afferent = $metrics['afferentCoupling'] ?? 0;
             $efferent = $metrics['efferentCoupling'] ?? 0;
             $connections = (is_int($afferent) ? $afferent : 0) + (is_int($efferent) ? $efferent : 0);
-            $nodeId = is_string($node['id'] ?? null) ? $node['id'] : '';
-            $nodeName = is_string($node['name'] ?? null) ? $node['name'] : '';
             $classConnections[] = [
-                'id' => str_replace('class:', '', $nodeId),
-                'name' => $nodeName,
+                'id' => str_replace('class:', '', is_string($node['id'] ?? null) ? $node['id'] : ''),
+                'name' => is_string($node['name'] ?? null) ? $node['name'] : '',
                 'connections' => $connections,
             ];
         }
+
         usort($classConnections, fn (array $a, array $b): int => $b['connections'] - $a['connections']);
-        $data['kgTopConnected'] = array_slice($classConnections, 0, 5);
 
-        $data['pageTitle'] = 'Dashboard';
-        $data['currentPage'] = 'index.html';
-
-        $this->renderTemplate('index.html.twig', $data, 'index.html');
+        return array_slice($classConnections, 0, 5);
     }
 
     protected function generateFilePage(): void
