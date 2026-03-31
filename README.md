@@ -18,13 +18,13 @@ PhpCodeArcheology is the **first PHP static analysis tool with native MCP (Model
 
 The setup depends on how you installed PhpCodeArcheology:
 
-**Global installation** (`composer global require phpcodearcheology/phpcodearcheology`):
+**Global installation** (`composer global require php-code-archeology/php-code-archeology`):
 
 ```bash
 claude mcp add phpcodearcheology -- phpcodearcheology mcp
 ```
 
-**Project dependency** (`composer require --dev phpcodearcheology/phpcodearcheology`):
+**Project dependency** (`composer require --dev php-code-archeology/php-code-archeology`):
 
 ```bash
 claude mcp add phpcodearcheology -- vendor/bin/phpcodearcheology mcp
