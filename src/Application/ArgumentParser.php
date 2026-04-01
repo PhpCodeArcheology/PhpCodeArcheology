@@ -103,6 +103,8 @@ final class ArgumentParser
                 $param = $matches[1];
 
                 switch ($param) {
+                    case 'help':
+                        throw new HelpDisplayException();
                     case 'version':
                         throw new VersionDisplayException(Application::VERSION);
                     case 'generate-claude-md':

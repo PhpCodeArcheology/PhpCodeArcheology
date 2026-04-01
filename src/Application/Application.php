@@ -68,7 +68,7 @@ use Twig\Loader\FilesystemLoader;
 
 final readonly class Application
 {
-    public const VERSION = '2.7.0';
+    public const VERSION = '2.7.1';
 
     /**
      * Version that introduced breaking changes to metric calculations.
@@ -87,8 +87,12 @@ final readonly class Application
     {
         try {
             $config = $this->createConfig($argv);
+        } catch (HelpDisplayException) {
+            echo PHP_EOL.$this->getHelpText().PHP_EOL;
+
+            return 0;
         } catch (VersionDisplayException $e) {
-            echo PHP_EOL.'PhpCodeArcheology v'.$e->getMessage();
+            echo PHP_EOL.'PhpCodeArcheology v'.$e->getMessage().PHP_EOL;
 
             return 0;
         }
@@ -215,6 +219,7 @@ final readonly class Application
 
         $historyService = new HistoryService();
         $historyDate = $historyService->setDeltas($metricsController, $config);
+        $historyService->writeHistory($metricsController, $config);
 
         $reports = ReportFactory::createMultiple(
             $config,
@@ -238,8 +243,6 @@ final readonly class Application
             $output->outNl('Old report files in the root directory can be safely removed.');
             $output->outNl();
         }
-
-        $historyService->writeHistory($metricsController, $config);
 
         if ($config->get('generateClaudeMd')) {
             (new ClaudeMdGenerator())->generate($config, $dataProviderFactory, $output);
@@ -271,6 +274,7 @@ final readonly class Application
      *
      * @throws MultipleConfigFilesException
      * @throws ConfigFileExtensionNotSupportedException
+     * @throws HelpDisplayException
      * @throws VersionDisplayException
      */
     private function createConfig(array $argv): Config
@@ -329,6 +333,17 @@ final readonly class Application
     {
         $fileList = new FileList($config);
         $fileList->fetch();
+
+        $testScanResultRaw = $config->get('testScanResult');
+        if ($testScanResultRaw instanceof TestScanResult) {
+            $testFiles = array_merge(
+                $testScanResultRaw->classBasedTestFiles,
+                $testScanResultRaw->functionBasedTestFiles,
+            );
+            if ([] !== $testFiles) {
+                $fileList->removeFiles($testFiles);
+            }
+        }
 
         return $fileList;
     }
@@ -615,5 +630,39 @@ final readonly class Application
         }
 
         $config->set('acknowledgedVersion', self::BREAKING_CHANGES_VERSION);
+    }
+
+    private function getHelpText(): string
+    {
+        return <<<HELP
+            PhpCodeArcheology v{$this->getVersion()} — PHP static analysis for architecture & maintainability
+
+            Usage: vendor/bin/phpcodearcheology [command] [options] [path...]
+
+            Options:
+              --help                 Show this help message
+              --version              Show version number
+              --quick                Quick terminal-only output (no report)
+              --report-type=TYPE     Report type: html, json, markdown, sarif, graph, ai-summary
+              --report-dir=DIR       Output directory for reports (default: tmp/report)
+              --coverage-file=FILE   Path to Clover XML coverage file
+              --git-root=DIR         Git repository root (for git metrics)
+              --fail-on=LEVEL        Exit with error on: error, warning, info
+              --extensions=EXT       File extensions to analyze (default: php)
+              --exclude=PATHS        Comma-separated paths to exclude
+              --no-color             Disable colored output
+              --generate-claude-md   Generate CLAUDE.md file for AI assistants
+
+            Commands:
+              mcp                    Start MCP server for AI-native code intelligence
+              init                   Create configuration file
+              compare                Compare two analysis results
+              baseline               Create problem baseline
+            HELP;
+    }
+
+    private function getVersion(): string
+    {
+        return self::VERSION;
     }
 }

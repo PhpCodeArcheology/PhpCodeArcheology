@@ -46,8 +46,8 @@ class HealthScoreTool
             $info = $getInt(MetricKey::OVERALL_INFORMATION_COUNT);
             $files = $getInt(MetricKey::OVERALL_FILES);
             $classes = $getInt(MetricKey::OVERALL_CLASSES);
-            $functions = $getInt('overallFunctions');
-            $methods = $getInt('overallMethods');
+            $functions = $getInt(MetricKey::OVERALL_FUNCTION_COUNT);
+            $methods = $getInt(MetricKey::OVERALL_METHODS_COUNT);
             $lloc = $getInt(MetricKey::OVERALL_LLOC);
             $avgCC = $getFloat(MetricKey::OVERALL_AVG_CC);
             $avgMI = $getFloat(MetricKey::OVERALL_AVG_MI);

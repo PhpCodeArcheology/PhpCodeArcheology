@@ -162,8 +162,8 @@ class ProjectCalculator implements CalculatorInterface
             [
                 MetricKey::OVERALL_FILES,
                 MetricKey::OVERALL_CLASSES,
-                'overallFunctions',
-                'overallMethods',
+                MetricKey::OVERALL_FUNCTION_COUNT,
+                MetricKey::OVERALL_METHODS_COUNT,
             ]
         );
 
@@ -179,8 +179,8 @@ class ProjectCalculator implements CalculatorInterface
         $this->data[MetricKey::OVERALL_AVG_CC] = $this->getAvgOrZero($this->sumCC, $this->metricCount);
         $this->data[MetricKey::OVERALL_AVG_CC_FILE] = $this->getAvgOrZero($this->sumCCFile, $metricValues[MetricKey::OVERALL_FILES]);
         $this->data[MetricKey::OVERALL_AVG_CC_CLASS] = $this->getAvgOrZero($this->sumCCClass, $metricValues[MetricKey::OVERALL_CLASSES]);
-        $this->data[MetricKey::OVERALL_AVG_CC_METHOD] = $this->getAvgOrZero($this->sumCCMethod, $metricValues['overallMethods']);
-        $this->data[MetricKey::OVERALL_AVG_CC_FUNCTION] = $this->getAvgOrZero($this->sumCCFunction, $metricValues['overallFunctions']);
+        $this->data[MetricKey::OVERALL_AVG_CC_METHOD] = $this->getAvgOrZero($this->sumCCMethod, $metricValues[MetricKey::OVERALL_METHODS_COUNT]);
+        $this->data[MetricKey::OVERALL_AVG_CC_FUNCTION] = $this->getAvgOrZero($this->sumCCFunction, $metricValues[MetricKey::OVERALL_FUNCTION_COUNT]);
         $this->data[MetricKey::OVERALL_AVG_LCOM] = $this->getAvgOrZero($this->lcomSum, $metricValues[MetricKey::OVERALL_CLASSES]);
         $this->data[MetricKey::OVERALL_AVG_MI] = $this->getAvgOrZero($this->miSum, $metricValues[MetricKey::OVERALL_FILES]);
         $this->data[MetricKey::OVERALL_COMMENT_WEIGHT] = $this->getAvgOrZero($this->commentWeightSum, $this->metricCount);

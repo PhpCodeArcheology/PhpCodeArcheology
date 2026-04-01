@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.7.1] - 2026-04-01
+
+### Fixed
+
+- **History required 3 runs instead of 2.** `writeHistory()` was called after report generation, so the current run's data was missing from the history file when reports were rendered. Moved before report generation.
+- **Dashboard showed "Functions: 0".** Wrong metric keys `overallFunctions` / `overallMethods` instead of `overallFunctionCount` / `overallMethodsCount` in the template, `ProjectCalculator`, and `HealthScoreTool`.
+- **Empty dashboard tiles.** Metrics with `ShowEverywhere` visibility that had no value (e.g. `overallCoveragePercent` without Clover XML) rendered as blank tiles. Now filtered out.
+- **Test detection missed tests in src/ directory.** Projects that place tests alongside production code (e.g. Flysystem) were not detected. Added fallback to parse `phpunit.xml.dist` / `phpunit.xml` test suite directories.
+- **Test files included in production analysis.** Recognized test files now excluded from the main analysis file list, preventing their classes, methods, LOC, and complexity from inflating project metrics.
+- **`--version` missing newline.** Output was immediately overwritten by the shell prompt. Fixes [#4](https://github.com/PhpCodeArcheology/PhpCodeArcheology/issues/4).
+- **`--help` not implemented.** Added `--help` flag with full usage information, all options, and available commands. Fixes [#4](https://github.com/PhpCodeArcheology/PhpCodeArcheology/issues/4).
+- **Unclear error/warning summary.** CLI summary line now reads "Problems: X errors | Y warnings | Z info" and includes a hint to check the report for per-file, per-class, and per-function details. Fixes [#5](https://github.com/PhpCodeArcheology/PhpCodeArcheology/issues/5).
+
 ## [2.7.0] - 2026-03-27
 
 ### Breaking Changes (Metric Corrections)

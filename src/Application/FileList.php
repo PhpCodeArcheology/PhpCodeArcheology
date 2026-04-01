@@ -100,6 +100,16 @@ final class FileList
         return false;
     }
 
+    /** @param string[] $paths */
+    public function removeFiles(array $paths): void
+    {
+        $remove = array_flip($paths);
+        $this->files = array_values(array_filter(
+            $this->files,
+            static fn (string $file): bool => !isset($remove[$file]),
+        ));
+    }
+
     /** @return string[] */
     public function getFiles(): array
     {

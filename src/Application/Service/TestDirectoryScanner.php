@@ -82,7 +82,52 @@ class TestDirectoryScanner
             }
         }
 
+        // Fallback: parse phpunit.xml.dist / phpunit.xml for test suite directories
+        if ([] === $dirs && $this->frameworkDetection instanceof FrameworkDetectionResult
+            && $this->frameworkDetection->phpunitDetected) {
+            $dirs = $this->findTestDirectoriesFromPhpunitXml($composerRoot);
+        }
+
         return array_values(array_unique($dirs));
+    }
+
+    /**
+     * @return string[]
+     */
+    private function findTestDirectoriesFromPhpunitXml(string $composerRoot): array
+    {
+        $dirs = [];
+
+        foreach (['phpunit.xml.dist', 'phpunit.xml'] as $filename) {
+            $path = $composerRoot.DIRECTORY_SEPARATOR.$filename;
+            if (!file_exists($path)) {
+                continue;
+            }
+
+            $xml = @simplexml_load_file($path);
+            if (false === $xml) {
+                continue;
+            }
+
+            $xpathResult = $xml->xpath('//testsuites/testsuite/directory');
+            foreach ($xpathResult ?: [] as $dirNode) {
+                $relPath = trim((string) $dirNode);
+                if ('' === $relPath) {
+                    continue;
+                }
+                $absPath = $composerRoot.DIRECTORY_SEPARATOR.$relPath;
+                $real = realpath($absPath);
+                if (false !== $real && is_dir($real)) {
+                    $dirs[] = $real;
+                }
+            }
+
+            if ([] !== $dirs) {
+                break;
+            }
+        }
+
+        return $dirs;
     }
 
     /**

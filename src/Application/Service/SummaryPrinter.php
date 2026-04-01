@@ -93,11 +93,12 @@ class SummaryPrinter
             $output->outNl(' Frameworks: '.$formatter->info($frameworks));
         }
         $output->outNl(sprintf(
-            ' Errors: %s  |  Warnings: %s  |  Info: %s',
+            ' Problems: %s errors  |  %s warnings  |  %s info',
             $errStr,
             $warnStr,
             $infoStr,
         ));
+        $output->outNl('           See report for per-file, per-class, and per-function details.');
         $output->outNl(' Report: '.$formatter->dim($reportFile));
         $output->outNl($line);
         $output->outNl();

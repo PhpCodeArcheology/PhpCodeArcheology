@@ -26,6 +26,9 @@ class ProjectDataProvider implements ReportDataProviderInterface
         $data = [];
         foreach ($metricTypes as $metricType) {
             $value = $projectMetrics->get($metricType->getKey());
+            if (null === $value) {
+                continue;
+            }
             $data[$metricType->getKey()] = $value;
         }
 
