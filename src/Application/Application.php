@@ -68,7 +68,7 @@ use Twig\Loader\FilesystemLoader;
 
 final readonly class Application
 {
-    public const VERSION = '2.7.2';
+    public const VERSION = '2.7.3';
 
     /**
      * Version that introduced breaking changes to metric calculations.
@@ -88,11 +88,11 @@ final readonly class Application
         try {
             $config = $this->createConfig($argv);
         } catch (HelpDisplayException) {
-            echo PHP_EOL.$this->getHelpText().PHP_EOL;
+            echo $this->getHelpText().PHP_EOL;
 
             return 0;
         } catch (VersionDisplayException $e) {
-            echo PHP_EOL.'PhpCodeArcheology v'.$e->getMessage().PHP_EOL;
+            echo 'PhpCodeArcheology v'.$e->getMessage().PHP_EOL;
 
             return 0;
         }
