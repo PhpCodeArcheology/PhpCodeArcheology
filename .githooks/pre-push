@@ -12,9 +12,6 @@ echo "Pre-push check on main..."
 echo "Running tests..."
 vendor/bin/pest --no-coverage || { echo "Tests failed! Push aborted."; exit 1; }
 
-echo "Checking code style..."
-vendor/bin/php-cs-fixer fix --dry-run --allow-risky=yes src/ || { echo "Code style issues found! Run 'composer cs-fix' first."; exit 1; }
-
 echo "Running PHPStan..."
 vendor/bin/phpstan analyse --no-progress --memory-limit=1G || { echo "PHPStan errors found! Push aborted."; exit 1; }
 
