@@ -153,3 +153,43 @@ it('detects correct class types', function() {
         ->and(count($collections['traits']))->toBe(1)
         ->and(count($collections['enums']))->toBe(1);
 });
+
+it('extracts correct namespace when class name appears in namespace', function () {
+    $testFile = __DIR__ . '/testfiles/fqn-namespace-collision.php';
+    $metricsController = getMetricsForVisitors($testFile, getIdVisitors());
+
+    $classes = $metricsController->getCollection(
+        MetricCollectionTypeEnum::ProjectCollection,
+        null,
+        'classes'
+    )->getAsArray();
+
+    // Hand-calculated: FQN = App\Account\EmployeeReport\Model\Account
+    // Short name = Account
+    // Expected namespace = App\Account\EmployeeReport\Model
+    foreach ($classes as $key => $name) {
+        $classMetrics = $metricsController->getMetricCollectionByIdentifierString($key);
+        expect($classMetrics->get('singleName')->getValue())->toBe('Account')
+            ->and($classMetrics->get('namespace')->getValue())->toBe('App\Account\EmployeeReport\Model');
+    }
+});
+
+it('extracts correct namespace when function name appears in namespace', function () {
+    $testFile = __DIR__ . '/testfiles/fqn-function-namespace-collision.php';
+    $metricsController = getMetricsForVisitors($testFile, getIdVisitors());
+
+    $functions = $metricsController->getCollection(
+        MetricCollectionTypeEnum::ProjectCollection,
+        null,
+        'functions'
+    )->getAsArray();
+
+    // Hand-calculated: FQN = App\Helper\Helper\helper
+    // Short name = helper
+    // Expected namespace = App\Helper\Helper
+    foreach ($functions as $key => $name) {
+        $fnMetrics = $metricsController->getMetricCollectionByIdentifierString($key);
+        expect($fnMetrics->get('singleName')->getValue())->toBe('helper')
+            ->and($fnMetrics->get('namespace')->getValue())->toBe('App\Helper\Helper');
+    }
+});

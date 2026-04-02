@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.7.2] - 2026-04-02
+
+### Fixed
+
+- **Fully Qualified Name wrong when class name appears in namespace.** `str_replace()` removed all occurrences of the class/function name from the FQN instead of only the trailing one. For example, `App\Account\EmployeeReport\Model\Account` produced a corrupted namespace. Now uses right-side extraction via `strrpos()`. Fixes [#6](https://github.com/PhpCodeArcheology/PhpCodeArcheology/issues/6).
+
+### Added
+
+- **Config dist-file support.** `php-codearch-config.yaml.dist` is now loaded as a fallback when `php-codearch-config.yaml` does not exist. This allows teams to commit a shared default config (`.yaml.dist`) while each developer can override it locally (`.yaml`, already gitignored). Fixes [#7](https://github.com/PhpCodeArcheology/PhpCodeArcheology/issues/7).
+
 ## [2.7.1] - 2026-04-01
 
 ### Fixed

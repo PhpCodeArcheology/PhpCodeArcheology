@@ -14,7 +14,13 @@ class ConfigFileParserFactory
      */
     public static function createFromFile(string $file): ConfigFileParserInterface
     {
-        switch (pathinfo($file, PATHINFO_EXTENSION)) {
+        $extension = pathinfo($file, PATHINFO_EXTENSION);
+
+        if ('dist' === $extension && str_ends_with($file, '.yaml.dist')) {
+            $extension = 'yaml';
+        }
+
+        switch ($extension) {
             case 'yaml':
                 $yaml = new Yaml();
 

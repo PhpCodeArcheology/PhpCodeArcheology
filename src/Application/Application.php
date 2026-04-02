@@ -68,7 +68,7 @@ use Twig\Loader\FilesystemLoader;
 
 final readonly class Application
 {
-    public const VERSION = '2.7.1';
+    public const VERSION = '2.7.2';
 
     /**
      * Version that introduced breaking changes to metric calculations.

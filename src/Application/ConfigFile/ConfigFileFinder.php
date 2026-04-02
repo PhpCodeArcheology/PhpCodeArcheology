@@ -27,28 +27,25 @@ readonly class ConfigFileFinder
 
         $path = $this->config->get('runningDir');
 
-        $configFile = sprintf(
-            '%s%s%s.*',
-            rtrim(is_string($path) ? $path : '', DIRECTORY_SEPARATOR),
-            DIRECTORY_SEPARATOR,
-            'php-codearch-config'
-        );
+        $basePath = rtrim(is_string($path) ? $path : '', DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
+        $candidates = [
+            $basePath.'php-codearch-config.yaml',
+            $basePath.'php-codearch-config.yaml.dist',
+        ];
 
-        $foundFiles = glob($configFile);
+        $configFile = null;
+        foreach ($candidates as $candidate) {
+            if (is_file($candidate)) {
+                $configFile = $candidate;
+                break;
+            }
+        }
 
-        if (false === $foundFiles) {
+        if (null === $configFile) {
             return false;
         }
 
-        if (count($foundFiles) > 1) {
-            throw new MultipleConfigFilesException('Multiple config files detected.');
-        }
-
-        if (0 === count($foundFiles)) {
-            return false;
-        }
-
-        $this->loadFile($foundFiles[0]);
+        $this->loadFile($configFile);
 
         return true;
     }

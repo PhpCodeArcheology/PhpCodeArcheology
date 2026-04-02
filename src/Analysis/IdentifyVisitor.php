@@ -246,8 +246,9 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface, InitializableVis
 
     private function setFunctionMetrics(Node\Stmt\Function_ $node): void
     {
-        $namespace = str_replace((string) $node->name, '', (string) $node->namespacedName);
-        $namespace = rtrim($namespace, '\\');
+        $fqn = (string) $node->namespacedName;
+        $lastBackslash = strrpos($fqn, '\\');
+        $namespace = false !== $lastBackslash ? substr($fqn, 0, $lastBackslash) : '';
 
         $identifierData = [
             'path' => $this->path,
@@ -300,8 +301,9 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface, InitializableVis
         $this->outputCount['classes'] = 0;
 
         $className = (string) ClassName::ofNode($node);
-        $namespace = str_replace((string) $node->name, '', ClassName::ofNode($node)->__toString());
-        $namespace = rtrim($namespace, '\\');
+        $fqn = ClassName::ofNode($node)->__toString();
+        $lastBackslash = strrpos($fqn, '\\');
+        $namespace = false !== $lastBackslash ? substr($fqn, 0, $lastBackslash) : '';
         $singleName = (string) $node->name;
 
         $identifierData = [
