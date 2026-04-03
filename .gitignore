@@ -6,6 +6,9 @@
 /report/
 /tmp/
 
+# Internal task files
+/tasks/
+
 # Config (user-specific)
 php-codearch-config.yaml
 .claude/settings.local.json
