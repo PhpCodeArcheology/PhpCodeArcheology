@@ -67,18 +67,43 @@ class HistoryDataProvider implements ReportDataProviderInterface
             return [];
         }
 
-        $lines = @file($this->historyFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-        if (false === $lines) {
+        $fp = @fopen($this->historyFile, 'r');
+        if (false === $fp) {
             return [];
         }
 
+        $projectMetrics = [
+            'overallAvgCC', 'overallAvgMI', 'healthScore',
+            'overallErrorCount', 'overallWarningCount',
+            'overallTechnicalDebtScore', 'overallClasses', 'overallLoc',
+        ];
+
         $runs = [];
-        foreach ($lines as $line) {
-            $decoded = json_decode($line, true);
-            if (is_array($decoded) && isset($decoded['date'])) {
-                $runs[] = $decoded;
+        while (($line = fgets($fp)) !== false) {
+            $line = rtrim($line);
+            if ('' === $line) {
+                continue;
             }
+            $decoded = json_decode($line, true);
+            if (!is_array($decoded) || !isset($decoded['date'])) {
+                continue;
+            }
+
+            $decodedData = $decoded['data'] ?? null;
+            $rawProject = is_array($decodedData) ? ($decodedData['ProjectCollection'] ?? []) : [];
+            $projectData = is_array($rawProject) ? $rawProject : [];
+
+            $slim = [];
+            foreach ($projectMetrics as $metric) {
+                if (isset($projectData[$metric])) {
+                    $slim[$metric] = $projectData[$metric];
+                }
+            }
+
+            $runs[] = ['date' => $decoded['date'], 'data' => ['ProjectCollection' => $slim]];
         }
+
+        fclose($fp);
 
         return $runs;
     }

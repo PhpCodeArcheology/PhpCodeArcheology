@@ -14,6 +14,9 @@ use PhpCodeArch\Metrics\Model\MetricValue;
 
 class HistoryService
 {
+    /** @var array<string, string> */
+    private array $lastLineCache = [];
+
     public function setDeltas(MetricsController $metricsController, Config $config): false|\DateTimeImmutable
     {
         $reportDirRaw = $config->get('reportDir');
@@ -186,6 +189,11 @@ class HistoryService
 
         foreach ($this->getHistoryData($metricsController) as $historyData) {
             $collectionKey = $historyData['collectionKey'];
+            // Compact format: only store project-level metrics to keep entries small.
+            // Old (full) entries are still read correctly by the readers.
+            if ('ProjectCollection' !== $collectionKey) {
+                continue;
+            }
             if (!isset($metricHistory['data'][$collectionKey])) {
                 $metricHistory['data'][$collectionKey] = [];
             }
@@ -215,6 +223,7 @@ class HistoryService
                     $lines = @file($historyFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [];
                     $lines[count($lines) - 1] = json_encode($lastEntry);
                     file_put_contents($historyFile, implode("\n", $lines)."\n");
+                    unset($this->lastLineCache[$historyFile]);
 
                     return;
                 }
@@ -223,6 +232,7 @@ class HistoryService
 
         // Append current run as new line
         file_put_contents($historyFile, json_encode($metricHistory)."\n", FILE_APPEND);
+        unset($this->lastLineCache[$historyFile]);
     }
 
     /**
@@ -291,11 +301,56 @@ class HistoryService
 
     private function getLastLineOfFile(string $file): ?string
     {
-        $lines = @file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-        if (false === $lines || [] === $lines) {
+        if (isset($this->lastLineCache[$file])) {
+            return $this->lastLineCache[$file];
+        }
+
+        $fp = @fopen($file, 'rb');
+        if (false === $fp) {
             return null;
         }
 
-        return end($lines);
+        try {
+            fseek($fp, 0, SEEK_END);
+            $size = ftell($fp);
+
+            if (false === $size || 0 === $size) {
+                return null;
+            }
+
+            $buffer = '';
+            $pos = $size;
+
+            while ($pos > 0) {
+                $readSize = min(8192, $pos);
+                $pos -= $readSize;
+                fseek($fp, $pos);
+                $chunk = fread($fp, $readSize);
+                if (false === $chunk) {
+                    return null;
+                }
+                $buffer = $chunk.$buffer;
+
+                $trimmed = rtrim($buffer, "\n\r");
+                $nlPos = strrpos($trimmed, "\n");
+                if (false !== $nlPos) {
+                    $result = substr($trimmed, $nlPos + 1);
+                    $this->lastLineCache[$file] = $result;
+
+                    return $result;
+                }
+            }
+
+            $trimmed = rtrim($buffer, "\n\r");
+            if ('' === $trimmed) {
+                return null;
+            }
+
+            $this->lastLineCache[$file] = $trimmed;
+
+            return $trimmed;
+        } finally {
+            fclose($fp);
+        }
     }
 }
