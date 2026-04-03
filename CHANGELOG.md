@@ -11,7 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Default directory exclusions.** `vendor/`, `node_modules/`, and `.git/` are now excluded from analysis automatically, even without a config file. The `init` command also includes `vendor` and `node_modules` in the generated config. Fixes [#9](https://github.com/PhpCodeArcheology/PhpCodeArcheology/issues/9).
 - **`memoryLimit` config option documented** in sample config and README with usage examples.
-- **76 new tests.** FileList exclusion logic (19), Config memory limit handling (13), YAML/JSON config file parsing (32), and an end-to-end integration test for the analysis pipeline (12). Test count: 440 → 516.
+- **259 new tests.** FileList exclusion logic (19), Config memory limit handling (13), YAML/JSON config file parsing (32), integration test for analysis pipeline (12), Problem value objects (96), Prediction tests for DeadCode/TooManyParams/DeepInheritance/TooLong/GodClass/DependencyCycle (87). Test count: 440 → 699.
+- **`/release` slash command** for automated releases (version detection, changelog update, tagging, GitHub release).
 
 ### Changed
 
@@ -21,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Halstead Difficulty threshold recalibrated.** Default raised from 20 to 30 (45 for framework projects).
 - **Test mapping improved.** Classes with Clover XML coverage are now recognized as tested.
 - **Internal task files removed from repository.**
+- **History memory optimization.** Stream-based reading (fseek instead of file()), selective metric loading for trend charts (8 metrics instead of full entries), last-run caching. New entries are written in compact format (project-level metrics only). Old full entries remain readable — no migration needed.
 
 ### Fixed
 
