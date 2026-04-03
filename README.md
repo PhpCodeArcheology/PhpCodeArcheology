@@ -466,6 +466,10 @@ The Health Score (0–100) is a **guideline for tracking trends**, not an absolu
 
 The score is weighted across 10 factors (Maintainability Index, Problem Density, Complexity, Coupling, Code Structure, HTML Ratio, Encapsulation, Dependencies, Abstractness, and Test Coverage). See [`docs/metrics-formulas.md`](docs/metrics-formulas.md) for the exact formulas and weights.
 
+## Contributing
+
+Contributions are welcome! Check the [open issues](https://github.com/PhpCodeArcheology/PhpCodeArcheology/issues) for bugs and feature requests, or see the [Roadmap](ROADMAP.md) for planned features. For larger changes, open an issue first to discuss the approach.
+
 ## Author
 
 Marcus Kober — [GitHub](https://github.com/marcuskober)

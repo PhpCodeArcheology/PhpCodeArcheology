@@ -1,0 +1,27 @@
+# Roadmap
+
+This document outlines planned features and improvements for PhpCodeArcheology. Items are roughly prioritized but not tied to specific versions or deadlines. Contributions and feedback are welcome — if you'd like to work on something, open an issue first so we can discuss the approach.
+
+## Next Up
+
+- **DocBlock display in class/method detail views.** Show descriptive PHPDoc comments alongside metrics in the HTML report, giving more context when reviewing individual classes and methods.
+- **Composer plugin.** `composer analyze` as a shortcut, with automatic configuration based on `composer.json` autoload settings.
+- **More test coverage.** Currently at ~75% line coverage with 699 tests. Goal: 85%+, especially for the remaining Prediction rules and Report DataProviders.
+
+## Planned
+
+- **Incremental analysis.** Cache AST parse results and only re-analyze changed files. Prerequisite for `--watch` mode. Significant performance improvement for large codebases.
+- **Custom rules.** User-defined problem detection rules via config. Configurable thresholds already exist (since v2.7.0) — this extends it to custom rule logic (e.g., "flag classes matching pattern X with metric Y above Z").
+- **Plugin system.** Extensibility via external plugins — custom metrics, custom report formats, custom rules.
+
+## Ideas
+
+These are longer-term ideas that may or may not happen. If any of these would be particularly useful for your workflow, let us know by opening an issue.
+
+- **`--watch` mode.** Continuous analysis that re-runs on file changes (depends on incremental analysis).
+- **History memory optimization.** Compact history storage for projects with many analysis runs (partially implemented — further improvements possible).
+- **Additional report formats.** Confluence, Notion, or other integrations based on demand.
+
+## Contributing
+
+If you'd like to contribute, check the [open issues](https://github.com/PhpCodeArcheology/PhpCodeArcheology/issues) for bugs and feature requests. For roadmap items, open an issue to discuss before starting work — some of these have architectural implications that are worth aligning on first.
