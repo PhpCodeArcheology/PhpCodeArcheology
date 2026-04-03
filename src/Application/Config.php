@@ -33,7 +33,7 @@ final class Config
             ini_set('memory_limit', $configMemoryLimit);
         } else {
             $current = ini_get('memory_limit');
-            if ('-1' !== $current && false !== $current) {
+            if ('-1' !== $current) {
                 ini_set('memory_limit', '1G');
             }
         }

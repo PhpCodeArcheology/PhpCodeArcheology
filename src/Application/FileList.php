@@ -20,12 +20,9 @@ final class FileList
     {
         $excludeRawValue = $this->config->has('exclude') ? $this->config->get('exclude') : [];
         $excludeRaw = is_array($excludeRawValue) ? $excludeRawValue : [];
-        $excludeRaw = array_unique(array_merge(self::DEFAULT_EXCLUDE_DIRS, $excludeRaw));
+        $excludeRaw = array_unique([...self::DEFAULT_EXCLUDE_DIRS, ...array_filter($excludeRaw, is_string(...))]);
         $exclude = [];
         foreach ($excludeRaw as $path) {
-            if (!is_string($path)) {
-                continue;
-            }
             $resolved = realpath($path);
             if (false !== $resolved) {
                 $exclude[] = rtrim($resolved, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
