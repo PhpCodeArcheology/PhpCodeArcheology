@@ -131,6 +131,17 @@ To create a config file interactively:
 ./vendor/bin/phpcodearcheology init
 ```
 
+## Memory and Performance
+
+The directories `vendor/`, `node_modules/`, and `.git/` are **excluded automatically** — you don't need to configure this. If you point the tool at your project root, only your own code is analysed.
+
+For **large codebases** (50k+ files), analysis may require more memory than the default 1G. The tool respects your `php.ini` `memory_limit` — if you've set it to `-1` (unlimited), it stays unlimited. To adjust the limit per project, add `memoryLimit` to your config file:
+
+```yaml
+# php-codearch-config.yaml
+memoryLimit: "2G"    # or "-1" for unlimited
+```
+
 ## Test Analysis
 
 PhpCodeArcheology automatically detects your test infrastructure from `composer.json` (PHPUnit, Pest, or Codeception) and maps test files to production classes using PSR-4 namespaces, naming conventions, and directory structure.

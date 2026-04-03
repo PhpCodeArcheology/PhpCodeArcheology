@@ -104,6 +104,10 @@ class ConfigFileParserJson implements ConfigFileParserInterface
             $config->set('framework', $data['framework']);
         }
 
+        if (isset($data['memoryLimit']) && is_string($data['memoryLimit'])) {
+            $config->set('memoryLimit', $data['memoryLimit']);
+        }
+
         if (isset($data['acknowledgedVersion']) && is_scalar($data['acknowledgedVersion'])) {
             $config->set('acknowledgedVersion', (string) $data['acknowledgedVersion']);
         }

@@ -8,7 +8,11 @@ include:
   - "src"
 
 # List all folders that should be not analyzed in exclude:
+# Note: vendor, node_modules, and .git are always excluded
+# automatically, even without this setting.
 exclude:
+  - "vendor"
+  - "node_modules"
 
 # If your project uses files with other extensions (such as
 # .inc), you are able to define these extensions here:
@@ -28,3 +32,9 @@ reportDir: "tmp/report"
 # The report type.
 # Either html or markdown
 reportType: "html"
+
+# Memory limit for the analysis process.
+# Defaults to 1G if not set. Set to "-1" for unlimited.
+# Your php.ini memory_limit is respected — if it's already
+# set to -1 (unlimited), the tool won't override it.
+# memoryLimit: "2G"

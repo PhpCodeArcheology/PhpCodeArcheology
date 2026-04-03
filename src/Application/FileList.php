@@ -6,6 +6,8 @@ namespace PhpCodeArch\Application;
 
 final class FileList
 {
+    private const DEFAULT_EXCLUDE_DIRS = ['vendor', 'node_modules', '.git'];
+
     /** @var string[] */
     private array $files = [];
 
@@ -18,6 +20,7 @@ final class FileList
     {
         $excludeRawValue = $this->config->has('exclude') ? $this->config->get('exclude') : [];
         $excludeRaw = is_array($excludeRawValue) ? $excludeRawValue : [];
+        $excludeRaw = array_unique(array_merge(self::DEFAULT_EXCLUDE_DIRS, $excludeRaw));
         $exclude = [];
         foreach ($excludeRaw as $path) {
             if (!is_string($path)) {

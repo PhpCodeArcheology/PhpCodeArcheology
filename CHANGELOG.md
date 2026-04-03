@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Default directory exclusions.** `vendor/`, `node_modules/`, and `.git/` are now excluded from analysis automatically, even without a config file. The `init` command also includes `vendor` and `node_modules` in the generated config. Fixes [#9](https://github.com/PhpCodeArcheology/PhpCodeArcheology/issues/9).
+- **`memoryLimit` config option documented** in sample config and README with usage examples.
+
+### Fixed
+
+- **`memory_limit=-1` from php.ini was overridden.** The tool always set `memory_limit` to `1G`, ignoring the system setting. Now respects unlimited (`-1`) from php.ini and only bumps to 1G when the current limit is lower. The `memoryLimit` config option also accepts `"-1"` for unlimited. Fixes [#9](https://github.com/PhpCodeArcheology/PhpCodeArcheology/issues/9).
+- **`memoryLimit` from config file was ignored.** The YAML/JSON config parser did not map the `memoryLimit` key to the application config, so the default of `1G` was always used regardless of the config file setting.
+- **Duplicate memory limit code.** Consolidated identical `ini_set` logic from `Application`, `McpCommand`, and `BaselineCommand` into `Config::applyMemoryLimit()`.
+
 ## [2.7.3] - 2026-04-02
 
 ### Fixed

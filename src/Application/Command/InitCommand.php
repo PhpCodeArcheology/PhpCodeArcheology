@@ -61,7 +61,7 @@ class InitCommand
         // Build config
         $configData = [
             'include' => $include,
-            'exclude' => [],
+            'exclude' => ['vendor', 'node_modules'],
             'extensions' => ['php'],
             'packageSize' => (int) $packageSize,
             'reportDir' => $reportDir,

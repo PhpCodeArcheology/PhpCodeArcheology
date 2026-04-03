@@ -26,6 +26,19 @@ final class Config
         return isset($this->config[$key]);
     }
 
+    public function applyMemoryLimit(): void
+    {
+        $configMemoryLimit = $this->get('memoryLimit');
+        if (is_string($configMemoryLimit) && preg_match('/^(-1|[0-9]+[KMG]?)$/i', $configMemoryLimit)) {
+            ini_set('memory_limit', $configMemoryLimit);
+        } else {
+            $current = ini_get('memory_limit');
+            if ('-1' !== $current && false !== $current) {
+                ini_set('memory_limit', '1G');
+            }
+        }
+    }
+
     /**
      * @throws ConfigException
      */

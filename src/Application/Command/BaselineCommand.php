@@ -52,9 +52,7 @@ class BaselineCommand
             return 1;
         }
 
-        $memoryLimitRaw = $config->get('memoryLimit');
-        $memoryLimit = is_string($memoryLimitRaw) ? $memoryLimitRaw : '1G';
-        ini_set('memory_limit', $memoryLimit);
+        $config->applyMemoryLimit();
 
         return match ($subCommand) {
             'create' => $this->create($config, $output, $formatter),

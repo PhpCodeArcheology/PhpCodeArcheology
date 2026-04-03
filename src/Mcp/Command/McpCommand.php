@@ -46,9 +46,7 @@ class McpCommand
             return 1;
         }
 
-        $memoryLimitRaw = $config->get('memoryLimit');
-        $memoryLimit = is_string($memoryLimitRaw) ? $memoryLimitRaw : '1G';
-        ini_set('memory_limit', $memoryLimit);
+        $config->applyMemoryLimit();
 
         // MCP uses STDOUT for JSON-RPC — all application output must go to STDERR
         $stderrOutput = new StderrOutput();

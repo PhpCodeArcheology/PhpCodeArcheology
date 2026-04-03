@@ -109,10 +109,7 @@ final readonly class Application
             return $this->dispatchCommand($command, $config, $output, $formatter);
         }
 
-        $memoryLimit = $config->get('memoryLimit') ?? '1G';
-        if (is_string($memoryLimit) && preg_match('/^[0-9]+[KMG]?$/i', $memoryLimit)) {
-            ini_set('memory_limit', $memoryLimit);
-        }
+        $config->applyMemoryLimit();
 
         // Framework detection (runs in all modes)
         $frameworkConfig = $config->get('framework');
