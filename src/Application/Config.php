@@ -30,14 +30,12 @@ final class Config implements AnalysisConfigInterface
 
     public function applyMemoryLimit(): void
     {
-        $memoryLimit = $this->getMemoryLimit();
-        if (preg_match('/^(-1|[0-9]+[KMG]?)$/i', $memoryLimit)) {
-            if ('-1' === $memoryLimit) {
-                ini_set('memory_limit', '-1');
-            } else {
-                ini_set('memory_limit', $memoryLimit);
-            }
+        $configValue = $this->config['memoryLimit'] ?? null;
+
+        if (is_string($configValue) && preg_match('/^(-1|[0-9]+[KMG]?)$/i', $configValue)) {
+            ini_set('memory_limit', $configValue);
         } else {
+            // No explicit config — ensure at least 1G but don't override unlimited
             $current = ini_get('memory_limit');
             if ('-1' !== $current) {
                 ini_set('memory_limit', '1G');
