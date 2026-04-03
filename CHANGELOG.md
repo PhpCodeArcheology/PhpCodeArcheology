@@ -11,12 +11,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Default directory exclusions.** `vendor/`, `node_modules/`, and `.git/` are now excluded from analysis automatically, even without a config file. The `init` command also includes `vendor` and `node_modules` in the generated config. Fixes [#9](https://github.com/PhpCodeArcheology/PhpCodeArcheology/issues/9).
 - **`memoryLimit` config option documented** in sample config and README with usage examples.
+- **76 new tests.** FileList exclusion logic (19), Config memory limit handling (13), YAML/JSON config file parsing (32), and an end-to-end integration test for the analysis pipeline (12). Test count: 440 → 516.
+
+### Changed
+
+- **Architecture refactoring.** `Application.php` split from 614 to 175 LLOC: `AnalysisPipeline`, `BootstrapService`, `ReportOrchestrator`, `CalculatorRegistry`, `PredictionRegistry`, `ServiceFactory` extracted. Interfaces added: `OutputInterface`, `MetricsReaderInterface`, `MetricsWriterInterface`, `AnalysisConfigInterface`. Typed Config getters replace raw `get()` calls.
+- **Monster methods split.** `ImpactAnalysisTool` CC 76→5, `RefactoringTool` CC 51→5, `GetTestCoverageTool` CC 44→5, `HalsteadMetricsVisitor::countOperators` CC 35→5, `HtmlReport::generateIndexPage` CC 38→1, `HistoryService::setDeltas` CC 22→9, `HotspotsTool` CC 26→8.
+- **GraphDataProvider split** into `ClassNodeCollector`, `EdgeCollector`, `PackageNodeCollector`.
+- **Halstead Difficulty threshold recalibrated.** Default raised from 20 to 30 (45 for framework projects).
+- **Test mapping improved.** Classes with Clover XML coverage are now recognized as tested.
+- **Internal task files removed from repository.**
 
 ### Fixed
 
 - **`memory_limit=-1` from php.ini was overridden.** The tool always set `memory_limit` to `1G`, ignoring the system setting. Now respects unlimited (`-1`) from php.ini and only bumps to 1G when the current limit is lower. The `memoryLimit` config option also accepts `"-1"` for unlimited. Fixes [#9](https://github.com/PhpCodeArcheology/PhpCodeArcheology/issues/9).
 - **`memoryLimit` from config file was ignored.** The YAML/JSON config parser did not map the `memoryLimit` key to the application config, so the default of `1G` was always used regardless of the config file setting.
 - **Duplicate memory limit code.** Consolidated identical `ini_set` logic from `Application`, `McpCommand`, and `BaselineCommand` into `Config::applyMemoryLimit()`.
+- **Test File Ratio removed.** Unreliable metric replaced by class-level tested/untested tracking.
 
 ## [2.7.3] - 2026-04-02
 
