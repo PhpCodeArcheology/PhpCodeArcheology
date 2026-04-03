@@ -14,16 +14,14 @@ beforeEach(function () {
     $this->output = new class extends CliOutput {
         public string $buffer = '';
 
-        public function out(string $message): static
+        public function out(string $message): void
         {
             $this->buffer .= $message;
-            return $this;
         }
 
-        public function outNl(string $message = ''): static
+        public function outNl(string $message = ''): void
         {
-            $this->buffer .= PHP_EOL . $message;
-            return $this;
+            $this->buffer .= PHP_EOL.$message;
         }
     };
 });
@@ -106,7 +104,7 @@ it('applies column formatters', function () {
 
     // Set a formatter on column 1 that wraps the value in brackets
     $table->setColumnFormatter(1, function (mixed $raw, string $padded): string {
-        return '[' . trim($padded) . ']';
+        return '['.trim($padded).']';
     });
 
     $table->render();

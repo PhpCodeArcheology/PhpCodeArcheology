@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Report\DataProvider;
 
-use PhpCodeArch\Application\Application;
-use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Application\Version;
+use PhpCodeArch\Metrics\Controller\MetricsReaderInterface;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 use PhpCodeArch\Metrics\MetricKey;
 
@@ -15,10 +15,10 @@ trait ReportDataProviderTrait
     private array $templateData = [];
 
     public function __construct(
-        private readonly MetricsController $metricsController)
+        private readonly MetricsReaderInterface $metricsController)
     {
         $this->templateData['createDate'] = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
-        $this->templateData['version'] = Application::VERSION;
+        $this->templateData['version'] = Version::CURRENT;
         $this->templateData['commonPath'] = $this->metricsController->getMetricValue(
             MetricCollectionTypeEnum::ProjectCollection,
             null,

@@ -17,16 +17,9 @@ class GetTestCoverageTool
     {
         try {
             $rawData = $this->factory->getTestsDataProvider()->getTemplateData();
-            $rawStats = $rawData['stats'] ?? null;
-            $stats = is_array($rawStats) ? $rawStats : [];
-            $rawGaps = $rawData['coverageGaps'] ?? null;
-            $gaps = is_array($rawGaps) ? $rawGaps : [];
+            $stats = $this->extractCoverageStats($rawData);
 
-            $testFileCount = is_int($stats['testFileCount'] ?? null) ? $stats['testFileCount'] : 0;
-            $rawFrameworks = $stats['detectedTestFrameworks'] ?? null;
-            $frameworks = is_string($rawFrameworks) ? $rawFrameworks : '';
-
-            if (0 === $testFileCount && '' === $frameworks) {
+            if (0 === $stats['testFileCount'] && '' === $stats['frameworks']) {
                 return implode("\n", [
                     'Test Coverage Summary',
                     '=====================',
@@ -34,78 +27,118 @@ class GetTestCoverageTool
                 ]);
             }
 
-            $productionFileCount = is_int($stats['productionFileCount'] ?? null) ? $stats['productionFileCount'] : 0;
-            $rawTestRatio = $stats['testRatio'] ?? null;
-            $testRatio = round(is_numeric($rawTestRatio) ? (float) $rawTestRatio : 0.0, 1);
-            $testedClassCount = is_int($stats['testedClassCount'] ?? null) ? $stats['testedClassCount'] : 0;
-            $untestedClassCount = is_int($stats['untestedClassCount'] ?? null) ? $stats['untestedClassCount'] : 0;
-            $totalClasses = $testedClassCount + $untestedClassCount;
-            $rawTestedClassRatio = $stats['testedClassRatio'] ?? null;
-            $testedClassRatio = round(is_numeric($rawTestedClassRatio) ? (float) $rawTestedClassRatio : 0.0, 1);
-            $functionBasedCount = is_int($stats['functionBasedTestFileCount'] ?? null) ? $stats['functionBasedTestFileCount'] : 0;
-
-            $lines = [
-                'Test Coverage Summary',
-                '=====================',
-            ];
-
-            if ('' !== $frameworks) {
-                $lines[] = "Test Frameworks: {$frameworks}";
-            }
-
-            $rawCoveragePercent = $stats['overallCoveragePercent'] ?? null;
-            $coveragePercent = is_numeric($rawCoveragePercent) ? (float) $rawCoveragePercent : null;
-            if (null !== $coveragePercent) {
-                $lines[] = 'Line Coverage: '.round($coveragePercent, 1).'% (from Clover XML)';
-            }
-
-            $lines[] = "Test Ratio: {$testRatio}% ({$testFileCount} test files / {$productionFileCount} production files)";
-            $lines[] = "Tested Classes: {$testedClassCount} / {$totalClasses} ({$testedClassRatio}%)";
-
-            if ($functionBasedCount > 0) {
-                $frameworkHint = '' !== $frameworks ? " ({$frameworks}-style, not mapped to classes)" : ' (function-based, not mapped to classes)';
-                $lines[] = "Function-based Tests: {$functionBasedCount} files{$frameworkHint}";
-            }
-
-            $gaps = array_slice($gaps, 0, max(1, $limit));
-
-            if ([] !== $gaps) {
-                $actualCount = count($gaps);
-                $lines[] = '';
-                $lines[] = "Top {$actualCount} Untested Complex Classes:";
-                $lines[] = sprintf(' %-3s %-38s %4s %6s  %8s', '#', 'Class', 'CC', 'LLOC', 'Priority');
-                $lines[] = str_repeat('-', 68);
-
-                foreach ($gaps as $i => $gap) {
-                    if (!is_array($gap)) {
-                        continue;
-                    }
-                    $rawFullName = $gap['fullName'] ?? null;
-                    $rawItemName = $gap['name'] ?? null;
-                    $fullName = is_string($rawFullName) ? $rawFullName : '';
-                    $itemName = is_string($rawItemName) ? $rawItemName : '';
-                    $name = '' !== $fullName ? $fullName : $itemName;
-                    $shortName = strlen($name) > 36 ? substr($name, 0, 33).'...' : $name;
-                    $rawRefPriority = $gap['refactoringPriority'] ?? null;
-                    $refPriority = is_numeric($rawRefPriority) ? (float) $rawRefPriority : 0.0;
-                    $cc = is_int($gap['cc'] ?? null) ? $gap['cc'] : 0;
-                    $lloc = is_int($gap['lloc'] ?? null) ? $gap['lloc'] : 0;
-                    $lines[] = sprintf(' %-3d %-38s %4d %6d  %8.1f',
-                        $i + 1,
-                        $shortName,
-                        $cc,
-                        $lloc,
-                        $refPriority
-                    );
-                }
-            } else {
-                $lines[] = '';
-                $lines[] = 'No untested classes found.';
-            }
+            $lines = $this->buildCoverageSummaryHeader($stats);
+            $rawGaps = $rawData['coverageGaps'] ?? null;
+            $gaps = is_array($rawGaps) ? $rawGaps : [];
+            $lines = array_merge($lines, $this->formatCoverageGaps($gaps, $limit));
 
             return implode("\n", $lines);
         } catch (\Throwable $e) {
             return 'An error occurred while retrieving test coverage.';
         }
+    }
+
+    /**
+     * @param array<string, mixed> $rawData
+     *
+     * @return array{testFileCount: int, frameworks: string, productionFileCount: int, testRatio: float, testedClassCount: int, untestedClassCount: int, totalClasses: int, testedClassRatio: float, functionBasedCount: int, coveragePercent: float|null}
+     */
+    private function extractCoverageStats(array $rawData): array
+    {
+        $rawStats = $rawData['stats'] ?? null;
+        $stats = is_array($rawStats) ? $rawStats : [];
+
+        $testedClassCount = is_int($stats['testedClassCount'] ?? null) ? $stats['testedClassCount'] : 0;
+        $untestedClassCount = is_int($stats['untestedClassCount'] ?? null) ? $stats['untestedClassCount'] : 0;
+        $rawCoveragePercent = $stats['overallCoveragePercent'] ?? null;
+
+        return [
+            'testFileCount' => is_int($stats['testFileCount'] ?? null) ? $stats['testFileCount'] : 0,
+            'frameworks' => is_string($stats['detectedTestFrameworks'] ?? null) ? $stats['detectedTestFrameworks'] : '',
+            'productionFileCount' => is_int($stats['productionFileCount'] ?? null) ? $stats['productionFileCount'] : 0,
+            'testRatio' => round(is_numeric($stats['testRatio'] ?? null) ? (float) $stats['testRatio'] : 0.0, 1),
+            'testedClassCount' => $testedClassCount,
+            'untestedClassCount' => $untestedClassCount,
+            'totalClasses' => $testedClassCount + $untestedClassCount,
+            'testedClassRatio' => round(is_numeric($stats['testedClassRatio'] ?? null) ? (float) $stats['testedClassRatio'] : 0.0, 1),
+            'functionBasedCount' => is_int($stats['functionBasedTestFileCount'] ?? null) ? $stats['functionBasedTestFileCount'] : 0,
+            'coveragePercent' => is_numeric($rawCoveragePercent) ? (float) $rawCoveragePercent : null,
+        ];
+    }
+
+    /**
+     * @param array{testFileCount: int, frameworks: string, productionFileCount: int, testRatio: float, testedClassCount: int, untestedClassCount: int, totalClasses: int, testedClassRatio: float, functionBasedCount: int, coveragePercent: float|null} $stats
+     *
+     * @return list<string>
+     */
+    private function buildCoverageSummaryHeader(array $stats): array
+    {
+        $lines = ['Test Coverage Summary', '====================='];
+
+        if ('' !== $stats['frameworks']) {
+            $lines[] = "Test Frameworks: {$stats['frameworks']}";
+        }
+
+        if (null !== $stats['coveragePercent']) {
+            $lines[] = 'Line Coverage: '.round($stats['coveragePercent'], 1).'% (from Clover XML)';
+        }
+
+        $lines[] = "Tested Classes: {$stats['testedClassCount']} / {$stats['totalClasses']} ({$stats['testedClassRatio']}%)";
+        $lines[] = "Test Files: {$stats['testFileCount']} ({$stats['functionBasedCount']} function-based)";
+
+        if ($stats['functionBasedCount'] > 0) {
+            $frameworkHint = '' !== $stats['frameworks']
+                ? " ({$stats['frameworks']}-style, not mapped to classes)"
+                : ' (function-based, not mapped to classes)';
+            $lines[] = "Function-based Tests: {$stats['functionBasedCount']} files{$frameworkHint}";
+        }
+
+        return $lines;
+    }
+
+    /**
+     * @param array<mixed> $gaps
+     *
+     * @return list<string>
+     */
+    private function formatCoverageGaps(array $gaps, int $limit): array
+    {
+        $gaps = array_slice($gaps, 0, max(1, $limit));
+
+        if ([] === $gaps) {
+            return ['', 'No untested classes found.'];
+        }
+
+        $actualCount = count($gaps);
+        $lines = [
+            '',
+            "Top {$actualCount} Untested Complex Classes:",
+            sprintf(' %-3s %-38s %4s %6s  %8s', '#', 'Class', 'CC', 'LLOC', 'Priority'),
+            str_repeat('-', 68),
+        ];
+
+        foreach ($gaps as $i => $gap) {
+            if (!is_array($gap)) {
+                continue;
+            }
+            $rawFullName = $gap['fullName'] ?? null;
+            $rawItemName = $gap['name'] ?? null;
+            $fullName = is_string($rawFullName) ? $rawFullName : '';
+            $itemName = is_string($rawItemName) ? $rawItemName : '';
+            $name = '' !== $fullName ? $fullName : $itemName;
+            $shortName = strlen($name) > 36 ? substr($name, 0, 33).'...' : $name;
+            $refPriority = is_numeric($gap['refactoringPriority'] ?? null) ? (float) $gap['refactoringPriority'] : 0.0;
+            $cc = is_int($gap['cc'] ?? null) ? $gap['cc'] : 0;
+            $lloc = is_int($gap['lloc'] ?? null) ? $gap['lloc'] : 0;
+            $lines[] = sprintf(' %-3d %-38s %4d %6d  %8.1f',
+                $i + 1,
+                $shortName,
+                $cc,
+                $lloc,
+                $refPriority
+            );
+        }
+
+        return $lines;
     }
 }

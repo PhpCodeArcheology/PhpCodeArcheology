@@ -18,7 +18,7 @@ use Twig\Loader\FilesystemLoader;
 
 function makeJsonReportDeps(): array
 {
-    $tmpDir = sys_get_temp_dir() . '/pca-json-report-test-' . uniqid();
+    $tmpDir = sys_get_temp_dir().'/pca-json-report-test-'.uniqid();
     mkdir($tmpDir, 0755, true);
 
     $config = new Config();
@@ -27,30 +27,30 @@ function makeJsonReportDeps(): array
 
     $projectProvider = Mockery::mock(ProjectDataProvider::class);
     $projectProvider->shouldReceive('getTemplateData')->andReturn([
-        'createDate'  => '2026-01-01T00:00:00+00:00',
-        'version'     => '2.5.0',
-        'commonPath'  => '/src',
-        'elements'    => [],
+        'createDate' => '2026-01-01T00:00:00+00:00',
+        'version' => '2.5.0',
+        'commonPath' => '/src',
+        'elements' => [],
     ]);
 
     $problemProvider = Mockery::mock(ProblemDataProvider::class);
     $problemProvider->shouldReceive('getTemplateData')->andReturn([
-        'fileProblems'     => [],
-        'classProblems'    => [],
+        'fileProblems' => [],
+        'classProblems' => [],
         'functionProblems' => [],
     ]);
 
     $gitProvider = Mockery::mock(GitDataProvider::class);
     $gitProvider->shouldReceive('getTemplateData')->andReturn([
-        'gitTotalCommits'   => 100,
-        'gitActiveAuthors'  => 3,
+        'gitTotalCommits' => 100,
+        'gitActiveAuthors' => 3,
         'gitAnalysisPeriod' => '3 months',
-        'hotspots'          => [],
+        'hotspots' => [],
     ]);
 
     $testsProvider = Mockery::mock(TestsDataProvider::class);
     $testsProvider->shouldReceive('getTemplateData')->andReturn([
-        'stats'        => ['testRatio' => 0.5, 'testFileCount' => 5, 'productionFileCount' => 10],
+        'stats' => ['testRatio' => 0.5, 'testFileCount' => 5, 'productionFileCount' => 10],
         'coverageGaps' => [],
     ]);
 
@@ -105,7 +105,7 @@ it('generates a report.json file in the json subdirectory', function () {
 
     (new JsonReport($config, $factory, $hd, $tl, $twig, $output))->generate();
 
-    expect(file_exists($tmpDir . '/json/report.json'))->toBeTrue();
+    expect(file_exists($tmpDir.'/json/report.json'))->toBeTrue();
 });
 
 it('generates valid JSON output', function () {
@@ -114,7 +114,7 @@ it('generates valid JSON output', function () {
 
     (new JsonReport($config, $factory, $hd, $tl, $twig, $output))->generate();
 
-    $raw  = file_get_contents($tmpDir . '/json/report.json');
+    $raw = file_get_contents($tmpDir.'/json/report.json');
     $data = json_decode($raw, true);
 
     expect(json_last_error())->toBe(JSON_ERROR_NONE);
@@ -127,7 +127,7 @@ it('includes project, files, classes, and functions sections', function () {
 
     (new JsonReport($config, $factory, $hd, $tl, $twig, $output))->generate();
 
-    $data = json_decode(file_get_contents($tmpDir . '/json/report.json'), true);
+    $data = json_decode(file_get_contents($tmpDir.'/json/report.json'), true);
 
     expect($data)->toHaveKeys(['project', 'files', 'classes', 'functions']);
 });
@@ -138,10 +138,10 @@ it('includes tests section with stats fields', function () {
 
     (new JsonReport($config, $factory, $hd, $tl, $twig, $output))->generate();
 
-    $data = json_decode(file_get_contents($tmpDir . '/json/report.json'), true);
+    $data = json_decode(file_get_contents($tmpDir.'/json/report.json'), true);
 
     expect($data)->toHaveKey('tests');
-    expect($data['tests'])->toHaveKeys(['testRatio', 'testFileCount', 'productionFileCount']);
+    expect($data['tests'])->toHaveKeys(['testedClassRatio', 'testFileCount', 'productionFileCount']);
 });
 
 it('includes problems section', function () {
@@ -150,7 +150,7 @@ it('includes problems section', function () {
 
     (new JsonReport($config, $factory, $hd, $tl, $twig, $output))->generate();
 
-    $data = json_decode(file_get_contents($tmpDir . '/json/report.json'), true);
+    $data = json_decode(file_get_contents($tmpDir.'/json/report.json'), true);
 
     expect($data)->toHaveKey('problems');
     expect($data['problems'])->toBeArray();

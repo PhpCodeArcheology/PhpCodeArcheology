@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace PhpCodeArch\Application\Service;
 
 use PhpCodeArch\Application\CliFormatter;
-use PhpCodeArch\Application\CliOutput;
 use PhpCodeArch\Application\Config;
+use PhpCodeArch\Application\OutputInterface;
 use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 use PhpCodeArch\Predictions\PredictionInterface;
@@ -16,7 +16,7 @@ class SummaryPrinter
     /**
      * @param array<int, int> $problems
      */
-    public function print(MetricsController $metricsController, Config $config, array $problems, CliOutput $output, CliFormatter $formatter): void
+    public function print(MetricsController $metricsController, Config $config, array $problems, OutputInterface $output, CliFormatter $formatter): void
     {
         $getInt = function (string $key) use ($metricsController): int {
             $v = $metricsController->getMetricValue(

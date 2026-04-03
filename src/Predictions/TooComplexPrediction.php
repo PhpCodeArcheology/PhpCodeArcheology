@@ -224,8 +224,8 @@ class TooComplexPrediction implements PredictionInterface
         );
 
         $maxDifficulty = $isFrameworkProject
-            ? $this->threshold('tooComplex.difficultyFramework', 35)
-            : $this->threshold('tooComplex.difficulty', 20);
+            ? $this->threshold('tooComplex.difficultyFramework', 45)
+            : $this->threshold('tooComplex.difficulty', 30);
 
         $problemCount += $this->check(
             MetricKey::DIFFICULTY,

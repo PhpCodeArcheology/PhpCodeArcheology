@@ -453,7 +453,18 @@ After a thorough review, I found and fixed several calculation bugs that had bee
 
 I sincerely apologize for the inaccuracy. A code analysis tool must be trustworthy above all else, and these bugs undermined that. Version 2.7.0 corrects all known calculation issues, and I've added hand-calculated test fixtures to ensure the formulas stay correct going forward.
 
-**What this means for you:** If you're upgrading from an earlier version, your analysis results will change — most notably, error counts will decrease by ~30-40% and Health Scores will improve slightly. The tool will show a one-time notice on first run. See [`docs/metrics-formulas.md`](docs/metrics-formulas.md) for a detailed breakdown of every change and its expected impact.
+**What this means for you:** If you're upgrading from an earlier version, your analysis results will change — most notably, error counts will decrease significantly and Health Scores will improve. The tool will show a one-time notice on first run. See [`docs/metrics-formulas.md`](docs/metrics-formulas.md) for a detailed breakdown of every change and its expected impact.
+
+## Understanding the Health Score
+
+The Health Score (0–100) is a **guideline for tracking trends**, not an absolute judgment of code quality. Some things to keep in mind:
+
+- **Complex domains produce complex code.** A financial calculation engine, a protocol parser, or a compiler will naturally have higher Halstead Difficulty and Cyclomatic Complexity than a REST API. That's expected, not a defect.
+- **Scores are most useful over time.** A project that moves from 65 to 72 over six months is improving — even if it never reaches 90.
+- **Focus on outliers, not the average.** The most actionable insight is which classes deviate significantly from your project's baseline. Those are your refactoring candidates.
+- **Don't compare across projects.** A score of 80 in a Symfony application is not the same as 80 in a CLI tool. Different architectures and domains have different natural complexity floors.
+
+The score is weighted across 10 factors (Maintainability Index, Problem Density, Complexity, Coupling, Code Structure, HTML Ratio, Encapsulation, Dependencies, Abstractness, and Test Coverage). See [`docs/metrics-formulas.md`](docs/metrics-formulas.md) for the exact formulas and weights.
 
 ## Author
 

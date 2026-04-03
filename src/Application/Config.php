@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Application;
 
-final class Config
+use PhpCodeArch\Application\Service\FrameworkDetectionResult;
+
+final class Config implements AnalysisConfigInterface
 {
     private const VALID_REPORT_TYPES = ['html', 'markdown', 'json', 'sarif', 'ai-summary', 'graph'];
 
@@ -28,15 +30,83 @@ final class Config
 
     public function applyMemoryLimit(): void
     {
-        $configMemoryLimit = $this->get('memoryLimit');
-        if (is_string($configMemoryLimit) && preg_match('/^(-1|[0-9]+[KMG]?)$/i', $configMemoryLimit)) {
-            ini_set('memory_limit', $configMemoryLimit);
+        $memoryLimit = $this->getMemoryLimit();
+        if (preg_match('/^(-1|[0-9]+[KMG]?)$/i', $memoryLimit)) {
+            if ('-1' === $memoryLimit) {
+                ini_set('memory_limit', '-1');
+            } else {
+                ini_set('memory_limit', $memoryLimit);
+            }
         } else {
             $current = ini_get('memory_limit');
             if ('-1' !== $current) {
                 ini_set('memory_limit', '1G');
             }
         }
+    }
+
+    public function isQuickMode(): bool
+    {
+        return (bool) ($this->config['quickMode'] ?? false);
+    }
+
+    public function getReportDir(): string
+    {
+        return is_string($this->config['reportDir'] ?? null) ? $this->config['reportDir'] : '';
+    }
+
+    public function getRunningDir(): string
+    {
+        return is_string($this->config['runningDir'] ?? null) ? $this->config['runningDir'] : (getcwd() ?: '');
+    }
+
+    /** @return array<mixed> */
+    public function getFiles(): array
+    {
+        return is_array($this->config['files'] ?? null) ? $this->config['files'] : [];
+    }
+
+    public function getReportTypes(): string
+    {
+        $rt = $this->config['reportType'] ?? 'html';
+
+        return is_string($rt) ? $rt : 'html';
+    }
+
+    public function getMemoryLimit(): string
+    {
+        return is_string($this->config['memoryLimit'] ?? null) ? $this->config['memoryLimit'] : '1G';
+    }
+
+    public function isNoColor(): bool
+    {
+        return (bool) ($this->config['noColor'] ?? false);
+    }
+
+    public function getCommand(): ?string
+    {
+        $cmd = $this->config['command'] ?? null;
+
+        return is_string($cmd) ? $cmd : null;
+    }
+
+    public function getFrameworkDetection(): ?FrameworkDetectionResult
+    {
+        $fd = $this->config['frameworkDetection'] ?? null;
+
+        return $fd instanceof FrameworkDetectionResult ? $fd : null;
+    }
+
+    public function getFailOn(): ?string
+    {
+        $fo = $this->config['failOn'] ?? null;
+
+        return is_string($fo) ? $fo : null;
+    }
+
+    public function getPackageSize(): int
+    {
+        return is_int($this->config['packageSize'] ?? null) ? $this->config['packageSize'] : 2;
     }
 
     /**

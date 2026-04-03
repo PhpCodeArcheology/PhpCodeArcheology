@@ -19,46 +19,20 @@ class HistoryService
         $reportDirRaw = $config->get('reportDir');
         $outputDir = (is_string($reportDirRaw) ? $reportDirRaw : '').DIRECTORY_SEPARATOR;
 
-        // Support both JSONL (new) and JSON (legacy)
-        $historyFile = $outputDir.'history.jsonl';
-        $isJsonl = true;
-        if (!file_exists($historyFile)) {
-            $historyFile = $outputDir.'history.json';
-            $isJsonl = false;
-            if (!file_exists($historyFile)) {
-                return false;
-            }
+        $fileInfo = $this->resolveHistoryFilePath($outputDir);
+        if (false === $fileInfo) {
+            return false;
         }
+        $historyFile = $fileInfo['path'];
+        $isJsonl = $fileInfo['isJsonl'];
 
-        $historyValueTypes = [
-            MetricValueType::Int,
-            MetricValueType::Float,
-            MetricValueType::Percentage,
-        ];
-
-        // Read last entry (last line for JSONL, whole file for JSON)
-        if ($isJsonl) {
-            $lastLine = $this->getLastLineOfFile($historyFile);
-            if (null === $lastLine) {
-                return false;
-            }
-            $historyFileData = json_decode($lastLine, true);
-        } else {
-            $rawData = @file_get_contents($historyFile);
-            if (false === $rawData) {
-                return false;
-            }
-            $historyFileData = json_decode($rawData, true);
-            unset($rawData);
-        }
-
+        $historyFileData = $this->readLastHistoryFileData($historyFile, $isJsonl);
         if (!is_array($historyFileData) || !isset($historyFileData['date'])) {
             return false;
         }
 
         $dateRaw = $historyFileData['date'];
         $historyDate = \DateTimeImmutable::createFromFormat('Y-m-d-H-i-s', is_string($dateRaw) ? $dateRaw : '');
-        unset($historyFileData);
 
         foreach ($this->getHistoryDataFromFile($historyFile, $isJsonl) as $historyData) {
             foreach ($historyData['data'] as $key => $historyValue) {
@@ -71,74 +45,132 @@ class HistoryService
                     continue;
                 }
 
-                $metricType = $metricValue->getMetricType();
-                $valueType = $metricType->getValueType();
-
-                if (MetricVisibility::ShowNowhere === $metricType->getVisibility() || MetricValueType::Storage === $metricType->getValueType()) {
-                    continue;
-                }
-
-                $containsColon = is_string($metricValue->getValue()) && str_contains($metricValue->getValue(), ': ');
-                $skip = !in_array($valueType, $historyValueTypes);
-                $skip = $skip && !$containsColon;
-
-                if ($skip) {
-                    continue;
-                }
-
-                $better = $metricType->getBetter();
-
-                $historyValue ??= 0;
-
-                $deltaObject = new class {
-                    public int|float $delta = 0;
-                    public string $direction = '';
-                    public ?bool $isBetter = null;
-                };
-
-                $currentValue = $metricValue->getValue();
-                if ($containsColon && is_string($currentValue) && (is_string($historyValue) || is_numeric($historyValue))) {
-                    $currentValue = (int) explode(': ', $currentValue)[1];
-                    $historyValue = (int) explode(': ', is_string($historyValue) ? $historyValue : (string) $historyValue)[1];
-                }
-
-                $currentNum = is_numeric($currentValue) ? $currentValue + 0 : 0;
-                $historyNum = is_numeric($historyValue) ? $historyValue + 0 : 0;
-                $delta = $currentNum - $historyNum;
-
-                $direction = 'sideways';
-                $isBetter = null;
-                switch (true) {
-                    case BetterDirection::Low === $better && $delta < 0:
-                        $direction = 'down';
-                        $isBetter = true;
-                        break;
-
-                    case BetterDirection::Low === $better && $delta > 0:
-                        $direction = 'up';
-                        $isBetter = false;
-                        break;
-
-                    case BetterDirection::High === $better && $delta > 0:
-                        $direction = 'up';
-                        $isBetter = true;
-                        break;
-
-                    case BetterDirection::High === $better && $delta < 0:
-                        $direction = 'down';
-                        $isBetter = false;
-                        break;
-                }
-
-                $deltaObject->delta = $delta;
-                $deltaObject->isBetter = $isBetter;
-                $deltaObject->direction = $direction;
-
-                $metricValue->setDelta($deltaObject);
+                $this->applyDeltaToMetric($metricValue, $historyValue);
             }
         }
 
         return $historyDate;
+    }
+
+    /**
+     * @return array{path: string, isJsonl: bool}|false
+     */
+    private function resolveHistoryFilePath(string $outputDir): array|false
+    {
+        $historyFile = $outputDir.'history.jsonl';
+        if (file_exists($historyFile)) {
+            return ['path' => $historyFile, 'isJsonl' => true];
+        }
+
+        $historyFile = $outputDir.'history.json';
+        if (!file_exists($historyFile)) {
+            return false;
+        }
+
+        return ['path' => $historyFile, 'isJsonl' => false];
+    }
+
+    /**
+     * @return array<mixed>|false
+     */
+    private function readLastHistoryFileData(string $historyFile, bool $isJsonl): array|false
+    {
+        if ($isJsonl) {
+            $lastLine = $this->getLastLineOfFile($historyFile);
+            if (null === $lastLine) {
+                return false;
+            }
+
+            $decoded = json_decode($lastLine, true);
+
+            return is_array($decoded) ? $decoded : false;
+        }
+
+        $rawData = @file_get_contents($historyFile);
+        if (false === $rawData) {
+            return false;
+        }
+
+        $decoded = json_decode($rawData, true);
+
+        return is_array($decoded) ? $decoded : false;
+    }
+
+    private function applyDeltaToMetric(MetricValue $metricValue, mixed $historyValue): void
+    {
+        $metricType = $metricValue->getMetricType();
+        $valueType = $metricType->getValueType();
+
+        if (MetricVisibility::ShowNowhere === $metricType->getVisibility() || MetricValueType::Storage === $valueType) {
+            return;
+        }
+
+        $historyValueTypes = [MetricValueType::Int, MetricValueType::Float, MetricValueType::Percentage];
+        $containsColon = is_string($metricValue->getValue()) && str_contains($metricValue->getValue(), ': ');
+        if (!in_array($valueType, $historyValueTypes) && !$containsColon) {
+            return;
+        }
+
+        $better = $metricType->getBetter();
+        $historyValue ??= 0;
+
+        $values = $this->normalizeValuesForDelta($metricValue->getValue(), $historyValue, $containsColon);
+        $delta = $values['current'] - $values['history'];
+
+        $metricValue->setDelta($this->createDeltaObject($delta, $better));
+    }
+
+    /**
+     * @return array{current: float|int, history: float|int}
+     */
+    private function normalizeValuesForDelta(mixed $currentValue, mixed $historyValue, bool $containsColon): array
+    {
+        if ($containsColon && is_string($currentValue) && (is_string($historyValue) || is_numeric($historyValue))) {
+            $currentValue = (int) explode(': ', $currentValue)[1];
+            $historyValue = (int) explode(': ', is_string($historyValue) ? $historyValue : (string) $historyValue)[1];
+        }
+
+        return [
+            'current' => is_numeric($currentValue) ? $currentValue + 0 : 0,
+            'history' => is_numeric($historyValue) ? $historyValue + 0 : 0,
+        ];
+    }
+
+    private function createDeltaObject(float|int $delta, BetterDirection $better): object
+    {
+        [$direction, $isBetter] = $this->determineDeltaDirection($delta, $better);
+
+        $deltaObject = new class {
+            public int|float $delta = 0;
+            public string $direction = '';
+            public ?bool $isBetter = null;
+        };
+        $deltaObject->delta = $delta;
+        $deltaObject->direction = $direction;
+        $deltaObject->isBetter = $isBetter;
+
+        return $deltaObject;
+    }
+
+    /**
+     * @return array{string, ?bool}
+     */
+    private function determineDeltaDirection(float|int $delta, BetterDirection $better): array
+    {
+        if (BetterDirection::Low === $better && $delta < 0) {
+            return ['down', true];
+        }
+        if (BetterDirection::Low === $better && $delta > 0) {
+            return ['up', false];
+        }
+        if (BetterDirection::High === $better && $delta > 0) {
+            return ['up', true];
+        }
+        if (BetterDirection::High === $better && $delta < 0) {
+            return ['down', false];
+        }
+
+        return ['sideways', null];
     }
 
     public function writeHistory(MetricsController $metricsController, Config $config): void

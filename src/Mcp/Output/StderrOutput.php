@@ -8,11 +8,9 @@ use PhpCodeArch\Application\CliOutput;
 
 class StderrOutput extends CliOutput
 {
-    public function out(string $message): static
+    public function out(string $message): void
     {
         fwrite(STDERR, $message);
-
-        return $this;
     }
 
     public function cls(): static

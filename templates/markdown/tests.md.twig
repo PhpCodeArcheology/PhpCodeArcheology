@@ -2,8 +2,8 @@
 
 ## Test Analysis
 
-- **Test Ratio:** {{ stats.testRatio|number_format(1) }}% ({{ stats.testFileCount }} test files / {{ stats.productionFileCount }} production files)
 - **Tested Classes:** {{ stats.testedClassCount }} / {{ stats.testedClassCount + stats.untestedClassCount }} ({{ stats.testedClassRatio|number_format(1) }}%)
+- **Test Files:** {{ stats.testFileCount }} ({{ stats.productionFileCount }} production files)
 - **Test Frameworks:** {{ stats.detectedTestFrameworks ?: 'None detected' }}
 {% if stats.functionBasedTestFileCount > 0 %}
 - **Function-based Tests:** {{ stats.functionBasedTestFileCount }} files (not mapped to classes)

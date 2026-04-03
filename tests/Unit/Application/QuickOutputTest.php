@@ -19,10 +19,9 @@ class CapturingCliOutput extends CliOutput
 {
     private string $captured = '';
 
-    public function out(string $message): static
+    public function out(string $message): void
     {
         $this->captured .= $message;
-        return $this;
     }
 
     public function getCaptured(): string
@@ -40,7 +39,7 @@ class CapturingCliOutput extends CliOutput
 
 function makeQoController(array $projectValues = []): MetricsController
 {
-    $container  = new MetricsContainer();
+    $container = new MetricsContainer();
     $controller = new MetricsController($container);
     $controller->registerMetricTypes();
     $controller->createProjectMetricsCollection(['/src']);
@@ -58,9 +57,10 @@ function makeQoController(array $projectValues = []): MetricsController
 
 function makeQo(MetricsController $ctrl): array
 {
-    $output    = new CapturingCliOutput();
+    $output = new CapturingCliOutput();
     $formatter = new CliFormatter(colorEnabled: false);
-    $qo        = new QuickOutput($ctrl, $output, $formatter);
+    $qo = new QuickOutput($ctrl, $output, $formatter);
+
     return [$qo, $output];
 }
 
@@ -68,12 +68,12 @@ function makeQo(MetricsController $ctrl): array
 
 it('outputs summary metrics (avg CC and avg MI)', function () {
     $ctrl = makeQoController([
-        'overallFiles'        => 20,
-        'overallClasses'      => 10,
+        'overallFiles' => 20,
+        'overallClasses' => 10,
         'overallMethodsCount' => 80,
-        'overallLloc'         => 3000,
-        'overallAvgCC'        => 4.5,
-        'overallAvgMI'        => 78.0,
+        'overallLloc' => 3000,
+        'overallAvgCC' => 4.5,
+        'overallAvgMI' => 78.0,
     ]);
 
     [$qo, $output] = makeQo($ctrl);
@@ -86,12 +86,12 @@ it('outputs summary metrics (avg CC and avg MI)', function () {
 
 it('outputs project overview with files, classes, methods and lloc', function () {
     $ctrl = makeQoController([
-        'overallFiles'        => 42,
-        'overallClasses'      => 15,
+        'overallFiles' => 42,
+        'overallClasses' => 15,
         'overallMethodsCount' => 120,
-        'overallLloc'         => 5000,
-        'overallAvgCC'        => 3.0,
-        'overallAvgMI'        => 85.0,
+        'overallLloc' => 5000,
+        'overallAvgCC' => 3.0,
+        'overallAvgMI' => 85.0,
     ]);
 
     [$qo, $output] = makeQo($ctrl);
@@ -111,7 +111,7 @@ it('handles empty metrics gracefully without throwing', function () {
 
     [$qo] = makeQo($ctrl);
 
-    expect(fn() => $qo->render())->not->toThrow(Throwable::class);
+    expect(fn () => $qo->render())->not->toThrow(Throwable::class);
 });
 
 it('outputs zero CC and MI when no metrics are set', function () {
@@ -152,7 +152,7 @@ it('renders Avg MI label in summary', function () {
 it('renders top files table when file collections exist', function () {
     $ctrl = makeQoController(['overallAvgCC' => 5.0, 'overallAvgMI' => 80.0]);
 
-    for ($i = 1; $i <= 3; $i++) {
+    for ($i = 1; $i <= 3; ++$i) {
         $path = "/src/File{$i}.php";
         $ctrl->createMetricCollection(MetricCollectionTypeEnum::FileCollection, ['path' => $path]);
         $ctrl->setMetricValues(
@@ -184,7 +184,7 @@ it('skips file table when no file collections exist', function () {
 it('renders top classes table when class collections exist', function () {
     $ctrl = makeQoController(['overallAvgCC' => 5.0, 'overallAvgMI' => 80.0]);
 
-    for ($i = 1; $i <= 3; $i++) {
+    for ($i = 1; $i <= 3; ++$i) {
         $path = "/src/Class{$i}.php";
         $ctrl->createMetricCollection(
             MetricCollectionTypeEnum::ClassCollection,

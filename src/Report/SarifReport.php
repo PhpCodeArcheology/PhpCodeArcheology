@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Report;
 
-use PhpCodeArch\Application\Application;
 use PhpCodeArch\Application\CliOutput;
 use PhpCodeArch\Application\Config;
+use PhpCodeArch\Application\Version;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection as ClassCollection;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
 use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection as FunctionCollection;
@@ -147,7 +147,7 @@ class SarifReport implements ReportInterface
                     'tool' => [
                         'driver' => [
                             'name' => 'PhpCodeArcheology',
-                            'version' => Application::VERSION,
+                            'version' => Version::CURRENT,
                             'informationUri' => 'https://github.com/PhpCodeArcheology/PhpCodeArcheology',
                             'rules' => $rules,
                         ],

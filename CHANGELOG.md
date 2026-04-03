@@ -63,6 +63,7 @@ Several metric calculations have been corrected. Analysis results may differ fro
 - **Maintainability Index default.** Inconsistent fallback (171 vs 50) now consistently 171.
 - **Spaceship operator CC.** Counted as +2, now +1 (standard McCabe).
 - **Package Cohesion normalization.** Values could exceed 1.0, now capped.
+- **Halstead Difficulty threshold recalibration.** Default raised from 20 to 30 (45 for framework projects). The previous threshold had no basis in the literature and flagged 22% of all entities. The new threshold combined with the existing relative effort check provides better signal with less noise.
 
 ### Added
 

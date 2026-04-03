@@ -339,7 +339,7 @@
     <div class="dash-panel-label">Test Coverage</div>
     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-bottom: 0.75rem;">
       <div class="stat-card">
-        <div class="stat-label">Test Ratio</div>
+        <div class="stat-label">Tested Class Ratio</div>
         <div class="stat-value" style="color: {% if testRatio >= 60 %}#86efac{% elseif testRatio >= 30 %}#fde68a{% else %}#fca5a5{% endif %}">
           {{ testRatio|number_format(1) }}%
         </div>

@@ -73,27 +73,37 @@ class TestMappingCalculator implements CalculatorInterface
         $totalStatements = 0;
 
         foreach ($productionIds as $id) {
-            $hasTest = isset($classTestCount[$id]);
+            $hasMappedTest = isset($classTestCount[$id]);
+
+            // Check Clover XML coverage: if a class has any line coverage, it was
+            // executed during tests — a stronger signal than naming conventions
+            $covEntry = null;
+            $hasCoverage = false;
+            if (null !== $this->coverageData && [] !== $this->coverageData) {
+                $covEntry = $this->lookupCoverage($id);
+                $hasCoverage = null !== $covEntry && $covEntry['linerate'] > 0;
+            }
+
+            $hasTest = $hasMappedTest || $hasCoverage;
+
             if ($hasTest) {
                 ++$testedCount;
             } elseif (!isset($abstractIds[$id])) {
-                // Abstract classes are excluded from the "untested" count
                 ++$untestedCount;
             }
+
+            $testType = $classTestType[$id] ?? ($hasCoverage ? 'coverage' : 'unknown');
 
             $classMetrics = [
                 MetricKey::HAS_TEST => $hasTest,
                 MetricKey::TEST_FILE_COUNT => $classTestCount[$id] ?? 0,
-                MetricKey::TEST_TYPE => $classTestType[$id] ?? 'unknown',
+                MetricKey::TEST_TYPE => $testType,
             ];
 
-            if (null !== $this->coverageData && [] !== $this->coverageData) {
-                $covEntry = $this->lookupCoverage($id);
-                if (null !== $covEntry) {
-                    $classMetrics[MetricKey::LINE_COVERAGE] = round($covEntry['linerate'] * 100, 2);
-                    $totalWeightedLinerate += $covEntry['linerate'] * $covEntry['statements'];
-                    $totalStatements += $covEntry['statements'];
-                }
+            if (null !== $covEntry) {
+                $classMetrics[MetricKey::LINE_COVERAGE] = round($covEntry['linerate'] * 100, 2);
+                $totalWeightedLinerate += $covEntry['linerate'] * $covEntry['statements'];
+                $totalStatements += $covEntry['statements'];
             }
 
             $this->metricsController->setMetricValuesByIdentifierString($id, $classMetrics);
@@ -102,9 +112,6 @@ class TestMappingCalculator implements CalculatorInterface
         $productionCount = count($productionIds);
         $functionBasedCount = count($this->testScanResult->functionBasedTestFiles);
 
-        $testRatio = $productionCount > 0
-            ? round($totalTestFiles / $productionCount * 100, 2)
-            : 0.0;
         $testedClassRatio = $productionCount > 0
             ? round($testedCount / $productionCount * 100, 2)
             : 0.0;
@@ -112,7 +119,7 @@ class TestMappingCalculator implements CalculatorInterface
         $projectMetrics = [
             MetricKey::OVERALL_TEST_FILE_COUNT => $totalTestFiles,
             MetricKey::OVERALL_PRODUCTION_FILE_COUNT => $productionCount,
-            MetricKey::OVERALL_TEST_RATIO => $testRatio,
+            MetricKey::OVERALL_TEST_RATIO => $testedClassRatio,
             MetricKey::OVERALL_TESTED_CLASS_COUNT => $testedCount,
             MetricKey::OVERALL_UNTESTED_CLASS_COUNT => $untestedCount,
             MetricKey::OVERALL_TESTED_CLASS_RATIO => $testedClassRatio,
