@@ -8,6 +8,6 @@
   },
   "license": "ISC",
   "devDependencies": {
-    "tailwindcss": "^3.4.0"
+    "tailwindcss": "^4.2.2"
   }
 }
