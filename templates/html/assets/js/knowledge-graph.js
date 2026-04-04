@@ -95,6 +95,33 @@
     let minCC        = 0;
     let problemsOnly = false;
 
+    // Focus mode: specific entity selection
+    const selectedEntities = new Set();
+    const packageMap = {};
+    (data.clusters || []).forEach(function (c) { packageMap[c.id] = c; });
+
+    // Build searchable entity index
+    const entityIndex = [];
+    var focusTypes = { class: 1, package: 1, author: 1 };
+    nodes.forEach(function (n) {
+      if (focusTypes[n.type]) {
+        entityIndex.push({
+          id: n.id,
+          name: n.name,
+          shortName: shortName(n.name),
+          type: resolveNodeType(n),
+          searchText: n.name.toLowerCase(),
+        });
+      }
+    });
+    var typePriority = { package: 0, author: 1 };
+    entityIndex.sort(function (a, b) {
+      var pa = typePriority[a.type] != null ? typePriority[a.type] : 2;
+      var pb = typePriority[b.type] != null ? typePriority[b.type] : 2;
+      if (pa !== pb) return pa - pb;
+      return a.name.localeCompare(b.name);
+    });
+
     // D3 setup
     const container = document.getElementById('graph-container');
     const svg       = d3.select('#knowledge-graph-svg');
@@ -135,7 +162,7 @@
       const isLight = document.documentElement.getAttribute('data-theme') === 'light';
 
       // Filter nodes
-      const visibleNodes = nodes.filter(function (node) {
+      let visibleNodes = nodes.filter(function (node) {
         const resolvedType = resolveNodeType(node);
         if (!activeNodeTypes.has(resolvedType)) return false;
         const cc = node.metrics && node.metrics.cc != null ? node.metrics.cc : 0;
@@ -146,6 +173,28 @@
         }
         return true;
       });
+
+      // Focus mode: show only selected entities + 1-hop neighbors
+      if (selectedEntities.size > 0) {
+        const expandedFocus = new Set(selectedEntities);
+        selectedEntities.forEach(function (eid) {
+          var cluster = packageMap[eid];
+          if (cluster && cluster.nodeIds) {
+            cluster.nodeIds.forEach(function (nid) { expandedFocus.add(nid); });
+          }
+        });
+        var neighborIds = new Set(expandedFocus);
+        edges.forEach(function (e) {
+          if (!activeEdgeTypes.has(e.type)) return;
+          var srcId = (e.source && e.source.id != null) ? e.source.id : e.source;
+          var tgtId = (e.target && e.target.id != null) ? e.target.id : e.target;
+          if (expandedFocus.has(srcId)) neighborIds.add(tgtId);
+          if (expandedFocus.has(tgtId)) neighborIds.add(srcId);
+        });
+        visibleNodes = visibleNodes.filter(function (node) {
+          return neighborIds.has(node.id);
+        });
+      }
 
       const visibleNodeIds = new Set(visibleNodes.map(function (n) { return n.id; }));
 
@@ -300,6 +349,18 @@
         .on('click', function (event, d) {
           const url = nodeUrl(d);
           if (url) window.location.href = url;
+        })
+        .on('dblclick', function (event, d) {
+          event.stopPropagation();
+          if (!selectedEntities.has(d.id)) {
+            selectedEntities.add(d.id);
+            if (resolveNodeType(d) === 'author') {
+              activateEdgeType('authored_by');
+            }
+            renderFocusChips();
+            renderDropdown(searchInput.value);
+            buildGraph();
+          }
         });
 
       // Force simulation
@@ -389,6 +450,183 @@
       resetZoomBtn.addEventListener('click', function () {
         svg.transition().duration(300).call(zoom.transform, d3.zoomIdentity);
       });
+    }
+
+    // Helper: activate an edge type filter if not already active
+    function activateEdgeType(type) {
+      if (activeEdgeTypes.has(type)) return;
+      activeEdgeTypes.add(type);
+      var chip = document.querySelector('.filter-chip[data-filter-type="edge"][data-value="' + type + '"]');
+      if (chip) {
+        chip.classList.remove('inactive');
+        applyChipStyle(chip);
+      }
+    }
+
+    // Focus selector: search, dropdown, chips
+    const searchInput    = document.getElementById('entity-search');
+    const dropdown       = document.getElementById('entity-dropdown');
+    const chipsContainer = document.getElementById('focus-chips');
+    const clearFocusBtn  = document.getElementById('clear-focus');
+    let highlightIndex   = -1;
+
+    function renderDropdown(query) {
+      var q = query.toLowerCase().trim();
+      var results = q === ''
+        ? entityIndex.slice(0, 50)
+        : entityIndex.filter(function (item) { return item.searchText.indexOf(q) !== -1; }).slice(0, 50);
+
+      highlightIndex = -1;
+
+      if (results.length === 0) {
+        dropdown.innerHTML = '<div class="focus-dropdown-empty">No matches</div>';
+        return;
+      }
+
+      var html = '';
+      var lastGroup = '';
+      results.forEach(function (item) {
+        var group = item.type === 'package' ? 'Packages' : item.type === 'author' ? 'Authors' : 'Classes';
+        if (group !== lastGroup) {
+          html += '<div class="focus-dropdown-group">' + group + '</div>';
+          lastGroup = group;
+        }
+        var isSelected = selectedEntities.has(item.id);
+        var nsPart = item.type !== 'package'
+          ? item.name.substring(0, Math.max(0, item.name.length - item.shortName.length - 1))
+          : '';
+        html += '<div class="focus-dropdown-item' + (isSelected ? ' selected' : '') + '" data-entity-id="' + item.id + '">'
+          + '<div class="focus-dropdown-dot" data-type="' + item.type + '"></div>'
+          + '<span class="focus-dropdown-item-name">' + item.shortName + '</span>'
+          + (nsPart ? '<span class="focus-dropdown-item-ns">' + nsPart + '</span>' : '')
+          + '<span class="focus-dropdown-item-check">' + (isSelected ? '✓' : '') + '</span>'
+          + '</div>';
+      });
+      dropdown.innerHTML = html;
+    }
+
+    function renderFocusChips() {
+      if (selectedEntities.size === 0) {
+        chipsContainer.classList.remove('has-items');
+        chipsContainer.innerHTML = '';
+        clearFocusBtn.style.display = 'none';
+        return;
+      }
+      clearFocusBtn.style.display = '';
+      chipsContainer.classList.add('has-items');
+
+      var html = '';
+      selectedEntities.forEach(function (entityId) {
+        var item = entityIndex.find(function (e) { return e.id === entityId; });
+        if (!item) return;
+        html += '<span class="focus-chip" data-type="' + item.type + '">'
+          + item.shortName
+          + '<span class="focus-chip-remove" data-entity-id="' + entityId + '">&times;</span>'
+          + '</span>';
+      });
+      chipsContainer.innerHTML = html;
+    }
+
+    var dropdownDebounce = null;
+    if (searchInput) {
+      searchInput.addEventListener('input', function () {
+        clearTimeout(dropdownDebounce);
+        dropdownDebounce = setTimeout(function () {
+          renderDropdown(searchInput.value);
+          dropdown.classList.add('open');
+          searchInput.setAttribute('aria-expanded', 'true');
+        }, 80);
+      });
+
+      searchInput.addEventListener('focus', function () {
+        renderDropdown(searchInput.value);
+        dropdown.classList.add('open');
+        searchInput.setAttribute('aria-expanded', 'true');
+      });
+
+      searchInput.addEventListener('keydown', function (e) {
+        var items = dropdown.querySelectorAll('.focus-dropdown-item');
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          highlightIndex = Math.min(highlightIndex + 1, items.length - 1);
+          items.forEach(function (el, i) { el.classList.toggle('highlighted', i === highlightIndex); });
+          if (items[highlightIndex]) items[highlightIndex].scrollIntoView({ block: 'nearest' });
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          highlightIndex = Math.max(highlightIndex - 1, 0);
+          items.forEach(function (el, i) { el.classList.toggle('highlighted', i === highlightIndex); });
+          if (items[highlightIndex]) items[highlightIndex].scrollIntoView({ block: 'nearest' });
+        } else if (e.key === 'Enter' && highlightIndex >= 0) {
+          e.preventDefault();
+          if (items[highlightIndex]) items[highlightIndex].click();
+        } else if (e.key === 'Escape') {
+          dropdown.classList.remove('open');
+          searchInput.setAttribute('aria-expanded', 'false');
+          searchInput.blur();
+        }
+      });
+    }
+
+    // Close dropdown on outside click
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest('.focus-selector')) {
+        dropdown.classList.remove('open');
+        if (searchInput) searchInput.setAttribute('aria-expanded', 'false');
+      }
+    });
+
+    // Dropdown item click: toggle selection
+    dropdown.addEventListener('click', function (e) {
+      var item = e.target.closest('.focus-dropdown-item');
+      if (!item) return;
+      var entityId = item.getAttribute('data-entity-id');
+      if (selectedEntities.has(entityId)) {
+        selectedEntities.delete(entityId);
+        var cluster = packageMap[entityId];
+        if (cluster && cluster.nodeIds) {
+          cluster.nodeIds.forEach(function (nid) { selectedEntities.delete(nid); });
+        }
+      } else {
+        selectedEntities.add(entityId);
+        var cluster = packageMap[entityId];
+        if (cluster && cluster.nodeIds) {
+          cluster.nodeIds.forEach(function (nid) { selectedEntities.add(nid); });
+        }
+        // Auto-activate authored_by edge type when selecting an author
+        var matched = entityIndex.find(function (ei) { return ei.id === entityId; });
+        if (matched && matched.type === 'author') {
+          activateEdgeType('authored_by');
+        }
+      }
+      renderDropdown(searchInput.value);
+      renderFocusChips();
+      buildGraph();
+    });
+
+    // Remove focus chip
+    chipsContainer.addEventListener('click', function (e) {
+      var removeBtn = e.target.closest('.focus-chip-remove');
+      if (!removeBtn) return;
+      var entityId = removeBtn.getAttribute('data-entity-id');
+      selectedEntities.delete(entityId);
+      var cluster = packageMap[entityId];
+      if (cluster && cluster.nodeIds) {
+        cluster.nodeIds.forEach(function (nid) { selectedEntities.delete(nid); });
+      }
+      renderFocusChips();
+      renderDropdown(searchInput.value);
+      buildGraph();
+    });
+
+    // Clear all focus
+    if (clearFocusBtn) {
+      clearFocusBtn.addEventListener('click', function () {
+        selectedEntities.clear();
+        if (searchInput) searchInput.value = '';
+        renderFocusChips();
+        buildGraph();
+      });
+      clearFocusBtn.style.display = 'none';
     }
 
     // Theme change re-render

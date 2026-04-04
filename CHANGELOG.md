@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Knowledge Graph: focus selector.** Searchable combobox to focus the graph on specific classes, packages, or authors. Type to search, click to select — the graph shows only the selected entities and their direct neighbors. Selected items appear as removable chips below the controls. Double-click any node in the graph to focus on it. Selecting an author automatically activates the `authored_by` edge type. Supports keyboard navigation (arrows, Enter, Escape).
+
 ### Changed
 
 - **Knowledge Graph filter chips: accessibility overhaul.** Replaced opacity-based active/inactive toggle with filled/outline pattern. Active chips now use darkened color backgrounds with white text, inactive chips are transparent with muted text. All combinations pass WCAG AA contrast (4.5:1+) in both dark and light themes. Added keyboard navigation (Tab + Enter/Space), focus-visible ring, and `role="button"`. Fixed German labels ("Node-Typen"/"Edge-Typen" → "Nodes"/"Edges"). Previously invisible chips in light mode (`depends_on`, `belongs_to`, `declares`) now use visible slate colors.
