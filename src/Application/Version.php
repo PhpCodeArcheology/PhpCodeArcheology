@@ -6,7 +6,7 @@ namespace PhpCodeArch\Application;
 
 final class Version
 {
-    public const CURRENT = '2.7.3';
+    public const CURRENT = '2.8.0';
 
     public const BREAKING_CHANGES = '2.7.0';
 }

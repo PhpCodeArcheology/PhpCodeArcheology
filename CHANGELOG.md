@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.8.0] - 2026-04-04
+
 ### Added
 
 - **Composer Plugin.** PhpCodeArcheology now registers as a Composer plugin, adding the `composer codearch:analyze` command. When no path is given and no config file exists, it auto-detects PSR-4 source directories from `composer.json`. All CLI options are supported via `composer codearch:analyze -- --quick`, `--report-type`, `--coverage-file`, etc.
