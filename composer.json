@@ -15,7 +15,7 @@
     "qa",
     "quality"
   ],
-  "type": "library",
+  "type": "composer-plugin",
   "license": "MIT",
   "autoload": {
     "psr-4": {
@@ -43,20 +43,26 @@
     "issues": "https://github.com/PhpCodeArcheology/PhpCodeArcheology/issues"
   },
   "require-dev": {
+    "composer/composer": "^2.0",
     "pestphp/pest": "^3.0",
     "mockery/mockery": "^1.6",
     "phpstan/phpstan": "^2.1",
     "friendsofphp/php-cs-fixer": "^3.94",
     "rector/rector": "^2.3"
   },
+  "extra": {
+    "class": "PhpCodeArch\\Composer\\AnalyzePlugin"
+  },
   "config": {
     "allow-plugins": {
-      "pestphp/pest-plugin": true
+      "pestphp/pest-plugin": true,
+      "php-code-archeology/php-code-archeology": true
     }
   },
   "require": {
     "php": ">=8.2",
     "ext-mbstring": "*",
+    "composer-plugin-api": "^2.0",
     "nikic/php-parser": "^5.0",
     "symfony/yaml": "^6.4 || ^7.0 || ^8.0",
     "twig/twig": "^3.0",

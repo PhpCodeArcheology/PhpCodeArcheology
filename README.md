@@ -125,6 +125,22 @@ No config file needed — the tool works out of the box. It scans your `src` dir
 
 > **Tip:** Add `tmp/report` to your `.gitignore` to keep generated reports out of version control.
 
+### Using the Composer Plugin
+
+PhpCodeArcheology registers itself as a Composer plugin, so you can run the analysis directly via Composer:
+
+```bash
+composer analyze
+```
+
+When no path is given and no config file exists, it automatically detects your PSR-4 source directories from `composer.json`. All CLI options are supported:
+
+```bash
+composer analyze -- --quick
+composer analyze -- --report-type=json --coverage-file=clover.xml
+composer analyze -- src/ lib/
+```
+
 To create a config file interactively:
 
 ```bash
