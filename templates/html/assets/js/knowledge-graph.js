@@ -347,11 +347,16 @@
           tooltip.style.display = 'none';
         })
         .on('click', function (event, d) {
-          const url = nodeUrl(d);
-          if (url) window.location.href = url;
+          if (d._clickTimer) { clearTimeout(d._clickTimer); d._clickTimer = null; return; }
+          d._clickTimer = setTimeout(function () {
+            d._clickTimer = null;
+            var url = nodeUrl(d);
+            if (url) window.location.href = url;
+          }, 250);
         })
         .on('dblclick', function (event, d) {
           event.stopPropagation();
+          if (d._clickTimer) { clearTimeout(d._clickTimer); d._clickTimer = null; }
           if (!selectedEntities.has(d.id)) {
             selectedEntities.add(d.id);
             if (resolveNodeType(d) === 'author') {
