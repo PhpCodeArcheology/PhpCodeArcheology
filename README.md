@@ -130,15 +130,15 @@ No config file needed — the tool works out of the box. It scans your `src` dir
 PhpCodeArcheology registers itself as a Composer plugin, so you can run the analysis directly via Composer:
 
 ```bash
-composer analyze
+composer codearch:analyze
 ```
 
 When no path is given and no config file exists, it automatically detects your PSR-4 source directories from `composer.json`. All CLI options are supported:
 
 ```bash
-composer analyze -- --quick
-composer analyze -- --report-type=json --coverage-file=clover.xml
-composer analyze -- src/ lib/
+composer codearch:analyze -- --quick
+composer codearch:analyze -- --report-type=json --coverage-file=clover.xml
+composer codearch:analyze -- src/ lib/
 ```
 
 To create a config file interactively:

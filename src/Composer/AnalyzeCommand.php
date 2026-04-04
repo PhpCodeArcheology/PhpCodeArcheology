@@ -22,7 +22,7 @@ final class AnalyzeCommand extends BaseCommand
     protected function configure(): void
     {
         $this
-            ->setName('analyze')
+            ->setName('codearch:analyze')
             ->setDescription('Run PhpCodeArcheology static analysis')
             ->addArgument('path', InputArgument::OPTIONAL | InputArgument::IS_ARRAY, 'Source directories to analyze')
             ->addOption('quick', null, InputOption::VALUE_NONE, 'Quick terminal-only output (no report)')

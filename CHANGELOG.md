@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Composer Plugin.** PhpCodeArcheology now registers as a Composer plugin, adding the `composer analyze` command. When no path is given and no config file exists, it auto-detects PSR-4 source directories from `composer.json`. All CLI options are supported via `composer analyze -- --quick`, `--report-type`, `--coverage-file`, etc.
+- **Composer Plugin.** PhpCodeArcheology now registers as a Composer plugin, adding the `composer codearch:analyze` command. When no path is given and no config file exists, it auto-detects PSR-4 source directories from `composer.json`. All CLI options are supported via `composer codearch:analyze -- --quick`, `--report-type`, `--coverage-file`, etc.
 - **Default directory exclusions.** `vendor/`, `node_modules/`, and `.git/` are now excluded from analysis automatically, even without a config file. The `init` command also includes `vendor` and `node_modules` in the generated config. Fixes [#9](https://github.com/PhpCodeArcheology/PhpCodeArcheology/issues/9).
 - **`memoryLimit` config option documented** in sample config and README with usage examples.
 - **259 new tests.** FileList exclusion logic (19), Config memory limit handling (13), YAML/JSON config file parsing (32), integration test for analysis pipeline (12), Problem value objects (96), Prediction tests for DeadCode/TooManyParams/DeepInheritance/TooLong/GodClass/DependencyCycle (87). Test count: 440 → 699.

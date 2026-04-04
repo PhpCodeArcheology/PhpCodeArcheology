@@ -39,7 +39,7 @@ function createComposerWithAutoload(array $autoload): Composer
 it('is named analyze', function () {
     $command = createCommand();
 
-    expect($command->getName())->toBe('analyze');
+    expect($command->getName())->toBe('codearch:analyze');
 });
 
 it('has a description', function () {
