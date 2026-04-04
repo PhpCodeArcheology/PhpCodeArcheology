@@ -1,92 +1,271 @@
 {% include('parts/header.html.twig') %}
 
-<div class="max-w-6xl mx-auto px-4">
-  <h1 class="text-3xl font-bold mb-6">Metric Glossary</h1>
-  <p class="text-gray-400 mb-8">Reference for all metrics collected by PhpCodeArcheology. The "Better" column indicates the preferred direction for each metric.</p>
+<style>
+  .glossary-section-label {
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: rgba(6,182,212,0.6);
+    margin-bottom: 0.5rem;
+  }
+  .glossary-panel {
+    position: relative;
+    overflow: hidden;
+  }
+  .glossary-panel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(6,182,212,0.4), transparent);
+  }
+  .glossary-metric {
+    padding: 0.85rem 1.25rem;
+    border-bottom: 1px solid rgba(6,182,212,0.08);
+  }
+  .glossary-metric:last-child {
+    border-bottom: none;
+  }
+  .glossary-metric-header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+  }
+  .glossary-metric-name {
+    font-weight: 600;
+    font-size: 1rem;
+  }
+  .glossary-metric-key {
+    font-family: monospace;
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.4);
+  }
+  .glossary-metric-badges {
+    margin-left: auto;
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .glossary-badge-better {
+    font-size: 0.7rem;
+    padding: 0.1rem 0.45rem;
+    border-radius: 9999px;
+    background: rgba(34,197,94,0.15);
+    color: #22c55e;
+  }
+  .glossary-badge-type {
+    font-size: 0.7rem;
+    padding: 0.1rem 0.45rem;
+    border-radius: 9999px;
+    background: rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.4);
+  }
+  .glossary-metric-desc {
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.6);
+    margin-top: 0.3rem;
+    line-height: 1.5;
+  }
+  .glossary-threshold-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .glossary-threshold-table th {
+    text-align: left;
+    padding: 0.75rem 1.25rem;
+    font-size: 0.8rem;
+    color: rgba(6,182,212,0.8);
+    font-weight: 600;
+    border-bottom: 1px solid rgba(6,182,212,0.15);
+  }
+  .glossary-threshold-table td {
+    padding: 0.65rem 1.25rem;
+    font-size: 0.9rem;
+  }
+  .glossary-threshold-table tr {
+    border-bottom: 1px solid rgba(6,182,212,0.06);
+  }
+  .glossary-threshold-table tr:nth-child(even) {
+    background: rgba(8,51,68,0.25);
+  }
+  .glossary-threshold-rule {
+    font-weight: 500;
+  }
+  .glossary-threshold-detail {
+    color: rgba(255,255,255,0.6);
+  }
+  .glossary-severity-error {
+    font-size: 0.7rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 0.375rem;
+    background: rgba(127,29,29,0.6);
+    color: #fca5a5;
+  }
+  .glossary-severity-warning {
+    font-size: 0.7rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 0.375rem;
+    background: rgba(113,63,18,0.6);
+    color: #fde68a;
+  }
+  .glossary-severity-info {
+    font-size: 0.7rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 0.375rem;
+    background: rgba(22,78,99,0.6);
+    color: #67e8f9;
+  }
 
-  <div class="overflow-x-auto mb-10">
-    <table class="w-full text-sm" style="table-layout: fixed;">
-      <colgroup>
-        <col style="width: 18%;">
-        <col style="width: 16%;">
-        <col style="width: 44%;">
-        <col style="width: 10%;">
-        <col style="width: 12%;">
-      </colgroup>
-      <thead>
-        <tr class="border-b border-cyan-900">
-          <th class="text-left py-2 px-3 text-cyan-300">Name</th>
-          <th class="text-left py-2 px-3 text-cyan-300">Key</th>
-          <th class="text-left py-2 px-3 text-cyan-300">Description</th>
-          <th class="text-left py-2 px-3 text-cyan-300">Type</th>
-          <th class="text-left py-2 px-3 text-cyan-300">Better</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for category, metrics in glossary %}
-        <tr class="bg-cyan-950/40">
-          <td colspan="5" class="py-3 px-3 text-cyan-400 font-semibold text-base capitalize">{{ category }} Metrics</td>
-        </tr>
-        {% for metric in metrics %}
-        <tr class="border-b border-cyan-950/50 hover:bg-cyan-950/20">
-          <td class="py-2 px-3 font-medium">{{ metric.name }}</td>
-          <td class="py-2 px-3 text-gray-500 font-mono text-xs">{{ metric.key }}</td>
-          <td class="py-2 px-3 text-gray-400">{{ metric.description ?: '—' }}</td>
-          <td class="py-2 px-3 text-gray-500">{{ metric.valueType }}</td>
-          <td class="py-2 px-3">
-            {% if metric.better == 'Low' %}
-              <span class="text-green-400">&darr; Low</span>
-            {% elseif metric.better == 'High' %}
-              <span class="text-green-400">&uarr; High</span>
-            {% else %}
-              <span class="text-gray-600">&mdash;</span>
-            {% endif %}
-          </td>
-        </tr>
-        {% endfor %}
-        {% endfor %}
-      </tbody>
-    </table>
+  /* Light theme */
+  [data-theme=light] .glossary-section-label {
+    color: #0e7490;
+  }
+  [data-theme=light] .glossary-panel::before {
+    background: linear-gradient(90deg, transparent, rgba(8,145,178,0.3), transparent);
+  }
+  [data-theme=light] .glossary-metric {
+    border-bottom-color: #e2e8f0;
+  }
+  [data-theme=light] .glossary-metric-key {
+    color: #64748b;
+  }
+  [data-theme=light] .glossary-badge-better {
+    background: rgba(34,197,94,0.1);
+    color: #15803d;
+  }
+  [data-theme=light] .glossary-badge-type {
+    background: #f1f5f9;
+    color: #64748b;
+  }
+  [data-theme=light] .glossary-metric-desc {
+    color: #475569;
+  }
+  [data-theme=light] .glossary-threshold-table th {
+    color: #0e7490;
+    border-bottom-color: #e2e8f0;
+  }
+  [data-theme=light] .glossary-threshold-table tr {
+    border-bottom-color: #f1f5f9;
+  }
+  [data-theme=light] .glossary-threshold-table tr:nth-child(even) {
+    background: #f8fafc;
+  }
+  [data-theme=light] .glossary-threshold-detail {
+    color: #475569;
+  }
+  [data-theme=light] .glossary-severity-error {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+  [data-theme=light] .glossary-severity-warning {
+    background: #fef3c7;
+    color: #92400e;
+  }
+  [data-theme=light] .glossary-severity-info {
+    background: #e0f2fe;
+    color: #155e75;
+  }
+</style>
+
+<div class="mt-6 lg:w-5/6">
+  <div class="mb-7 text-sm">
+    <ul class="flex gap-1">
+      <li class="flex after:content-['⮁'] gap-1">
+        <a href="index.html" class="text-cyan-500">Home</a>
+      </li>
+      <li>Metric Glossary</li>
+    </ul>
   </div>
 
-  <h2 class="text-xl font-semibold mb-4 text-cyan-400">Problem Detection Thresholds</h2>
-  <div class="overflow-x-auto mb-10">
-    <table class="w-full text-sm" style="table-layout: fixed;">
-      <colgroup>
-        <col style="width: 20%;">
-        <col style="width: 20%;">
-        <col style="width: 44%;">
-        <col style="width: 16%;">
-      </colgroup>
-      <thead>
-        <tr class="border-b border-cyan-900">
-          <th class="text-left py-2 px-3 text-cyan-300">Rule</th>
-          <th class="text-left py-2 px-3 text-cyan-300">Applies To</th>
-          <th class="text-left py-2 px-3 text-cyan-300">Threshold</th>
-          <th class="text-left py-2 px-3 text-cyan-300">Severity</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr class="border-b border-cyan-950/50 hover:bg-cyan-950/20"><td class="py-2 px-3">Too Long</td><td class="py-2 px-3 text-gray-400">File/Class/Func/Method</td><td class="py-2 px-3 text-gray-400">File &gt;400, Class &gt;300, Func &gt;40, Method &gt;30 LLOC</td><td class="py-2 px-3 text-yellow-400">Warning</td></tr>
-        <tr class="border-b border-cyan-950/50 hover:bg-cyan-950/20"><td class="py-2 px-3">Too Complex (CC)</td><td class="py-2 px-3 text-gray-400">File/Class/Function</td><td class="py-2 px-3 text-gray-400">CC &gt;10 (small), &gt;20 (large code)</td><td class="py-2 px-3 text-red-400">Error</td></tr>
-        <tr class="border-b border-cyan-950/50 hover:bg-cyan-950/20"><td class="py-2 px-3">Cognitive Complexity</td><td class="py-2 px-3 text-gray-400">Method</td><td class="py-2 px-3 text-gray-400">&gt;15 per method</td><td class="py-2 px-3 text-red-400">Error</td></tr>
-        <tr class="border-b border-cyan-950/50 hover:bg-cyan-950/20"><td class="py-2 px-3">Difficulty</td><td class="py-2 px-3 text-gray-400">File/Class/Function</td><td class="py-2 px-3 text-gray-400">&gt;20</td><td class="py-2 px-3 text-red-400">Error</td></tr>
-        <tr class="border-b border-cyan-950/50 hover:bg-cyan-950/20"><td class="py-2 px-3">Effort</td><td class="py-2 px-3 text-gray-400">File/Class/Function</td><td class="py-2 px-3 text-gray-400">&gt;30% above project average</td><td class="py-2 px-3 text-red-400">Error</td></tr>
-        <tr class="border-b border-cyan-950/50 hover:bg-cyan-950/20"><td class="py-2 px-3">Maintainability Index</td><td class="py-2 px-3 text-gray-400">File/Class/Function</td><td class="py-2 px-3 text-gray-400">&lt;20% below avg (30% if type coverage &gt;80%)</td><td class="py-2 px-3 text-red-400">Error</td></tr>
-        <tr class="border-b border-cyan-950/50 hover:bg-cyan-950/20"><td class="py-2 px-3">LCOM</td><td class="py-2 px-3 text-gray-400">Class</td><td class="py-2 px-3 text-gray-400">&gt;30% above project average</td><td class="py-2 px-3 text-red-400">Error</td></tr>
-        <tr class="border-b border-cyan-950/50 hover:bg-cyan-950/20"><td class="py-2 px-3">God Class</td><td class="py-2 px-3 text-gray-400">Class</td><td class="py-2 px-3 text-gray-400">Suspect index &ge;3 (public methods, coupling, LCOM, long methods)</td><td class="py-2 px-3 text-red-400">Error</td></tr>
-        <tr class="border-b border-cyan-950/50 hover:bg-cyan-950/20"><td class="py-2 px-3">Too Dependent</td><td class="py-2 px-3 text-gray-400">Function/Class</td><td class="py-2 px-3 text-gray-400">Function &gt;10, Class &gt;20 dependencies</td><td class="py-2 px-3 text-blue-400">Info</td></tr>
-        <tr class="border-b border-cyan-950/50 hover:bg-cyan-950/20"><td class="py-2 px-3">Too Much HTML</td><td class="py-2 px-3 text-gray-400">File/Class/Function</td><td class="py-2 px-3 text-gray-400">File &gt;25%, Class/Func &gt;10% HTML</td><td class="py-2 px-3 text-yellow-400">Warning</td></tr>
-        <tr class="border-b border-cyan-950/50 hover:bg-cyan-950/20"><td class="py-2 px-3">Low Type Coverage</td><td class="py-2 px-3 text-gray-400">Class</td><td class="py-2 px-3 text-gray-400">&lt;40% (Error), &lt;60% (Warning)</td><td class="py-2 px-3 text-red-400">Error / Warning</td></tr>
-        <tr class="border-b border-cyan-950/50 hover:bg-cyan-950/20"><td class="py-2 px-3">Deep Inheritance</td><td class="py-2 px-3 text-gray-400">Class</td><td class="py-2 px-3 text-gray-400">DIT &ge;4 (Warning), &ge;6 (Error)</td><td class="py-2 px-3 text-yellow-400">Warning / Error</td></tr>
-        <tr class="border-b border-cyan-950/50 hover:bg-cyan-950/20"><td class="py-2 px-3">Dependency Cycle</td><td class="py-2 px-3 text-gray-400">Class</td><td class="py-2 px-3 text-gray-400">Any circular dependency detected</td><td class="py-2 px-3 text-red-400">Error</td></tr>
-        <tr class="border-b border-cyan-950/50 hover:bg-cyan-950/20"><td class="py-2 px-3">Too Many Parameters</td><td class="py-2 px-3 text-gray-400">Function/Method</td><td class="py-2 px-3 text-gray-400">&gt;4 (Warning), &gt;7 (Error)</td><td class="py-2 px-3 text-yellow-400">Warning / Error</td></tr>
-        <tr class="border-b border-cyan-950/50 hover:bg-cyan-950/20"><td class="py-2 px-3">Dead Code</td><td class="py-2 px-3 text-gray-400">Class</td><td class="py-2 px-3 text-gray-400">Any unused private method</td><td class="py-2 px-3 text-blue-400">Info</td></tr>
-        <tr class="border-b border-cyan-950/50 hover:bg-cyan-950/20"><td class="py-2 px-3">Security Smell</td><td class="py-2 px-3 text-gray-400">File/Class/Function</td><td class="py-2 px-3 text-gray-400">eval(), exec(), system(), shell_exec(), etc.</td><td class="py-2 px-3 text-red-400">Error / Warning</td></tr>
-        <tr class="border-b border-cyan-950/50 hover:bg-cyan-950/20"><td class="py-2 px-3">SOLID Violation</td><td class="py-2 px-3 text-gray-400">Class</td><td class="py-2 px-3 text-gray-400">Any SRP/ISP violation detected</td><td class="py-2 px-3 text-yellow-400">Warning</td></tr>
-        <tr class="border-b border-cyan-950/50 hover:bg-cyan-950/20"><td class="py-2 px-3">Hotspot</td><td class="py-2 px-3 text-gray-400">File</td><td class="py-2 px-3 text-gray-400">Git churn &ge;10 AND CC &ge;15</td><td class="py-2 px-3 text-yellow-400">Warning</td></tr>
-      </tbody>
-    </table>
+  <h1 class="mb-2 text-3xl font-semibold font-display">Metric Glossary</h1>
+  <p class="text-white/40 mb-8">Reference for all metrics collected by PhpCodeArcheology, grouped by scope.</p>
+
+  {% for category, metrics in glossary %}
+  <div class="mb-6">
+    <div class="glossary-section-label">{{ category }} Metrics</div>
+    <div class="rounded-xl border border-cyan-800 bg-cyan-950/45 glossary-panel">
+      {% for metric in metrics %}
+      <div class="glossary-metric">
+        <div class="glossary-metric-header">
+          <span class="glossary-metric-name">{{ metric.name }}</span>
+          <span class="glossary-metric-key">{{ metric.key }}</span>
+          <span class="glossary-metric-badges">
+            {% if metric.better == 'Low' %}
+              <span class="glossary-badge-better">&#8595; Low</span>
+            {% elseif metric.better == 'High' %}
+              <span class="glossary-badge-better">&#8593; High</span>
+            {% endif %}
+            <span class="glossary-badge-type">{{ metric.valueType }}</span>
+          </span>
+        </div>
+        {% if metric.description and metric.description != '.' %}
+        <div class="glossary-metric-desc">{{ metric.description }}</div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+
+  <div class="mb-6 mt-10">
+    <div class="glossary-section-label">Problem Detection Thresholds</div>
+    <div class="rounded-xl border border-cyan-800 bg-cyan-950/45 glossary-panel">
+      <div class="overflow-x-auto">
+        <table class="glossary-threshold-table">
+          <thead>
+            <tr>
+              <th>Rule</th>
+              <th>Applies To</th>
+              <th>Threshold</th>
+              <th>Severity</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% set thresholds = [
+              { rule: 'Too Long', applies: 'File / Class / Function / Method', threshold: 'File >400, Class >300, Func >40, Method >30 LLOC', severity: 'warning' },
+              { rule: 'Too Complex (CC)', applies: 'File / Class / Function', threshold: 'CC >10 (small code), >20 (large code)', severity: 'error' },
+              { rule: 'Cognitive Complexity', applies: 'Method', threshold: '>15 per method', severity: 'error' },
+              { rule: 'Difficulty', applies: 'File / Class / Function', threshold: '>30 (>45 for framework projects)', severity: 'error' },
+              { rule: 'Effort', applies: 'File / Class / Function', threshold: '>30% above project average', severity: 'error' },
+              { rule: 'Maintainability Index', applies: 'File / Class / Function', threshold: '<20% below avg (30% if type coverage >80%)', severity: 'error' },
+              { rule: 'LCOM', applies: 'Class', threshold: '>30% above project average', severity: 'error' },
+              { rule: 'God Class', applies: 'Class', threshold: 'Suspect index ≥3 (public methods, coupling, LCOM, long methods)', severity: 'error' },
+              { rule: 'Too Dependent', applies: 'Function / Class', threshold: 'Function >10, Class >20 dependencies', severity: 'info' },
+              { rule: 'Too Much HTML', applies: 'File / Class / Function', threshold: 'File >25%, Class/Func >10% HTML', severity: 'warning' },
+              { rule: 'Low Type Coverage', applies: 'Class', threshold: '<40% (Error), <60% (Warning)', severity: 'error' },
+              { rule: 'Deep Inheritance', applies: 'Class', threshold: 'DIT ≥4 (Warning), ≥6 (Error)', severity: 'warning' },
+              { rule: 'Dependency Cycle', applies: 'Class', threshold: 'Any circular dependency detected', severity: 'error' },
+              { rule: 'Too Many Parameters', applies: 'Function / Method', threshold: '>4 (Warning), >7 (Error)', severity: 'warning' },
+              { rule: 'Dead Code', applies: 'Class', threshold: 'Any unused private method', severity: 'info' },
+              { rule: 'Security Smell', applies: 'File / Class / Function', threshold: 'eval(), exec(), system(), shell_exec(), etc.', severity: 'error' },
+              { rule: 'SOLID Violation', applies: 'Class', threshold: 'Any SRP/ISP violation detected', severity: 'warning' },
+              { rule: 'Untested Complex Code', applies: 'Class', threshold: 'CC ≥8 and no tests detected', severity: 'warning' },
+              { rule: 'Hotspot', applies: 'File', threshold: 'Git churn ≥10 AND CC ≥15', severity: 'warning' }
+            ] %}
+            {% for t in thresholds %}
+            <tr>
+              <td class="glossary-threshold-rule">{{ t.rule }}</td>
+              <td class="glossary-threshold-detail">{{ t.applies }}</td>
+              <td class="glossary-threshold-detail">{{ t.threshold }}</td>
+              <td>
+                {% if t.severity == 'error' %}
+                  <span class="glossary-severity-error">Error</span>
+                {% elseif t.severity == 'warning' %}
+                  <span class="glossary-severity-warning">Warning</span>
+                {% elseif t.severity == 'info' %}
+                  <span class="glossary-severity-info">Info</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </div>
 
