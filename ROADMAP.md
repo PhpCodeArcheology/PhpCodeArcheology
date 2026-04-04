@@ -4,7 +4,7 @@ This document outlines planned features and improvements for PhpCodeArcheology. 
 
 ## Next Up
 
-- ~~**Graph filter accessibility.** Rework the Knowledge Graph filter chips for better readability and WCAG AA contrast in both dark and light themes. Active vs inactive state needs a clearer visual distinction beyond opacity.~~ *(done in v2.8.1)*
+- ~~**Graph filter accessibility.** Rework the Knowledge Graph filter chips for better readability and WCAG AA contrast in both dark and light themes. Active vs inactive state needs a clearer visual distinction beyond opacity.~~
 - **Graph class/package selector.** Allow focusing the Knowledge Graph on specific classes or packages instead of toggling entire node types. Needs a UX that scales to hundreds of classes (searchable typeahead, package drill-down, or click-to-focus on neighborhood).
 - **DocBlock display in class/method detail views.** Show descriptive PHPDoc comments alongside metrics in the HTML report, giving more context when reviewing individual classes and methods.
 - **More test coverage.** Currently at ~75% line coverage with 720 tests. Goal: 85%+, especially for the remaining Prediction rules and Report DataProviders.
