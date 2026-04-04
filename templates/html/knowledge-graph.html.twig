@@ -65,19 +65,25 @@
     display: inline-flex;
     align-items: center;
     gap: 0.25rem;
-    padding: 0.125rem 0.5rem;
+    padding: 0.15rem 0.55rem;
     border-radius: 9999px;
     border: 1px solid;
     cursor: pointer;
     font-size: 0.75rem;
-    transition: opacity 0.15s;
+    transition: background-color 0.15s, color 0.15s, border-color 0.15s;
     user-select: none;
   }
   .filter-chip.inactive {
-    opacity: 0.35;
+    background: transparent !important;
+    color: rgba(255,255,255,0.55) !important;
+    border-color: rgba(255,255,255,0.25) !important;
   }
   .filter-chip:hover {
-    opacity: 1 !important;
+    filter: brightness(1.15);
+  }
+  .filter-chip:focus-visible {
+    outline: 2px solid #06b6d4;
+    outline-offset: 2px;
   }
   .graph-legend {
     display: flex;
@@ -188,6 +194,14 @@
   [data-theme=light] .legend-hint {
     color: #94a3b8;
   }
+  [data-theme=light] .filter-chip.inactive {
+    color: #64748b !important;
+    border-color: #cbd5e1 !important;
+    background: transparent !important;
+  }
+  [data-theme=light] .filter-chip:focus-visible {
+    outline-color: #0891b2;
+  }
   [data-theme=light] .problems-only-label {
     color: #475569;
   }
@@ -233,27 +247,27 @@
   {# Filter Controls #}
   <div class="graph-controls">
     <div class="filter-group">
-      <span class="filter-group-label">Node-Typen:</span>
-      <span class="filter-chip" data-filter-type="node" data-value="class"    style="color:#06b6d4; border-color:#06b6d4;">class</span>
-      <span class="filter-chip" data-filter-type="node" data-value="interface" style="color:#a855f7; border-color:#a855f7;">interface</span>
-      <span class="filter-chip" data-filter-type="node" data-value="trait"     style="color:#f97316; border-color:#f97316;">trait</span>
-      <span class="filter-chip" data-filter-type="node" data-value="package"   style="color:#22c55e; border-color:#22c55e;">package</span>
-      <span class="filter-chip" data-filter-type="node" data-value="author"    style="color:#ec4899; border-color:#ec4899;">author</span>
-      <span class="filter-chip" data-filter-type="node" data-value="method"   style="color:#94a3b8; border-color:#94a3b8;">method</span>
-      <span class="filter-chip inactive" data-filter-type="node" data-value="function" style="color:#64748b; border-color:#64748b;">function</span>
+      <span class="filter-group-label">Nodes:</span>
+      <span class="filter-chip" data-filter-type="node" data-value="class"     data-color="#0e7490" tabindex="0" role="button">class</span>
+      <span class="filter-chip" data-filter-type="node" data-value="interface" data-color="#7c3aed" tabindex="0" role="button">interface</span>
+      <span class="filter-chip" data-filter-type="node" data-value="trait"     data-color="#c2410c" tabindex="0" role="button">trait</span>
+      <span class="filter-chip" data-filter-type="node" data-value="package"   data-color="#15803d" tabindex="0" role="button">package</span>
+      <span class="filter-chip" data-filter-type="node" data-value="author"    data-color="#be185d" tabindex="0" role="button">author</span>
+      <span class="filter-chip" data-filter-type="node" data-value="method"    data-color="#64748b" tabindex="0" role="button">method</span>
+      <span class="filter-chip inactive" data-filter-type="node" data-value="function" data-color="#475569" tabindex="0" role="button">function</span>
     </div>
 
     <div class="filter-group">
-      <span class="filter-group-label">Edge-Typen:</span>
-      <span class="filter-chip" data-filter-type="edge" data-value="depends_on"  style="color:rgba(255,255,255,0.6); border-color:rgba(255,255,255,0.25);">depends_on</span>
-      <span class="filter-chip" data-filter-type="edge" data-value="extends"     style="color:#3b82f6; border-color:#3b82f6;">extends</span>
-      <span class="filter-chip" data-filter-type="edge" data-value="implements"  style="color:#a855f7; border-color:#a855f7;">implements</span>
-      <span class="filter-chip" data-filter-type="edge" data-value="uses_trait"  style="color:#f97316; border-color:#f97316;">uses_trait</span>
-      <span class="filter-chip" data-filter-type="edge" data-value="cycle_member" style="color:#ef4444; border-color:#ef4444;">cycle_member</span>
-      <span class="filter-chip inactive" data-filter-type="edge" data-value="belongs_to"  style="color:rgba(255,255,255,0.5); border-color:rgba(255,255,255,0.2);">belongs_to</span>
-      <span class="filter-chip inactive" data-filter-type="edge" data-value="authored_by" style="color:#ec4899; border-color:#ec4899;">authored_by</span>
-      <span class="filter-chip" data-filter-type="edge" data-value="declares"    style="color:rgba(255,255,255,0.4); border-color:rgba(255,255,255,0.15);">declares</span>
-      <span class="filter-chip" data-filter-type="edge" data-value="calls"       style="color:#facc15; border-color:#facc15;">calls</span>
+      <span class="filter-group-label">Edges:</span>
+      <span class="filter-chip" data-filter-type="edge" data-value="depends_on"   data-color="#64748b" tabindex="0" role="button">depends_on</span>
+      <span class="filter-chip" data-filter-type="edge" data-value="extends"      data-color="#2563eb" tabindex="0" role="button">extends</span>
+      <span class="filter-chip" data-filter-type="edge" data-value="implements"   data-color="#7c3aed" tabindex="0" role="button">implements</span>
+      <span class="filter-chip" data-filter-type="edge" data-value="uses_trait"   data-color="#c2410c" tabindex="0" role="button">uses_trait</span>
+      <span class="filter-chip" data-filter-type="edge" data-value="cycle_member" data-color="#dc2626" tabindex="0" role="button">cycle_member</span>
+      <span class="filter-chip inactive" data-filter-type="edge" data-value="belongs_to"  data-color="#64748b" tabindex="0" role="button">belongs_to</span>
+      <span class="filter-chip inactive" data-filter-type="edge" data-value="authored_by" data-color="#be185d" tabindex="0" role="button">authored_by</span>
+      <span class="filter-chip" data-filter-type="edge" data-value="declares"     data-color="#64748b" tabindex="0" role="button">declares</span>
+      <span class="filter-chip" data-filter-type="edge" data-value="calls"        data-color="#a16207" tabindex="0" role="button">calls</span>
     </div>
 
     <div class="filter-group">

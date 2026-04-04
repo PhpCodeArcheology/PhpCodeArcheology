@@ -48,6 +48,22 @@
     return parts[parts.length - 1];
   }
 
+  function applyChipStyle(chip) {
+    var color = chip.getAttribute('data-color');
+    if (chip.classList.contains('inactive')) {
+      chip.style.backgroundColor = '';
+      chip.style.color = '';
+      chip.style.borderColor = '';
+    } else {
+      chip.style.backgroundColor = color;
+      chip.style.color = '#fff';
+      chip.style.borderColor = color;
+    }
+  }
+
+  // Apply initial chip styles
+  document.querySelectorAll('.filter-chip').forEach(applyChipStyle);
+
   window.initKnowledgeGraph = function (data) {
     const nodes = (data.nodes || []).map(n => Object.assign({}, n));
     const edges = (data.edges || []).map(e => Object.assign({}, e));
@@ -320,7 +336,11 @@
           activeNodeTypes.add(value);
           chip.classList.remove('inactive');
         }
+        applyChipStyle(chip);
         buildGraph();
+      });
+      chip.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); chip.click(); }
       });
     });
 
@@ -335,7 +355,11 @@
           activeEdgeTypes.add(value);
           chip.classList.remove('inactive');
         }
+        applyChipStyle(chip);
         buildGraph();
+      });
+      chip.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); chip.click(); }
       });
     });
 
@@ -369,6 +393,7 @@
 
     // Theme change re-render
     const themeObserver = new MutationObserver(function () {
+      document.querySelectorAll('.filter-chip').forEach(applyChipStyle);
       buildGraph();
     });
     themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
