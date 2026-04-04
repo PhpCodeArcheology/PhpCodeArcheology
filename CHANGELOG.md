@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Knowledge Graph filter chips: accessibility overhaul.** Replaced opacity-based active/inactive toggle with filled/outline pattern. Active chips now use darkened color backgrounds with white text, inactive chips are transparent with muted text. All combinations pass WCAG AA contrast (4.5:1+) in both dark and light themes. Added keyboard navigation (Tab + Enter/Space), focus-visible ring, and `role="button"`. Fixed German labels ("Node-Typen"/"Edge-Typen" → "Nodes"/"Edges"). Previously invisible chips in light mode (`depends_on`, `belongs_to`, `declares`) now use visible slate colors.
 - **Glossary page redesigned.** Replaced the flat table layout with grouped panels per metric category (Class, File, Function, Method, Package, Project, Git). Each metric shows name, description, type badge, and better-direction badge. Threshold table restyled with severity badges. All colors pass WCAG AA contrast in both dark and light themes.
 - **17 metric descriptions improved.** Replaced placeholder descriptions (e.g. "LCOM.", "Instability.") with proper explanations including formulas and interpretation guidance for LCOM, Instability, all Halstead metrics, Complexity Density, Maintainability Index, Comment Weight, and Package metrics (Abstractness, Distance, Coupling).
+- **Tailwind CSS upgraded from v3 to v4.** Migrated config from `tailwind.config.js` to CSS-native `@theme` and `@utility` directives. Resolves all npm security advisories.
+- **Twig updated to v3.24.0.** Resolves sandbox bypass and `__toString()`/`__isset()` security advisories.
+- **Dependabot enabled.** Automated dependency update PRs for Composer (weekly), npm (monthly), and GitHub Actions (weekly).
 
 ## [2.8.0] - 2026-04-04
 
