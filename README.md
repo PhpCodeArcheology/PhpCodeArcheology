@@ -3,6 +3,7 @@
 [![Packagist Version](https://img.shields.io/packagist/v/php-code-archeology/php-code-archeology)](https://packagist.org/packages/php-code-archeology/php-code-archeology)
 [![PHP Version](https://img.shields.io/packagist/php-v/php-code-archeology/php-code-archeology)](https://packagist.org/packages/php-code-archeology/php-code-archeology)
 [![License](https://img.shields.io/packagist/l/php-code-archeology/php-code-archeology)](https://packagist.org/packages/php-code-archeology/php-code-archeology)
+[![Glama MCP Server](https://glama.ai/mcp/servers/PhpCodeArcheology/PhpCodeArcheology/badges/score.svg)](https://glama.ai/mcp/servers/PhpCodeArcheology/PhpCodeArcheology)
 
 **PhpCodeArcheology** is a PHP static analysis tool that measures code quality through 60+ metrics including cyclomatic complexity, maintainability index, coupling, and cohesion. It generates comprehensive reports for files, classes, methods, and functions — detecting code smells, identifying hotspots via git churn analysis, and tracking quality trends over time.
 
