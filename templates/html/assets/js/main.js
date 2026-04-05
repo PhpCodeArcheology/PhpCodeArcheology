@@ -228,4 +228,21 @@
   }
 
   window.addEventListener('load', () => setTimeout(initPagination, 100));
+
+  // --- Dynamic font sizing for metric tile values ---
+  document.querySelectorAll('.metric-tile-value').forEach(el => {
+    const text = el.textContent.trim();
+    const len = text.length;
+    if (len > 80) {
+      el.classList.replace('text-3xl', 'text-sm');
+    } else if (len > 30) {
+      el.classList.replace('text-3xl', 'text-base');
+    } else if (len > 10) {
+      el.classList.replace('text-3xl', 'text-xl');
+    }
+    if (len > 10) {
+      el.style.overflowWrap = 'anywhere';
+      el.innerHTML = el.innerHTML.replace(/\\/g, '\\<wbr>');
+    }
+  });
 })();
