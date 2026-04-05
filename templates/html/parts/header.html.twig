@@ -5,6 +5,7 @@
   <title>PhpCodeArcheology - {{ pageTitle }}</title>
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="{% if isSubdir %}../{% endif %}assets/img/logo.svg">
   <link href="{% if isSubdir %}../{% endif %}assets/css/output.css" rel="stylesheet">
 
   <script src="{% if isSubdir %}../{% endif %}assets/js/chart.umd.min.js"></script>
@@ -94,7 +95,8 @@
   </svg>
 <header class="sticky top-0 z-40 w-full backdrop-blur-sm bg-black/45">
   <div class="py-4 px-4 font-medium text-lg text-pink-600 flex items-center justify-between">
-    <div>
+    <div class="flex items-center gap-2">
+      <img src="{% if isSubdir %}../{% endif %}assets/img/logo.svg" width="28" height="28" alt="Logo">
       PhpCodeArcheology
       <span class="text-xs text-white/30">v{{ version }}</span>
     </div>

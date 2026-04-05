@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/logo.svg" width="80" alt="PhpCodeArcheology Logo">
+</p>
+
 # PhpCodeArcheology
 
 [![Packagist Version](https://img.shields.io/packagist/v/php-code-archeology/php-code-archeology)](https://packagist.org/packages/php-code-archeology/php-code-archeology)
