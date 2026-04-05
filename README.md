@@ -9,7 +9,7 @@
 
 Unlike PHPStan or Psalm (which focus on type safety and bug detection), PhpCodeArcheology focuses on **architecture and maintainability** — giving you the insights you need to understand and improve your codebase structure. Think of it as an alternative to PHPMetrics with deeper git integration, baseline management, and AI-ready output.
 
-![PhpCodeArcheology Dashboard](docs/screenshot-dashboard.png)
+![PhpCodeArcheology Dashboard](docs/screenshot-dashboard-v2.8.0.png)
 
 ## AI Integration (MCP Server)
 
