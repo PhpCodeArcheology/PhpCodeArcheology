@@ -9,10 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Project logo.** New logo (compass-graph hybrid) added to README, HTML report header, and as favicon.
 - **Knowledge Graph: focus selector.** Searchable combobox to focus the graph on specific classes, packages, or authors. Type to search, click to select — the graph shows only the selected entities and their direct neighbors. Selected items appear as removable chips below the controls. Double-click any node in the graph to focus on it. Selecting an author automatically activates the `authored_by` edge type. Supports keyboard navigation (arrows, Enter, Escape).
 
 ### Changed
 
+- **Metric tiles: dynamic font sizing.** Long metric values (namespace lists, refactoring recommendations) now scale down automatically instead of overflowing. Word-break at backslashes for readable namespace wrapping.
+- **Metric tiles: empty value indicator.** Tiles with no value now show a subtle dash instead of being completely empty.
 - **Knowledge Graph filter chips: accessibility overhaul.** Replaced opacity-based active/inactive toggle with filled/outline pattern. Active chips now use darkened color backgrounds with white text, inactive chips are transparent with muted text. All combinations pass WCAG AA contrast (4.5:1+) in both dark and light themes. Added keyboard navigation (Tab + Enter/Space), focus-visible ring, and `role="button"`. Fixed German labels ("Node-Typen"/"Edge-Typen" → "Nodes"/"Edges"). Previously invisible chips in light mode (`depends_on`, `belongs_to`, `declares`) now use visible slate colors.
 - **Glossary page redesigned.** Replaced the flat table layout with grouped panels per metric category (Class, File, Function, Method, Package, Project, Git). Each metric shows name, description, type badge, and better-direction badge. Threshold table restyled with severity badges. All colors pass WCAG AA contrast in both dark and light themes.
 - **17 metric descriptions improved.** Replaced placeholder descriptions (e.g. "LCOM.", "Instability.") with proper explanations including formulas and interpretation guidance for LCOM, Instability, all Halstead metrics, Complexity Density, Maintainability Index, Comment Weight, and Package metrics (Abstractness, Distance, Coupling).
