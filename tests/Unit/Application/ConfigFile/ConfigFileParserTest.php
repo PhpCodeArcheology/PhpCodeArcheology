@@ -12,6 +12,9 @@ use Symfony\Component\Yaml\Yaml;
 // Helpers
 // ──────────────────────────────────────────────────────────────────────────────
 
+/**
+ * @param array<string, mixed> $data
+ */
 function writeTempJson(array $data): string
 {
     $file = tempnam(sys_get_temp_dir(), 'phpca_json_').'.json';
@@ -44,7 +47,7 @@ function parseJsonFile(string $file, Config $config): void
 it('json: maps include to files', function () {
     $file = writeTempJson(['include' => ['src/', 'lib/']]);
     $config = new Config();
-    (new ConfigFileParserJson($file))->parseJson(file_get_contents($file), $config);
+    parseJsonFile($file, $config);
     unlink($file);
 
     expect($config->get('files'))->toBe(['src/', 'lib/']);
@@ -53,7 +56,7 @@ it('json: maps include to files', function () {
 it('json: maps exclude', function () {
     $file = writeTempJson(['exclude' => ['vendor/', 'tests/']]);
     $config = new Config();
-    (new ConfigFileParserJson($file))->parseJson(file_get_contents($file), $config);
+    parseJsonFile($file, $config);
     unlink($file);
 
     expect($config->get('exclude'))->toBe(['vendor/', 'tests/']);
@@ -62,7 +65,7 @@ it('json: maps exclude', function () {
 it('json: maps extensions', function () {
     $file = writeTempJson(['extensions' => ['php', 'phtml']]);
     $config = new Config();
-    (new ConfigFileParserJson($file))->parseJson(file_get_contents($file), $config);
+    parseJsonFile($file, $config);
     unlink($file);
 
     expect($config->get('extensions'))->toBe(['php', 'phtml']);
@@ -71,7 +74,7 @@ it('json: maps extensions', function () {
 it('json: maps memoryLimit string', function () {
     $file = writeTempJson(['memoryLimit' => '512M']);
     $config = new Config();
-    (new ConfigFileParserJson($file))->parseJson(file_get_contents($file), $config);
+    parseJsonFile($file, $config);
     unlink($file);
 
     expect($config->get('memoryLimit'))->toBe('512M');
@@ -80,7 +83,7 @@ it('json: maps memoryLimit string', function () {
 it('json: maps memoryLimit -1', function () {
     $file = writeTempJson(['memoryLimit' => '-1']);
     $config = new Config();
-    (new ConfigFileParserJson($file))->parseJson(file_get_contents($file), $config);
+    parseJsonFile($file, $config);
     unlink($file);
 
     expect($config->get('memoryLimit'))->toBe('-1');
@@ -89,7 +92,7 @@ it('json: maps memoryLimit -1', function () {
 it('json: maps reportType', function () {
     $file = writeTempJson(['reportType' => 'json']);
     $config = new Config();
-    (new ConfigFileParserJson($file))->parseJson(file_get_contents($file), $config);
+    parseJsonFile($file, $config);
     unlink($file);
 
     expect($config->get('reportType'))->toBe('json');
@@ -98,7 +101,7 @@ it('json: maps reportType', function () {
 it('json: maps packageSize', function () {
     $file = writeTempJson(['packageSize' => 5]);
     $config = new Config();
-    (new ConfigFileParserJson($file))->parseJson(file_get_contents($file), $config);
+    parseJsonFile($file, $config);
     unlink($file);
 
     expect($config->get('packageSize'))->toBe(5);
@@ -107,7 +110,7 @@ it('json: maps packageSize', function () {
 it('json: maps framework', function () {
     $file = writeTempJson(['framework' => 'symfony']);
     $config = new Config();
-    (new ConfigFileParserJson($file))->parseJson(file_get_contents($file), $config);
+    parseJsonFile($file, $config);
     unlink($file);
 
     expect($config->get('framework'))->toBe('symfony');
@@ -116,7 +119,7 @@ it('json: maps framework', function () {
 it('json: maps php', function () {
     $file = writeTempJson(['php' => '8.2']);
     $config = new Config();
-    (new ConfigFileParserJson($file))->parseJson(file_get_contents($file), $config);
+    parseJsonFile($file, $config);
     unlink($file);
 
     expect($config->get('php'))->toBe('8.2');
@@ -125,7 +128,7 @@ it('json: maps php', function () {
 it('json: maps acknowledgedVersion', function () {
     $file = writeTempJson(['acknowledgedVersion' => '2.8.0']);
     $config = new Config();
-    (new ConfigFileParserJson($file))->parseJson(file_get_contents($file), $config);
+    parseJsonFile($file, $config);
     unlink($file);
 
     expect($config->get('acknowledgedVersion'))->toBe('2.8.0');
@@ -134,7 +137,7 @@ it('json: maps acknowledgedVersion', function () {
 it('json: maps history', function () {
     $file = writeTempJson(['history' => ['keep' => 10]]);
     $config = new Config();
-    (new ConfigFileParserJson($file))->parseJson(file_get_contents($file), $config);
+    parseJsonFile($file, $config);
     unlink($file);
 
     // history is not a mapped key — no assertion; just verifying no crash
@@ -144,7 +147,7 @@ it('json: maps history', function () {
 it('json: sets configFileDir from file path', function () {
     $file = writeTempJson([]);
     $config = new Config();
-    (new ConfigFileParserJson($file))->parseJson(file_get_contents($file), $config);
+    parseJsonFile($file, $config);
     unlink($file);
 
     expect($config->get('configFileDir'))->toBe(realpath(sys_get_temp_dir()) ?: sys_get_temp_dir());
@@ -157,7 +160,7 @@ it('json: sets configFileDir from file path', function () {
 it('json: partial config does not crash', function () {
     $file = writeTempJson(['include' => ['src/']]);
     $config = new Config();
-    (new ConfigFileParserJson($file))->parseJson(file_get_contents($file), $config);
+    parseJsonFile($file, $config);
     unlink($file);
 
     expect($config->get('exclude'))->toBeNull();
@@ -193,7 +196,7 @@ it('json: CLI reportType is not overwritten by config file', function () {
     $file = writeTempJson(['reportType' => 'markdown']);
     $config = new Config();
     $config->set('reportType', 'html'); // simulates CLI flag already set
-    (new ConfigFileParserJson($file))->parseJson(file_get_contents($file), $config);
+    parseJsonFile($file, $config);
     unlink($file);
 
     expect($config->get('reportType'))->toBe('html');
@@ -202,7 +205,7 @@ it('json: CLI reportType is not overwritten by config file', function () {
 it('json: config file reportType is used when CLI did not set it', function () {
     $file = writeTempJson(['reportType' => 'markdown']);
     $config = new Config();
-    (new ConfigFileParserJson($file))->parseJson(file_get_contents($file), $config);
+    parseJsonFile($file, $config);
     unlink($file);
 
     expect($config->get('reportType'))->toBe('markdown');
@@ -220,7 +223,7 @@ it('json: relative reportDir is resolved against runningDir', function () {
     $file = writeTempJson(['reportDir' => $relativeDir]);
     $config = new Config();
     $config->set('runningDir', $runningDir);
-    (new ConfigFileParserJson($file))->parseJson(file_get_contents($file), $config);
+    parseJsonFile($file, $config);
     unlink($file);
 
     $reportDir = $config->get('reportDir');
