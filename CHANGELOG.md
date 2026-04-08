@@ -5,7 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [Unreleased] — 3.0.0 (in development)
+
+> This branch (`3.0.x`) tracks the next major version. Scope, design decisions, and breaking-change notes are collected here as they land. See the [3.0.0 milestone](https://github.com/PhpCodeArcheology/PhpCodeArcheology/milestone/1) for tracking. The 2.x line continues on `main`.
+
+### Planned
+
+- **Rework of relative average thresholds.** Replace the current "percentage above/below project average" rule for Effort, Maintainability Index, and LCOM with robust statistical outlier detection (Median + MAD or Q3 + IQR). The current approach is mathematically weak on right-skewed distributions and produces noise in framework-heavy projects. Score recalibration across Health Score, Technical Debt Score, and Refactoring Priority follows from this.
 
 ## [2.9.0] - 2026-04-08
 
