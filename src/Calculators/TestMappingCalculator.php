@@ -50,7 +50,7 @@ class TestMappingCalculator implements CalculatorInterface
             return;
         }
 
-        [$shortNameIndex, $fqcnIndex, $productionIds, $abstractIds] = $this->buildProductionIndex();
+        [$shortNameIndex, $fqcnIndex, $productionIds, $abstractIds, $sourceExcludedCount] = $this->buildProductionIndex();
 
         /** @var array<string, int> identifierString → test file count */
         $classTestCount = [];
@@ -123,6 +123,7 @@ class TestMappingCalculator implements CalculatorInterface
             MetricKey::OVERALL_TESTED_CLASS_COUNT => $testedCount,
             MetricKey::OVERALL_UNTESTED_CLASS_COUNT => $untestedCount,
             MetricKey::OVERALL_TESTED_CLASS_RATIO => $testedClassRatio,
+            MetricKey::OVERALL_SOURCE_EXCLUDED_CLASS_COUNT => $sourceExcludedCount,
             MetricKey::OVERALL_FUNCTION_BASED_TEST_FILE_COUNT => $functionBasedCount,
             MetricKey::DETECTED_TEST_FRAMEWORKS => $this->frameworkDetection?->getTestFrameworkSummary() ?? '',
         ];
@@ -141,25 +142,37 @@ class TestMappingCalculator implements CalculatorInterface
     /**
      * Build indexes for production class lookup.
      *
-     * @return array{array<string,string>, array<string,string>, string[], array<string,true>}
-     *                                                                                         [shortNameIndex, fqcnIndex, productionIds, abstractIds]
+     * Classes whose file path sits outside the <source> coverage scope defined in
+     * phpunit.xml are tagged with EXCLUDED_BY_PHPUNIT_SOURCE and kept out of the
+     * production index — they appear in neither tested nor untested counts,
+     * consistent with how interfaces/traits/enums are handled.
+     *
+     * @return array{array<string,string>, array<string,string>, string[], array<string,true>, int}
+     *                                                                                              [shortNameIndex, fqcnIndex, productionIds, abstractIds, sourceExcludedCount]
      */
     private function buildProductionIndex(): array
     {
         $shortNameIndex = [];  // shortName → identifierString
         $fqcnIndex = [];       // fqcn → identifierString
-        $productionIds = [];   // all non-interface/trait/enum identifier strings
+        $productionIds = [];   // all non-interface/trait/enum/source-excluded identifier strings
         $abstractIds = [];     // identifierString → true, for abstract classes
+        $sourceExcludedCount = 0;
 
         $testFilePaths = $this->testScanResult instanceof TestScanResult
             ? array_flip($this->testScanResult->classBasedTestFiles)
             : [];
+
+        $phpunitConfig = $this->testScanResult?->phpunitConfig;
 
         foreach ($this->metricsController->getAllCollections() as $identifierString => $collection) {
             if (!$collection instanceof ClassMetricsCollection) {
                 continue;
             }
 
+            // Note: FILE_PATH metric carries a COMMON-PATH-STRIPPED relative path (set by
+            // FileCalculator). For phpunit.xml <source> scope matching we need the
+            // original absolute path, which the collection still holds via getPath().
+            $absoluteFilePath = $collection->getPath();
             $filePath = $this->metricsController->getMetricValueByIdentifierString($identifierString, MetricKey::FILE_PATH)?->asString();
             if (is_string($filePath) && isset($testFilePaths[$filePath])) {
                 continue;
@@ -170,6 +183,22 @@ class TestMappingCalculator implements CalculatorInterface
             $isEnum = $this->metricsController->getMetricValueByIdentifierString($identifierString, MetricKey::ENUM)?->asBool() ?? false;
 
             if ($isInterface || $isTrait || $isEnum) {
+                continue;
+            }
+
+            // Respect phpunit.xml <source> scope: classes outside it are tagged and
+            // excluded from the tested/untested split. Matched against the absolute
+            // path, since phpunit.xml stores absolute realpaths too.
+            if (null !== $phpunitConfig
+                && $phpunitConfig->hasSourceScope()
+                && '' !== $absoluteFilePath
+                && !$phpunitConfig->isInSourceScope($absoluteFilePath)
+            ) {
+                $this->metricsController->setMetricValuesByIdentifierString(
+                    $identifierString,
+                    [MetricKey::EXCLUDED_BY_PHPUNIT_SOURCE => true]
+                );
+                ++$sourceExcludedCount;
                 continue;
             }
 
@@ -187,7 +216,7 @@ class TestMappingCalculator implements CalculatorInterface
             }
         }
 
-        return [$shortNameIndex, $fqcnIndex, $productionIds, $abstractIds];
+        return [$shortNameIndex, $fqcnIndex, $productionIds, $abstractIds, $sourceExcludedCount];
     }
 
     /**
@@ -374,6 +403,7 @@ class TestMappingCalculator implements CalculatorInterface
                 MetricKey::OVERALL_TESTED_CLASS_COUNT => 0,
                 MetricKey::OVERALL_UNTESTED_CLASS_COUNT => 0,
                 MetricKey::OVERALL_TESTED_CLASS_RATIO => 0.0,
+                MetricKey::OVERALL_SOURCE_EXCLUDED_CLASS_COUNT => 0,
                 MetricKey::OVERALL_FUNCTION_BASED_TEST_FILE_COUNT => 0,
                 MetricKey::DETECTED_TEST_FRAMEWORKS => $this->frameworkDetection?->getTestFrameworkSummary() ?? '',
             ]

@@ -177,6 +177,7 @@ final class MetricKey
     public const TEST_TYPE = 'testType';
     public const LINE_COVERAGE = 'lineCoverage';
     public const IS_TEST_FILE = 'isTestFile';
+    public const EXCLUDED_BY_PHPUNIT_SOURCE = 'excludedByPhpunitSource';
 
     // --- Git ---
     public const GIT_CHURN_COUNT = 'gitChurnCount';
@@ -269,6 +270,7 @@ final class MetricKey
     public const OVERALL_TESTED_CLASS_RATIO = 'overallTestedClassRatio';
     public const OVERALL_COVERAGE_PERCENT = 'overallCoveragePercent';
     public const OVERALL_FUNCTION_BASED_TEST_FILE_COUNT = 'overallFunctionBasedTestFileCount';
+    public const OVERALL_SOURCE_EXCLUDED_CLASS_COUNT = 'overallSourceExcludedClassCount';
 
     // --- Project Aggregates: Per-Collection Min/Avg/Max ---
     public const OVERALL_CLASS_METRICS_COLLECTION_AVG_CC = 'overallClassMetricsCollectionAvgCc';

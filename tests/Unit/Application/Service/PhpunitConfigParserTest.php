@@ -352,3 +352,293 @@ it('isExcluded exact file match', function () {
     expect($result->isExcluded($brokenAbs))->toBeTrue()
         ->and($result->isExcluded($otherAbs))->toBeFalse();
 });
+
+// ---------------------------------------------------------------------------
+// <source> scope parsing (PHPUnit 10+ coverage scope definition)
+// ---------------------------------------------------------------------------
+
+it('reports hasSourceScope() false when <source> is missing', function () {
+    file_put_contents(
+        $this->tempDir.'/phpunit.xml',
+        '<?xml version="1.0"?><phpunit/>'
+    );
+
+    $parser = new PhpunitConfigParser();
+    $result = $parser->parse($this->tempDir);
+
+    expect($result->hasSourceScope())->toBeFalse()
+        ->and($result->sourceIncludeDirectories)->toBe([])
+        ->and($result->sourceExcludeDirectories)->toBe([]);
+});
+
+it('treats every path as in-scope when no <source> is configured', function () {
+    file_put_contents(
+        $this->tempDir.'/phpunit.xml',
+        '<?xml version="1.0"?><phpunit/>'
+    );
+
+    $parser = new PhpunitConfigParser();
+    $result = $parser->parse($this->tempDir);
+
+    expect($result->isInSourceScope('/any/absolute/path.php'))->toBeTrue();
+});
+
+it('parses <source><include><directory> entries', function () {
+    mkdir($this->tempDir.'/src', 0777, true);
+    file_put_contents(
+        $this->tempDir.'/phpunit.xml',
+        '<?xml version="1.0"?>
+<phpunit>
+  <source>
+    <include>
+      <directory>src</directory>
+    </include>
+  </source>
+</phpunit>'
+    );
+
+    $parser = new PhpunitConfigParser();
+    $result = $parser->parse($this->tempDir);
+
+    expect($result->hasSourceScope())->toBeTrue()
+        ->and($result->sourceIncludeDirectories)->toHaveCount(1)
+        ->and($result->sourceIncludeDirectories[0])->toBe(realpath($this->tempDir.'/src'));
+});
+
+it('parses <source><include><file> entries', function () {
+    mkdir($this->tempDir.'/src', 0777, true);
+    file_put_contents($this->tempDir.'/src/Kernel.php', '<?php');
+    file_put_contents(
+        $this->tempDir.'/phpunit.xml',
+        '<?xml version="1.0"?>
+<phpunit>
+  <source>
+    <include>
+      <file>src/Kernel.php</file>
+    </include>
+  </source>
+</phpunit>'
+    );
+
+    $parser = new PhpunitConfigParser();
+    $result = $parser->parse($this->tempDir);
+
+    expect($result->sourceIncludeFiles)->toHaveCount(1)
+        ->and($result->sourceIncludeFiles[0])->toBe(realpath($this->tempDir.'/src/Kernel.php'));
+});
+
+it('parses <source><exclude><directory> entries', function () {
+    mkdir($this->tempDir.'/src', 0777, true);
+    mkdir($this->tempDir.'/src/DataFixtures', 0777, true);
+    file_put_contents(
+        $this->tempDir.'/phpunit.xml',
+        '<?xml version="1.0"?>
+<phpunit>
+  <source>
+    <include>
+      <directory>src</directory>
+    </include>
+    <exclude>
+      <directory>src/DataFixtures</directory>
+    </exclude>
+  </source>
+</phpunit>'
+    );
+
+    $parser = new PhpunitConfigParser();
+    $result = $parser->parse($this->tempDir);
+
+    expect($result->sourceExcludeDirectories)->toHaveCount(1)
+        ->and($result->sourceExcludeDirectories[0])->toBe(realpath($this->tempDir.'/src/DataFixtures'));
+});
+
+it('parses <source><exclude><file> entries', function () {
+    mkdir($this->tempDir.'/src', 0777, true);
+    file_put_contents($this->tempDir.'/src/Kernel.php', '<?php');
+    file_put_contents(
+        $this->tempDir.'/phpunit.xml',
+        '<?xml version="1.0"?>
+<phpunit>
+  <source>
+    <include>
+      <directory>src</directory>
+    </include>
+    <exclude>
+      <file>src/Kernel.php</file>
+    </exclude>
+  </source>
+</phpunit>'
+    );
+
+    $parser = new PhpunitConfigParser();
+    $result = $parser->parse($this->tempDir);
+
+    expect($result->sourceExcludeFiles)->toHaveCount(1)
+        ->and($result->sourceExcludeFiles[0])->toBe(realpath($this->tempDir.'/src/Kernel.php'));
+});
+
+it('accepts <source> with only <exclude> (no <include>)', function () {
+    mkdir($this->tempDir.'/src/DataFixtures', 0777, true);
+    file_put_contents(
+        $this->tempDir.'/phpunit.xml',
+        '<?xml version="1.0"?>
+<phpunit>
+  <source>
+    <exclude>
+      <directory>src/DataFixtures</directory>
+    </exclude>
+  </source>
+</phpunit>'
+    );
+
+    $parser = new PhpunitConfigParser();
+    $result = $parser->parse($this->tempDir);
+
+    expect($result->hasSourceScope())->toBeTrue()
+        ->and($result->sourceIncludeDirectories)->toBe([])
+        ->and($result->sourceExcludeDirectories)->toHaveCount(1);
+});
+
+it('isInSourceScope() returns true for files under an include directory', function () {
+    mkdir($this->tempDir.'/src/Module', 0777, true);
+    file_put_contents($this->tempDir.'/src/Module/Foo.php', '<?php');
+    file_put_contents(
+        $this->tempDir.'/phpunit.xml',
+        '<?xml version="1.0"?>
+<phpunit>
+  <source>
+    <include>
+      <directory>src</directory>
+    </include>
+  </source>
+</phpunit>'
+    );
+
+    $parser = new PhpunitConfigParser();
+    $result = $parser->parse($this->tempDir);
+
+    $fooPath = realpath($this->tempDir.'/src/Module/Foo.php');
+    expect($result->isInSourceScope($fooPath))->toBeTrue();
+});
+
+it('isInSourceScope() returns false for files under an exclude directory', function () {
+    mkdir($this->tempDir.'/src/DataFixtures', 0777, true);
+    file_put_contents($this->tempDir.'/src/DataFixtures/UserFixtures.php', '<?php');
+    file_put_contents(
+        $this->tempDir.'/phpunit.xml',
+        '<?xml version="1.0"?>
+<phpunit>
+  <source>
+    <include>
+      <directory>src</directory>
+    </include>
+    <exclude>
+      <directory>src/DataFixtures</directory>
+    </exclude>
+  </source>
+</phpunit>'
+    );
+
+    $parser = new PhpunitConfigParser();
+    $result = $parser->parse($this->tempDir);
+
+    $fixturePath = realpath($this->tempDir.'/src/DataFixtures/UserFixtures.php');
+    expect($result->isInSourceScope($fixturePath))->toBeFalse();
+});
+
+it('isInSourceScope() returns false for files outside any include directory', function () {
+    mkdir($this->tempDir.'/src', 0777, true);
+    mkdir($this->tempDir.'/other', 0777, true);
+    file_put_contents($this->tempDir.'/other/Something.php', '<?php');
+    file_put_contents(
+        $this->tempDir.'/phpunit.xml',
+        '<?xml version="1.0"?>
+<phpunit>
+  <source>
+    <include>
+      <directory>src</directory>
+    </include>
+  </source>
+</phpunit>'
+    );
+
+    $parser = new PhpunitConfigParser();
+    $result = $parser->parse($this->tempDir);
+
+    $outsidePath = realpath($this->tempDir.'/other/Something.php');
+    expect($result->isInSourceScope($outsidePath))->toBeFalse();
+});
+
+it('isInSourceScope() lets <exclude> win over <include> for the same path', function () {
+    mkdir($this->tempDir.'/src', 0777, true);
+    file_put_contents($this->tempDir.'/src/Kernel.php', '<?php');
+    file_put_contents(
+        $this->tempDir.'/phpunit.xml',
+        '<?xml version="1.0"?>
+<phpunit>
+  <source>
+    <include>
+      <directory>src</directory>
+    </include>
+    <exclude>
+      <file>src/Kernel.php</file>
+    </exclude>
+  </source>
+</phpunit>'
+    );
+
+    $parser = new PhpunitConfigParser();
+    $result = $parser->parse($this->tempDir);
+
+    $kernelPath = realpath($this->tempDir.'/src/Kernel.php');
+    expect($result->isInSourceScope($kernelPath))->toBeFalse();
+});
+
+it('isInSourceScope() matches <include><file> exactly', function () {
+    mkdir($this->tempDir.'/src', 0777, true);
+    file_put_contents($this->tempDir.'/src/Target.php', '<?php');
+    file_put_contents($this->tempDir.'/src/Other.php', '<?php');
+    file_put_contents(
+        $this->tempDir.'/phpunit.xml',
+        '<?xml version="1.0"?>
+<phpunit>
+  <source>
+    <include>
+      <file>src/Target.php</file>
+    </include>
+  </source>
+</phpunit>'
+    );
+
+    $parser = new PhpunitConfigParser();
+    $result = $parser->parse($this->tempDir);
+
+    $targetPath = realpath($this->tempDir.'/src/Target.php');
+    $otherPath = realpath($this->tempDir.'/src/Other.php');
+    expect($result->isInSourceScope($targetPath))->toBeTrue()
+        ->and($result->isInSourceScope($otherPath))->toBeFalse();
+});
+
+it('silently drops unresolvable <source> paths', function () {
+    file_put_contents(
+        $this->tempDir.'/phpunit.xml',
+        '<?xml version="1.0"?>
+<phpunit>
+  <source>
+    <include>
+      <directory>src/does-not-exist</directory>
+    </include>
+    <exclude>
+      <file>src/also-missing.php</file>
+    </exclude>
+  </source>
+</phpunit>'
+    );
+
+    $parser = new PhpunitConfigParser();
+    $result = $parser->parse($this->tempDir);
+
+    expect($result->sourceIncludeDirectories)->toBe([])
+        ->and($result->sourceExcludeFiles)->toBe([])
+        ->and($result->hasSourceScope())->toBeFalse();
+});

@@ -523,4 +523,16 @@ return [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
         ],
     ],
+    [
+        'key' => 'excludedByPhpunitSource',
+        'name' => 'Excluded by phpunit.xml',
+        'shortName' => 'Excluded',
+        'description' => 'Whether this class sits outside the <source> coverage scope defined in phpunit.xml. Excluded classes are not counted as tested or untested.',
+        'valueType' => \PhpCodeArch\Metrics\Model\Enums\MetricValueType::Bool,
+        'better' => \PhpCodeArch\Metrics\Model\Enums\BetterDirection::Irrelevant,
+        'visibility' => \PhpCodeArch\Metrics\Model\Enums\MetricVisibility::ShowNowhere,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ClassCollection,
+        ],
+    ],
 ];

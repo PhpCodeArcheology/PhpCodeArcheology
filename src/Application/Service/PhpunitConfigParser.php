@@ -43,11 +43,99 @@ class PhpunitConfigParser
             $testSuites[] = $this->parseSuiteNode($suiteNode, $configDir);
         }
 
+        [$sourceIncludeDirs, $sourceIncludeFiles, $sourceExcludeDirs, $sourceExcludeFiles]
+            = $this->parseSourceNode($xml, $configDir);
+
         return new PhpunitConfigResult(
             found: true,
             configFilePath: $configFile,
             testSuites: $testSuites,
+            sourceIncludeDirectories: $sourceIncludeDirs,
+            sourceIncludeFiles: $sourceIncludeFiles,
+            sourceExcludeDirectories: $sourceExcludeDirs,
+            sourceExcludeFiles: $sourceExcludeFiles,
         );
+    }
+
+    /**
+     * Parse the top-level <source> element (PHPUnit 10+ coverage scope definition).
+     *
+     * Returns absolute realpaths for include/exclude directories and files.
+     * Missing paths are silently dropped, matching the tolerance of the <testsuite><exclude> parser.
+     *
+     * @return array{string[], string[], string[], string[]} [includeDirs, includeFiles, excludeDirs, excludeFiles]
+     */
+    private function parseSourceNode(\SimpleXMLElement $xml, string $configDir): array
+    {
+        $includeDirs = [];
+        $includeFiles = [];
+        $excludeDirs = [];
+        $excludeFiles = [];
+
+        $sourceNodes = $xml->xpath('/phpunit/source') ?: [];
+        foreach ($sourceNodes as $sourceNode) {
+            foreach ($sourceNode->include as $includeNode) {
+                foreach ($includeNode->directory as $dirNode) {
+                    $absPath = $this->resolveEntryPath((string) $dirNode, $configDir, requireDir: true);
+                    if (null !== $absPath) {
+                        $includeDirs[] = $absPath;
+                    }
+                }
+                foreach ($includeNode->file as $fileNode) {
+                    $absPath = $this->resolveEntryPath((string) $fileNode, $configDir, requireFile: true);
+                    if (null !== $absPath) {
+                        $includeFiles[] = $absPath;
+                    }
+                }
+            }
+            foreach ($sourceNode->exclude as $excludeNode) {
+                foreach ($excludeNode->directory as $dirNode) {
+                    $absPath = $this->resolveEntryPath((string) $dirNode, $configDir, requireDir: true);
+                    if (null !== $absPath) {
+                        $excludeDirs[] = $absPath;
+                    }
+                }
+                foreach ($excludeNode->file as $fileNode) {
+                    $absPath = $this->resolveEntryPath((string) $fileNode, $configDir, requireFile: true);
+                    if (null !== $absPath) {
+                        $excludeFiles[] = $absPath;
+                    }
+                }
+            }
+        }
+
+        return [
+            array_values(array_unique($includeDirs)),
+            array_values(array_unique($includeFiles)),
+            array_values(array_unique($excludeDirs)),
+            array_values(array_unique($excludeFiles)),
+        ];
+    }
+
+    /**
+     * Resolve a <source> entry string to an absolute realpath, with an optional
+     * file-or-directory sanity check.
+     */
+    private function resolveEntryPath(string $raw, string $configDir, bool $requireDir = false, bool $requireFile = false): ?string
+    {
+        $trimmed = trim($raw);
+        if ('' === $trimmed) {
+            return null;
+        }
+
+        $absPath = $this->resolvePath($trimmed, $configDir);
+        if (null === $absPath) {
+            return null;
+        }
+
+        if ($requireDir && !is_dir($absPath)) {
+            return null;
+        }
+        if ($requireFile && !is_file($absPath)) {
+            return null;
+        }
+
+        return $absPath;
     }
 
     private function findConfigFile(string $composerRoot): ?string
