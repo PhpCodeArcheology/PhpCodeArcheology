@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Tailwind CSS upgraded from v3 to v4.** Migrated config from `tailwind.config.js` to CSS-native `@theme` and `@utility` directives. Resolves all npm security advisories.
 - **Twig updated to v3.24.0.** Resolves sandbox bypass and `__toString()`/`__isset()` security advisories.
 - **Dependabot enabled.** Automated dependency update PRs for Composer (weekly), npm (monthly), and GitHub Actions (weekly).
+- **3.0.0 roadmap announced.** New `## Next Major (3.0)` section in [ROADMAP.md](ROADMAP.md) and [3.0.0 milestone](https://github.com/PhpCodeArcheology/PhpCodeArcheology/milestone/1) for tracking. The next major will rework relative average thresholds (Effort, MI, LCOM) with statistical outlier detection — development happens on the `3.0.x` branch; 2.x continues on `main`.
 
 ## [2.8.0] - 2026-04-04
 

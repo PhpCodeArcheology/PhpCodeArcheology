@@ -2,6 +2,16 @@
 
 This document outlines planned features and improvements for PhpCodeArcheology. Items are roughly prioritized but not tied to specific versions or deadlines. Contributions and feedback are welcome — if you'd like to work on something, open an issue first so we can discuss the approach.
 
+## Next Major (3.0)
+
+A major version is in development on the `3.0.x` branch. Tracking happens in the [3.0.0 milestone](https://github.com/PhpCodeArcheology/PhpCodeArcheology/milestone/1).
+
+**Why a major version:** 3.0 reworks how problem thresholds are calculated for metrics that compare against project averages (Effort, Maintainability Index, LCOM). The current "percentage above/below average" rule is mathematically weak on right-skewed distributions — it produces noise in framework-heavy projects where structural patterns (e.g. Doctrine entities) pull the average up and a significant share of classes lands over the threshold by construction. The replacement will use robust statistical outlier detection (Median + MAD or Q3 + IQR).
+
+**Impact:** Problem counts, Refactoring Priority, Health Score, and Technical Debt Score will shift noticeably. History comparisons against 2.x reports will not be directly comparable — a one-time migration notice is planned.
+
+The 2.x line continues to receive bug fixes and non-breaking improvements on `main`. Internal refactorings without user-visible effects (MetricsController split, Config split, visitor cleanup) are not gated on 3.0 and may land in 2.x minors.
+
 ## Next Up
 
 - ~~**Graph filter accessibility.** Rework the Knowledge Graph filter chips for better readability and WCAG AA contrast in both dark and light themes. Active vs inactive state needs a clearer visual distinction beyond opacity.~~

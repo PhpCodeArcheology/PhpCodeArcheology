@@ -499,6 +499,10 @@ The Health Score (0–100) is a **guideline for tracking trends**, not an absolu
 
 The score is weighted across 10 factors (Maintainability Index, Problem Density, Complexity, Coupling, Code Structure, HTML Ratio, Encapsulation, Dependencies, Abstractness, and Test Coverage). See [`docs/metrics-formulas.md`](docs/metrics-formulas.md) for the exact formulas and weights.
 
+## Roadmap
+
+See [ROADMAP.md](ROADMAP.md) for planned features. The next major version (**3.0**) is in development on the `3.0.x` branch — it reworks how relative problem thresholds are calculated, replacing the current "percentage above/below project average" rule with robust statistical outlier detection. Track progress in the [3.0.0 milestone](https://github.com/PhpCodeArcheology/PhpCodeArcheology/milestone/1).
+
 ## Contributing
 
 Contributions are welcome! Check the [open issues](https://github.com/PhpCodeArcheology/PhpCodeArcheology/issues) for bugs and feature requests, or see the [Roadmap](ROADMAP.md) for planned features. For larger changes, open an issue first to discuss the approach.
