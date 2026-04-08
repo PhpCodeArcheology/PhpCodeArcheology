@@ -12,6 +12,17 @@ class TestsDataProvider implements ReportDataProviderInterface
 {
     use ReportDataProviderTrait;
 
+    /**
+     * Minimum cyclomatic complexity for a class to appear in the
+     * "Untested Complex Classes" table.
+     *
+     * Matches the default of `untestedComplexCode.cc` used by
+     * UntestedComplexCodePrediction, so the HTML list and the problem count
+     * stay consistent. Trivial classes (exceptions, one-liner DTOs, …)
+     * don't need their own tests and are filtered out here.
+     */
+    private const MIN_COMPLEXITY_FOR_GAP = 8;
+
     public function gatherData(): void
     {
         $coverageGaps = [];
@@ -28,7 +39,21 @@ class TestsDataProvider implements ReportDataProviderInterface
                 continue;
             }
 
+            // Skip classes outside phpunit.xml's <source> coverage scope — these are
+            // infrastructure code (fixtures, kernel, migrations) and should not appear
+            // in the untested gap list.
+            if ($collection->getBool(MetricKey::EXCLUDED_BY_PHPUNIT_SOURCE)) {
+                continue;
+            }
+
             if ($collection->getBool(MetricKey::HAS_TEST)) {
+                continue;
+            }
+
+            // The table is titled "Untested Complex Classes" — honor the "complex" part.
+            // Trivial classes (exceptions with CC=1, one-liner DTOs, …) are not
+            // meaningful coverage gaps and would only dilute the list.
+            if ($collection->getInt(MetricKey::CC) < self::MIN_COMPLEXITY_FOR_GAP) {
                 continue;
             }
 
@@ -68,6 +93,9 @@ class TestsDataProvider implements ReportDataProviderInterface
             )?->asFloat() ?? 0.0,
             'functionBasedTestFileCount' => $this->metricsController->getMetricValue(
                 MetricCollectionTypeEnum::ProjectCollection, null, MetricKey::OVERALL_FUNCTION_BASED_TEST_FILE_COUNT
+            )?->asInt() ?? 0,
+            'sourceExcludedClassCount' => $this->metricsController->getMetricValue(
+                MetricCollectionTypeEnum::ProjectCollection, null, MetricKey::OVERALL_SOURCE_EXCLUDED_CLASS_COUNT
             )?->asInt() ?? 0,
             'detectedTestFrameworks' => $this->metricsController->getMetricValue(
                 MetricCollectionTypeEnum::ProjectCollection, null, MetricKey::DETECTED_TEST_FRAMEWORKS

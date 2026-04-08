@@ -13,6 +13,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Rework of relative average thresholds.** Replace the current "percentage above/below project average" rule for Effort, Maintainability Index, and LCOM with robust statistical outlier detection (Median + MAD or Q3 + IQR). The current approach is mathematically weak on right-skewed distributions and produces noise in framework-heavy projects. Score recalibration across Health Score, Technical Debt Score, and Refactoring Priority follows from this.
 
+## [2.9.1] - 2026-04-08
+
+### Fixed
+
+- **`<source>` section from phpunit.xml is now respected.** The v2.9.0 phpunit.xml integration only parsed `<testsuite>` entries; the `<source><include>` and `<source><exclude>` sections — which tell PHPUnit which production files belong to the coverage scope — were ignored. As a result, classes explicitly excluded from coverage (DataFixtures, `Kernel`, migrations, …) were still counted as untested and showed up in the "Untested Complex Classes" table, and some triggered false-positive `UntestedComplexCode` problems. The parser now reads the full `<source>` tree, classes outside the scope get the new `excludedByPhpunitSource` flag, and the Tests page shows a dedicated "Excluded by phpunit.xml" stats card so the removal is visible. Tested/untested counts, test ratio, Health Score and Technical Debt Score improve correspondingly for projects that use `<source><exclude>`. Projects without a `<source>` section are byte-identical to 2.9.0.
+- **"Untested Complex Classes" list now honors the "Complex" part of its title.** The table listed any untested class (sorted by CC, top 20), even trivial ones like pass-through exceptions with CC=1 — while `UntestedComplexCodePrediction` used a CC threshold of 8 for the actual warnings. The two were inconsistent: the list could show 20 "complex" entries while only 2 were actually flagged. The Tests page now filters by the same CC ≥ 8 threshold, so trivial exception classes, one-liner DTOs and the like no longer dilute the list.
+
 ## [2.9.0] - 2026-04-08
 
 ### Added

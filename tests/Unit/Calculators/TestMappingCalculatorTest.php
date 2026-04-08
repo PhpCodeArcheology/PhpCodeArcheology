@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use PhpCodeArch\Application\Service\FrameworkDetectionResult;
+use PhpCodeArch\Application\Service\PhpunitConfigResult;
 use PhpCodeArch\Application\Service\TestCoversParseResult;
 use PhpCodeArch\Application\Service\TestScanResult;
 use PhpCodeArch\Calculators\TestMappingCalculator;
@@ -23,8 +24,8 @@ function createProdClass(
     string $path = '',
     array $flags = [],
 ): string {
-    if ($path === '') {
-        $path = '/src/' . str_replace('\\', '/', $name) . '.php';
+    if ('' === $path) {
+        $path = '/src/'.str_replace('\\', '/', $name).'.php';
     }
 
     $controller->createMetricCollection(
@@ -344,4 +345,171 @@ it('calculates project-level aggregates correctly', function () {
         ->and(getMappingProjectMetric($this->controller, 'overallTestedClassCount'))->toBe(1)
         ->and(getMappingProjectMetric($this->controller, 'overallUntestedClassCount'))->toBe(1)
         ->and(getMappingProjectMetric($this->controller, 'overallTestedClassRatio'))->toBe(33.33);
+});
+
+// ---------------------------------------------------------------------------
+// phpunit.xml <source> scope exclusion
+// ---------------------------------------------------------------------------
+
+it('tags classes outside <source> scope with EXCLUDED_BY_PHPUNIT_SOURCE', function () {
+    $fixturePath = '/project/src/DataFixtures/UserFixtures.php';
+    $fixtureId = createProdClass($this->controller, 'App\\DataFixtures\\UserFixtures', $fixturePath);
+
+    $phpunitConfig = new PhpunitConfigResult(
+        found: true,
+        configFilePath: '/project/phpunit.xml',
+        sourceIncludeDirectories: ['/project/src'],
+        sourceExcludeDirectories: ['/project/src/DataFixtures'],
+    );
+
+    $testScan = new TestScanResult(
+        testDirectories: ['/project/tests'],
+        classBasedTestFiles: ['/project/tests/SomeTest.php'],
+        testFileToType: ['/project/tests/SomeTest.php' => 'unit'],
+        phpunitConfig: $phpunitConfig,
+    );
+
+    $calculator = new TestMappingCalculator(
+        metricsController: $this->controller,
+        testScanResult: $testScan,
+    );
+    $calculator->afterTraverse();
+
+    $excluded = $this->controller
+        ->getMetricCollectionByIdentifierString($fixtureId)
+        ->get('excludedByPhpunitSource')
+        ?->getValue();
+
+    expect($excluded)->toBeTrue();
+});
+
+it('does not count source-excluded classes as production or untested', function () {
+    createProdClass($this->controller, 'App\\Services\\UserService', '/project/src/Services/UserService.php');
+    createProdClass($this->controller, 'App\\DataFixtures\\UserFixtures', '/project/src/DataFixtures/UserFixtures.php');
+    createProdClass($this->controller, 'App\\Kernel', '/project/src/Kernel.php');
+
+    $phpunitConfig = new PhpunitConfigResult(
+        found: true,
+        configFilePath: '/project/phpunit.xml',
+        sourceIncludeDirectories: ['/project/src'],
+        sourceExcludeDirectories: ['/project/src/DataFixtures'],
+        sourceExcludeFiles: ['/project/src/Kernel.php'],
+    );
+
+    $testScan = new TestScanResult(
+        testDirectories: ['/project/tests'],
+        classBasedTestFiles: ['/project/tests/SomeTest.php'],
+        testFileToType: ['/project/tests/SomeTest.php' => 'unit'],
+        phpunitConfig: $phpunitConfig,
+    );
+
+    $calculator = new TestMappingCalculator(
+        metricsController: $this->controller,
+        testScanResult: $testScan,
+    );
+    $calculator->afterTraverse();
+
+    // Only UserService remains in the production set
+    expect(getMappingProjectMetric($this->controller, 'overallProductionFileCount'))->toBe(1)
+        ->and(getMappingProjectMetric($this->controller, 'overallTestedClassCount'))->toBe(0)
+        ->and(getMappingProjectMetric($this->controller, 'overallUntestedClassCount'))->toBe(1)
+        ->and(getMappingProjectMetric($this->controller, 'overallSourceExcludedClassCount'))->toBe(2);
+});
+
+it('behaves unchanged when testScanResult->phpunitConfig is null', function () {
+    createProdClass($this->controller, 'App\\Services\\UserService', '/project/src/Services/UserService.php');
+    createProdClass($this->controller, 'App\\DataFixtures\\UserFixtures', '/project/src/DataFixtures/UserFixtures.php');
+
+    $testScan = new TestScanResult(
+        testDirectories: ['/project/tests'],
+        classBasedTestFiles: ['/project/tests/SomeTest.php'],
+        testFileToType: ['/project/tests/SomeTest.php' => 'unit'],
+        phpunitConfig: null,
+    );
+
+    $calculator = new TestMappingCalculator(
+        metricsController: $this->controller,
+        testScanResult: $testScan,
+    );
+    $calculator->afterTraverse();
+
+    // Both classes still counted as production (nothing excluded)
+    expect(getMappingProjectMetric($this->controller, 'overallProductionFileCount'))->toBe(2)
+        ->and(getMappingProjectMetric($this->controller, 'overallSourceExcludedClassCount'))->toBe(0);
+});
+
+it('behaves unchanged when phpunitConfig has no <source> scope', function () {
+    createProdClass($this->controller, 'App\\Services\\UserService', '/project/src/Services/UserService.php');
+    createProdClass($this->controller, 'App\\DataFixtures\\UserFixtures', '/project/src/DataFixtures/UserFixtures.php');
+
+    $phpunitConfig = new PhpunitConfigResult(
+        found: true,
+        configFilePath: '/project/phpunit.xml',
+    );
+
+    $testScan = new TestScanResult(
+        testDirectories: ['/project/tests'],
+        classBasedTestFiles: ['/project/tests/SomeTest.php'],
+        testFileToType: ['/project/tests/SomeTest.php' => 'unit'],
+        phpunitConfig: $phpunitConfig,
+    );
+
+    $calculator = new TestMappingCalculator(
+        metricsController: $this->controller,
+        testScanResult: $testScan,
+    );
+    $calculator->afterTraverse();
+
+    expect(getMappingProjectMetric($this->controller, 'overallProductionFileCount'))->toBe(2)
+        ->and(getMappingProjectMetric($this->controller, 'overallSourceExcludedClassCount'))->toBe(0);
+});
+
+it('uses the absolute class path, not the common-path-stripped FILE_PATH metric', function () {
+    // Simulate the post-FileCalculator state: FILE_PATH metric has been stripped to
+    // a relative path, while the collection's getPath() still returns the absolute one.
+    // Regression guard: isInSourceScope() must be matched against getPath(), not FILE_PATH.
+    $serviceId = createProdClass(
+        $this->controller,
+        'App\\Services\\UserService',
+        '/project/src/Services/UserService.php',
+    );
+    $fixtureId = createProdClass(
+        $this->controller,
+        'App\\DataFixtures\\UserFixtures',
+        '/project/src/DataFixtures/UserFixtures.php',
+    );
+
+    // Overwrite the FILE_PATH metric with the common-path-stripped form FileCalculator
+    // would produce. The collection's path (used internally) stays absolute.
+    $this->controller->setMetricValuesByIdentifierString($serviceId, [
+        'filePath' => 'Services/UserService.php',
+    ]);
+    $this->controller->setMetricValuesByIdentifierString($fixtureId, [
+        'filePath' => 'DataFixtures/UserFixtures.php',
+    ]);
+
+    $phpunitConfig = new PhpunitConfigResult(
+        found: true,
+        configFilePath: '/project/phpunit.xml',
+        sourceIncludeDirectories: ['/project/src'],
+        sourceExcludeDirectories: ['/project/src/DataFixtures'],
+    );
+
+    $testScan = new TestScanResult(
+        testDirectories: ['/project/tests'],
+        classBasedTestFiles: ['/project/tests/SomeTest.php'],
+        testFileToType: ['/project/tests/SomeTest.php' => 'unit'],
+        phpunitConfig: $phpunitConfig,
+    );
+
+    $calculator = new TestMappingCalculator(
+        metricsController: $this->controller,
+        testScanResult: $testScan,
+    );
+    $calculator->afterTraverse();
+
+    // UserService stays in production (under /project/src, not excluded).
+    // UserFixtures is excluded (under /project/src/DataFixtures).
+    expect(getMappingProjectMetric($this->controller, 'overallProductionFileCount'))->toBe(1)
+        ->and(getMappingProjectMetric($this->controller, 'overallSourceExcludedClassCount'))->toBe(1);
 });

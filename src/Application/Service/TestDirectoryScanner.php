@@ -49,6 +49,7 @@ class TestDirectoryScanner
             classBasedTestFiles: $classBasedTestFiles,
             functionBasedTestFiles: $functionBasedTestFiles,
             testFileToType: $testFileToType,
+            phpunitConfig: $phpunitConfig,
         );
     }
 

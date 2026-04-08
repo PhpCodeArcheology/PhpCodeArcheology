@@ -15,7 +15,10 @@
   <h1 class="mb-6 text-3xl font-semibold font-display">Tests</h1>
 
   {# Summary Cards #}
-  <div style="display: grid; grid-template-columns: repeat({% if stats.overallCoveragePercent is not null %}5{% else %}4{% endif %}, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
+  {% set cardCount = 4 %}
+  {% if stats.overallCoveragePercent is not null %}{% set cardCount = cardCount + 1 %}{% endif %}
+  {% if stats.sourceExcludedClassCount > 0 %}{% set cardCount = cardCount + 1 %}{% endif %}
+  <div style="display: grid; grid-template-columns: repeat({{ cardCount }}, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
     <div class="rounded-xl border border-cyan-800 bg-cyan-950/45 p-4 text-center">
       <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Tested Class Ratio</div>
       <div style="font-family: 'Oswald', sans-serif; font-size: 2.5rem; font-weight: 500;
@@ -51,6 +54,15 @@
         {{ stats.overallCoveragePercent|number_format(1) }}%
       </div>
       <div style="font-size: 0.7rem; color: rgba(255,255,255,0.4);">from Clover XML</div>
+    </div>
+    {% endif %}
+    {% if stats.sourceExcludedClassCount > 0 %}
+    <div class="rounded-xl border border-slate-700 bg-slate-950/45 p-4 text-center">
+      <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Excluded by phpunit.xml</div>
+      <div style="font-family: 'Oswald', sans-serif; font-size: 2.5rem; font-weight: 500; color: rgba(255,255,255,0.7);">
+        {{ stats.sourceExcludedClassCount }}
+      </div>
+      <div style="font-size: 0.7rem; color: rgba(255,255,255,0.4);">classes outside &lt;source&gt; scope</div>
     </div>
     {% endif %}
   </div>

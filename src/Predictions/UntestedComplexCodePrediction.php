@@ -48,6 +48,12 @@ class UntestedComplexCodePrediction implements PredictionInterface
                 continue;
             }
 
+            // Classes outside phpunit.xml's <source> scope are not meant to be tested.
+            $sourceExcluded = $metric->get(MetricKey::EXCLUDED_BY_PHPUNIT_SOURCE)?->asBool() ?? false;
+            if ($sourceExcluded) {
+                continue;
+            }
+
             $hasTest = $metric->get(MetricKey::HAS_TEST)?->asBool() ?? false;
             $cc = $metric->get(MetricKey::CC)?->asInt() ?? 0;
 

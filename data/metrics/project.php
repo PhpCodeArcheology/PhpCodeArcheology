@@ -877,6 +877,18 @@ return [
         ],
     ],
     [
+        'key' => 'overallSourceExcludedClassCount',
+        'name' => 'Classes excluded by phpunit.xml',
+        'shortName' => 'Excluded',
+        'description' => 'Number of classes outside the <source> coverage scope defined in phpunit.xml. Not counted as tested or untested.',
+        'valueType' => \PhpCodeArch\Metrics\Model\Enums\MetricValueType::Int,
+        'better' => \PhpCodeArch\Metrics\Model\Enums\BetterDirection::Irrelevant,
+        'visibility' => \PhpCodeArch\Metrics\Model\Enums\MetricVisibility::ShowNowhere,
+        'collections' => [
+            \PhpCodeArch\Metrics\MetricCollectionTypeEnum::ProjectCollection,
+        ],
+    ],
+    [
         'key' => 'overallTestedClassRatio',
         'name' => 'Tested class ratio',
         'shortName' => 'Tested %',

@@ -15,6 +15,8 @@ final readonly class TestScanResult
         public array $functionBasedTestFiles = [],
         /** @var array<string, string> Maps test file path → 'unit'|'integration'|'unknown' */
         public array $testFileToType = [],
+        /** Parsed phpunit.xml (if any) — carries testsuite and <source> scope info */
+        public ?PhpunitConfigResult $phpunitConfig = null,
     ) {
     }
 }

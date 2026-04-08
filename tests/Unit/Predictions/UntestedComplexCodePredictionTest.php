@@ -17,6 +17,7 @@ function makeUntestedController(): MetricsController
     $controller = new MetricsController($container);
     $controller->registerMetricTypes();
     $controller->createProjectMetricsCollection(['/src']);
+
     return $controller;
 }
 
@@ -26,7 +27,7 @@ function createComplexClass(
     array $metrics = [],
     array $flags = [],
 ): string {
-    $path = '/src/' . str_replace('\\', '/', $name) . '.php';
+    $path = '/src/'.str_replace('\\', '/', $name).'.php';
 
     $controller->createMetricCollection(
         MetricCollectionTypeEnum::ClassCollection,
@@ -57,6 +58,7 @@ function makeTestFrameworkConfig(): Config
 {
     $config = new Config();
     $config->set('frameworkDetection', new FrameworkDetectionResult(pestDetected: true));
+
     return $config;
 }
 
@@ -192,4 +194,19 @@ it('detects test infrastructure from testScanResult directories', function () {
 
     // testScanResult has directories → infrastructure detected → fires
     expect($prediction->predict($controller))->toBe(1);
+});
+
+it('skips classes flagged as excludedByPhpunitSource', function () {
+    $controller = makeUntestedController();
+    createComplexClass(
+        $controller,
+        'App\\DataFixtures\\UserFixtures',
+        ['cc' => 15],
+        ['excludedByPhpunitSource' => true],
+    );
+
+    $prediction = new UntestedComplexCodePrediction(makeTestFrameworkConfig());
+
+    // Even though cc=15 and hasTest=false, the source exclusion wins
+    expect($prediction->predict($controller))->toBe(0);
 });
