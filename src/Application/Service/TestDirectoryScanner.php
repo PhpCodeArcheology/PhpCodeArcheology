@@ -16,21 +16,31 @@ class TestDirectoryScanner
         $projectRoot = rtrim($projectRoot, '/\\');
         $composerRoot = $this->resolveComposerRoot($projectRoot);
 
-        $testDirectories = $this->findTestDirectories($projectRoot, $composerRoot);
+        $phpunitConfig = (new PhpunitConfigParser())->parse($composerRoot);
+
+        if (null !== $phpunitConfig && $phpunitConfig->hasTestSuites()) {
+            [$testFiles, $testDirectories] = $this->collectFromPhpunitConfig($phpunitConfig);
+        } else {
+            $testDirectories = $this->findTestDirectoriesLegacy($projectRoot, $composerRoot);
+            $testFiles = [];
+            foreach ($testDirectories as $testDir) {
+                foreach ($this->findTestFilesInDirectoryLegacy($testDir) as $file) {
+                    $testFiles[] = $file;
+                }
+            }
+        }
 
         $classBasedTestFiles = [];
         $functionBasedTestFiles = [];
         $testFileToType = [];
 
-        foreach ($testDirectories as $testDir) {
-            foreach ($this->findTestFilesInDirectory($testDir) as $file) {
-                $testFileToType[$file] = $this->determineTestType($file);
+        foreach ($testFiles as $file) {
+            $testFileToType[$file] = $this->determineTestType($file);
 
-                if ($this->hasClassDeclaration($file)) {
-                    $classBasedTestFiles[] = $file;
-                } else {
-                    $functionBasedTestFiles[] = $file;
-                }
+            if ($this->hasClassDeclaration($file)) {
+                $classBasedTestFiles[] = $file;
+            } else {
+                $functionBasedTestFiles[] = $file;
             }
         }
 
@@ -44,21 +54,73 @@ class TestDirectoryScanner
 
     private function resolveComposerRoot(string $projectRoot): string
     {
-        if ('' !== $this->frameworkDetection?->composerJsonPath) {
-            return dirname((string) $this->frameworkDetection?->composerJsonPath);
+        if (null === $this->frameworkDetection) {
+            return $projectRoot;
+        }
+
+        $composerJsonPath = $this->frameworkDetection->composerJsonPath;
+        if ('' !== $composerJsonPath) {
+            return dirname($composerJsonPath);
         }
 
         return $projectRoot;
     }
 
     /**
+     * Collect test files and directories from a parsed PHPUnit config.
+     *
+     * Honors per-directory suffix/prefix, explicit <file> entries, and <exclude> entries.
+     *
+     * @return array{0: string[], 1: string[]} [testFiles, testDirectories]
+     */
+    private function collectFromPhpunitConfig(PhpunitConfigResult $cfg): array
+    {
+        $files = [];
+        $dirs = [];
+
+        foreach ($cfg->getAllDirectories() as $directory) {
+            $dirs[] = $directory->absolutePath;
+
+            foreach ($this->iterateFilesRecursive($directory->absolutePath) as $filePath) {
+                if ($cfg->isExcluded($filePath)) {
+                    continue;
+                }
+
+                $name = basename($filePath);
+                if (!str_ends_with($name, $directory->suffix)) {
+                    continue;
+                }
+                if ('' !== $directory->prefix && !str_starts_with($name, $directory->prefix)) {
+                    continue;
+                }
+
+                $files[] = $filePath;
+            }
+        }
+
+        foreach ($cfg->getAllExplicitFiles() as $explicitFile) {
+            if ($cfg->isExcluded($explicitFile)) {
+                continue;
+            }
+            $files[] = $explicitFile;
+        }
+
+        return [
+            array_values(array_unique($files)),
+            array_values(array_unique($dirs)),
+        ];
+    }
+
+    /**
+     * Legacy discovery path used when no phpunit.xml is present (or has no testsuites).
+     *
      * @return string[]
      */
-    private function findTestDirectories(string $projectRoot, string $composerRoot): array
+    private function findTestDirectoriesLegacy(string $projectRoot, string $composerRoot): array
     {
         $dirs = [];
 
-        // Primary: use PSR-4 autoload-dev directories from composer.json
+        // Primary legacy: use PSR-4 autoload-dev directories from composer.json
         if ($this->frameworkDetection instanceof FrameworkDetectionResult && [] !== $this->frameworkDetection->psr4AutoloadDev) {
             foreach ($this->frameworkDetection->psr4AutoloadDev as $relPath) {
                 $absPath = $composerRoot.DIRECTORY_SEPARATOR.$relPath;
@@ -69,7 +131,7 @@ class TestDirectoryScanner
             }
         }
 
-        // Fallback: scan for common test directory names
+        // Secondary legacy: scan for common test directory names
         if ([] === $dirs) {
             foreach (['tests', 'test', 'spec'] as $dirName) {
                 foreach (array_unique([$projectRoot, $composerRoot]) as $base) {
@@ -82,61 +144,39 @@ class TestDirectoryScanner
             }
         }
 
-        // Fallback: parse phpunit.xml.dist / phpunit.xml for test suite directories
-        if ([] === $dirs && $this->frameworkDetection instanceof FrameworkDetectionResult
-            && $this->frameworkDetection->phpunitDetected) {
-            $dirs = $this->findTestDirectoriesFromPhpunitXml($composerRoot);
-        }
-
         return array_values(array_unique($dirs));
     }
 
     /**
+     * Legacy file matcher: hard-coded Test.php / Spec.php / Cest.php suffix set.
+     * Used by the fallback path (no phpunit.xml). Codeception and Pest-without-phpunit.xml
+     * projects rely on this.
+     *
      * @return string[]
      */
-    private function findTestDirectoriesFromPhpunitXml(string $composerRoot): array
-    {
-        $dirs = [];
-
-        foreach (['phpunit.xml.dist', 'phpunit.xml'] as $filename) {
-            $path = $composerRoot.DIRECTORY_SEPARATOR.$filename;
-            if (!file_exists($path)) {
-                continue;
-            }
-
-            $xml = @simplexml_load_file($path);
-            if (false === $xml) {
-                continue;
-            }
-
-            $xpathResult = $xml->xpath('//testsuites/testsuite/directory');
-            foreach ($xpathResult ?: [] as $dirNode) {
-                $relPath = trim((string) $dirNode);
-                if ('' === $relPath) {
-                    continue;
-                }
-                $absPath = $composerRoot.DIRECTORY_SEPARATOR.$relPath;
-                $real = realpath($absPath);
-                if (false !== $real && is_dir($real)) {
-                    $dirs[] = $real;
-                }
-            }
-
-            if ([] !== $dirs) {
-                break;
-            }
-        }
-
-        return $dirs;
-    }
-
-    /**
-     * @return string[]
-     */
-    private function findTestFilesInDirectory(string $dir): array
+    private function findTestFilesInDirectoryLegacy(string $dir): array
     {
         $files = [];
 
+        foreach ($this->iterateFilesRecursive($dir) as $filePath) {
+            $filename = basename($filePath);
+            if (
+                str_ends_with($filename, 'Test.php')
+                || str_ends_with($filename, 'Spec.php')
+                || str_ends_with($filename, 'Cest.php')
+            ) {
+                $files[] = $filePath;
+            }
+        }
+
+        return $files;
+    }
+
+    /**
+     * @return iterable<string>
+     */
+    private function iterateFilesRecursive(string $dir): iterable
+    {
         $iterator = new \RecursiveIteratorIterator(
             new \RecursiveDirectoryIterator($dir, \RecursiveDirectoryIterator::SKIP_DOTS)
         );
@@ -145,17 +185,8 @@ class TestDirectoryScanner
             if (!$file instanceof \SplFileInfo || !$file->isFile()) {
                 continue;
             }
-            $filename = $file->getFilename();
-            if (
-                str_ends_with((string) $filename, 'Test.php')
-                || str_ends_with((string) $filename, 'Spec.php')
-                || str_ends_with((string) $filename, 'Cest.php')
-            ) {
-                $files[] = $file->getPathname();
-            }
+            yield $file->getPathname();
         }
-
-        return $files;
     }
 
     private function hasClassDeclaration(string $filePath): bool

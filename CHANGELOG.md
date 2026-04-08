@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **PHPUnit testsuite configuration is now respected.** Test discovery reads `phpunit.xml` / `phpunit.xml.dist` / `phpunit.dist.xml` and honors `<testsuite>` definitions including `<directory>` (with `suffix` and `prefix` attributes), explicit `<file>` entries, and `<exclude>` paths. Pest projects benefit automatically since Pest uses `phpunit.xml` under the hood. Projects without a phpunit config continue to use the existing heuristic (PSR-4 `autoload-dev` → common directory names), so Codeception and PHPUnit-less projects are unaffected.
 - **`coverageFile` config option.** The Clover XML path can now be set persistently in `php-codearch-config.yaml` / `.phpcodearch.json` instead of passing `--coverage-file` on every run. Relative paths are resolved against the project's running directory. The CLI flag still takes precedence over the config value.
 - **Symfony-style Clover auto-detection.** `var/reports/clover.xml` and `var/coverage/clover.xml` are now part of the auto-detection candidate list, alongside the existing root, `coverage/`, `build/logs/`, and `build/coverage/` locations.
 - **Project logo.** New logo (compass-graph hybrid) added to README, HTML report header, and as favicon.
@@ -16,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Behavior change: phpunit.xml is now authoritative for PHPUnit/Pest test discovery.** When a `phpunit.xml` (or `.xml.dist` / `.dist.xml`) with testsuites is present, PhpCodeArcheology uses it as the single source of truth instead of just scanning PSR-4 `autoload-dev` directories. Test files outside the configured suites, inside `<exclude>` paths, or not matching the configured `suffix` are no longer counted. If your test ratio drops unexpectedly after upgrading, check whether your `phpunit.xml` is narrower than your filesystem layout — the new count reflects what PHPUnit actually runs.
 - **Metric tiles: dynamic font sizing.** Long metric values (namespace lists, refactoring recommendations) now scale down automatically instead of overflowing. Word-break at backslashes for readable namespace wrapping.
 - **Metric tiles: empty value indicator.** Tiles with no value now show a subtle dash instead of being completely empty.
 - **Knowledge Graph filter chips: accessibility overhaul.** Replaced opacity-based active/inactive toggle with filled/outline pattern. Active chips now use darkened color backgrounds with white text, inactive chips are transparent with muted text. All combinations pass WCAG AA contrast (4.5:1+) in both dark and light themes. Added keyboard navigation (Tab + Enter/Space), focus-visible ring, and `role="button"`. Fixed German labels ("Node-Typen"/"Edge-Typen" → "Nodes"/"Edges"). Previously invisible chips in light mode (`depends_on`, `belongs_to`, `declares`) now use visible slate colors.
