@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.9.0] - 2026-04-08
+
 ### Added
 
 - **PHPUnit testsuite configuration is now respected.** Test discovery reads `phpunit.xml` / `phpunit.xml.dist` / `phpunit.dist.xml` and honors `<testsuite>` definitions including `<directory>` (with `suffix` and `prefix` attributes), explicit `<file>` entries, and `<exclude>` paths. Pest projects benefit automatically since Pest uses `phpunit.xml` under the hood. Projects without a phpunit config continue to use the existing heuristic (PSR-4 `autoload-dev` → common directory names), so Codeception and PHPUnit-less projects are unaffected.
