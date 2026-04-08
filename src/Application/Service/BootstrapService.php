@@ -47,7 +47,14 @@ final class BootstrapService
 
         // Auto-detect Clover XML in common locations
         if (null === $config->get('coverageFile')) {
-            $candidates = ['clover.xml', 'coverage/clover.xml', 'build/logs/clover.xml', 'build/coverage/clover.xml'];
+            $candidates = [
+                'clover.xml',
+                'coverage/clover.xml',
+                'build/logs/clover.xml',
+                'build/coverage/clover.xml',
+                'var/reports/clover.xml',
+                'var/coverage/clover.xml',
+            ];
             foreach ($candidates as $candidate) {
                 $path = $composerRoot.DIRECTORY_SEPARATOR.$candidate;
                 if (is_file($path)) {

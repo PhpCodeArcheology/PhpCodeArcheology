@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`coverageFile` config option.** The Clover XML path can now be set persistently in `php-codearch-config.yaml` / `.phpcodearch.json` instead of passing `--coverage-file` on every run. Relative paths are resolved against the project's running directory. The CLI flag still takes precedence over the config value.
+- **Symfony-style Clover auto-detection.** `var/reports/clover.xml` and `var/coverage/clover.xml` are now part of the auto-detection candidate list, alongside the existing root, `coverage/`, `build/logs/`, and `build/coverage/` locations.
 - **Project logo.** New logo (compass-graph hybrid) added to README, HTML report header, and as favicon.
 - **Knowledge Graph: focus selector.** Searchable combobox to focus the graph on specific classes, packages, or authors. Type to search, click to select — the graph shows only the selected entities and their direct neighbors. Selected items appear as removable chips below the controls. Double-click any node in the graph to focus on it. Selecting an author automatically activates the `authored_by` edge type. Supports keyboard navigation (arrows, Enter, Escape).
 

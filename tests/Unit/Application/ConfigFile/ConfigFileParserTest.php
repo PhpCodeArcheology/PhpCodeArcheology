@@ -28,6 +28,15 @@ function writeTempYaml(string $content): string
     return $file;
 }
 
+function parseJsonFile(string $file, Config $config): void
+{
+    $content = file_get_contents($file);
+    if (false === $content) {
+        throw new RuntimeException('Failed to read temp file: '.$file);
+    }
+    (new ConfigFileParserJson($file))->parseJson($content, $config);
+}
+
 // ──────────────────────────────────────────────────────────────────────────────
 // JSON parser — full config
 // ──────────────────────────────────────────────────────────────────────────────
@@ -224,6 +233,70 @@ it('json: relative reportDir is resolved against runningDir', function () {
 });
 
 // ──────────────────────────────────────────────────────────────────────────────
+// JSON parser — coverageFile
+// ──────────────────────────────────────────────────────────────────────────────
+
+it('json: maps absolute coverageFile path', function () {
+    // Create a real temp file so realpath() resolves
+    $coverageFile = tempnam(sys_get_temp_dir(), 'phpca_clover_').'.xml';
+    file_put_contents($coverageFile, '<?xml version="1.0"?><coverage/>');
+
+    $file = writeTempJson(['coverageFile' => $coverageFile]);
+    $config = new Config();
+    parseJsonFile($file, $config);
+    unlink($file);
+    unlink($coverageFile);
+
+    expect($config->get('coverageFile'))->toBe(realpath($coverageFile) ?: $coverageFile);
+});
+
+it('json: keeps unresolved absolute coverageFile path as raw value', function () {
+    $rawPath = '/nonexistent/path/clover.xml';
+    $file = writeTempJson(['coverageFile' => $rawPath]);
+    $config = new Config();
+    parseJsonFile($file, $config);
+    unlink($file);
+
+    expect($config->get('coverageFile'))->toBe($rawPath);
+});
+
+it('json: relative coverageFile is resolved against runningDir', function () {
+    $runningDir = sys_get_temp_dir();
+    $relativeName = 'phpca_test_clover_'.uniqid().'.xml';
+    $absolutePath = $runningDir.DIRECTORY_SEPARATOR.$relativeName;
+    file_put_contents($absolutePath, '<?xml version="1.0"?><coverage/>');
+
+    $file = writeTempJson(['coverageFile' => $relativeName]);
+    $config = new Config();
+    $config->set('runningDir', $runningDir);
+    parseJsonFile($file, $config);
+    unlink($file);
+
+    expect($config->get('coverageFile'))->toBe(realpath($absolutePath) ?: $absolutePath);
+
+    unlink($absolutePath);
+});
+
+it('json: CLI coverageFile is not overwritten by config file', function () {
+    $file = writeTempJson(['coverageFile' => 'config-clover.xml']);
+    $config = new Config();
+    $config->set('coverageFile', 'cli-clover.xml'); // simulates CLI flag already set
+    parseJsonFile($file, $config);
+    unlink($file);
+
+    expect($config->get('coverageFile'))->toBe('cli-clover.xml');
+});
+
+it('json: non-scalar coverageFile value is ignored', function () {
+    $file = writeTempJson(['coverageFile' => ['key' => 'value']]);
+    $config = new Config();
+    parseJsonFile($file, $config);
+    unlink($file);
+
+    expect($config->get('coverageFile'))->toBeNull();
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
 // YAML parser — full config
 // ──────────────────────────────────────────────────────────────────────────────
 
@@ -353,6 +426,20 @@ it('yaml: CLI reportType is not overwritten by config file', function () {
     unlink($file);
 
     expect($config->get('reportType'))->toBe('html');
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
+// YAML parser — coverageFile
+// ──────────────────────────────────────────────────────────────────────────────
+
+it('yaml: maps coverageFile (raw path when unresolved)', function () {
+    $file = writeTempYaml("coverageFile: var/reports/clover.xml\n");
+    $config = new Config();
+    (new ConfigFileParserYaml($file, new Yaml()))->parse($config);
+    unlink($file);
+
+    // Without runningDir set and without an existing file, the raw path is kept
+    expect($config->get('coverageFile'))->toBe('var/reports/clover.xml');
 });
 
 // ──────────────────────────────────────────────────────────────────────────────

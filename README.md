@@ -183,12 +183,24 @@ PhpCodeArcheology automatically detects your test infrastructure from `composer.
 XDEBUG_MODE=coverage vendor/bin/pest --coverage-clover clover.xml
 # or: XDEBUG_MODE=coverage vendor/bin/phpunit --coverage-clover clover.xml
 
-# PhpCodeArcheology auto-detects clover.xml in common locations (project root, build/logs/, etc.)
+# PhpCodeArcheology auto-detects clover.xml in common locations:
+#   clover.xml, coverage/clover.xml,
+#   build/logs/clover.xml, build/coverage/clover.xml,
+#   var/reports/clover.xml, var/coverage/clover.xml  (Symfony layout)
 ./vendor/bin/phpcodearcheology src/
 
-# Or specify explicitly:
+# Or specify explicitly via CLI:
 ./vendor/bin/phpcodearcheology --coverage-file clover.xml src/
 ```
+
+To make the path persistent across runs, set it in your config file:
+
+```yaml
+# php-codearch-config.yaml
+coverageFile: var/reports/clover.xml
+```
+
+The CLI flag still takes precedence over the config file value.
 
 Coverage data is factored into the **Health Score** as a 10th factor (10% weight). The `get_test_coverage` MCP tool exposes all coverage data to AI assistants.
 

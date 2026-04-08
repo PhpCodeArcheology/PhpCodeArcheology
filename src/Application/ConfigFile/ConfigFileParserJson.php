@@ -84,6 +84,23 @@ class ConfigFileParserJson implements ConfigFileParserInterface
             $config->set('git', $data['git']);
         }
 
+        // CLI flag takes precedence over config file
+        if (isset($data['coverageFile']) && !$config->has('coverageFile')) {
+            $coverageValue = $data['coverageFile'];
+            $coveragePath = is_scalar($coverageValue) ? (string) $coverageValue : '';
+
+            if ('' !== $coveragePath) {
+                $resolved = realpath($coveragePath);
+                if (false === $resolved) {
+                    // Try relative to runningDir
+                    $runningDir = $config->get('runningDir');
+                    $resolved = realpath((is_string($runningDir) ? $runningDir : '').DIRECTORY_SEPARATOR.$coveragePath);
+                }
+                // If still unresolved, keep raw path — BootstrapService prints the warning
+                $config->set('coverageFile', false !== $resolved ? $resolved : $coveragePath);
+            }
+        }
+
         if (isset($data['qualityGate'])) {
             $config->set('qualityGate', $data['qualityGate']);
         }
