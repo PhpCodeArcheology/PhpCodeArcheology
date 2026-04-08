@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.9.1] - 2026-04-08
+
 ### Fixed
 
 - **`<source>` section from phpunit.xml is now respected.** The v2.9.0 phpunit.xml integration only parsed `<testsuite>` entries; the `<source><include>` and `<source><exclude>` sections — which tell PHPUnit which production files belong to the coverage scope — were ignored. As a result, classes explicitly excluded from coverage (DataFixtures, `Kernel`, migrations, …) were still counted as untested and showed up in the "Untested Complex Classes" table, and some triggered false-positive `UntestedComplexCode` problems. The parser now reads the full `<source>` tree, classes outside the scope get the new `excludedByPhpunitSource` flag, and the Tests page shows a dedicated "Excluded by phpunit.xml" stats card so the removal is visible. Tested/untested counts, test ratio, Health Score and Technical Debt Score improve correspondingly for projects that use `<source><exclude>`. Projects without a `<source>` section are byte-identical to 2.9.0.
