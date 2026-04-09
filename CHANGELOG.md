@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Test coverage for `TooComplexPrediction`.** 42 dedicated unit tests covering all code paths: CC thresholds (small/large code), Difficulty (trivial exit, framework adjustment), Effort and MI (relative-to-average, typed code tolerance, framework tolerance), LCOM (relative-to-average, floor behavior), the full `shouldSkipLcom` exclusion matrix, per-method cognitive complexity, `classTooComplex` flag, File/Function collection handling, and configurable thresholds. All expected values hand-calculated.
+
 ## [2.9.1] - 2026-04-08
 
 ### Fixed
