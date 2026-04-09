@@ -51,21 +51,38 @@ class DocumentationCoverageVisitor implements NodeVisitor, VisitorInterface
                 $this->currentClassName[] = $className;
                 $this->classDocumented[$className] = 0;
                 $this->classTotal[$className] = 0;
+
+                $this->metricsController->setMetricValue(
+                    MetricCollectionTypeEnum::ClassCollection,
+                    ['path' => $this->path, 'name' => $className],
+                    $this->extractDocBlockSummary($node),
+                    MetricKey::DOC_BLOCK_SUMMARY
+                );
                 break;
 
             case $node instanceof Node\Stmt\ClassMethod:
-                // Only count public methods for documentation coverage
+                $name = (string) $node->name;
+                $className = end($this->currentClassName);
+
+                // Store docblock summary for ALL methods (including private/magic)
+                if (false !== $className) {
+                    $this->metricsController->setMetricValue(
+                        MetricCollectionTypeEnum::MethodCollection,
+                        ['path' => $className, 'name' => $name],
+                        $this->extractDocBlockSummary($node),
+                        MetricKey::DOC_BLOCK_SUMMARY
+                    );
+                }
+
+                // Only count public non-magic methods for documentation coverage
                 if (!$node->isPublic()) {
                     break;
                 }
 
-                // Skip magic methods
-                $name = (string) $node->name;
                 if (str_starts_with($name, '__')) {
                     break;
                 }
 
-                $className = end($this->currentClassName);
                 if (false === $className) {
                     break;
                 }
@@ -93,6 +110,13 @@ class DocumentationCoverageVisitor implements NodeVisitor, VisitorInterface
 
             case $node instanceof Node\Stmt\Function_:
                 $functionName = (string) $node->namespacedName;
+
+                $this->metricsController->setMetricValue(
+                    MetricCollectionTypeEnum::FunctionCollection,
+                    ['path' => $this->path, 'name' => $functionName],
+                    $this->extractDocBlockSummary($node),
+                    MetricKey::DOC_BLOCK_SUMMARY
+                );
 
                 ++$this->fileTotal;
 
@@ -162,6 +186,30 @@ class DocumentationCoverageVisitor implements NodeVisitor, VisitorInterface
         );
 
         return null;
+    }
+
+    private function extractDocBlockSummary(Node $node): string
+    {
+        $docComment = $node->getDocComment();
+        if (!$docComment instanceof \PhpParser\Comment\Doc) {
+            return '';
+        }
+
+        $text = $docComment->getText();
+        $text = str_replace('*/', '', $text);
+        // Use ` ?` instead of `\s?` to avoid consuming newlines (preserve paragraph breaks)
+        $text = (string) preg_replace('/^\s*\* ?/m', '', $text);
+
+        // Remove @-tags at line start (not mid-line, to preserve emails)
+        $text = (string) preg_replace('/^\s*@.*/m', '', $text);
+
+        // Remove opening comment marker
+        $text = (string) preg_replace('/^\/\*\* ?/m', '', $text);
+
+        // Collapse 3+ newlines to double newline
+        $text = (string) preg_replace('/\n{3,}/', "\n\n", $text);
+
+        return trim($text);
     }
 
     private function hasDocBlock(Node $node): bool
