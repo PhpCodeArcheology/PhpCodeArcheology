@@ -1,22 +1,41 @@
 # Roadmap
 
-This document outlines planned features and improvements for PhpCodeArcheology. Items are roughly prioritized but not tied to specific versions or deadlines. Contributions and feedback are welcome — if you'd like to work on something, open an issue first so we can discuss the approach.
+This document outlines planned features and improvements for PhpCodeArcheology. Items are roughly prioritized but not tied to specific deadlines. Contributions and feedback are welcome — if you'd like to work on something, open an issue first so we can discuss the approach.
 
-## Next Major (3.0)
+## 2.10.0
 
-A major version is in development on the `3.0.x` branch. Tracking happens in the [3.0.0 milestone](https://github.com/PhpCodeArcheology/PhpCodeArcheology/milestone/1).
+Tracking: [2.10.0 milestone](https://github.com/PhpCodeArcheology/PhpCodeArcheology/milestone/2)
+
+- **Test coverage for TooComplexPrediction** ([#11](https://github.com/PhpCodeArcheology/PhpCodeArcheology/issues/11)) — dedicated unit tests for the most complex prediction class, with hand-calculated expected values.
+- **DocBlock display in detail views** ([#16](https://github.com/PhpCodeArcheology/PhpCodeArcheology/issues/16)) — show PHPDoc comments alongside metrics in the HTML report class and method detail views.
+
+## 2.11.0
+
+Tracking: [2.11.0 milestone](https://github.com/PhpCodeArcheology/PhpCodeArcheology/milestone/3)
+
+- **Split MetricsController into Registry / Reader / Writer** ([#13](https://github.com/PhpCodeArcheology/PhpCodeArcheology/issues/13)) — break up the monolithic MetricsController into focused classes with narrow interfaces. Internal refactoring, no user-visible change.
+
+## 2.12.0
+
+Tracking: [2.12.0 milestone](https://github.com/PhpCodeArcheology/PhpCodeArcheology/milestone/4)
+
+- **Introduce AnalysisContext and finish typed-getter migration** ([#14](https://github.com/PhpCodeArcheology/PhpCodeArcheology/issues/14)) — separate runtime analysis state from user configuration. Completes the untyped `Config::get()` / `Config::set()` migration.
+
+## 3.0.0 (Next Major)
+
+Tracking: [3.0.0 milestone](https://github.com/PhpCodeArcheology/PhpCodeArcheology/milestone/1). Development happens on the `3.0.x` branch.
 
 **Why a major version:** 3.0 reworks how problem thresholds are calculated for metrics that compare against project averages (Effort, Maintainability Index, LCOM). The current "percentage above/below average" rule is mathematically weak on right-skewed distributions — it produces noise in framework-heavy projects where structural patterns (e.g. Doctrine entities) pull the average up and a significant share of classes lands over the threshold by construction. The replacement will use robust statistical outlier detection (Median + MAD or Q3 + IQR).
 
 **Impact:** Problem counts, Refactoring Priority, Health Score, and Technical Debt Score will shift noticeably. History comparisons against 2.x reports will not be directly comparable — a one-time migration notice is planned.
 
-The 2.x line continues to receive bug fixes and non-breaking improvements on `main`. Internal refactorings without user-visible effects (MetricsController split, Config split, visitor cleanup) are not gated on 3.0 and may land in 2.x minors.
+- **Threshold design prototype** ([#12](https://github.com/PhpCodeArcheology/PhpCodeArcheology/issues/12)) — run Median+MAD and Q3+IQR on real projects, pick the algorithm based on data.
+- **Threshold rework** ([#15](https://github.com/PhpCodeArcheology/PhpCodeArcheology/issues/15)) — replace relative-to-average with the chosen statistical outlier detection. Recalibrate Health Score, Technical Debt Score, and Refactoring Priority.
+
+The 2.x line continues to receive bug fixes and non-breaking improvements on `main`. The internal refactorings in 2.10–2.12 prepare the codebase for the 3.0 threshold rework.
 
 ## Next Up
 
-- ~~**Graph filter accessibility.** Rework the Knowledge Graph filter chips for better readability and WCAG AA contrast in both dark and light themes. Active vs inactive state needs a clearer visual distinction beyond opacity.~~
-- ~~**Graph class/package selector.** Allow focusing the Knowledge Graph on specific classes or packages instead of toggling entire node types. Needs a UX that scales to hundreds of classes (searchable typeahead, package drill-down, or click-to-focus on neighborhood).~~
-- **DocBlock display in class/method detail views.** Show descriptive PHPDoc comments alongside metrics in the HTML report, giving more context when reviewing individual classes and methods.
 - **More test coverage.** Currently at ~75% line coverage with 720 tests. Goal: 85%+, especially for the remaining Prediction rules and Report DataProviders.
 
 ## Planned
