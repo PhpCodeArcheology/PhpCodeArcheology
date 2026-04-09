@@ -48,6 +48,13 @@
     </span>
   </h2>
 
+  {% set docBlockSummary = function.get('docBlockSummary').getValue() %}
+  {% if docBlockSummary %}
+  <div class="mt-6 rounded-xl border border-white/10 bg-white/5 p-4">
+    <p class="text-white/70 leading-relaxed whitespace-pre-line">{{ docBlockSummary }}</p>
+  </div>
+  {% endif %}
+
   <div class="mt-8 rounded-xl border border-cyan-800 bg-cyan-950/45 p-4">
     <h3 class="mb-3 text-xl font-semibold font-display">Parameters</h3>
     {% set parameters = parameters[function.getIdentifier().__toString()] %}

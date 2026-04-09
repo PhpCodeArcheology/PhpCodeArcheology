@@ -63,4 +63,5 @@ return [
             \PhpCodeArch\Metrics\MetricCollectionTypeEnum::MethodCollection,
         ],
     ],
+    ['key' => 'docBlockSummary', 'type' => 'storage'],
 ];

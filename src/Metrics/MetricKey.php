@@ -137,6 +137,7 @@ final class MetricKey
 
     // --- Documentation & Type Coverage ---
     public const HAS_DOC_BLOCK = 'hasDocBlock';
+    public const DOC_BLOCK_SUMMARY = 'docBlockSummary';
     public const DOC_COVERAGE = 'docCoverage';
     public const DOC_PARAM_COVERAGE = 'docParamCoverage';
     public const TYPE_COVERAGE = 'typeCoverage';
