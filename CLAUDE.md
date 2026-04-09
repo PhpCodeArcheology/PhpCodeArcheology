@@ -64,6 +64,13 @@ This project follows **Semantic Versioning** (semver.org):
 - **MINOR**: New features, new metrics, new report types (backwards-compatible)
 - **PATCH**: Bug fixes, documentation updates
 
+## Related Projects
+
+- **Tool website**: `~/Projects/PhpCodeArcheology-website`
+- **Author website** (Astro): `~/Projects/marcuskober.de-astro`
+  - Blog article (EN): "How I Use My Own Tool: PhpCodeArcheology in Practice" — `how-i-use-phpcodearcheology`
+  - Blog article (EN): "PhpCodeArcheology: Measure Code Quality, Don't Guess" — `phpcodearcheology`
+
 ## Key Conventions
 
 - Config file: `php-codearch-config.yaml` (YAML) or `.phpcodearch.json` (JSON)

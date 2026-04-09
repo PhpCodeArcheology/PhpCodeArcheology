@@ -15,57 +15,6 @@ Unlike PHPStan or Psalm (which focus on type safety and bug detection), PhpCodeA
 
 ![PhpCodeArcheology Dashboard](docs/screenshot-dashboard-v2.8.0.png)
 
-## AI Integration (MCP Server)
-
-PhpCodeArcheology is the **first PHP static analysis tool with native MCP (Model Context Protocol) support** — meaning AI assistants like Claude can query your codebase analysis results directly, without reading files or parsing JSON manually.
-
-### Quick Start with Claude Code
-
-The setup depends on how you installed PhpCodeArcheology:
-
-**Global installation** (`composer global require php-code-archeology/php-code-archeology`):
-
-```bash
-claude mcp add phpcodearcheology -- phpcodearcheology mcp
-```
-
-**Project dependency** (`composer require --dev php-code-archeology/php-code-archeology`):
-
-```bash
-claude mcp add phpcodearcheology -- vendor/bin/phpcodearcheology mcp
-```
-
-Or drop a `.mcp.json` into your project root for team sharing:
-
-```json
-{
-  "mcpServers": {
-    "phpcodearcheology": {
-      "command": "vendor/bin/phpcodearcheology",
-      "args": ["mcp"]
-    }
-  }
-}
-```
-
-Once connected, Claude can answer questions like *"Which classes have the highest technical debt?"*, *"Show me all God Classes"*, or *"What are the top refactoring priorities in this project?"* — using live analysis data.
-
-### Available MCP Tools
-
-| Tool | Description |
-|------|-------------|
-| `get_health_score` | Overall code health score, grade, and project statistics |
-| `get_problems` | Code quality problems, filterable by severity and type |
-| `get_metrics` | Detailed metrics for a specific class, file, or function |
-| `get_hotspots` | Git hotspots ranked by churn × complexity |
-| `get_refactoring_priorities` | Ranked refactoring candidates with recommendations |
-| `get_dependencies` | Class dependency analysis (incoming/outgoing) |
-| `get_class_list` | All classes with key metrics, sortable and filterable |
-| `get_graph` | Knowledge graph as JSON (nodes, edges, cycles) |
-| `get_impact_analysis` | Impact analysis: what breaks if you change a method? Shows callers and call chains |
-| `get_test_coverage` | Test coverage summary — tested/untested classes, coverage gaps, test mapping |
-| `search_code` | Search entities by name with metric overview |
-
 ## Features
 
 - **60+ code quality metrics** per file, class, and function — cyclomatic complexity, cognitive complexity, maintainability index, LCOM, Halstead metrics, coupling, instability, and more
@@ -80,6 +29,38 @@ Once connected, Claude can answer questions like *"Which classes have the highes
 - **CI/CD ready** — configurable exit codes, SARIF for GitHub Code Scanning, JSON for custom tooling
 - **Quick mode** — fast terminal-only output without report generation
 - **CLAUDE.md generation** — auto-generated project overview for AI coding assistants
+- **AI integration** — native MCP server for AI assistants like Claude Code ([details below](#ai-integration-mcp-server))
+
+## Quick Start
+
+```bash
+composer require --dev php-code-archeology/php-code-archeology
+./vendor/bin/phpcodearcheology
+```
+
+No config file needed — the tool works out of the box. It scans your `src` directory and creates an HTML report in `tmp/report`. Open `tmp/report/index.html` in your browser.
+
+> **Tip:** Add `tmp/report` to your `.gitignore` to keep generated reports out of version control.
+
+## Table of Contents
+
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Using the Composer Plugin](#using-the-composer-plugin)
+- [CLI Options](#cli-options)
+- [Subcommands](#subcommands)
+- [Configuration](#configuration)
+- [Test Analysis](#test-analysis)
+- [Report Types](#report-types)
+- [Knowledge Graph Export](#knowledge-graph-export)
+- [Key Metrics](#key-metrics)
+- [AI Integration (MCP Server)](#ai-integration-mcp-server)
+- [Understanding the Health Score](#understanding-the-health-score)
+- [Memory and Performance](#memory-and-performance)
+- [A Note on Metric Accuracy (v2.7.0)](#a-note-on-metric-accuracy-v270)
+- [Development](#development)
+- [Roadmap](#roadmap)
+- [Contributing](#contributing)
 
 ## Prerequisites
 
@@ -118,19 +99,7 @@ docker run --rm -v "$(pwd)":/project -v "$(pwd)/report":/output phpcodearcheolog
 
 This mounts your project into the container and writes the HTML report to `./report/`.
 
-## Quick Start
-
-Run in your project root:
-
-```bash
-./vendor/bin/phpcodearcheology
-```
-
-No config file needed — the tool works out of the box. It scans your `src` directory and creates an HTML report in `tmp/report`. Open `tmp/report/index.html` in your browser.
-
-> **Tip:** Add `tmp/report` to your `.gitignore` to keep generated reports out of version control.
-
-### Using the Composer Plugin
+## Using the Composer Plugin
 
 PhpCodeArcheology registers itself as a Composer plugin, so you can run the analysis directly via Composer:
 
@@ -151,58 +120,6 @@ To create a config file interactively:
 ```bash
 ./vendor/bin/phpcodearcheology init
 ```
-
-## Memory and Performance
-
-The directories `vendor/`, `node_modules/`, and `.git/` are **excluded automatically** — you don't need to configure this. If you point the tool at your project root, only your own code is analysed.
-
-For **large codebases** (50k+ files), analysis may require more memory than the default 1G. The tool respects your `php.ini` `memory_limit` — if you've set it to `-1` (unlimited), it stays unlimited. To adjust the limit per project, add `memoryLimit` to your config file:
-
-```yaml
-# php-codearch-config.yaml
-memoryLimit: "2G"    # or "-1" for unlimited
-```
-
-## Test Analysis
-
-PhpCodeArcheology automatically detects your test infrastructure from `composer.json` (PHPUnit, Pest, or Codeception) and maps test files to production classes using PSR-4 namespaces, naming conventions, and directory structure.
-
-**What you get out of the box:**
-
-- Per-class `hasTest` flag and test file count in the HTML/Markdown/JSON reports
-- `UntestedComplexCode` warnings for classes with cyclomatic complexity ≥ 8 and no tests (only when test infrastructure is detected)
-- `untested` as a refactoring priority driver
-- A **Tests page** in the HTML and Markdown reports with a coverage gaps table and dashboard tiles
-
-**Important note on Pest:** Pest's function-based tests (`it(...)`, `test(...)`) contain no class declaration and cannot be mapped to production classes by name alone. To get accurate coverage for Pest projects, generate a Clover XML report — this tracks actual line execution regardless of test style.
-
-**With Clover XML coverage data** (optional, recommended for Pest), you get line-level coverage per class:
-
-```bash
-# Generate coverage first (requires Xdebug or PCOV PHP extension)
-XDEBUG_MODE=coverage vendor/bin/pest --coverage-clover clover.xml
-# or: XDEBUG_MODE=coverage vendor/bin/phpunit --coverage-clover clover.xml
-
-# PhpCodeArcheology auto-detects clover.xml in common locations:
-#   clover.xml, coverage/clover.xml,
-#   build/logs/clover.xml, build/coverage/clover.xml,
-#   var/reports/clover.xml, var/coverage/clover.xml  (Symfony layout)
-./vendor/bin/phpcodearcheology src/
-
-# Or specify explicitly via CLI:
-./vendor/bin/phpcodearcheology --coverage-file clover.xml src/
-```
-
-To make the path persistent across runs, set it in your config file:
-
-```yaml
-# php-codearch-config.yaml
-coverageFile: var/reports/clover.xml
-```
-
-The CLI flag still takes precedence over the config file value.
-
-Coverage data is factored into the **Health Score** as a 10th factor (10% weight). The `get_test_coverage` MCP tool exposes all coverage data to AI assistants.
 
 ## CLI Options
 
@@ -338,6 +255,47 @@ thresholds:
 
 All threshold values shown above are the defaults. You only need to specify values you want to override.
 
+## Test Analysis
+
+PhpCodeArcheology automatically detects your test infrastructure from `composer.json` (PHPUnit, Pest, or Codeception) and maps test files to production classes using PSR-4 namespaces, naming conventions, and directory structure.
+
+**What you get out of the box:**
+
+- Per-class `hasTest` flag and test file count in the HTML/Markdown/JSON reports
+- `UntestedComplexCode` warnings for classes with cyclomatic complexity ≥ 8 and no tests (only when test infrastructure is detected)
+- `untested` as a refactoring priority driver
+- A **Tests page** in the HTML and Markdown reports with a coverage gaps table and dashboard tiles
+
+**Important note on Pest:** Pest's function-based tests (`it(...)`, `test(...)`) contain no class declaration and cannot be mapped to production classes by name alone. To get accurate coverage for Pest projects, generate a Clover XML report — this tracks actual line execution regardless of test style.
+
+**With Clover XML coverage data** (optional, recommended for Pest), you get line-level coverage per class:
+
+```bash
+# Generate coverage first (requires Xdebug or PCOV PHP extension)
+XDEBUG_MODE=coverage vendor/bin/pest --coverage-clover clover.xml
+# or: XDEBUG_MODE=coverage vendor/bin/phpunit --coverage-clover clover.xml
+
+# PhpCodeArcheology auto-detects clover.xml in common locations:
+#   clover.xml, coverage/clover.xml,
+#   build/logs/clover.xml, build/coverage/clover.xml,
+#   var/reports/clover.xml, var/coverage/clover.xml  (Symfony layout)
+./vendor/bin/phpcodearcheology src/
+
+# Or specify explicitly via CLI:
+./vendor/bin/phpcodearcheology --coverage-file clover.xml src/
+```
+
+To make the path persistent across runs, set it in your config file:
+
+```yaml
+# php-codearch-config.yaml
+coverageFile: var/reports/clover.xml
+```
+
+The CLI flag still takes precedence over the config file value.
+
+Coverage data is factored into the **Health Score** as a 10th factor (10% weight). The `get_test_coverage` MCP tool exposes all coverage data to AI assistants.
+
 ## Report Types
 
 | Type | Subdirectory | Output | Use Case |
@@ -461,6 +419,91 @@ For detailed descriptions, formulas, thresholds, and interpretation guidelines, 
 
 The HTML report also includes a full **Metric Glossary** with descriptions, thresholds, and severity levels.
 
+## AI Integration (MCP Server)
+
+PhpCodeArcheology includes a native **MCP (Model Context Protocol) server** — AI assistants like Claude can query your codebase analysis results directly, without reading files or parsing JSON manually.
+
+### Setup with Claude Code
+
+The setup depends on how you installed PhpCodeArcheology:
+
+**Global installation** (`composer global require php-code-archeology/php-code-archeology`):
+
+```bash
+claude mcp add phpcodearcheology -- phpcodearcheology mcp
+```
+
+**Project dependency** (`composer require --dev php-code-archeology/php-code-archeology`):
+
+```bash
+claude mcp add phpcodearcheology -- vendor/bin/phpcodearcheology mcp
+```
+
+Or drop a `.mcp.json` into your project root for team sharing:
+
+```json
+{
+  "mcpServers": {
+    "phpcodearcheology": {
+      "command": "vendor/bin/phpcodearcheology",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+Once connected, Claude can answer questions like *"Which classes have the highest technical debt?"*, *"Show me all God Classes"*, or *"What are the top refactoring priorities in this project?"* — using live analysis data.
+
+### Available MCP Tools
+
+| Tool | Description |
+|------|-------------|
+| `get_health_score` | Overall code health score, grade, and project statistics |
+| `get_problems` | Code quality problems, filterable by severity and type |
+| `get_metrics` | Detailed metrics for a specific class, file, or function |
+| `get_hotspots` | Git hotspots ranked by churn × complexity |
+| `get_refactoring_priorities` | Ranked refactoring candidates with recommendations |
+| `get_dependencies` | Class dependency analysis (incoming/outgoing) |
+| `get_class_list` | All classes with key metrics, sortable and filterable |
+| `get_graph` | Knowledge graph as JSON (nodes, edges, cycles) |
+| `get_impact_analysis` | Impact analysis: what breaks if you change a method? Shows callers and call chains |
+| `get_test_coverage` | Test coverage summary — tested/untested classes, coverage gaps, test mapping |
+| `search_code` | Search entities by name with metric overview |
+
+## Understanding the Health Score
+
+The Health Score (0–100) is a **guideline for tracking trends**, not an absolute judgment of code quality. Some things to keep in mind:
+
+- **Complex domains produce complex code.** A financial calculation engine, a protocol parser, or a compiler will naturally have higher Halstead Difficulty and Cyclomatic Complexity than a REST API. That's expected, not a defect.
+- **Scores are most useful over time.** A project that moves from 65 to 72 over six months is improving — even if it never reaches 90.
+- **Focus on outliers, not the average.** The most actionable insight is which classes deviate significantly from your project's baseline. Those are your refactoring candidates.
+- **Don't compare across projects.** A score of 80 in a Symfony application is not the same as 80 in a CLI tool. Different architectures and domains have different natural complexity floors.
+
+The score is weighted across 10 factors (Maintainability Index, Problem Density, Complexity, Coupling, Code Structure, HTML Ratio, Encapsulation, Dependencies, Abstractness, and Test Coverage). See [`docs/metrics-formulas.md`](docs/metrics-formulas.md) for the exact formulas and weights.
+
+**Further reading:** [How I Use PhpCodeArcheology in Practice](https://www.marcuskober.de/en/blog/how-i-use-phpcodearcheology/) — a real-world walkthrough covering legacy assessment, hotspot discovery, and measuring refactoring success.
+
+## Memory and Performance
+
+The directories `vendor/`, `node_modules/`, and `.git/` are **excluded automatically** — you don't need to configure this. If you point the tool at your project root, only your own code is analysed.
+
+For **large codebases** (50k+ files), analysis may require more memory than the default 1G. The tool respects your `php.ini` `memory_limit` — if you've set it to `-1` (unlimited), it stays unlimited. To adjust the limit per project, add `memoryLimit` to your config file:
+
+```yaml
+# php-codearch-config.yaml
+memoryLimit: "2G"    # or "-1" for unlimited
+```
+
+## A Note on Metric Accuracy (v2.7.0)
+
+I use PhpCodeArcheology extensively on my own projects to track code quality over time. While doing so, I noticed that some metric values didn't quite add up — method-level Halstead difficulty seemed too high, certain classes were flagged as God Classes when they shouldn't have been, and error counts felt inflated.
+
+After a thorough review, I found and fixed several calculation bugs that had been present since earlier versions. The most impactful was a Halstead operand tracking bug at the method level, along with double-counting in complexity predictions, false positives in God Class detection, and a few other issues.
+
+I sincerely apologize for the inaccuracy. A code analysis tool must be trustworthy above all else, and these bugs undermined that. Version 2.7.0 corrects all known calculation issues, and I've added hand-calculated test fixtures to ensure the formulas stay correct going forward.
+
+**What this means for you:** If you're upgrading from an earlier version, your analysis results will change — most notably, error counts will decrease significantly and Health Scores will improve. The tool will show a one-time notice on first run. See [`docs/metrics-formulas.md`](docs/metrics-formulas.md) for a detailed breakdown of every change and its expected impact.
+
 ## Development
 
 The HTML report templates use **Tailwind CSS**. The compiled `output.css` is committed to the repository, so you do **not** need Node.js to use or contribute to this project.
@@ -477,27 +520,6 @@ For live rebuilding during development:
 ```bash
 npm run watch:css
 ```
-
-## A Note on Metric Accuracy (v2.7.0)
-
-I use PhpCodeArcheology extensively on my own projects to track code quality over time. While doing so, I noticed that some metric values didn't quite add up — method-level Halstead difficulty seemed too high, certain classes were flagged as God Classes when they shouldn't have been, and error counts felt inflated.
-
-After a thorough review, I found and fixed several calculation bugs that had been present since earlier versions. The most impactful was a Halstead operand tracking bug at the method level, along with double-counting in complexity predictions, false positives in God Class detection, and a few other issues.
-
-I sincerely apologize for the inaccuracy. A code analysis tool must be trustworthy above all else, and these bugs undermined that. Version 2.7.0 corrects all known calculation issues, and I've added hand-calculated test fixtures to ensure the formulas stay correct going forward.
-
-**What this means for you:** If you're upgrading from an earlier version, your analysis results will change — most notably, error counts will decrease significantly and Health Scores will improve. The tool will show a one-time notice on first run. See [`docs/metrics-formulas.md`](docs/metrics-formulas.md) for a detailed breakdown of every change and its expected impact.
-
-## Understanding the Health Score
-
-The Health Score (0–100) is a **guideline for tracking trends**, not an absolute judgment of code quality. Some things to keep in mind:
-
-- **Complex domains produce complex code.** A financial calculation engine, a protocol parser, or a compiler will naturally have higher Halstead Difficulty and Cyclomatic Complexity than a REST API. That's expected, not a defect.
-- **Scores are most useful over time.** A project that moves from 65 to 72 over six months is improving — even if it never reaches 90.
-- **Focus on outliers, not the average.** The most actionable insight is which classes deviate significantly from your project's baseline. Those are your refactoring candidates.
-- **Don't compare across projects.** A score of 80 in a Symfony application is not the same as 80 in a CLI tool. Different architectures and domains have different natural complexity floors.
-
-The score is weighted across 10 factors (Maintainability Index, Problem Density, Complexity, Coupling, Code Structure, HTML Ratio, Encapsulation, Dependencies, Abstractness, and Test Coverage). See [`docs/metrics-formulas.md`](docs/metrics-formulas.md) for the exact formulas and weights.
 
 ## Roadmap
 
