@@ -12,6 +12,7 @@
 # Config (user-specific)
 php-codearch-config.yaml
 .claude/settings.local.json
+.claude/commands/
 CLAUDE.local.md
 
 # Static Analysis & Code Style
