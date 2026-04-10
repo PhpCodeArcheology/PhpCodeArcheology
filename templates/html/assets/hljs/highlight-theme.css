@@ -1,0 +1,108 @@
+/*
+ * PhpCodeArcheology dark theme for highlight.js
+ * Based on the report's zinc-900 / cyan / pink palette.
+ */
+
+pre code.hljs {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+}
+
+code.hljs {
+  padding: 3px 5px;
+}
+
+.hljs {
+  color: #e2e8f0;
+  background: transparent;
+}
+
+.hljs-comment,
+.hljs-quote {
+  color: #6b7280;
+  font-style: italic;
+}
+
+.hljs-keyword,
+.hljs-selector-tag {
+  color: #c084fc;
+}
+
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag .hljs-attr,
+.hljs-attribute {
+  color: #f472b6;
+}
+
+.hljs-string,
+.hljs-doctag {
+  color: #86efac;
+}
+
+.hljs-number,
+.hljs-literal {
+  color: #fdba74;
+}
+
+.hljs-type,
+.hljs-class .hljs-title,
+.hljs-title.class_,
+.hljs-title.class_.inherited__,
+.hljs-title.function_ {
+  color: #67e8f9;
+}
+
+.hljs-built_in {
+  color: #22d3ee;
+}
+
+.hljs-params {
+  color: #e2e8f0;
+}
+
+.hljs-symbol,
+.hljs-bullet {
+  color: #f472b6;
+}
+
+.hljs-meta {
+  color: #9ca3af;
+}
+
+.hljs-meta .hljs-keyword {
+  color: #c084fc;
+}
+
+.hljs-meta .hljs-string {
+  color: #86efac;
+}
+
+.hljs-section,
+.hljs-title {
+  color: #67e8f9;
+  font-weight: bold;
+}
+
+.hljs-subst {
+  color: #e2e8f0;
+}
+
+.hljs-deletion {
+  color: #fca5a5;
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.hljs-addition {
+  color: #86efac;
+  background: rgba(34, 197, 94, 0.15);
+}
+
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-strong {
+  font-weight: bold;
+}

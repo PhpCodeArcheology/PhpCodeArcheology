@@ -40,6 +40,13 @@ class CognitiveComplexityVisitor implements NodeVisitor, VisitorInterface
     /** @var array<int, string> */
     private array $nestingStack = [];
 
+    /** @var array<string, array<int, array{startLine: int, endLine: int, depth: int}>> */
+    private array $nestingEvents = [];
+    /** @var array<int, int> */
+    private array $methodBaseNesting = [];
+    /** @var array<int, string> */
+    private array $currentMethodKey = [];
+
     /**
      * @param array<int, Node> $nodes
      */
@@ -53,6 +60,9 @@ class CognitiveComplexityVisitor implements NodeVisitor, VisitorInterface
         $this->currentFunctionName = [];
         $this->nestingLevel = 0;
         $this->nestingStack = [];
+        $this->nestingEvents = [];
+        $this->methodBaseNesting = [];
+        $this->currentMethodKey = [];
 
         return null;
     }
@@ -83,18 +93,26 @@ class CognitiveComplexityVisitor implements NodeVisitor, VisitorInterface
                 $methodName = (string) $node->name;
                 $this->currentFunctionName[] = $methodName;
                 $this->methodCogC[$className][$methodName] = 0;
+                $methodKey = $className.'::'.$methodName;
+                $this->currentMethodKey[] = $methodKey;
+                $this->methodBaseNesting[] = $this->nestingLevel;
+                $this->nestingEvents[$methodKey] = [];
                 break;
 
             case $node instanceof Node\Stmt\Function_:
                 $functionName = (string) $node->namespacedName;
                 $this->currentFunctionName[] = $functionName;
                 $this->functionCogC[$functionName] = 0;
+                $this->currentMethodKey[] = $functionName;
+                $this->methodBaseNesting[] = $this->nestingLevel;
+                $this->nestingEvents[$functionName] = [];
                 break;
 
             case $node instanceof Node\Expr\Closure:
             case $node instanceof Node\Expr\ArrowFunction:
                 $this->nestingLevel++;
                 $this->nestingStack[] = 'closure';
+                $this->recordNestingEvent($node);
                 break;
 
                 // Structural increments WITH nesting penalty
@@ -102,6 +120,7 @@ class CognitiveComplexityVisitor implements NodeVisitor, VisitorInterface
                 $this->addIncrement(1 + $this->nestingLevel);
                 ++$this->nestingLevel;
                 $this->nestingStack[] = 'if';
+                $this->recordNestingEvent($node);
                 break;
 
             case $node instanceof Node\Stmt\For_:
@@ -111,12 +130,14 @@ class CognitiveComplexityVisitor implements NodeVisitor, VisitorInterface
                 $this->addIncrement(1 + $this->nestingLevel);
                 ++$this->nestingLevel;
                 $this->nestingStack[] = 'loop';
+                $this->recordNestingEvent($node);
                 break;
 
             case $node instanceof Node\Stmt\Catch_:
                 $this->addIncrement(1 + $this->nestingLevel);
                 ++$this->nestingLevel;
                 $this->nestingStack[] = 'catch';
+                $this->recordNestingEvent($node);
                 break;
 
             case $node instanceof Node\Stmt\Switch_:
@@ -124,6 +145,7 @@ class CognitiveComplexityVisitor implements NodeVisitor, VisitorInterface
                 $this->addIncrement(1 + $this->nestingLevel);
                 ++$this->nestingLevel;
                 $this->nestingStack[] = 'switch';
+                $this->recordNestingEvent($node);
                 break;
 
                 // Structural increments WITHOUT nesting penalty
@@ -182,12 +204,14 @@ class CognitiveComplexityVisitor implements NodeVisitor, VisitorInterface
                 if (false === $className || null === $methodName) {
                     break;
                 }
+                $methodIdentifier = ['path' => $className, 'name' => $methodName];
                 $this->metricsController->setMetricValue(
                     MetricCollectionTypeEnum::MethodCollection,
-                    ['path' => $className, 'name' => $methodName],
+                    $methodIdentifier,
                     $this->methodCogC[$className][$methodName] ?? 0,
                     MetricKey::COGNITIVE_COMPLEXITY
                 );
+                $this->storeNestingDepthMap(MetricCollectionTypeEnum::MethodCollection, $methodIdentifier);
                 break;
 
             case $node instanceof Node\Stmt\Function_:
@@ -195,12 +219,14 @@ class CognitiveComplexityVisitor implements NodeVisitor, VisitorInterface
                 if (null === $functionName) {
                     break;
                 }
+                $functionIdentifier = ['path' => $this->path, 'name' => $functionName];
                 $this->metricsController->setMetricValue(
                     MetricCollectionTypeEnum::FunctionCollection,
-                    ['path' => $this->path, 'name' => $functionName],
+                    $functionIdentifier,
                     $this->functionCogC[$functionName] ?? 0,
                     MetricKey::COGNITIVE_COMPLEXITY
                 );
+                $this->storeNestingDepthMap(MetricCollectionTypeEnum::FunctionCollection, $functionIdentifier);
                 break;
 
             case $node instanceof Node\Expr\Closure:
@@ -260,6 +286,57 @@ class CognitiveComplexityVisitor implements NodeVisitor, VisitorInterface
             $functionName = end($this->currentFunctionName);
             $this->functionCogC[$functionName] += $amount;
         }
+    }
+
+    private function recordNestingEvent(Node $node): void
+    {
+        $methodKey = end($this->currentMethodKey);
+        if (false === $methodKey) {
+            return;
+        }
+
+        $this->nestingEvents[$methodKey][] = [
+            'startLine' => $node->getStartLine(),
+            'endLine' => $node->getEndLine(),
+            'depth' => $this->nestingLevel,
+        ];
+    }
+
+    /**
+     * @param array<string, string> $identifier
+     */
+    private function storeNestingDepthMap(MetricCollectionTypeEnum $collectionType, array $identifier): void
+    {
+        $methodKey = array_pop($this->currentMethodKey);
+        $baseNesting = array_pop($this->methodBaseNesting);
+
+        if (null === $methodKey || null === $baseNesting) {
+            return;
+        }
+
+        $events = $this->nestingEvents[$methodKey] ?? [];
+        if ([] === $events) {
+            return;
+        }
+
+        $map = [];
+        foreach ($events as $event) {
+            $relativeDepth = $event['depth'] - $baseNesting;
+            for ($line = $event['startLine']; $line <= $event['endLine']; ++$line) {
+                $map[$line] = max($map[$line] ?? 0, $relativeDepth);
+            }
+        }
+
+        ksort($map);
+
+        $this->metricsController->setMetricValue(
+            $collectionType,
+            $identifier,
+            $map,
+            MetricKey::NESTING_DEPTH_MAP
+        );
+
+        unset($this->nestingEvents[$methodKey]);
     }
 
     /**

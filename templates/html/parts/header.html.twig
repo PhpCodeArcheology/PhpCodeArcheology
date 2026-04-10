@@ -10,6 +10,12 @@
 
   <script src="{% if isSubdir %}../{% endif %}assets/js/chart.umd.min.js"></script>
 
+  {% if sourceCodeEnabled is defined and sourceCodeEnabled %}
+  <link rel="stylesheet" href="{% if isSubdir %}../{% endif %}assets/hljs/highlight-theme.css">
+  <script src="{% if isSubdir %}../{% endif %}assets/hljs/highlight.min.js"></script>
+  <script src="{% if isSubdir %}../{% endif %}assets/hljs/php.min.js"></script>
+  {% endif %}
+
   <style>
     .title-state {
       fill: rgba(8, 51, 68) !important;

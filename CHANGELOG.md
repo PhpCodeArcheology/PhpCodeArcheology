@@ -9,8 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Source code display in HTML report.** Method and function detail pages can now show the actual source code with PHP syntax highlighting (highlight.js). A nesting-depth heatmap highlights deeply nested lines progressively (depth 2: subtle yellow, depth 3: stronger yellow, depth 4+: red), making complexity drivers immediately visible. Problem badges above the code block and a colored left border (red/yellow/blue by severity) connect metrics to the code. Opt-in via `--source-code` CLI flag or `sourceCode: { enable: true, display: "all"|"problems-only" }` in config. Default display mode is `problems-only` (only methods/functions with detected problems). The highlight.js assets are only included in the report when the feature is enabled.
+- **`startLine` / `endLine` metrics for methods, functions, and classes.** Stored during AST analysis, also fixes the SARIF report which previously defaulted all line numbers to 1.
 - **DocBlock summary display in HTML report detail views.** Class and method/function detail pages now show the PHPDoc summary text (description before `@`-tags) below the title. Works for all visibility levels including private methods and `__construct`. Empty or missing docblocks are handled gracefully (no empty boxes). Closes #16.
 - **Test coverage for `TooComplexPrediction`.** 42 dedicated unit tests covering all code paths: CC thresholds (small/large code), Difficulty (trivial exit, framework adjustment), Effort and MI (relative-to-average, typed code tolerance, framework tolerance), LCOM (relative-to-average, floor behavior), the full `shouldSkipLcom` exclusion matrix, per-method cognitive complexity, `classTooComplex` flag, File/Function collection handling, and configurable thresholds. All expected values hand-calculated.
+
+### Fixed
+
+- **Search input and filter dropdown invisible in dark mode.** The search fields and problem-level dropdown in all table views (classes, methods, functions, files, git, tests, refactoring roadmap) used `text-black` without an explicit background, making them unreadable on dark backgrounds. Replaced with themed `.search-input` styling that works in both dark and light mode. Filter bar elements now have proper spacing.
 
 ## [2.9.1] - 2026-04-08
 

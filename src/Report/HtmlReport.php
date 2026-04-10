@@ -8,6 +8,7 @@ use PhpCodeArch\Application\CliFormatter;
 use PhpCodeArch\Application\CliOutput;
 use PhpCodeArch\Application\Config;
 use PhpCodeArch\Application\ProgressBar;
+use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
 use PhpCodeArch\Report\DataProvider\DataProviderFactory;
 use PhpCodeArch\Report\Helper\FileCopier;
@@ -58,6 +59,9 @@ class HtmlReport implements ReportInterface
         $fc->setFiles([
             $this->templateDir.'assets',
         ]);
+        if (!$this->config->isSourceCodeEnabled()) {
+            $fc->setExcludeDirs(['hljs']);
+        }
         $fc->copyFilesTo(rtrim($this->outputDir.'/assets', DIRECTORY_SEPARATOR));
 
         $this->generateReportFiles();
@@ -306,6 +310,11 @@ class HtmlReport implements ReportInterface
         $data['currentPage'] = 'functions-list.html';
         $this->renderTemplate('functions-list.html.twig', $data, 'functions-list.html');
 
+        $sourceCodeEnabled = $this->config->isSourceCodeEnabled();
+        $sourceCodeDisplay = $this->config->getSourceCodeDisplay();
+        /** @var array<string, list<string>> $fileCache */
+        $fileCache = [];
+
         $functionsData = $data['functions'];
         $methodsData = $data['methods'];
         unset($data['functions'], $data['methods']);
@@ -314,6 +323,10 @@ class HtmlReport implements ReportInterface
             $templateData = $data;
             $templateData['isMethod'] = false;
             $templateData['function'] = $functionData;
+            $templateData['sourceCodeEnabled'] = $sourceCodeEnabled;
+            if ($sourceCodeEnabled && $functionData instanceof MetricsCollectionInterface) {
+                $this->addSourceCodeData($templateData, $functionData, $sourceCodeDisplay, $fileCache);
+            }
             $this->createFunctionFile($templateData, 'functions');
         }
         unset($functionsData);
@@ -322,9 +335,93 @@ class HtmlReport implements ReportInterface
             $templateData = $data;
             $templateData['isMethod'] = true;
             $templateData['function'] = $functionData;
+            $templateData['sourceCodeEnabled'] = $sourceCodeEnabled;
+            if ($sourceCodeEnabled && $functionData instanceof MetricsCollectionInterface) {
+                $this->addSourceCodeData($templateData, $functionData, $sourceCodeDisplay, $fileCache);
+            }
             $this->createFunctionFile($templateData, 'methods');
         }
-        unset($data, $methodsData);
+        unset($data, $methodsData, $fileCache);
+    }
+
+    /**
+     * @param array<string, mixed>        $templateData
+     * @param array<string, list<string>> $fileCache
+     */
+    private function addSourceCodeData(array &$templateData, MetricsCollectionInterface $function, string $displayMode, array &$fileCache): void
+    {
+        $allMetrics = $function->getAll();
+
+        // Collect problems from all metrics (deduplicate by message)
+        $sourceProblems = [];
+        $maxProblemLevel = 0;
+        $seenMessages = [];
+        foreach ($allMetrics as $metricValue) {
+            if ($metricValue->hasProblems()) {
+                foreach ($metricValue->getProblems() as $problem) {
+                    $msg = $problem->getMessage();
+                    if (isset($seenMessages[$msg])) {
+                        continue;
+                    }
+                    $seenMessages[$msg] = true;
+                    $sourceProblems[] = [
+                        'level' => $problem->getProblemLevel(),
+                        'message' => $msg,
+                    ];
+                    $maxProblemLevel = max($maxProblemLevel, $problem->getProblemLevel());
+                }
+            }
+        }
+
+        // In problems-only mode, skip methods without problems
+        if ('problems-only' === $displayMode && 0 === $maxProblemLevel) {
+            return;
+        }
+
+        // Methods store the actual filesystem path in SOURCE_FILE, functions use their getPath()
+        $filePath = $function->getString(MetricKey::SOURCE_FILE);
+        if ('' === $filePath) {
+            $filePath = $function->getPath();
+        }
+        $startLine = $function->get(MetricKey::START_LINE)?->asInt() ?? 0;
+        $endLine = $function->get(MetricKey::END_LINE)?->asInt() ?? 0;
+
+        if ('' === $filePath || 0 === $startLine || 0 === $endLine) {
+            return;
+        }
+
+        // Read source file with caching
+        if (!isset($fileCache[$filePath])) {
+            if (!is_file($filePath)) {
+                return;
+            }
+            $fileCache[$filePath] = file($filePath) ?: [];
+        }
+
+        $fileLines = $fileCache[$filePath];
+        $lines = [];
+        for ($i = $startLine - 1; $i < $endLine && $i < count($fileLines); ++$i) {
+            $lines[$i + 1] = rtrim($fileLines[$i]);
+        }
+
+        if ([] === $lines) {
+            return;
+        }
+
+        $nestingMap = $function->get(MetricKey::NESTING_DEPTH_MAP)?->asArray() ?? [];
+
+        $templateData['sourceCode'] = [
+            'lines' => $lines,
+            'startLine' => $startLine,
+        ];
+        $templateData['nestingMap'] = $nestingMap;
+        $templateData['sourceProblems'] = $sourceProblems;
+        $templateData['sourceBorderColor'] = match (true) {
+            $maxProblemLevel >= 3 => 'border-red-600',
+            $maxProblemLevel >= 2 => 'border-yellow-600',
+            $maxProblemLevel >= 1 => 'border-blue-600',
+            default => 'border-slate-600',
+        };
     }
 
     protected function generatePackagesPage(): void

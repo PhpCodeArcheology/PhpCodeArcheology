@@ -9,10 +9,19 @@ class FileCopier
     /** @var list<string> */
     private array $files = [];
 
+    /** @var list<string> */
+    private array $excludeDirs = [];
+
     /** @param list<string> $files */
     public function setFiles(array $files): void
     {
         $this->files = $files;
+    }
+
+    /** @param list<string> $excludeDirs */
+    public function setExcludeDirs(array $excludeDirs): void
+    {
+        $this->excludeDirs = $excludeDirs;
     }
 
     public function copyFilesTo(string $destination): void
@@ -51,6 +60,9 @@ class FileCopier
             $destinationPath = $destination.'/'.$file;
 
             if (is_dir($sourcePath)) {
+                if (in_array($file, $this->excludeDirs, true)) {
+                    continue;
+                }
                 $this->copy($sourcePath, $destinationPath);
             } else {
                 copy($sourcePath, $destinationPath);

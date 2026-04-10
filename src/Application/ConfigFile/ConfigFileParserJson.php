@@ -128,5 +128,10 @@ class ConfigFileParserJson implements ConfigFileParserInterface
         if (isset($data['acknowledgedVersion']) && is_scalar($data['acknowledgedVersion'])) {
             $config->set('acknowledgedVersion', (string) $data['acknowledgedVersion']);
         }
+
+        // CLI flag takes precedence over config file
+        if (isset($data['sourceCode']) && !$config->has('sourceCode')) {
+            $config->set('sourceCode', $data['sourceCode']);
+        }
     }
 }

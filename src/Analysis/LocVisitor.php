@@ -315,6 +315,8 @@ class LocVisitor implements NodeVisitor, VisitorInterface
 
         $functionMetrics = $this->getLinesOfCodeFunction($node, $functionName);
         $functionMetrics[MetricKey::HTML_LOC] = $this->functionHtmlLoc[$functionName];
+        $functionMetrics[MetricKey::START_LINE] = $node->getStartLine();
+        $functionMetrics[MetricKey::END_LINE] = $node->getEndLine();
 
         $this->functionNodes[$functionName] = [];
 
@@ -345,6 +347,8 @@ class LocVisitor implements NodeVisitor, VisitorInterface
             MetricKey::CLOC => $cloc,
             MetricKey::LLOC => $lloc,
             MetricKey::HTML_LOC => $this->classHtmlLoc[$className],
+            MetricKey::START_LINE => $node->getStartLine(),
+            MetricKey::END_LINE => $node->getEndLine(),
         ];
 
         $this->metricsController->setMetricValues(
@@ -386,6 +390,9 @@ class LocVisitor implements NodeVisitor, VisitorInterface
 
         $methodMetrics[MetricKey::LOC] = $methodLoc;
         $methodMetrics[MetricKey::HTML_LOC] = $this->methodHtmlLoc[$className][$methodName];
+        $methodMetrics[MetricKey::START_LINE] = $node->getStartLine();
+        $methodMetrics[MetricKey::END_LINE] = $node->getEndLine();
+        $methodMetrics[MetricKey::SOURCE_FILE] = $this->path;
 
         $this->metricsController->setMetricValues(
             MetricCollectionTypeEnum::MethodCollection,

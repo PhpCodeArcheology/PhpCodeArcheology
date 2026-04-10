@@ -64,7 +64,7 @@
 
     // Create problem level dropdown
     const select = document.createElement('select');
-    select.className = 'problem-filter text-black rounded px-2 py-0.5';
+    select.className = 'problem-filter search-input rounded px-2 py-1';
     select.style.cssText = 'font-size:0.875rem;margin-right:0.5rem;';
     select.innerHTML = '<option value="all">All</option>'
       + '<option value="3">Errors</option>'

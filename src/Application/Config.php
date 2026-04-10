@@ -102,6 +102,30 @@ final class Config implements AnalysisConfigInterface
         return is_string($fo) ? $fo : null;
     }
 
+    public function isSourceCodeEnabled(): bool
+    {
+        $sourceCode = $this->config['sourceCode'] ?? null;
+
+        if (is_array($sourceCode)) {
+            return (bool) ($sourceCode['enable'] ?? false);
+        }
+
+        return (bool) ($sourceCode ?? false);
+    }
+
+    public function getSourceCodeDisplay(): string
+    {
+        $sourceCode = $this->config['sourceCode'] ?? null;
+
+        if (is_array($sourceCode)) {
+            $display = $sourceCode['display'] ?? 'problems-only';
+
+            return in_array($display, ['all', 'problems-only'], true) ? $display : 'problems-only';
+        }
+
+        return 'problems-only';
+    }
+
     public function getPackageSize(): int
     {
         return is_int($this->config['packageSize'] ?? null) ? $this->config['packageSize'] : 2;

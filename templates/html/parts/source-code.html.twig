@@ -1,0 +1,37 @@
+{% if sourceCode is defined and sourceCode is not null %}
+<div class="mt-8">
+  <h3 class="text-xl font-semibold text-cyan-200 mb-3">Source Code</h3>
+
+  {% if sourceProblems is defined and sourceProblems is not empty %}
+  <div class="mb-3 flex flex-wrap gap-1.5">
+    {% for problem in sourceProblems %}
+      <span class="inline-block rounded px-2 py-0.5 text-sm font-medium {{ problem.level >= 3 ? 'bg-red-900 text-red-100' : (problem.level >= 2 ? 'bg-yellow-900 text-yellow-100' : 'bg-blue-900 text-blue-100') }}">
+        {{ problem.message }}
+      </span>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="border-l-4 {{ sourceBorderColor ?? 'border-slate-600' }} rounded-lg bg-zinc-950/60 overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm leading-relaxed" style="border-collapse: separate; border-spacing: 0;">
+        {% for lineNum, line in sourceCode.lines %}
+          {% set depth = nestingMap[lineNum] is defined ? nestingMap[lineNum] : 0 %}
+          {% set depthClass = '' %}
+          {% if depth >= 4 %}
+            {% set depthClass = 'bg-red-900/20' %}
+          {% elseif depth == 3 %}
+            {% set depthClass = 'bg-yellow-900/20' %}
+          {% elseif depth == 2 %}
+            {% set depthClass = 'bg-yellow-900/10' %}
+          {% endif %}
+          <tr class="{{ depthClass }}">
+            <td class="select-none text-right pr-4 pl-3 text-slate-500/60 w-12 align-top font-mono" style="user-select: none;">{{ lineNum }}</td>
+            <td class="pr-4"><pre class="whitespace-pre" style="margin: 0; padding: 0; background: transparent;"><code class="language-php" style="background: transparent; padding: 0;">{{ line }}</code></pre></td>
+          </tr>
+        {% endfor %}
+      </table>
+    </div>
+  </div>
+</div>
+{% endif %}

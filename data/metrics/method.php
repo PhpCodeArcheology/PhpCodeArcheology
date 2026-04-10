@@ -64,4 +64,8 @@ return [
         ],
     ],
     ['key' => 'docBlockSummary', 'type' => 'storage'],
+    ['key' => 'startLine', 'type' => 'storage'],
+    ['key' => 'endLine', 'type' => 'storage'],
+    ['key' => 'nestingDepthMap', 'type' => 'storage'],
+    ['key' => 'sourceFile', 'type' => 'storage'],
 ];

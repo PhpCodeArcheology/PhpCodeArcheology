@@ -20,6 +20,12 @@ final class MetricKey
     public const HTML_PERCENTAGE = 'htmlPercentage';
     public const OUTPUT_COUNT = 'outputCount';
 
+    // --- Line Position ---
+    public const START_LINE = 'startLine';
+    public const END_LINE = 'endLine';
+    public const NESTING_DEPTH_MAP = 'nestingDepthMap';
+    public const SOURCE_FILE = 'sourceFile';
+
     // --- Halstead ---
     public const VOCABULARY = 'vocabulary';
     public const LENGTH = 'length';

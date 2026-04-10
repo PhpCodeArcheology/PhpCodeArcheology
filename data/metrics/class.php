@@ -474,6 +474,8 @@ return [
     ],
     ['key' => 'refactoringPriorityDrivers', 'type' => 'storage'],
     ['key' => 'docBlockSummary', 'type' => 'storage'],
+    ['key' => 'startLine', 'type' => 'storage'],
+    ['key' => 'endLine', 'type' => 'storage'],
 
     // Test coverage
     [

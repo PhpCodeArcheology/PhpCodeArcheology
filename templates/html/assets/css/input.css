@@ -9,6 +9,29 @@
   background-image: url('../img/body-pattern.svg');
 }
 
+/* Filter bar layout */
+.filters > div {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Search input — dark base */
+.search-input {
+  background-color: #1e293b;
+  color: #e2e8f0;
+  border: 1px solid #475569;
+}
+
+.search-input::placeholder {
+  color: #64748b;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #0891b2;
+}
+
 /* --- Light Theme Overrides --- */
 
 /* Base: body background & text */
@@ -314,6 +337,21 @@
 }
 
 [data-theme="light"] .hover\:border-gray-200:hover {
+  border-color: #0891b2 !important;
+}
+
+/* Search input */
+[data-theme="light"] .search-input {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+
+[data-theme="light"] .search-input::placeholder {
+  color: #94a3b8 !important;
+}
+
+[data-theme="light"] .search-input:focus {
   border-color: #0891b2 !important;
 }
 

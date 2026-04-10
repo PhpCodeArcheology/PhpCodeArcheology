@@ -119,6 +119,10 @@ final class ArgumentParser
                         $config->set('quickMode', true);
                         break;
 
+                    case 'source-code':
+                        $config->set('sourceCode', ['enable' => true, 'display' => 'problems-only']);
+                        break;
+
                     default:
                         throw new ParamException('CLI parameter "'.$param.'" does not exist.');
                 }

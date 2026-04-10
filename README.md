@@ -21,6 +21,7 @@ Unlike PHPStan or Psalm (which focus on type safety and bug detection), PhpCodeA
 - **Problem detection** with 14 built-in rules — God Class, too complex, dead code, security smells, SOLID violations, deep inheritance, low type coverage, untested complex code
 - **Test analysis** — auto-detects PHPUnit/Pest/Codeception, maps test files to production classes, integrates Clover XML for line-level coverage, highlights untested hotspots
 - **Git integration** — churn analysis, hotspot detection (high churn + high complexity), author tracking
+- **Source code display** — view method source code directly in the HTML report with PHP syntax highlighting and a nesting-depth heatmap that reveals complexity hotspots at a glance ([details below](#source-code-display))
 - **Multiple report formats** — interactive HTML, Markdown, JSON, SARIF (GitHub Code Scanning), AI summary, Knowledge Graph (JSON)
 - **Health Score** — single 0-100 score with A-F grading for your entire project
 - **Technical Debt Score** — weighted problem score normalised per 100 logical lines of code
@@ -52,6 +53,7 @@ No config file needed — the tool works out of the box. It scans your `src` dir
 - [Configuration](#configuration)
 - [Test Analysis](#test-analysis)
 - [Report Types](#report-types)
+- [Source Code Display](#source-code-display)
 - [Knowledge Graph Export](#knowledge-graph-export)
 - [Key Metrics](#key-metrics)
 - [AI Integration (MCP Server)](#ai-integration-mcp-server)
@@ -139,6 +141,7 @@ To create a config file interactively:
 | `--extensions=EXT` | File extensions to analyse (comma-separated, default: `php`) |
 | `--exclude=DIR` | Directories to exclude (comma-separated) |
 | `--coverage-file=FILE` | Clover XML coverage file from PHPUnit/Pest for line-level coverage data |
+| `--source-code` | Include source code with syntax highlighting and nesting heatmap in the HTML report ([details below](#source-code-display)) |
 | `--version` | Show version |
 
 ## Subcommands
@@ -333,6 +336,34 @@ Generate multiple report types in one run:
 ```
 
 > **Upgrading from v1.5.x?** Old report files in the report root (e.g. `index.html`, `report.json`) are no longer overwritten. They can be safely deleted.
+
+## Source Code Display
+
+The HTML report can embed the actual source code of methods and functions — with PHP syntax highlighting and a **nesting-depth heatmap** that makes complexity visible at a glance.
+
+```bash
+./vendor/bin/phpcodearcheology --source-code src/
+```
+
+**What you see:**
+
+- Full PHP source code with syntax highlighting (powered by highlight.js)
+- **Nesting heatmap** — lines inside deeper control structures (if/for/while/switch/catch) progressively light up from yellow to red, so the complexity drivers are immediately obvious
+- **Problem badges** above the code showing all detected issues (e.g. "Complexity is too high")
+- **Severity border** — the code block gets a colored left border matching the worst problem level
+
+**Configuration:**
+
+```yaml
+sourceCode:
+  enable: true
+  display: "problems-only"   # or "all" for every method/function
+```
+
+- `problems-only` (default with `--source-code`) — only shows source for methods with detected problems, keeping the report size manageable
+- `all` — shows source for every method and function
+
+The highlight.js assets are only included in the report when the feature is enabled.
 
 ## Knowledge Graph Export
 
