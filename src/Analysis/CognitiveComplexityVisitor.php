@@ -303,7 +303,7 @@ class CognitiveComplexityVisitor implements NodeVisitor, VisitorInterface
     }
 
     /**
-     * @param array<string, string> $identifier
+     * @param array{path?: string, name?: string} $identifier
      */
     private function storeNestingDepthMap(MetricCollectionTypeEnum $collectionType, array $identifier): void
     {
