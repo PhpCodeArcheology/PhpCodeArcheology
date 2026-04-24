@@ -131,8 +131,10 @@ class HistoryService
     private function normalizeValuesForDelta(mixed $currentValue, mixed $historyValue, bool $containsColon): array
     {
         if ($containsColon && is_string($currentValue) && (is_string($historyValue) || is_numeric($historyValue))) {
-            $currentValue = (int) explode(': ', $currentValue)[1];
-            $historyValue = (int) explode(': ', is_string($historyValue) ? $historyValue : (string) $historyValue)[1];
+            $currentParts = explode(': ', $currentValue);
+            $historyParts = explode(': ', is_string($historyValue) ? $historyValue : (string) $historyValue);
+            $currentValue = (int) ($currentParts[1] ?? $currentParts[0]);
+            $historyValue = (int) ($historyParts[1] ?? $historyParts[0]);
         }
 
         return [
