@@ -11,7 +11,7 @@ use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
 
 class CodeDuplicationCalculator implements CalculatorInterface
 {
-    use CalculatorTrait;
+    use \PhpCodeArch\Metrics\Controller\Traits\MetricsReaderWriterTrait;
 
     private const MIN_TOKENS = 50;
 
@@ -106,7 +106,7 @@ class CodeDuplicationCalculator implements CalculatorInterface
             $loc = $this->getFileLoc($fileId);
             $rate = $loc > 0 ? round(($duplicatedLines / $loc) * 100, 2) : 0.0;
 
-            $this->metricsController->setMetricValuesByIdentifierString(
+            $this->writer->setMetricValuesByIdentifierString(
                 $fileId,
                 [
                     MetricKey::DUPLICATION_RATE => $rate,
@@ -121,7 +121,7 @@ class CodeDuplicationCalculator implements CalculatorInterface
         // Set defaults for files without enough tokens
         foreach (array_keys($this->filePaths) as $fileId) {
             if (!isset($this->fileHashes[$fileId])) {
-                $this->metricsController->setMetricValuesByIdentifierString(
+                $this->writer->setMetricValuesByIdentifierString(
                     $fileId,
                     [MetricKey::DUPLICATION_RATE => 0.0, MetricKey::DUPLICATED_LINES => 0]
                 );
@@ -133,7 +133,7 @@ class CodeDuplicationCalculator implements CalculatorInterface
             ? round(($this->totalDuplicatedLines / $this->totalLines) * 100, 2)
             : 0.0;
 
-        $this->metricsController->setMetricValues(
+        $this->writer->setMetricValues(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             [
@@ -191,6 +191,6 @@ class CodeDuplicationCalculator implements CalculatorInterface
 
     private function getFileLoc(string $fileId): int
     {
-        return $this->metricsController->getMetricValueByIdentifierString($fileId, MetricKey::LOC)?->asInt() ?? 0;
+        return $this->reader->getMetricValueByIdentifierString($fileId, MetricKey::LOC)?->asInt() ?? 0;
     }
 }

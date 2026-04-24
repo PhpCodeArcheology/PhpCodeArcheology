@@ -13,7 +13,7 @@ use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
 
 class LimitsAndAveragesCalculator implements CalculatorInterface
 {
-    use CalculatorTrait;
+    use \PhpCodeArch\Metrics\Controller\Traits\MetricsReaderWriterTrait;
 
     public const METRIC_KEYS = [
         FileMetricsCollection::class => [
@@ -75,7 +75,7 @@ class LimitsAndAveragesCalculator implements CalculatorInterface
                 foreach ($data as $key => $value) {
                     $projectKey = 'overall'.$className.ucfirst((string) $valueType).ucfirst((string) $key);
 
-                    $this->metricsController->setMetricValue(
+                    $this->writer->setMetricValue(
                         MetricCollectionTypeEnum::ProjectCollection,
                         null,
                         $value,

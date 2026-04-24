@@ -12,7 +12,7 @@ use PhpCodeArch\Metrics\Model\MetricValue;
 
 class FileCalculator implements CalculatorInterface
 {
-    use CalculatorTrait;
+    use \PhpCodeArch\Metrics\Controller\Traits\MetricsReaderWriterTrait;
 
     /** @var array<string, string> identifier → fileName */
     private array $files = [];
@@ -35,7 +35,7 @@ class FileCalculator implements CalculatorInterface
             $commonPath .= '/';
         }
 
-        $this->metricsController->setMetricValue(
+        $this->writer->setMetricValue(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             $commonPath,
@@ -56,14 +56,14 @@ class FileCalculator implements CalculatorInterface
                 MetricKey::FILE_NAME => $pathInfo['basename'],
             ];
 
-            $this->metricsController->setMetricValues(
+            $this->writer->setMetricValues(
                 MetricCollectionTypeEnum::FileCollection,
                 ['path' => $fileName],
                 $fileMetrics
             );
         }
 
-        foreach ($this->metricsController->getAllCollections() as &$metrics) {
+        foreach ($this->registry->getAllCollections() as &$metrics) {
             if ($metrics instanceof FileMetricsCollection) {
                 continue;
             }

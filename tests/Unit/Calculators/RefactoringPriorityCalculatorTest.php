@@ -6,9 +6,8 @@ use PhpCodeArch\Calculators\RefactoringPriorityCalculator;
 use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 use PhpCodeArch\Metrics\Model\MetricsContainer;
-use PhpCodeArch\Predictions\Problems\TooComplexProblem;
-use PhpCodeArch\Predictions\Problems\SolidViolationProblem;
 use PhpCodeArch\Predictions\PredictionInterface;
+use PhpCodeArch\Predictions\Problems\TooComplexProblem;
 
 beforeEach(function () {
     $this->container = new MetricsContainer();
@@ -16,12 +15,12 @@ beforeEach(function () {
     $this->controller->registerMetricTypes();
     $this->controller->createProjectMetricsCollection(['/src']);
 
-    $this->calculator = new RefactoringPriorityCalculator($this->controller);
+    $this->calculator = new RefactoringPriorityCalculator($this->controller, $this->controller);
 });
 
 function createClass(MetricsController $controller, string $name, array $values, array $flags = []): string
 {
-    $path = '/src/' . str_replace('\\', '/', $name) . '.php';
+    $path = '/src/'.str_replace('\\', '/', $name).'.php';
 
     // Create file collection for git data lookup
     $controller->createMetricCollection(
@@ -71,6 +70,7 @@ function addProblemToClass(MetricsController $controller, string $classId, int $
 function getClassMetric(MetricsController $controller, string $classId, string $key): mixed
 {
     $collection = $controller->getMetricCollectionByIdentifierString($classId);
+
     return $collection->get($key)?->getValue();
 }
 
@@ -80,6 +80,7 @@ function getProjectMetricVal(MetricsController $controller, string $key): mixed
         MetricCollectionTypeEnum::ProjectCollection,
         null
     );
+
     return $collection->get($key)?->getValue();
 }
 
@@ -139,7 +140,7 @@ it('gives high score to a god class', function () {
     ]);
 
     // Add 4 errors
-    for ($i = 0; $i < 4; $i++) {
+    for ($i = 0; $i < 4; ++$i) {
         addProblemToClass($this->controller, $classId, PredictionInterface::ERROR);
     }
 
@@ -183,7 +184,7 @@ it('does not exceed 100 with extreme values', function () {
         'solidViolationCount' => 20,
     ]);
 
-    for ($i = 0; $i < 20; $i++) {
+    for ($i = 0; $i < 20; ++$i) {
         addProblemToClass($this->controller, $classId, PredictionInterface::ERROR);
     }
 

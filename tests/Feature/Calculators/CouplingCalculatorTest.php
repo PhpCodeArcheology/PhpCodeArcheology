@@ -16,7 +16,7 @@ use PhpCodeArch\Metrics\Model\Collections\TraitNameCollection;
 use PhpCodeArch\Metrics\Model\MetricsContainer;
 use PhpCodeArch\Metrics\Model\MetricValue;
 
-beforeEach(function() {
+beforeEach(function () {
     $metrics = new MetricsContainer();
 
     $this->metricsController = new MetricsController($metrics);
@@ -130,13 +130,12 @@ beforeEach(function() {
 
     $classes = [];
 
-
-    array_walk($this->classes, function(&$class) use (&$classes) {
+    array_walk($this->classes, function (&$class) use (&$classes) {
         $classMetrics = $this->metricsController->createMetricCollection(
             MetricCollectionTypeEnum::ClassCollection,
             [
-               'path' => '',
-               'name' => $class['name'],
+                'path' => '',
+                'name' => $class['name'],
             ],
         );
 
@@ -202,8 +201,8 @@ beforeEach(function() {
         'packages'
     );
 
-    $packageIACalc = new PackageInstabilityAbstractnessCalculator($this->metricsController);
-    $couplingCalculator = new CouplingCalculator($this->metricsController, $packageIACalc);
+    $packageIACalc = new PackageInstabilityAbstractnessCalculator($this->metricsController, $this->metricsController);
+    $couplingCalculator = new CouplingCalculator($this->metricsController, $this->metricsController, $packageIACalc);
 
     $couplingCalculator->beforeTraverse();
 
@@ -213,8 +212,8 @@ beforeEach(function() {
     $couplingCalculator->afterTraverse();
 });
 
-it('calculates dependency counts correctly', function() {
-    array_walk($this->classes, function($class) {
+it('calculates dependency counts correctly', function () {
+    array_walk($this->classes, function ($class) {
         $classMetrics = $this->metricsController->getMetricCollectionByIdentifierString($class['id']);
 
         expect($classMetrics->get('usesInProjectCount')->getValue())->toBe($class['expected']['usesInProjectCount'])
@@ -222,16 +221,15 @@ it('calculates dependency counts correctly', function() {
     });
 });
 
-
-it('calculates instability correctly', function() {
-    array_walk($this->classes, function($class) {
+it('calculates instability correctly', function () {
+    array_walk($this->classes, function ($class) {
         $classMetrics = $this->metricsController->getMetricCollectionByIdentifierString($class['id']);
 
         expect($classMetrics->get('instability')->getValue())->toBe($class['expected']['instability']);
     });
 });
 
-/**
+/*
  * Hand-calculated scenario: ServiceA → ServiceB
  *
  * Instability formula: I = Ce / (Ca + Ce)
@@ -245,8 +243,8 @@ it('calculates instability correctly', function() {
  *
  * See: tests/Feature/Analysis/testfiles/hand-calculated-coupling.php
  */
-describe('hand-calculated ServiceA → ServiceB', function() {
-    beforeEach(function() {
+describe('hand-calculated ServiceA → ServiceB', function () {
+    beforeEach(function () {
         $metrics = new MetricsContainer();
         $this->metricsController = new MetricsController($metrics);
         $this->metricsController->createProjectMetricsCollection(['']);
@@ -282,7 +280,7 @@ describe('hand-calculated ServiceA → ServiceB', function() {
 
         $classes = [];
 
-        array_walk($this->handCalcClasses, function(&$class) use (&$classes) {
+        array_walk($this->handCalcClasses, function (&$class) use (&$classes) {
             $classMetrics = $this->metricsController->createMetricCollection(
                 MetricCollectionTypeEnum::ClassCollection,
                 ['path' => '', 'name' => $class['name']]
@@ -320,8 +318,8 @@ describe('hand-calculated ServiceA → ServiceB', function() {
             );
         }
 
-        $packageIACalc = new PackageInstabilityAbstractnessCalculator($this->metricsController);
-        $couplingCalculator = new CouplingCalculator($this->metricsController, $packageIACalc);
+        $packageIACalc = new PackageInstabilityAbstractnessCalculator($this->metricsController, $this->metricsController);
+        $couplingCalculator = new CouplingCalculator($this->metricsController, $this->metricsController, $packageIACalc);
 
         $couplingCalculator->beforeTraverse();
         foreach ($this->metricsController->getAllCollections() as $metric) {
@@ -330,8 +328,8 @@ describe('hand-calculated ServiceA → ServiceB', function() {
         $couplingCalculator->afterTraverse();
     });
 
-    it('calculates usesForInstabilityCount and usedByCount correctly', function() {
-        array_walk($this->handCalcClasses, function($class) {
+    it('calculates usesForInstabilityCount and usedByCount correctly', function () {
+        array_walk($this->handCalcClasses, function ($class) {
             $classMetrics = $this->metricsController->getMetricCollectionByIdentifierString($class['id']);
 
             expect($classMetrics->get('usesForInstabilityCount')->getValue())
@@ -341,8 +339,8 @@ describe('hand-calculated ServiceA → ServiceB', function() {
         });
     });
 
-    it('calculates instability correctly for hand-calculated scenario', function() {
-        array_walk($this->handCalcClasses, function($class) {
+    it('calculates instability correctly for hand-calculated scenario', function () {
+        array_walk($this->handCalcClasses, function ($class) {
             $classMetrics = $this->metricsController->getMetricCollectionByIdentifierString($class['id']);
 
             expect($classMetrics->get('instability')->getValue())

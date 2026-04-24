@@ -9,19 +9,23 @@ use PhpCodeArch\Application\Service\FrameworkDetectionResult;
 use PhpCodeArch\Application\Service\TestCoversParseResult;
 use PhpCodeArch\Application\Service\TestScanResult;
 use PhpCodeArch\Calculators\Helpers\PackageInstabilityAbstractnessCalculator;
-use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\Controller\MetricsReaderInterface;
+use PhpCodeArch\Metrics\Controller\MetricsRegistryInterface;
+use PhpCodeArch\Metrics\Controller\MetricsWriterInterface;
 
 final class CalculatorRegistry
 {
     public function __construct(
-        private readonly MetricsController $metricsController,
+        private readonly MetricsReaderInterface $reader,
+        private readonly MetricsWriterInterface $writer,
+        private readonly MetricsRegistryInterface $registry,
     ) {
     }
 
     /** @return list<CalculatorInterface> */
     public function getMainCalculators(Config $config): array
     {
-        $packageIACalculator = new PackageInstabilityAbstractnessCalculator($this->metricsController);
+        $packageIACalculator = new PackageInstabilityAbstractnessCalculator($this->reader, $this->writer);
 
         $frameworkDetectionRaw = $config->get('frameworkDetection');
         $frameworkDetection = $frameworkDetectionRaw instanceof FrameworkDetectionResult ? $frameworkDetectionRaw : null;
@@ -41,19 +45,19 @@ final class CalculatorRegistry
                 : (is_array($filesRaw) && is_string($filesRaw[0] ?? null) ? $filesRaw[0] : (getcwd() ?: '')));
 
         return [
-            new MaintainabilityIndexCalculator($this->metricsController),
-            new FileCalculator($this->metricsController),
-            new TestMappingCalculator($this->metricsController, $frameworkDetection, $testScanResult, $coverageData, $composerRoot, $coversParseResult),
-            new VariablesCalculator($this->metricsController),
-            new CouplingCalculator($this->metricsController, $packageIACalculator),
-            new InheritanceDepthCalculator($this->metricsController),
-            new DependencyCycleCalculator($this->metricsController),
-            new SolidViolationCalculator($this->metricsController),
-            new LayerViolationCalculator($this->metricsController),
-            new PackageCohesionCalculator($this->metricsController),
-            new CodeDuplicationCalculator($this->metricsController),
-            new ProjectCalculator($this->metricsController),
-            new LimitsAndAveragesCalculator($this->metricsController),
+            new MaintainabilityIndexCalculator($this->writer),
+            new FileCalculator($this->reader, $this->writer, $this->registry),
+            new TestMappingCalculator($this->reader, $this->writer, $this->registry, $frameworkDetection, $testScanResult, $coverageData, $composerRoot, $coversParseResult),
+            new VariablesCalculator($this->reader, $this->writer, $this->registry),
+            new CouplingCalculator($this->reader, $this->writer, $packageIACalculator),
+            new InheritanceDepthCalculator($this->reader, $this->writer, $this->registry),
+            new DependencyCycleCalculator($this->reader, $this->writer, $this->registry),
+            new SolidViolationCalculator($this->reader, $this->writer, $this->registry),
+            new LayerViolationCalculator($this->reader, $this->writer, $this->registry),
+            new PackageCohesionCalculator($this->reader, $this->writer, $this->registry),
+            new CodeDuplicationCalculator($this->reader, $this->writer, $this->registry),
+            new ProjectCalculator($this->reader, $this->writer, $this->registry),
+            new LimitsAndAveragesCalculator($this->reader, $this->writer, $this->registry),
         ];
     }
 
@@ -61,10 +65,10 @@ final class CalculatorRegistry
     public function getQuickCalculators(): array
     {
         return [
-            new MaintainabilityIndexCalculator($this->metricsController),
-            new FileCalculator($this->metricsController),
-            new ProjectCalculator($this->metricsController),
-            new LimitsAndAveragesCalculator($this->metricsController),
+            new MaintainabilityIndexCalculator($this->writer),
+            new FileCalculator($this->reader, $this->writer, $this->registry),
+            new ProjectCalculator($this->reader, $this->writer, $this->registry),
+            new LimitsAndAveragesCalculator($this->reader, $this->writer, $this->registry),
         ];
     }
 
@@ -72,9 +76,9 @@ final class CalculatorRegistry
     public function getPostPredictionCalculators(): array
     {
         return [
-            new TechnicalDebtCalculator($this->metricsController),
-            new HealthScoreCalculator($this->metricsController),
-            new RefactoringPriorityCalculator($this->metricsController),
+            new TechnicalDebtCalculator($this->writer),
+            new HealthScoreCalculator($this->writer),
+            new RefactoringPriorityCalculator($this->writer, $this->registry),
         ];
     }
 

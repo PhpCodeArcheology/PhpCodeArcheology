@@ -70,7 +70,7 @@ function getClassTestFileCount(MetricsController $controller, string $classId): 
 }
 
 it('sets zero project metrics when no test files exist', function () {
-    $calculator = new TestMappingCalculator($this->controller);
+    $calculator = new TestMappingCalculator($this->controller, $this->controller, $this->controller);
     $calculator->afterTraverse();
 
     expect(getMappingProjectMetric($this->controller, 'overallTestFileCount'))->toBe(0)
@@ -89,7 +89,9 @@ it('maps test file to production class by naming convention', function () {
     );
 
     $calculator = new TestMappingCalculator(
-        metricsController: $this->controller,
+        reader: $this->controller,
+        writer: $this->controller,
+        registry: $this->controller,
         testScanResult: $testScan,
     );
     $calculator->afterTraverse();
@@ -117,7 +119,9 @@ it('maps test file to production class via PSR-4 namespace', function () {
     );
 
     $calculator = new TestMappingCalculator(
-        metricsController: $this->controller,
+        reader: $this->controller,
+        writer: $this->controller,
+        registry: $this->controller,
         frameworkDetection: $frameworkDetection,
         testScanResult: $testScan,
     );
@@ -137,7 +141,9 @@ it('sets hasTest=true on matched class and hasTest=false on unmatched class', fu
     );
 
     $calculator = new TestMappingCalculator(
-        metricsController: $this->controller,
+        reader: $this->controller,
+        writer: $this->controller,
+        registry: $this->controller,
         testScanResult: $testScan,
     );
     $calculator->afterTraverse();
@@ -167,7 +173,9 @@ it('counts testFileCount correctly when multiple tests cover one class via @cove
     ]);
 
     $calculator = new TestMappingCalculator(
-        metricsController: $this->controller,
+        reader: $this->controller,
+        writer: $this->controller,
+        registry: $this->controller,
         testScanResult: $testScan,
         coversParseResult: $covers,
     );
@@ -190,7 +198,9 @@ it('resolves @covers annotations to production classes', function () {
     ]);
 
     $calculator = new TestMappingCalculator(
-        metricsController: $this->controller,
+        reader: $this->controller,
+        writer: $this->controller,
+        registry: $this->controller,
         testScanResult: $testScan,
         coversParseResult: $covers,
     );
@@ -217,7 +227,9 @@ it('resolves multiple classes from @covers', function () {
     ]);
 
     $calculator = new TestMappingCalculator(
-        metricsController: $this->controller,
+        reader: $this->controller,
+        writer: $this->controller,
+        registry: $this->controller,
         testScanResult: $testScan,
         coversParseResult: $covers,
     );
@@ -243,7 +255,9 @@ it('prefers @covers over naming convention', function () {
     ]);
 
     $calculator = new TestMappingCalculator(
-        metricsController: $this->controller,
+        reader: $this->controller,
+        writer: $this->controller,
+        registry: $this->controller,
         testScanResult: $testScan,
         coversParseResult: $covers,
     );
@@ -270,7 +284,9 @@ it('uses use-statements for integration tests without @covers', function () {
     );
 
     $calculator = new TestMappingCalculator(
-        metricsController: $this->controller,
+        reader: $this->controller,
+        writer: $this->controller,
+        registry: $this->controller,
         testScanResult: $testScan,
         coversParseResult: $covers,
     );
@@ -294,7 +310,9 @@ it('excludes test classes from production index', function () {
     );
 
     $calculator = new TestMappingCalculator(
-        metricsController: $this->controller,
+        reader: $this->controller,
+        writer: $this->controller,
+        registry: $this->controller,
         testScanResult: $testScan,
     );
     $calculator->afterTraverse();
@@ -313,7 +331,9 @@ it('does not count abstract classes as untested', function () {
     );
 
     $calculator = new TestMappingCalculator(
-        metricsController: $this->controller,
+        reader: $this->controller,
+        writer: $this->controller,
+        registry: $this->controller,
         testScanResult: $testScan,
     );
     $calculator->afterTraverse();
@@ -335,7 +355,9 @@ it('calculates project-level aggregates correctly', function () {
     );
 
     $calculator = new TestMappingCalculator(
-        metricsController: $this->controller,
+        reader: $this->controller,
+        writer: $this->controller,
+        registry: $this->controller,
         testScanResult: $testScan,
     );
     $calculator->afterTraverse();
@@ -370,7 +392,9 @@ it('tags classes outside <source> scope with EXCLUDED_BY_PHPUNIT_SOURCE', functi
     );
 
     $calculator = new TestMappingCalculator(
-        metricsController: $this->controller,
+        reader: $this->controller,
+        writer: $this->controller,
+        registry: $this->controller,
         testScanResult: $testScan,
     );
     $calculator->afterTraverse();
@@ -404,7 +428,9 @@ it('does not count source-excluded classes as production or untested', function 
     );
 
     $calculator = new TestMappingCalculator(
-        metricsController: $this->controller,
+        reader: $this->controller,
+        writer: $this->controller,
+        registry: $this->controller,
         testScanResult: $testScan,
     );
     $calculator->afterTraverse();
@@ -428,7 +454,9 @@ it('behaves unchanged when testScanResult->phpunitConfig is null', function () {
     );
 
     $calculator = new TestMappingCalculator(
-        metricsController: $this->controller,
+        reader: $this->controller,
+        writer: $this->controller,
+        registry: $this->controller,
         testScanResult: $testScan,
     );
     $calculator->afterTraverse();
@@ -455,7 +483,9 @@ it('behaves unchanged when phpunitConfig has no <source> scope', function () {
     );
 
     $calculator = new TestMappingCalculator(
-        metricsController: $this->controller,
+        reader: $this->controller,
+        writer: $this->controller,
+        registry: $this->controller,
         testScanResult: $testScan,
     );
     $calculator->afterTraverse();
@@ -503,7 +533,9 @@ it('uses the absolute class path, not the common-path-stripped FILE_PATH metric'
     );
 
     $calculator = new TestMappingCalculator(
-        metricsController: $this->controller,
+        reader: $this->controller,
+        writer: $this->controller,
+        registry: $this->controller,
         testScanResult: $testScan,
     );
     $calculator->afterTraverse();

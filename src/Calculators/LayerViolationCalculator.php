@@ -11,7 +11,7 @@ use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
 
 class LayerViolationCalculator implements CalculatorInterface
 {
-    use CalculatorTrait;
+    use \PhpCodeArch\Metrics\Controller\Traits\MetricsReaderWriterTrait;
 
     // Default layer order (higher index = higher layer, lower layers should not depend on higher)
     // Convention-based: detected from namespace segments
@@ -43,7 +43,7 @@ class LayerViolationCalculator implements CalculatorInterface
 
         $collections = ['classes', 'interfaces', 'traits', 'enums'];
         foreach ($collections as $collectionKey) {
-            $items = $this->metricsController->getCollection(
+            $items = $this->reader->getCollection(
                 MetricCollectionTypeEnum::ProjectCollection,
                 null,
                 $collectionKey
@@ -76,7 +76,7 @@ class LayerViolationCalculator implements CalculatorInterface
     {
         foreach ($this->classLayers as $classId => $layer) {
             if ('' === $layer) {
-                $this->metricsController->setMetricValuesByIdentifierString(
+                $this->writer->setMetricValuesByIdentifierString(
                     $classId,
                     [MetricKey::LAYER_VIOLATION_COUNT => 0, MetricKey::LAYER_VIOLATIONS => []]
                 );
@@ -85,7 +85,7 @@ class LayerViolationCalculator implements CalculatorInterface
 
             $layerIndex = self::LAYER_ORDER[$layer] ?? -1;
             if ($layerIndex < 0) {
-                $this->metricsController->setMetricValuesByIdentifierString(
+                $this->writer->setMetricValuesByIdentifierString(
                     $classId,
                     [MetricKey::LAYER_VIOLATION_COUNT => 0, MetricKey::LAYER_VIOLATIONS => []]
                 );
@@ -93,7 +93,7 @@ class LayerViolationCalculator implements CalculatorInterface
             }
 
             // Check dependencies
-            $usedClasses = $this->metricsController->getCollectionByIdentifierString($classId, 'usedClasses');
+            $usedClasses = $this->reader->getCollectionByIdentifierString($classId, 'usedClasses');
             $violations = [];
 
             if ($usedClasses instanceof \PhpCodeArch\Metrics\Model\Collections\CollectionInterface) {
@@ -117,7 +117,7 @@ class LayerViolationCalculator implements CalculatorInterface
                 }
             }
 
-            $this->metricsController->setMetricValuesByIdentifierString(
+            $this->writer->setMetricValuesByIdentifierString(
                 $classId,
                 [
                     MetricKey::LAYER_VIOLATION_COUNT => count($violations),

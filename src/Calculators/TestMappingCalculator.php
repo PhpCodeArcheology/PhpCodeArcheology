@@ -7,7 +7,9 @@ namespace PhpCodeArch\Calculators;
 use PhpCodeArch\Application\Service\FrameworkDetectionResult;
 use PhpCodeArch\Application\Service\TestCoversParseResult;
 use PhpCodeArch\Application\Service\TestScanResult;
-use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\Controller\MetricsReaderInterface;
+use PhpCodeArch\Metrics\Controller\MetricsRegistryInterface;
+use PhpCodeArch\Metrics\Controller\MetricsWriterInterface;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
@@ -19,7 +21,9 @@ class TestMappingCalculator implements CalculatorInterface
      * @param array<string, array{linerate: float, statements: int}>|null $coverageData
      */
     public function __construct(
-        private readonly MetricsController $metricsController,
+        private readonly MetricsReaderInterface $reader,
+        private readonly MetricsWriterInterface $writer,
+        private readonly MetricsRegistryInterface $registry,
         private readonly ?FrameworkDetectionResult $frameworkDetection = null,
         private readonly ?TestScanResult $testScanResult = null,
         private readonly ?array $coverageData = null,
@@ -106,7 +110,7 @@ class TestMappingCalculator implements CalculatorInterface
                 $totalStatements += $covEntry['statements'];
             }
 
-            $this->metricsController->setMetricValuesByIdentifierString($id, $classMetrics);
+            $this->writer->setMetricValuesByIdentifierString($id, $classMetrics);
         }
 
         $productionCount = count($productionIds);
@@ -132,7 +136,7 @@ class TestMappingCalculator implements CalculatorInterface
             $projectMetrics[MetricKey::OVERALL_COVERAGE_PERCENT] = round($totalWeightedLinerate / $totalStatements * 100, 2);
         }
 
-        $this->metricsController->setMetricValues(
+        $this->writer->setMetricValues(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             $projectMetrics
@@ -164,7 +168,7 @@ class TestMappingCalculator implements CalculatorInterface
 
         $phpunitConfig = $this->testScanResult?->phpunitConfig;
 
-        foreach ($this->metricsController->getAllCollections() as $identifierString => $collection) {
+        foreach ($this->registry->getAllCollections() as $identifierString => $collection) {
             if (!$collection instanceof ClassMetricsCollection) {
                 continue;
             }
@@ -173,14 +177,14 @@ class TestMappingCalculator implements CalculatorInterface
             // FileCalculator). For phpunit.xml <source> scope matching we need the
             // original absolute path, which the collection still holds via getPath().
             $absoluteFilePath = $collection->getPath();
-            $filePath = $this->metricsController->getMetricValueByIdentifierString($identifierString, MetricKey::FILE_PATH)?->asString();
+            $filePath = $this->reader->getMetricValueByIdentifierString($identifierString, MetricKey::FILE_PATH)?->asString();
             if (is_string($filePath) && isset($testFilePaths[$filePath])) {
                 continue;
             }
 
-            $isInterface = $this->metricsController->getMetricValueByIdentifierString($identifierString, MetricKey::INTERFACE)?->asBool() ?? false;
-            $isTrait = $this->metricsController->getMetricValueByIdentifierString($identifierString, MetricKey::TRAIT)?->asBool() ?? false;
-            $isEnum = $this->metricsController->getMetricValueByIdentifierString($identifierString, MetricKey::ENUM)?->asBool() ?? false;
+            $isInterface = $this->reader->getMetricValueByIdentifierString($identifierString, MetricKey::INTERFACE)?->asBool() ?? false;
+            $isTrait = $this->reader->getMetricValueByIdentifierString($identifierString, MetricKey::TRAIT)?->asBool() ?? false;
+            $isEnum = $this->reader->getMetricValueByIdentifierString($identifierString, MetricKey::ENUM)?->asBool() ?? false;
 
             if ($isInterface || $isTrait || $isEnum) {
                 continue;
@@ -194,7 +198,7 @@ class TestMappingCalculator implements CalculatorInterface
                 && '' !== $absoluteFilePath
                 && !$phpunitConfig->isInSourceScope($absoluteFilePath)
             ) {
-                $this->metricsController->setMetricValuesByIdentifierString(
+                $this->writer->setMetricValuesByIdentifierString(
                     $identifierString,
                     [MetricKey::EXCLUDED_BY_PHPUNIT_SOURCE => true]
                 );
@@ -202,7 +206,7 @@ class TestMappingCalculator implements CalculatorInterface
                 continue;
             }
 
-            $isAbstract = $this->metricsController->getMetricValueByIdentifierString($identifierString, MetricKey::ABSTRACT)?->asBool() ?? false;
+            $isAbstract = $this->reader->getMetricValueByIdentifierString($identifierString, MetricKey::ABSTRACT)?->asBool() ?? false;
 
             $fqcn = $collection->getName();
             $shortName = basename(str_replace('\\', '/', $fqcn));
@@ -393,7 +397,7 @@ class TestMappingCalculator implements CalculatorInterface
 
     private function setZeroProjectMetrics(): void
     {
-        $this->metricsController->setMetricValues(
+        $this->writer->setMetricValues(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             [
@@ -418,7 +422,7 @@ class TestMappingCalculator implements CalculatorInterface
      */
     private function lookupCoverage(string $identifierString): ?array
     {
-        $absolutePath = $this->metricsController
+        $absolutePath = $this->reader
             ->getMetricValueByIdentifierString($identifierString, MetricKey::FILE_PATH)
             ?->asString();
 

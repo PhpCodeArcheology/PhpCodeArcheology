@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Calculators;
 
-use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\Controller\MetricsWriterInterface;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
@@ -18,7 +18,7 @@ class TechnicalDebtCalculator implements CalculatorInterface
     private int $totalLloc = 0;
 
     public function __construct(
-        private readonly MetricsController $metricsController,
+        private readonly MetricsWriterInterface $writer,
     ) {
     }
 
@@ -45,7 +45,7 @@ class TechnicalDebtCalculator implements CalculatorInterface
 
         $debtPerHundredLines = $lloc > 0 ? round($debtPoints / $lloc * 100, 2) : 0;
 
-        $this->metricsController->setMetricValueByIdentifierString(
+        $this->writer->setMetricValueByIdentifierString(
             (string) $metrics->getIdentifier(),
             MetricKey::TECHNICAL_DEBT_SCORE,
             $debtPerHundredLines
@@ -60,7 +60,7 @@ class TechnicalDebtCalculator implements CalculatorInterface
     public function afterTraverse(): void
     {
         $overallDebt = $this->totalLloc > 0 ? round($this->totalDebt / $this->totalLloc * 100, 2) : 0;
-        $this->metricsController->setMetricValues(
+        $this->writer->setMetricValues(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             [MetricKey::OVERALL_TECHNICAL_DEBT_SCORE => $overallDebt]

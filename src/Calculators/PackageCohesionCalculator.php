@@ -11,7 +11,7 @@ use PhpCodeArch\Metrics\Model\PackageMetrics\PackageMetricsCollection;
 
 class PackageCohesionCalculator implements CalculatorInterface
 {
-    use CalculatorTrait;
+    use \PhpCodeArch\Metrics\Controller\Traits\MetricsReaderWriterTrait;
 
     /** @var array<string, string[]> packageId → [classId, ...] */
     private array $packageClasses = [];
@@ -26,7 +26,7 @@ class PackageCohesionCalculator implements CalculatorInterface
 
         $collections = ['classes', 'interfaces', 'traits', 'enums'];
         foreach ($collections as $collectionKey) {
-            $items = $this->metricsController->getCollection(
+            $items = $this->reader->getCollection(
                 MetricCollectionTypeEnum::ProjectCollection,
                 null,
                 $collectionKey
@@ -52,7 +52,7 @@ class PackageCohesionCalculator implements CalculatorInterface
         $identifierString = (string) $metrics->getIdentifier();
 
         // Get classes in this package
-        $classCollection = $this->metricsController->getCollectionByIdentifierString(
+        $classCollection = $this->reader->getCollectionByIdentifierString(
             $identifierString,
             'classes'
         );
@@ -81,7 +81,7 @@ class PackageCohesionCalculator implements CalculatorInterface
         foreach ($this->packageClasses as $packageId => $classIds) {
             $n = count($classIds);
             if ($n <= 1) {
-                $this->metricsController->setMetricValueByIdentifierString(
+                $this->writer->setMetricValueByIdentifierString(
                     $packageId,
                     MetricKey::PACKAGE_COHESION,
                     $n > 0 ? 1.0 : 0.0
@@ -94,7 +94,7 @@ class PackageCohesionCalculator implements CalculatorInterface
             $classNamesInPackage = array_keys($classIds);
 
             foreach ($classIds as $className => $classId) {
-                $usedClasses = $this->metricsController->getCollectionByIdentifierString($classId, 'usedClasses');
+                $usedClasses = $this->reader->getCollectionByIdentifierString($classId, 'usedClasses');
                 if (!$usedClasses instanceof \PhpCodeArch\Metrics\Model\Collections\CollectionInterface) {
                     continue;
                 }
@@ -109,7 +109,7 @@ class PackageCohesionCalculator implements CalculatorInterface
             // H = (R + 1) / N
             $cohesion = min(1.0, round(($internalRelations + 1) / $n, 2));
 
-            $this->metricsController->setMetricValueByIdentifierString(
+            $this->writer->setMetricValueByIdentifierString(
                 $packageId,
                 'packageCohesion',
                 $cohesion

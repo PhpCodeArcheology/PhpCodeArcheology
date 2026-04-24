@@ -13,7 +13,7 @@ use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
 
 class ProjectCalculator implements CalculatorInterface
 {
-    use CalculatorTrait;
+    use \PhpCodeArch\Metrics\Controller\Traits\MetricsReaderWriterTrait;
 
     /** @var array<string, mixed> */
     private array $data;
@@ -112,7 +112,7 @@ class ProjectCalculator implements CalculatorInterface
 
                 $this->lcomSum += $metrics->getInt(MetricKey::LCOM);
 
-                $methodCollection = $this->metricsController->getCollectionByIdentifierString(
+                $methodCollection = $this->reader->getCollectionByIdentifierString(
                     (string) $metrics->getIdentifier(),
                     'methods'
                 );
@@ -126,7 +126,7 @@ class ProjectCalculator implements CalculatorInterface
                         continue;
                     }
 
-                    $methodCC = $this->metricsController->getMetricValueByIdentifierString(
+                    $methodCC = $this->reader->getMetricValueByIdentifierString(
                         $methodIdentifierString,
                         MetricKey::CC
                     )?->asInt() ?? 0;
@@ -156,7 +156,7 @@ class ProjectCalculator implements CalculatorInterface
             );
         }
 
-        $metricValues = $this->metricsController->getMetricValues(
+        $metricValues = $this->reader->getMetricValues(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             [
@@ -196,7 +196,7 @@ class ProjectCalculator implements CalculatorInterface
             MetricKey::OVERALL_STATIC_METHODS_COUNT,
         ];
         foreach ($counterDefaults as $key) {
-            $existing = $this->metricsController->getMetricValue(
+            $existing = $this->reader->getMetricValue(
                 MetricCollectionTypeEnum::ProjectCollection, null, $key
             );
             if (!$existing instanceof \PhpCodeArch\Metrics\Model\MetricValue || null === $existing->getValue()) {
@@ -204,7 +204,7 @@ class ProjectCalculator implements CalculatorInterface
             }
         }
 
-        $this->metricsController->setMetricValues(
+        $this->writer->setMetricValues(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             $this->data

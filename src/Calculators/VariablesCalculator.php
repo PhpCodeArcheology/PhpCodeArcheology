@@ -10,7 +10,7 @@ use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
 
 class VariablesCalculator implements CalculatorInterface
 {
-    use CalculatorTrait;
+    use \PhpCodeArch\Metrics\Controller\Traits\MetricsReaderWriterTrait;
 
     public function calculate(MetricsCollectionInterface $metrics): void
     {
@@ -18,25 +18,25 @@ class VariablesCalculator implements CalculatorInterface
 
     public function afterTraverse(): void
     {
-        $classes = $this->metricsController->getCollection(
+        $classes = $this->reader->getCollection(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             'classes'
         )?->getAsArray() ?? [];
 
-        $files = $this->metricsController->getCollection(
+        $files = $this->reader->getCollection(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             'files'
         )?->getAsArray() ?? [];
 
-        $functions = $this->metricsController->getCollection(
+        $functions = $this->reader->getCollection(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             'functions'
         )?->getAsArray() ?? [];
 
-        $methods = $this->metricsController->getCollection(
+        $methods = $this->reader->getCollection(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             'methods'
@@ -45,7 +45,7 @@ class VariablesCalculator implements CalculatorInterface
         $elements = array_merge($classes, $files, $functions, $methods);
 
         foreach (array_keys($elements) as $elementId) {
-            $classMetricCollection = $this->metricsController->getMetricCollectionByIdentifierString($elementId);
+            $classMetricCollection = $this->reader->getMetricCollectionByIdentifierString($elementId);
 
             $superglobals = $classMetricCollection->getArray(MetricKey::SUPERGLOBALS);
             $variables = $classMetricCollection->getArray(MetricKey::VARIABLES);
@@ -77,7 +77,7 @@ class VariablesCalculator implements CalculatorInterface
                     )
                     : 0;
 
-            $this->metricsController->setMetricValuesByIdentifierString($elementId, $metricValues);
+            $this->writer->setMetricValuesByIdentifierString($elementId, $metricValues);
         }
     }
 }

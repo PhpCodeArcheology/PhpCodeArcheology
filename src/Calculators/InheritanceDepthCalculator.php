@@ -11,7 +11,7 @@ use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
 
 class InheritanceDepthCalculator implements CalculatorInterface
 {
-    use CalculatorTrait;
+    use \PhpCodeArch\Metrics\Controller\Traits\MetricsReaderWriterTrait;
 
     /** @var array<string, string> classIdentifier → parentClassIdentifier */
     private array $parentMap = [];
@@ -35,7 +35,7 @@ class InheritanceDepthCalculator implements CalculatorInterface
         // Build nameToId map from project classes
         $collections = ['classes', 'interfaces', 'traits', 'enums'];
         foreach ($collections as $collectionKey) {
-            $items = $this->metricsController->getCollection(
+            $items = $this->reader->getCollection(
                 MetricCollectionTypeEnum::ProjectCollection,
                 null,
                 $collectionKey
@@ -64,7 +64,7 @@ class InheritanceDepthCalculator implements CalculatorInterface
         $identifierString = (string) $metrics->getIdentifier();
 
         // Get extends collection
-        $extends = $this->metricsController->getCollectionByIdentifierString(
+        $extends = $this->reader->getCollectionByIdentifierString(
             $identifierString,
             'extends'
         );
@@ -100,7 +100,7 @@ class InheritanceDepthCalculator implements CalculatorInterface
         foreach ($this->nameToId as $id) {
             $dit = $this->computeDit($id);
 
-            $this->metricsController->setMetricValuesByIdentifierString(
+            $this->writer->setMetricValuesByIdentifierString(
                 $id,
                 [
                     MetricKey::DIT => $dit,

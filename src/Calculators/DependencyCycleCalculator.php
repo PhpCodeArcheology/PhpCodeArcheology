@@ -12,7 +12,7 @@ use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
 
 class DependencyCycleCalculator implements CalculatorInterface
 {
-    use CalculatorTrait;
+    use \PhpCodeArch\Metrics\Controller\Traits\MetricsReaderWriterTrait;
 
     /** @var array<string, string> classIdentifier → className */
     private array $idToName = [];
@@ -31,7 +31,7 @@ class DependencyCycleCalculator implements CalculatorInterface
 
         $collections = ['classes', 'interfaces', 'traits', 'enums'];
         foreach ($collections as $collectionKey) {
-            $items = $this->metricsController->getCollection(
+            $items = $this->reader->getCollection(
                 MetricCollectionTypeEnum::ProjectCollection,
                 null,
                 $collectionKey
@@ -61,7 +61,7 @@ class DependencyCycleCalculator implements CalculatorInterface
         $identifierString = (string) $metrics->getIdentifier();
 
         // Get usedClasses collection (dependencies from DependencyVisitor)
-        $usedClasses = $this->metricsController->getCollectionByIdentifierString(
+        $usedClasses = $this->reader->getCollectionByIdentifierString(
             $identifierString,
             'usedClasses'
         );
@@ -98,7 +98,7 @@ class DependencyCycleCalculator implements CalculatorInterface
 
             foreach ($cycle as $classId) {
                 ++$classesInCycles;
-                $this->metricsController->setMetricValuesByIdentifierString(
+                $this->writer->setMetricValuesByIdentifierString(
                     $classId,
                     [
                         MetricKey::IN_DEPENDENCY_CYCLE => true,
@@ -111,9 +111,9 @@ class DependencyCycleCalculator implements CalculatorInterface
 
         // Set default values for classes NOT in cycles
         foreach (array_keys($this->idToName) as $id) {
-            $existing = $this->metricsController->getMetricValueByIdentifierString($id, MetricKey::IN_DEPENDENCY_CYCLE);
+            $existing = $this->reader->getMetricValueByIdentifierString($id, MetricKey::IN_DEPENDENCY_CYCLE);
             if (!$existing instanceof \PhpCodeArch\Metrics\Model\MetricValue || null === $existing->getValue()) {
-                $this->metricsController->setMetricValuesByIdentifierString(
+                $this->writer->setMetricValuesByIdentifierString(
                     $id,
                     [
                         MetricKey::IN_DEPENDENCY_CYCLE => false,
@@ -125,7 +125,7 @@ class DependencyCycleCalculator implements CalculatorInterface
         }
 
         // Project-level metrics
-        $this->metricsController->setMetricValues(
+        $this->writer->setMetricValues(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             [

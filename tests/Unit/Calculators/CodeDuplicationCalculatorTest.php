@@ -6,7 +6,6 @@ use PhpCodeArch\Calculators\CodeDuplicationCalculator;
 use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 use PhpCodeArch\Metrics\Model\MetricsContainer;
-use PhpCodeArch\Metrics\Model\MetricValue;
 
 // Helpers ─────────────────────────────────────────────────────────────────────
 
@@ -18,6 +17,7 @@ function makeDupTmpFile(string $content): string
 {
     $path = tempnam(sys_get_temp_dir(), 'dup_test_');
     file_put_contents($path, $content);
+
     return $path;
 }
 
@@ -93,7 +93,7 @@ it('returns zero duplicates when a file is unique (only one file)', function () 
 
     [$ctrl1, $id1] = setupControllerWithFile($file1, 60);
 
-    $calc = new CodeDuplicationCalculator($ctrl1);
+    $calc = new CodeDuplicationCalculator($ctrl1, $ctrl1, $ctrl1);
     $calc->beforeTraverse();
 
     foreach ($ctrl1->getAllCollections() as $col) {
@@ -135,7 +135,7 @@ it('detects duplicate code blocks across two identical files', function () {
         );
     }
 
-    $calc = new CodeDuplicationCalculator($controller);
+    $calc = new CodeDuplicationCalculator($controller, $controller, $controller);
     $calc->beforeTraverse();
 
     foreach ($controller->getAllCollections() as $col) {
@@ -184,7 +184,7 @@ it('calculates per-file duplication rate from duplicated lines and loc', functio
         ['path' => $file1]
     )->getIdentifier();
 
-    $calc = new CodeDuplicationCalculator($controller);
+    $calc = new CodeDuplicationCalculator($controller, $controller, $controller);
     $calc->beforeTraverse();
 
     foreach ($controller->getAllCollections() as $col) {
@@ -193,7 +193,7 @@ it('calculates per-file duplication rate from duplicated lines and loc', functio
     $calc->afterTraverse();
 
     $dupLines = $controller->getMetricValueByIdentifierString($id1, 'duplicatedLines')?->getValue() ?? 0;
-    $rate     = $controller->getMetricValueByIdentifierString($id1, 'duplicationRate')?->getValue() ?? 0.0;
+    $rate = $controller->getMetricValueByIdentifierString($id1, 'duplicationRate')?->getValue() ?? 0.0;
 
     // rate = round((duplicatedLines / loc) * 100, 2)
     if ($dupLines > 0 && $loc > 0) {
@@ -234,7 +234,7 @@ it('sets zero duplication for files below the minimum token threshold', function
         ['path' => $file1]
     )->getIdentifier();
 
-    $calc = new CodeDuplicationCalculator($controller);
+    $calc = new CodeDuplicationCalculator($controller, $controller, $controller);
     $calc->beforeTraverse();
 
     foreach ($controller->getAllCollections() as $col) {
@@ -258,7 +258,7 @@ it('skips non-FileMetricsCollection entries without error', function () {
         ['name' => 'SomeClass', 'path' => '/src/SomeClass.php']
     );
 
-    $calc = new CodeDuplicationCalculator($controller);
+    $calc = new CodeDuplicationCalculator($controller, $controller, $controller);
     $calc->beforeTraverse();
 
     foreach ($controller->getAllCollections() as $col) {
@@ -296,7 +296,7 @@ it('resets internal state on beforeTraverse so two runs are independent', functi
         );
     }
 
-    $calc = new CodeDuplicationCalculator($controller);
+    $calc = new CodeDuplicationCalculator($controller, $controller, $controller);
 
     // First run
     $calc->beforeTraverse();

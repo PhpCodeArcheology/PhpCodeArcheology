@@ -7,7 +7,7 @@ namespace PhpCodeArch\Calculators;
 use PhpCodeArch\Application\CliFormatter;
 use PhpCodeArch\Application\CliOutput;
 use PhpCodeArch\Application\ProgressBar;
-use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\Controller\MetricsRegistryInterface;
 
 readonly class CalculatorService
 {
@@ -16,9 +16,9 @@ readonly class CalculatorService
          * @var CalculatorInterface[]
          */
         private array $calculators,
-        private MetricsController $metricsController,
-        private CliOutput $output)
-    {
+        private MetricsRegistryInterface $registry,
+        private CliOutput $output,
+    ) {
     }
 
     public function run(): void
@@ -26,10 +26,10 @@ readonly class CalculatorService
         $this->maybeCallMethod('beforeTraverse');
 
         $formatter = $this->output->getFormatter() ?? new CliFormatter();
-        $metricsCollectionCount = $this->metricsController->getContainerCount();
+        $metricsCollectionCount = $this->registry->getContainerCount();
         $progressBar = new ProgressBar($this->output, $formatter, $metricsCollectionCount, 'Calculating');
 
-        foreach ($this->metricsController->getAllCollections() as $metric) {
+        foreach ($this->registry->getAllCollections() as $metric) {
             $progressBar->advance();
 
             foreach ($this->calculators as $calculator) {

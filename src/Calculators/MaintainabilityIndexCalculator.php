@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Calculators;
 
-use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\Controller\MetricsWriterInterface;
 use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
@@ -14,7 +14,7 @@ use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
 class MaintainabilityIndexCalculator implements CalculatorInterface
 {
     public function __construct(
-        private readonly MetricsController $metricsController,
+        private readonly MetricsWriterInterface $writer,
     ) {
     }
 
@@ -26,7 +26,7 @@ class MaintainabilityIndexCalculator implements CalculatorInterface
             return;
         }
 
-        $this->metricsController->setMetricValuesByIdentifierString(
+        $this->writer->setMetricValuesByIdentifierString(
             (string) $metrics->getIdentifier(),
             $this->calculateIndex($metrics)
         );

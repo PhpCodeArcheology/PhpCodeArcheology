@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Calculators;
 
-use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\Controller\MetricsRegistryInterface;
+use PhpCodeArch\Metrics\Controller\MetricsWriterInterface;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
@@ -17,7 +18,8 @@ class RefactoringPriorityCalculator implements CalculatorInterface
     private array $scores = [];
 
     public function __construct(
-        private readonly MetricsController $metricsController,
+        private readonly MetricsWriterInterface $writer,
+        private readonly MetricsRegistryInterface $registry,
     ) {
     }
 
@@ -115,7 +117,7 @@ class RefactoringPriorityCalculator implements CalculatorInterface
         $avg = $count > 0 ? round(array_sum($this->scores) / $count, 1) : 0;
         $max = $count > 0 ? max($this->scores) : 0;
 
-        $this->metricsController->setMetricValues(
+        $this->writer->setMetricValues(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             [
@@ -178,7 +180,7 @@ class RefactoringPriorityCalculator implements CalculatorInterface
 
         if (null === $this->fileCollectionIndex) {
             $this->fileCollectionIndex = [];
-            foreach ($this->metricsController->getAllCollections() as $collection) {
+            foreach ($this->registry->getAllCollections() as $collection) {
                 if ($collection instanceof \PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection) {
                     $this->fileCollectionIndex[$collection->getPath()] = $collection;
                 }
@@ -285,19 +287,19 @@ class RefactoringPriorityCalculator implements CalculatorInterface
     {
         $this->scores[] = $priority;
 
-        $this->metricsController->setMetricValueByIdentifierString(
+        $this->writer->setMetricValueByIdentifierString(
             (string) $metrics->getIdentifier(),
             MetricKey::REFACTORING_PRIORITY,
             $priority
         );
 
-        $this->metricsController->setMetricValueByIdentifierString(
+        $this->writer->setMetricValueByIdentifierString(
             (string) $metrics->getIdentifier(),
             MetricKey::REFACTORING_PRIORITY_RECOMMENDATION,
             $recommendation
         );
 
-        $this->metricsController->setMetricValueByIdentifierString(
+        $this->writer->setMetricValueByIdentifierString(
             (string) $metrics->getIdentifier(),
             MetricKey::REFACTORING_PRIORITY_DRIVERS,
             $drivers

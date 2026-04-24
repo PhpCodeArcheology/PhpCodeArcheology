@@ -11,14 +11,14 @@ use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
 
 class SolidViolationCalculator implements CalculatorInterface
 {
-    use CalculatorTrait;
+    use \PhpCodeArch\Metrics\Controller\Traits\MetricsReaderWriterTrait;
 
     /** @var array<string, string> className → classIdentifier */
     private array $interfaceIds = [];
 
     public function beforeTraverse(): void
     {
-        $interfaces = $this->metricsController->getCollection(
+        $interfaces = $this->reader->getCollection(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             'interfaces'
@@ -59,7 +59,7 @@ class SolidViolationCalculator implements CalculatorInterface
         }
 
         // --- DIP Check ---
-        $usedClasses = $this->metricsController->getCollectionByIdentifierString(
+        $usedClasses = $this->reader->getCollectionByIdentifierString(
             $identifierString,
             'usedClasses'
         );
@@ -83,7 +83,7 @@ class SolidViolationCalculator implements CalculatorInterface
         $totalDeps = $interfaceDeps + $concreteDeps;
         $dipScore = $totalDeps > 0 ? round(($interfaceDeps / $totalDeps) * 100, 2) : 100.0;
 
-        $this->metricsController->setMetricValuesByIdentifierString(
+        $this->writer->setMetricValuesByIdentifierString(
             $identifierString,
             [
                 MetricKey::SOLID_VIOLATIONS => $violations,
