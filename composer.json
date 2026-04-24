@@ -57,6 +57,9 @@
     "allow-plugins": {
       "pestphp/pest-plugin": true,
       "php-code-archeology/php-code-archeology": true
+    },
+    "platform": {
+      "php": "8.2.0"
     }
   },
   "require": {
