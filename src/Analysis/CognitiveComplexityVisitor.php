@@ -190,7 +190,7 @@ class CognitiveComplexityVisitor implements NodeVisitor, VisitorInterface
                 if (null === $className) {
                     break;
                 }
-                $this->metricsController->setMetricValue(
+                $this->writer->setMetricValue(
                     MetricCollectionTypeEnum::ClassCollection,
                     ['path' => $this->path, 'name' => $className],
                     $this->classCogC[$className] ?? 0,
@@ -205,7 +205,7 @@ class CognitiveComplexityVisitor implements NodeVisitor, VisitorInterface
                     break;
                 }
                 $methodIdentifier = ['path' => $className, 'name' => $methodName];
-                $this->metricsController->setMetricValue(
+                $this->writer->setMetricValue(
                     MetricCollectionTypeEnum::MethodCollection,
                     $methodIdentifier,
                     $this->methodCogC[$className][$methodName] ?? 0,
@@ -220,7 +220,7 @@ class CognitiveComplexityVisitor implements NodeVisitor, VisitorInterface
                     break;
                 }
                 $functionIdentifier = ['path' => $this->path, 'name' => $functionName];
-                $this->metricsController->setMetricValue(
+                $this->writer->setMetricValue(
                     MetricCollectionTypeEnum::FunctionCollection,
                     $functionIdentifier,
                     $this->functionCogC[$functionName] ?? 0,
@@ -253,7 +253,7 @@ class CognitiveComplexityVisitor implements NodeVisitor, VisitorInterface
      */
     public function afterTraverse(array $nodes): ?array
     {
-        $this->metricsController->setMetricValue(
+        $this->writer->setMetricValue(
             MetricCollectionTypeEnum::FileCollection,
             ['path' => $this->path],
             $this->fileCogC,
@@ -329,7 +329,7 @@ class CognitiveComplexityVisitor implements NodeVisitor, VisitorInterface
 
         ksort($map);
 
-        $this->metricsController->setMetricValue(
+        $this->writer->setMetricValue(
             $collectionType,
             $identifier,
             $map,

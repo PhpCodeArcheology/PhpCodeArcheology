@@ -32,14 +32,14 @@ class PackageVisitor implements NodeVisitor, VisitorInterface, InitializableVisi
 
     public function init(): void
     {
-        $this->metricsController->setCollection(
+        $this->writer->setCollection(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             new PackageNameCollection(),
             'packages'
         );
 
-        $this->metricsController->createMetricCollection(
+        $this->registry->createMetricCollection(
             MetricCollectionTypeEnum::PackageCollection,
             ['name' => '_global'],
         );
@@ -95,7 +95,7 @@ class PackageVisitor implements NodeVisitor, VisitorInterface, InitializableVisi
                 $package = $this->detectPackage($node);
                 $this->getCurrentPackageMetric($package);
 
-                $this->metricsController->setMetricValue(
+                $this->writer->setMetricValue(
                     MetricCollectionTypeEnum::ClassCollection,
                     [
                         'path' => $this->path,
@@ -107,7 +107,7 @@ class PackageVisitor implements NodeVisitor, VisitorInterface, InitializableVisi
 
                 $this->packageData[$package]['classes'][] = $className;
 
-                $this->metricsController->setCollectionDataUnique(
+                $this->writer->setCollectionDataUnique(
                     MetricCollectionTypeEnum::PackageCollection,
                     ['name' => $package],
                     'classes',
@@ -123,7 +123,7 @@ class PackageVisitor implements NodeVisitor, VisitorInterface, InitializableVisi
                 $package = $this->detectPackage($node);
                 $this->getCurrentPackageMetric($package);
 
-                $this->metricsController->setMetricValue(
+                $this->writer->setMetricValue(
                     MetricCollectionTypeEnum::FunctionCollection,
                     [
                         'path' => $this->path,
@@ -135,7 +135,7 @@ class PackageVisitor implements NodeVisitor, VisitorInterface, InitializableVisi
 
                 $this->packageData[$package]['functions'][] = $functionName;
 
-                $this->metricsController->setCollectionDataUnique(
+                $this->writer->setCollectionDataUnique(
                     MetricCollectionTypeEnum::PackageCollection,
                     ['name' => $package],
                     'functions',
@@ -151,21 +151,21 @@ class PackageVisitor implements NodeVisitor, VisitorInterface, InitializableVisi
 
     public function afterTraverse(array $nodes): ?array
     {
-        $this->metricsController->setMetricValue(
+        $this->writer->setMetricValue(
             MetricCollectionTypeEnum::FileCollection,
             ['path' => $this->path],
             $this->fileNamespace,
             MetricKey::NAMESPACE
         );
 
-        $this->metricsController->setMetricValue(
+        $this->writer->setMetricValue(
             MetricCollectionTypeEnum::FileCollection,
             ['path' => $this->path],
             $this->filePackage,
             MetricKey::PACKAGE
         );
 
-        $this->metricsController->setCollectionDataUnique(
+        $this->writer->setCollectionDataUnique(
             MetricCollectionTypeEnum::PackageCollection,
             ['name' => $this->fileNamespace],
             'files',
@@ -185,12 +185,12 @@ class PackageVisitor implements NodeVisitor, VisitorInterface, InitializableVisi
         if (!in_array($packageName, $this->packages)) {
             $this->packages[] = $packageName;
 
-            $packageCollection = $this->metricsController->createMetricCollection(
+            $packageCollection = $this->registry->createMetricCollection(
                 MetricCollectionTypeEnum::PackageCollection,
                 ['name' => $packageName],
             );
 
-            $this->metricsController->setCollectionDataOrCreateEmptyCollection(
+            $this->writer->setCollectionDataOrCreateEmptyCollection(
                 MetricCollectionTypeEnum::ProjectCollection,
                 null,
                 'packages',
@@ -253,7 +253,7 @@ class PackageVisitor implements NodeVisitor, VisitorInterface, InitializableVisi
         ];
 
         foreach ($collections as $collectionName => $collectionObject) {
-            $this->metricsController->setCollection(
+            $this->writer->setCollection(
                 MetricCollectionTypeEnum::PackageCollection,
                 ['name' => $packageName],
                 $collectionObject,

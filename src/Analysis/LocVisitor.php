@@ -6,6 +6,9 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Analysis;
 
+use PhpCodeArch\Metrics\Controller\MetricsReaderInterface;
+use PhpCodeArch\Metrics\Controller\MetricsRegistryInterface;
+use PhpCodeArch\Metrics\Controller\MetricsWriterInterface;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 use PhpCodeArch\Metrics\MetricKey;
 use PhpParser\Node;
@@ -14,7 +17,17 @@ use PhpParser\PrettyPrinter;
 
 class LocVisitor implements NodeVisitor, VisitorInterface
 {
-    use VisitorTrait;
+    use VisitorTrait {
+        __construct as private __visitorTraitConstruct;
+    }
+
+    public function __construct(
+        MetricsWriterInterface $writer,
+        MetricsRegistryInterface $registry,
+        private readonly MetricsReaderInterface $reader,
+    ) {
+        $this->__visitorTraitConstruct($writer, $registry);
+    }
 
     /**
      * @var array<int, string>
@@ -105,7 +118,7 @@ class LocVisitor implements NodeVisitor, VisitorInterface
             MetricKey::OVERALL_LLOC => MetricKey::LLOC,
         ];
 
-        $this->metricsController->setMetricValues(
+        $this->writer->setMetricValues(
             MetricCollectionTypeEnum::FileCollection,
             ['path' => $this->path],
             $fileMetricData
@@ -114,7 +127,7 @@ class LocVisitor implements NodeVisitor, VisitorInterface
         foreach ($projectMetricKeys as $projectMetricKey => $fileMetricKey) {
             $fileMetricValue = $fileMetricData[$fileMetricKey];
 
-            $this->metricsController->changeMetricValue(
+            $this->writer->changeMetricValue(
                 MetricCollectionTypeEnum::ProjectCollection,
                 null,
                 $projectMetricKey,
@@ -204,7 +217,7 @@ class LocVisitor implements NodeVisitor, VisitorInterface
 
     public function afterTraverse(array $nodes): ?array
     {
-        $metricValue = $this->metricsController->getMetricValue(
+        $metricValue = $this->reader->getMetricValue(
             MetricCollectionTypeEnum::FileCollection,
             ['path' => $this->path],
             MetricKey::LLOC
@@ -218,7 +231,7 @@ class LocVisitor implements NodeVisitor, VisitorInterface
             MetricKey::HTML_LOC => $this->fileHtmlLoc,
         ];
 
-        $this->metricsController->setMetricValues(
+        $this->writer->setMetricValues(
             MetricCollectionTypeEnum::FileCollection,
             ['path' => $this->path],
             $fileMetrics
@@ -232,7 +245,7 @@ class LocVisitor implements NodeVisitor, VisitorInterface
         ];
 
         foreach ($projectMetricIncrements as $key => $increment) {
-            $this->metricsController->changeMetricValue(
+            $this->writer->changeMetricValue(
                 MetricCollectionTypeEnum::ProjectCollection,
                 null,
                 $key,
@@ -320,7 +333,7 @@ class LocVisitor implements NodeVisitor, VisitorInterface
 
         $this->functionNodes[$functionName] = [];
 
-        $this->metricsController->setMetricValues(
+        $this->writer->setMetricValues(
             MetricCollectionTypeEnum::FunctionCollection,
             [
                 'path' => $this->path,
@@ -351,7 +364,7 @@ class LocVisitor implements NodeVisitor, VisitorInterface
             MetricKey::END_LINE => $node->getEndLine(),
         ];
 
-        $this->metricsController->setMetricValues(
+        $this->writer->setMetricValues(
             MetricCollectionTypeEnum::ClassCollection,
             [
                 'path' => $this->path,
@@ -394,7 +407,7 @@ class LocVisitor implements NodeVisitor, VisitorInterface
         $methodMetrics[MetricKey::END_LINE] = $node->getEndLine();
         $methodMetrics[MetricKey::SOURCE_FILE] = $this->path;
 
-        $this->metricsController->setMetricValues(
+        $this->writer->setMetricValues(
             MetricCollectionTypeEnum::MethodCollection,
             [
                 'path' => $className,

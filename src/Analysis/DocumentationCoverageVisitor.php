@@ -52,7 +52,7 @@ class DocumentationCoverageVisitor implements NodeVisitor, VisitorInterface
                 $this->classDocumented[$className] = 0;
                 $this->classTotal[$className] = 0;
 
-                $this->metricsController->setMetricValue(
+                $this->writer->setMetricValue(
                     MetricCollectionTypeEnum::ClassCollection,
                     ['path' => $this->path, 'name' => $className],
                     $this->extractDocBlockSummary($node),
@@ -66,7 +66,7 @@ class DocumentationCoverageVisitor implements NodeVisitor, VisitorInterface
 
                 // Store docblock summary for ALL methods (including private/magic)
                 if (false !== $className) {
-                    $this->metricsController->setMetricValue(
+                    $this->writer->setMetricValue(
                         MetricCollectionTypeEnum::MethodCollection,
                         ['path' => $className, 'name' => $name],
                         $this->extractDocBlockSummary($node),
@@ -98,7 +98,7 @@ class DocumentationCoverageVisitor implements NodeVisitor, VisitorInterface
                     ++$this->fileDocumented;
                 }
 
-                $this->metricsController->setMetricValues(
+                $this->writer->setMetricValues(
                     MetricCollectionTypeEnum::MethodCollection,
                     ['path' => $className, 'name' => $name],
                     [
@@ -111,7 +111,7 @@ class DocumentationCoverageVisitor implements NodeVisitor, VisitorInterface
             case $node instanceof Node\Stmt\Function_:
                 $functionName = (string) $node->namespacedName;
 
-                $this->metricsController->setMetricValue(
+                $this->writer->setMetricValue(
                     MetricCollectionTypeEnum::FunctionCollection,
                     ['path' => $this->path, 'name' => $functionName],
                     $this->extractDocBlockSummary($node),
@@ -127,7 +127,7 @@ class DocumentationCoverageVisitor implements NodeVisitor, VisitorInterface
                     ++$this->fileDocumented;
                 }
 
-                $this->metricsController->setMetricValues(
+                $this->writer->setMetricValues(
                     MetricCollectionTypeEnum::FunctionCollection,
                     ['path' => $this->path, 'name' => $functionName],
                     [
@@ -157,7 +157,7 @@ class DocumentationCoverageVisitor implements NodeVisitor, VisitorInterface
                     ? (($this->classDocumented[$className] ?? 0) / $this->classTotal[$className]) * 100
                     : 100.0;
 
-                $this->metricsController->setMetricValue(
+                $this->writer->setMetricValue(
                     MetricCollectionTypeEnum::ClassCollection,
                     ['path' => $this->path, 'name' => $className],
                     round($coverage, 2),
@@ -178,7 +178,7 @@ class DocumentationCoverageVisitor implements NodeVisitor, VisitorInterface
             ? ($this->fileDocumented / $this->fileTotal) * 100
             : 100.0;
 
-        $this->metricsController->setMetricValue(
+        $this->writer->setMetricValue(
             MetricCollectionTypeEnum::FileCollection,
             ['path' => $this->path],
             round($coverage, 2),

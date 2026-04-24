@@ -52,8 +52,8 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface, InitializableVis
 
     public function init(): void
     {
-        $this->parameterAnalyzer = new ParameterAnalyzer($this->metricsController);
-        $this->classMemberAnalyzer = new ClassMemberAnalyzer($this->metricsController, $this->parameterAnalyzer);
+        $this->parameterAnalyzer = new ParameterAnalyzer($this->writer);
+        $this->classMemberAnalyzer = new ClassMemberAnalyzer($this->writer, $this->registry, $this->parameterAnalyzer);
 
         $projectCollections = [
             'classes' => new ClassNameCollection(),
@@ -65,7 +65,7 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface, InitializableVis
         ];
 
         foreach ($projectCollections as $key => $collection) {
-            $this->metricsController->setCollection(
+            $this->writer->setCollection(
                 MetricCollectionTypeEnum::ProjectCollection,
                 null,
                 $collection,
@@ -73,7 +73,7 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface, InitializableVis
             );
         }
 
-        $this->metricsController->setMetricValues(
+        $this->writer->setMetricValues(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             [
@@ -147,7 +147,7 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface, InitializableVis
             case $node instanceof Node\Stmt\Function_:
                 $this->inFunction = false;
 
-                $this->metricsController->setMetricValues(
+                $this->writer->setMetricValues(
                     MetricCollectionTypeEnum::FunctionCollection,
                     [
                         'name' => (string) $node->namespacedName,
@@ -171,7 +171,7 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface, InitializableVis
             case $node instanceof Node\Stmt\Enum_:
                 $this->inClass = false;
 
-                $this->metricsController->setMetricValue(
+                $this->writer->setMetricValue(
                     MetricCollectionTypeEnum::ClassCollection,
                     [
                         'name' => ClassName::ofNode($node)->__toString(),
@@ -194,28 +194,28 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface, InitializableVis
      */
     public function afterTraverse(array $nodes): ?array
     {
-        $this->metricsController->setMetricValue(
+        $this->writer->setMetricValue(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             $this->outputCount['overall'],
             MetricKey::OVERALL_OUTPUT_STATEMENTS
         );
 
-        $this->metricsController->setMetricValue(
+        $this->writer->setMetricValue(
             MetricCollectionTypeEnum::FileCollection,
             ['path' => $this->path],
             $this->outputCount['file'],
             MetricKey::OUTPUT_COUNT
         );
 
-        $this->metricsController->setCollection(
+        $this->writer->setCollection(
             MetricCollectionTypeEnum::FileCollection,
             ['path' => $this->path],
             new FunctionNameCollection($this->functions),
             'functions'
         );
 
-        $this->metricsController->setCollection(
+        $this->writer->setCollection(
             MetricCollectionTypeEnum::FileCollection,
             ['path' => $this->path],
             new ClassNameCollection($this->classes),
@@ -255,7 +255,7 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface, InitializableVis
             'name' => (string) $node->namespacedName,
         ];
 
-        $fnMetricCollection = $this->metricsController->createMetricCollection(
+        $fnMetricCollection = $this->registry->createMetricCollection(
             MetricCollectionTypeEnum::FunctionCollection,
             $identifierData
         );
@@ -265,7 +265,7 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface, InitializableVis
             MetricKey::NAMESPACE => $namespace,
         ];
 
-        $this->metricsController->setMetricValues(
+        $this->writer->setMetricValues(
             MetricCollectionTypeEnum::FunctionCollection,
             $identifierData,
             $metricData
@@ -274,14 +274,14 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface, InitializableVis
         $this->parameterAnalyzer->handleParameters($node, $identifierData);
         $this->parameterAnalyzer->handleReturn($node, $identifierData);
 
-        $this->metricsController->changeMetricValue(
+        $this->writer->changeMetricValue(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             MetricKey::OVERALL_FUNCTION_COUNT,
             'PhpCodeArch\incrementOr1IfNull'
         );
 
-        $this->metricsController->setCollectionData(
+        $this->writer->setCollectionData(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             'functions',
@@ -311,7 +311,7 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface, InitializableVis
             'name' => $className,
         ];
 
-        $classMetricCollection = $this->metricsController->createMetricCollection(
+        $classMetricCollection = $this->registry->createMetricCollection(
             MetricCollectionTypeEnum::ClassCollection,
             $identifierData
         );
@@ -343,7 +343,7 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface, InitializableVis
         }
 
         if (method_exists($node, 'isAbstract') && $node->isAbstract()) {
-            $this->metricsController->changeMetricValue(
+            $this->writer->changeMetricValue(
                 MetricCollectionTypeEnum::ProjectCollection,
                 null,
                 MetricKey::OVERALL_ABSTRACT_CLASSES,
@@ -355,7 +355,7 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface, InitializableVis
 
         switch (true) {
             case $node instanceof Node\Stmt\Class_:
-                $this->metricsController->changeMetricValue(
+                $this->writer->changeMetricValue(
                     MetricCollectionTypeEnum::ProjectCollection,
                     null,
                     MetricKey::OVERALL_CLASSES,
@@ -368,7 +368,7 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface, InitializableVis
                     }
                 );
 
-                $this->metricsController->setCollectionData(
+                $this->writer->setCollectionData(
                     MetricCollectionTypeEnum::ProjectCollection,
                     null,
                     'classes',
@@ -380,7 +380,7 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface, InitializableVis
                 break;
 
             case $node instanceof Node\Stmt\Enum_:
-                $this->metricsController->setCollectionData(
+                $this->writer->setCollectionData(
                     MetricCollectionTypeEnum::ProjectCollection,
                     null,
                     'enums',
@@ -392,14 +392,14 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface, InitializableVis
                 break;
 
             case $node instanceof Node\Stmt\Interface_:
-                $this->metricsController->changeMetricValue(
+                $this->writer->changeMetricValue(
                     MetricCollectionTypeEnum::ProjectCollection,
                     null,
                     MetricKey::OVERALL_INTERFACES,
                     'PhpCodeArch\incrementOr1IfNull'
                 );
 
-                $this->metricsController->setCollectionData(
+                $this->writer->setCollectionData(
                     MetricCollectionTypeEnum::ProjectCollection,
                     null,
                     'interfaces',
@@ -412,7 +412,7 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface, InitializableVis
                 break;
 
             default:
-                $this->metricsController->setCollectionData(
+                $this->writer->setCollectionData(
                     MetricCollectionTypeEnum::ProjectCollection,
                     null,
                     'traits',
@@ -424,7 +424,7 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface, InitializableVis
                 break;
         }
 
-        $this->metricsController->setMetricValues(
+        $this->writer->setMetricValues(
             MetricCollectionTypeEnum::ClassCollection,
             $identifierData,
             $classMetricsData

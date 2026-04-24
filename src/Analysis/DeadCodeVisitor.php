@@ -119,7 +119,7 @@ class DeadCodeVisitor implements NodeVisitor, VisitorInterface
                 $calledSet = array_unique($this->calledMethods[$className] ?? []);
                 $unusedMethods = array_diff($this->privateMethods[$className] ?? [], $calledSet);
 
-                $this->metricsController->setMetricValues(
+                $this->writer->setMetricValues(
                     MetricCollectionTypeEnum::ClassCollection,
                     ['path' => $this->path, 'name' => $className],
                     [

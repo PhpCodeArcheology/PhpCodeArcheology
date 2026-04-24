@@ -137,7 +137,7 @@ class TypeCoverageVisitor implements NodeVisitor, VisitorInterface
                     $this->classTotalProperties[$className],
                 );
 
-                $this->metricsController->setMetricValues(
+                $this->writer->setMetricValues(
                     MetricCollectionTypeEnum::ClassCollection,
                     ['path' => $this->path, 'name' => $className],
                     [
@@ -175,7 +175,7 @@ class TypeCoverageVisitor implements NodeVisitor, VisitorInterface
             $this->fileTotalProperties,
         );
 
-        $this->metricsController->setMetricValues(
+        $this->writer->setMetricValues(
             MetricCollectionTypeEnum::FileCollection,
             ['path' => $this->path],
             [
@@ -275,14 +275,14 @@ class TypeCoverageVisitor implements NodeVisitor, VisitorInterface
 
         if ($isMethod) {
             $parts = explode('::', $funcKey, 2);
-            $this->metricsController->setMetricValue(
+            $this->writer->setMetricValue(
                 MetricCollectionTypeEnum::MethodCollection,
                 ['path' => $parts[0], 'name' => $parts[1] ?? ''],
                 $coverage,
                 MetricKey::TYPE_COVERAGE
             );
         } else {
-            $this->metricsController->setMetricValue(
+            $this->writer->setMetricValue(
                 MetricCollectionTypeEnum::FunctionCollection,
                 ['path' => $this->path, 'name' => $funcKey],
                 $coverage,

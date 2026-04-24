@@ -116,7 +116,7 @@ class HalsteadMetricsVisitor implements NodeVisitor, VisitorInterface, PathAware
                     break;
                 }
 
-                $this->metricsController->setMetricValues(
+                $this->writer->setMetricValues(
                     MetricCollectionTypeEnum::ClassCollection,
                     [
                         'path' => $this->path,
@@ -132,7 +132,7 @@ class HalsteadMetricsVisitor implements NodeVisitor, VisitorInterface, PathAware
                     break;
                 }
 
-                $this->metricsController->setMetricValues(
+                $this->writer->setMetricValues(
                     MetricCollectionTypeEnum::FunctionCollection,
                     [
                         'path' => $this->path,
@@ -151,7 +151,7 @@ class HalsteadMetricsVisitor implements NodeVisitor, VisitorInterface, PathAware
 
                 $key = sprintf('%s::%s', $className, $methodName);
 
-                $this->metricsController->setMetricValues(
+                $this->writer->setMetricValues(
                     MetricCollectionTypeEnum::MethodCollection,
                     [
                         'path' => $className,
@@ -173,7 +173,7 @@ class HalsteadMetricsVisitor implements NodeVisitor, VisitorInterface, PathAware
         // Calculate file metrics
         $halstead = $this->calculateMetrics($this->operators, $this->operands);
 
-        $this->metricsController->setMetricValues(
+        $this->writer->setMetricValues(
             MetricCollectionTypeEnum::FileCollection,
             ['path' => $this->path],
             $halstead,

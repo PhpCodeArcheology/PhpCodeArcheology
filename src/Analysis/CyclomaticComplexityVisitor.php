@@ -115,7 +115,7 @@ class CyclomaticComplexityVisitor implements NodeVisitor, VisitorInterface
                     break;
                 }
 
-                $this->metricsController->setMetricValue(
+                $this->writer->setMetricValue(
                     MetricCollectionTypeEnum::ClassCollection,
                     [
                         'path' => $this->path,
@@ -133,7 +133,7 @@ class CyclomaticComplexityVisitor implements NodeVisitor, VisitorInterface
                     break;
                 }
 
-                $this->metricsController->setMetricValue(
+                $this->writer->setMetricValue(
                     MetricCollectionTypeEnum::MethodCollection,
                     [
                         'path' => $className,
@@ -150,7 +150,7 @@ class CyclomaticComplexityVisitor implements NodeVisitor, VisitorInterface
                     break;
                 }
 
-                $this->metricsController->setMetricValue(
+                $this->writer->setMetricValue(
                     MetricCollectionTypeEnum::FunctionCollection,
                     [
                         'path' => $this->path,
@@ -196,7 +196,7 @@ class CyclomaticComplexityVisitor implements NodeVisitor, VisitorInterface
      */
     public function afterTraverse(array $nodes): ?array
     {
-        $this->metricsController->setMetricValue(
+        $this->writer->setMetricValue(
             MetricCollectionTypeEnum::FileCollection,
             ['path' => $this->path],
             $this->fileCc,

@@ -105,7 +105,7 @@ class SecuritySmellVisitor implements NodeVisitor, VisitorInterface
                 if (null === $className) {
                     break;
                 }
-                $this->metricsController->setMetricValues(
+                $this->writer->setMetricValues(
                     MetricCollectionTypeEnum::ClassCollection,
                     ['path' => $this->path, 'name' => $className],
                     [
@@ -121,7 +121,7 @@ class SecuritySmellVisitor implements NodeVisitor, VisitorInterface
                     break;
                 }
                 $parts = explode('::', $key, 2);
-                $this->metricsController->setMetricValue(
+                $this->writer->setMetricValue(
                     MetricCollectionTypeEnum::MethodCollection,
                     ['path' => $parts[0], 'name' => $parts[1] ?? ''],
                     count($this->functionSmells[$key] ?? []),
@@ -134,7 +134,7 @@ class SecuritySmellVisitor implements NodeVisitor, VisitorInterface
                 if (null === $key) {
                     break;
                 }
-                $this->metricsController->setMetricValue(
+                $this->writer->setMetricValue(
                     MetricCollectionTypeEnum::FunctionCollection,
                     ['path' => $this->path, 'name' => $key],
                     count($this->functionSmells[$key] ?? []),
@@ -151,7 +151,7 @@ class SecuritySmellVisitor implements NodeVisitor, VisitorInterface
      */
     public function afterTraverse(array $nodes): ?array
     {
-        $this->metricsController->setMetricValues(
+        $this->writer->setMetricValues(
             MetricCollectionTypeEnum::FileCollection,
             ['path' => $this->path],
             [

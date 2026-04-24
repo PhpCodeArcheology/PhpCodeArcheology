@@ -6,7 +6,7 @@ namespace PhpCodeArch\Analysis\Helper;
 
 use function PhpCodeArch\getNodeName;
 
-use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\Controller\MetricsWriterInterface;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\Collections\ParameterCollection;
@@ -15,7 +15,7 @@ use PhpParser\Node;
 class ParameterAnalyzer
 {
     public function __construct(
-        private readonly MetricsController $metricsController,
+        private readonly MetricsWriterInterface $writer,
     ) {
     }
 
@@ -91,14 +91,14 @@ class ParameterAnalyzer
 
         $metricsType = $node instanceof Node\Stmt\ClassMethod ? MetricCollectionTypeEnum::MethodCollection : MetricCollectionTypeEnum::FunctionCollection;
 
-        $this->metricsController->setCollection(
+        $this->writer->setCollection(
             $metricsType,
             $identifierData,
             $parameterCollection,
             'parameters'
         );
 
-        $this->metricsController->setMetricValues(
+        $this->writer->setMetricValues(
             $metricsType,
             $identifierData,
             [
@@ -130,7 +130,7 @@ class ParameterAnalyzer
 
         $metricsType = $node instanceof Node\Stmt\ClassMethod ? MetricCollectionTypeEnum::MethodCollection : MetricCollectionTypeEnum::FunctionCollection;
 
-        $this->metricsController->setMetricValue(
+        $this->writer->setMetricValue(
             $metricsType,
             $identifierData,
             $returnType,

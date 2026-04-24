@@ -95,7 +95,7 @@ class RuntimeComplexityVisitor implements NodeVisitor, VisitorInterface
                     break;
                 }
                 $complexity = $this->depthToComplexity($this->classMaxLoopDepth[$className] ?? 0);
-                $this->metricsController->setMetricValue(
+                $this->writer->setMetricValue(
                     MetricCollectionTypeEnum::ClassCollection,
                     ['path' => $this->path, 'name' => $className],
                     $complexity,
@@ -110,7 +110,7 @@ class RuntimeComplexityVisitor implements NodeVisitor, VisitorInterface
                 }
                 $parts = explode('::', $key, 2);
                 $complexity = $this->depthToComplexity($this->functionMaxLoopDepth[$key] ?? 0);
-                $this->metricsController->setMetricValue(
+                $this->writer->setMetricValue(
                     MetricCollectionTypeEnum::MethodCollection,
                     ['path' => $parts[0], 'name' => $parts[1] ?? ''],
                     $complexity,
@@ -125,7 +125,7 @@ class RuntimeComplexityVisitor implements NodeVisitor, VisitorInterface
                     break;
                 }
                 $complexity = $this->depthToComplexity($this->functionMaxLoopDepth[$key] ?? 0);
-                $this->metricsController->setMetricValue(
+                $this->writer->setMetricValue(
                     MetricCollectionTypeEnum::FunctionCollection,
                     ['path' => $this->path, 'name' => $key],
                     $complexity,
@@ -150,7 +150,7 @@ class RuntimeComplexityVisitor implements NodeVisitor, VisitorInterface
      */
     public function afterTraverse(array $nodes): ?array
     {
-        $this->metricsController->setMetricValue(
+        $this->writer->setMetricValue(
             MetricCollectionTypeEnum::FileCollection,
             ['path' => $this->path],
             $this->depthToComplexity($this->fileMaxLoopDepth),

@@ -142,7 +142,7 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface, ConfigAwareVis
     {
         $dependencyCollection = new ClassNameCollection($this->outsideDependencies);
 
-        $this->metricsController->setCollection(
+        $this->writer->setCollection(
             MetricCollectionTypeEnum::FileCollection,
             ['path' => $this->path],
             $dependencyCollection,
@@ -338,7 +338,7 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface, ConfigAwareVis
         ];
 
         foreach ($collections as $collectionKey => $collection) {
-            $this->metricsController->setCollection(
+            $this->writer->setCollection(
                 MetricCollectionTypeEnum::ClassCollection,
                 [
                     'path' => $this->path,
@@ -354,7 +354,7 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface, ConfigAwareVis
     {
         $functionName = (string) $node->namespacedName;
 
-        $this->metricsController->setCollection(
+        $this->writer->setCollection(
             MetricCollectionTypeEnum::FunctionCollection,
             [
                 'path' => $this->path,
@@ -377,7 +377,7 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface, ConfigAwareVis
         }
         $methodName = (string) $node->name;
 
-        $this->metricsController->setCollection(
+        $this->writer->setCollection(
             MetricCollectionTypeEnum::MethodCollection,
             [
                 'path' => $className,
@@ -486,7 +486,7 @@ class DependencyVisitor implements NodeVisitor, VisitorInterface, ConfigAwareVis
             return;
         }
 
-        $this->metricsController->setCollection(
+        $this->writer->setCollection(
             MetricCollectionTypeEnum::MethodCollection,
             [
                 'path' => $className,

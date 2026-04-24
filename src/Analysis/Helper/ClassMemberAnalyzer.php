@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Analysis\Helper;
 
-use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\Controller\MetricsRegistryInterface;
+use PhpCodeArch\Metrics\Controller\MetricsWriterInterface;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\Collections\CollectionInterface;
@@ -17,7 +18,8 @@ use PhpParser\PrettyPrinter\Standard;
 class ClassMemberAnalyzer
 {
     public function __construct(
-        private readonly MetricsController $metricsController,
+        private readonly MetricsWriterInterface $writer,
+        private readonly MetricsRegistryInterface $registry,
         private readonly ParameterAnalyzer $parameterAnalyzer,
     ) {
     }
@@ -31,7 +33,7 @@ class ClassMemberAnalyzer
         Node\Stmt\Class_|Node\Stmt\Trait_|Node\Stmt\Enum_|Node\Stmt\Interface_ $node,
         array $classIdentifierData): void
     {
-        $this->metricsController->setCollection(
+        $this->writer->setCollection(
             MetricCollectionTypeEnum::ClassCollection,
             $classIdentifierData,
             new FileNameCollection(),
@@ -69,7 +71,7 @@ class ClassMemberAnalyzer
         foreach ($projectMetrics as $projectMetric => $classMetricKey) {
             $incrementBy = $classMetricData[$classMetricKey];
 
-            $this->metricsController->changeMetricValue(
+            $this->writer->changeMetricValue(
                 MetricCollectionTypeEnum::ProjectCollection,
                 null,
                 $projectMetric,
@@ -81,7 +83,7 @@ class ClassMemberAnalyzer
             );
         }
 
-        $this->metricsController->setMetricValues(
+        $this->writer->setMetricValues(
             MetricCollectionTypeEnum::ClassCollection,
             $classIdentifierData,
             $classMetricData
@@ -101,12 +103,12 @@ class ClassMemberAnalyzer
             'name' => (string) $node->name,
         ];
 
-        $methodMetricCollection = $this->metricsController->createMetricCollection(
+        $methodMetricCollection = $this->registry->createMetricCollection(
             MetricCollectionTypeEnum::MethodCollection,
             $methodIdentifierData
         );
 
-        $this->metricsController->setCollectionData(
+        $this->writer->setCollectionData(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             'methods',
@@ -114,7 +116,7 @@ class ClassMemberAnalyzer
             $methodIdentifierData['name']
         );
 
-        $this->metricsController->setCollectionData(
+        $this->writer->setCollectionData(
             MetricCollectionTypeEnum::ClassCollection,
             $classIdentifierData,
             'methods',
@@ -134,7 +136,7 @@ class ClassMemberAnalyzer
             MetricKey::STATIC => $node->isStatic(),
         ];
 
-        $this->metricsController->setMetricValues(
+        $this->writer->setMetricValues(
             MetricCollectionTypeEnum::MethodCollection,
             $methodIdentifierData,
             $methodData
@@ -155,14 +157,14 @@ class ClassMemberAnalyzer
             $this->handlePropOrConst($property, 'props', $propertyCollection);
         }
 
-        $this->metricsController->setCollection(
+        $this->writer->setCollection(
             MetricCollectionTypeEnum::ClassCollection,
             $identifierData,
             $propertyCollection,
             'properties'
         );
 
-        $this->metricsController->setMetricValue(
+        $this->writer->setMetricValue(
             MetricCollectionTypeEnum::ClassCollection,
             $identifierData,
             count($propertyCollection),
@@ -182,14 +184,14 @@ class ClassMemberAnalyzer
             $this->handlePropOrConst($constant, 'consts', $constantCollection);
         }
 
-        $this->metricsController->setCollection(
+        $this->writer->setCollection(
             MetricCollectionTypeEnum::ClassCollection,
             $identifierData,
             $constantCollection,
             'constants'
         );
 
-        $this->metricsController->setMetricValue(
+        $this->writer->setMetricValue(
             MetricCollectionTypeEnum::ClassCollection,
             $identifierData,
             count($constantCollection),

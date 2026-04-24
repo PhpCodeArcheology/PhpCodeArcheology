@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Helpers for tests
+ * Helpers for tests.
  *
  * These helpers generate the metrics needed for the tests.
  *
@@ -15,7 +15,6 @@ namespace Test\Feature\Analysis;
 use PhpCodeArch\Application\Config;
 use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
-use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
 use PhpCodeArch\Metrics\Model\MetricsContainer;
 use PhpCodeArch\Metrics\Model\ProjectMetrics\ProjectMetricsCollection;
 use PhpParser\NodeTraverser;
@@ -29,7 +28,6 @@ use PhpParser\ParserFactory;
  * @return array The array includes the source code, the metrics object, the created parser
  *               and the traverser
  */
-
 function setupCore(): array
 {
     $projectMetrics = new ProjectMetricsCollection(dirname(''));
@@ -55,7 +53,7 @@ function setupAnalyzer(string $file): array
 
     [$metricsController, $parser, $traverser] = setupCore();
 
-    /**
+    /*
      * @var MetricsController $metricsController
      */
     $metricsController->createMetricCollection(
@@ -75,17 +73,15 @@ function setupAnalyzer(string $file): array
 
 /**
  * @param array $visitors Array of Visitor class names
- * @param NodeTraverser $traverser
- * @param MetricsController $metricsController
- * @param string $file
- * @return void
  */
 function setVisitors(array $visitors, NodeTraverser $traverser, MetricsController $metricsController, string $file): void
 {
     $traverser->addVisitor(new NameResolver());
 
     foreach ($visitors as $visitor) {
-        $visitorObject = new $visitor($metricsController);
+        $visitorObject = \PhpCodeArch\Analysis\LocVisitor::class === $visitor
+            ? new $visitor($metricsController, $metricsController, $metricsController)
+            : new $visitor($metricsController, $metricsController);
 
         if (method_exists($visitorObject, 'init')) {
             $visitorObject->init();
@@ -95,18 +91,11 @@ function setVisitors(array $visitors, NodeTraverser $traverser, MetricsControlle
             $visitorObject->injectConfig(new Config());
         }
 
-
         $visitorObject->setPath($file);
         $traverser->addVisitor($visitorObject);
     }
 }
 
-/**
- * @param string $code
- * @param Parser $parser
- * @param NodeTraverser $traverser
- * @return void
- */
 function parseCode(string $code, Parser $parser, NodeTraverser $traverser): void
 {
     $stmts = $parser->parse($code);
@@ -114,9 +103,7 @@ function parseCode(string $code, Parser $parser, NodeTraverser $traverser): void
 }
 
 /**
- * @param string $file
  * @param array $visitors Array of Visitor class names
- * @return MetricsController
  */
 function getMetrics(string $file, array $visitors): MetricsController
 {
@@ -128,11 +115,6 @@ function getMetrics(string $file, array $visitors): MetricsController
     return $metricsController;
 }
 
-/**
- * @param string $file
- * @param array $visitors
- * @return MetricsController
- */
 function getMetricsForVisitors(string $file, array $visitors): MetricsController
 {
     return getMetrics($file, $visitors);
@@ -155,7 +137,9 @@ function getMetricsForMultipleFilesAndVisitors(array $files, array $visitors): M
 
     $visitorObjects = [];
     foreach ($visitors as $visitor) {
-        $visitorObject = new $visitor($metricsController);
+        $visitorObject = \PhpCodeArch\Analysis\LocVisitor::class === $visitor
+            ? new $visitor($metricsController, $metricsController, $metricsController)
+            : new $visitor($metricsController, $metricsController);
 
         if (method_exists($visitorObject, 'init')) {
             $visitorObject->init();
@@ -170,7 +154,7 @@ function getMetricsForMultipleFilesAndVisitors(array $files, array $visitors): M
     }
 
     foreach ($files as $file) {
-        array_walk($visitorObjects, function($visitor) use ($file) {
+        array_walk($visitorObjects, function ($visitor) use ($file) {
             $visitor->setPath($file);
         });
 

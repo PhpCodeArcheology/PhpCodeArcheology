@@ -4,22 +4,21 @@ declare(strict_types=1);
 
 namespace Test\Unit\Analysis;
 
-use Mockery;
 use PhpCodeArch\Analysis\DependencyVisitor;
 use PhpCodeArch\Metrics\Controller\MetricsController;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 use PhpCodeArch\Metrics\Model\MetricsContainer;
 use PhpParser\Node\Expr\New_;
 use PhpParser\Node\Expr\StaticCall;
+use PhpParser\Node\Identifier;
 use PhpParser\Node\Name;
 use PhpParser\Node\Name\FullyQualified;
-use PhpParser\Node\Identifier;
 use PhpParser\Node\Param;
 use PhpParser\Node\Stmt\Class_;
 use PhpParser\Node\Stmt\Function_;
 use PhpParser\Node\Stmt\TraitUse;
 
-beforeEach(function() {
+beforeEach(function () {
     $metricsContainer = new MetricsContainer();
     $this->metricsController = new MetricsController($metricsContainer);
 
@@ -28,11 +27,11 @@ beforeEach(function() {
         ['path' => '']
     );
 
-    $this->visitor = new DependencyVisitor($this->metricsController);
+    $this->visitor = new DependencyVisitor($this->metricsController, $this->metricsController);
     $this->visitor->setPath('');
 });
 
-it('only counts unique dependencies for file metrics', function() {
+it('only counts unique dependencies for file metrics', function () {
     $className = new FullyQualified('TestClass');
 
     $newExpression = new New_($className);
@@ -53,7 +52,7 @@ it('only counts unique dependencies for file metrics', function() {
         ->and($dependencies)->toContain('TestClass');
 });
 
-it('only counts unique dependencies for class metrics', function() {
+it('only counts unique dependencies for class metrics', function () {
     $this->metricsController->createMetricCollection(
         MetricCollectionTypeEnum::ClassCollection,
         ['path' => '', 'name' => 'ParentClass']
@@ -83,7 +82,7 @@ it('only counts unique dependencies for class metrics', function() {
         ->and($dependencies)->toContain('TestClass');
 });
 
-it('only counts unique dependencies for function metrics', function() {
+it('only counts unique dependencies for function metrics', function () {
     $this->metricsController->createMetricCollection(
         MetricCollectionTypeEnum::FunctionCollection,
         ['path' => '', 'name' => 'TestFunction']
@@ -113,7 +112,7 @@ it('only counts unique dependencies for function metrics', function() {
         ->and($dependencies)->toContain('TestClass');
 });
 
-it('sets traits correctly and counts only unique ones', function() {
+it('sets traits correctly and counts only unique ones', function () {
     $this->metricsController->createMetricCollection(
         MetricCollectionTypeEnum::ClassCollection,
         ['path' => '', 'name' => 'ParentClass']
@@ -139,7 +138,7 @@ it('sets traits correctly and counts only unique ones', function() {
         ->and($traits)->toContain('TestClass');
 });
 
-it("doesn't count self and parent", function() {
+it("doesn't count self and parent", function () {
     $this->metricsController->createMetricCollection(
         MetricCollectionTypeEnum::ClassCollection,
         ['path' => '', 'name' => 'ParentClass']
@@ -166,7 +165,7 @@ it("doesn't count self and parent", function() {
     expect($dependencies)->toBeEmpty();
 });
 
-it('handles function parameters with correct parameter type', function() {
+it('handles function parameters with correct parameter type', function () {
     $this->metricsController->createMetricCollection(
         MetricCollectionTypeEnum::FunctionCollection,
         ['path' => '', 'name' => 'TestFunction']
@@ -195,7 +194,7 @@ it('handles function parameters with correct parameter type', function() {
         ->and($dependencies)->toContain('TestClass');
 });
 
-it('handles function return value with correct return type', function() {
+it('handles function return value with correct return type', function () {
     $this->metricsController->createMetricCollection(
         MetricCollectionTypeEnum::FunctionCollection,
         ['path' => '', 'name' => 'TestFunction']

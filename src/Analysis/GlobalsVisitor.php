@@ -147,7 +147,7 @@ class GlobalsVisitor implements NodeVisitor, VisitorInterface
                     break;
                 }
 
-                $this->metricsController->setMetricValues(
+                $this->writer->setMetricValues(
                     MetricCollectionTypeEnum::FunctionCollection,
                     [
                         'path' => $this->path,
@@ -168,7 +168,7 @@ class GlobalsVisitor implements NodeVisitor, VisitorInterface
                     break;
                 }
 
-                $this->metricsController->setMetricValues(
+                $this->writer->setMetricValues(
                     MetricCollectionTypeEnum::MethodCollection,
                     [
                         'path' => $className,
@@ -191,7 +191,7 @@ class GlobalsVisitor implements NodeVisitor, VisitorInterface
                     break;
                 }
 
-                $this->metricsController->setMetricValues(
+                $this->writer->setMetricValues(
                     MetricCollectionTypeEnum::ClassCollection,
                     [
                         'path' => $this->path,
@@ -214,7 +214,7 @@ class GlobalsVisitor implements NodeVisitor, VisitorInterface
      */
     public function afterTraverse(array $nodes): ?array
     {
-        $this->metricsController->setMetricValues(
+        $this->writer->setMetricValues(
             MetricCollectionTypeEnum::FileCollection,
             ['path' => $this->path],
             [
