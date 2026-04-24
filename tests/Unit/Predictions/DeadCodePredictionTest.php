@@ -44,26 +44,26 @@ function createDeadCodeClass(
 
 it('returns 0 when no classes exist', function () {
     $controller = makeDeadCodeController();
-    $prediction = new DeadCodePrediction();
+    $prediction = new DeadCodePrediction($controller, $controller, $controller);
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 it('returns 0 when unusedPrivateMethodCount is 0', function () {
     $controller = makeDeadCodeController();
     createDeadCodeClass($controller, 'App\\CleanService', 0, []);
 
-    $prediction = new DeadCodePrediction();
+    $prediction = new DeadCodePrediction($controller, $controller, $controller);
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 it('fires when unusedPrivateMethodCount is 1', function () {
     $controller = makeDeadCodeController();
     $classId = createDeadCodeClass($controller, 'App\\DirtyService', 1, ['orphanMethod']);
 
-    $prediction = new DeadCodePrediction();
-    $count = $prediction->predict($controller);
+    $prediction = new DeadCodePrediction($controller, $controller, $controller);
+    $count = $prediction->predict();
 
     expect($count)->toBe(1);
 
@@ -78,9 +78,9 @@ it('fires when unusedPrivateMethodCount is greater than 1', function () {
     $controller = makeDeadCodeController();
     $classId = createDeadCodeClass($controller, 'App\\LegacyService', 3, ['oldA', 'oldB', 'oldC']);
 
-    $prediction = new DeadCodePrediction();
+    $prediction = new DeadCodePrediction($controller, $controller, $controller);
 
-    expect($prediction->predict($controller))->toBe(1);
+    expect($prediction->predict())->toBe(1);
 
     $problems = $controller->getMetricCollectionByIdentifierString($classId)
         ->get(MetricKey::UNUSED_PRIVATE_METHOD_COUNT)?->getProblems();
@@ -92,8 +92,8 @@ it('attaches DeadCodeProblem to unusedPrivateMethodCount metric', function () {
     $controller = makeDeadCodeController();
     $classId = createDeadCodeClass($controller, 'App\\LegacyService', 2, ['oldMethod', 'deadHelper']);
 
-    $prediction = new DeadCodePrediction();
-    $prediction->predict($controller);
+    $prediction = new DeadCodePrediction($controller, $controller, $controller);
+    $prediction->predict();
 
     $metric = $controller->getMetricCollectionByIdentifierString($classId)
         ->get(MetricKey::UNUSED_PRIVATE_METHOD_COUNT);
@@ -108,8 +108,8 @@ it('problem message contains unused method names', function () {
     $controller = makeDeadCodeController();
     $classId = createDeadCodeClass($controller, 'App\\OldService', 2, ['doLegacy', 'doObsolete']);
 
-    $prediction = new DeadCodePrediction();
-    $prediction->predict($controller);
+    $prediction = new DeadCodePrediction($controller, $controller, $controller);
+    $prediction->predict();
 
     $problem = $controller->getMetricCollectionByIdentifierString($classId)
         ->get(MetricKey::UNUSED_PRIVATE_METHOD_COUNT)?->getProblems()[0] ?? null;
@@ -119,7 +119,8 @@ it('problem message contains unused method names', function () {
 });
 
 it('problem level is INFO', function () {
-    $prediction = new DeadCodePrediction();
+    $controller = makeDeadCodeController();
+    $prediction = new DeadCodePrediction($controller, $controller, $controller);
 
     expect($prediction->getLevel())->toBe(PredictionInterface::INFO);
 });
@@ -130,9 +131,9 @@ it('counts multiple classes with dead code independently', function () {
     createDeadCodeClass($controller, 'App\\ServiceB', 2, ['deadB1', 'deadB2']);
     createDeadCodeClass($controller, 'App\\CleanService', 0, []);
 
-    $prediction = new DeadCodePrediction();
+    $prediction = new DeadCodePrediction($controller, $controller, $controller);
 
-    expect($prediction->predict($controller))->toBe(2);
+    expect($prediction->predict())->toBe(2);
 });
 
 it('does not fire for classes with zero unused methods', function () {
@@ -140,9 +141,9 @@ it('does not fire for classes with zero unused methods', function () {
     createDeadCodeClass($controller, 'App\\PureClass', 0, []);
     createDeadCodeClass($controller, 'App\\AnotherClean', 0, []);
 
-    $prediction = new DeadCodePrediction();
+    $prediction = new DeadCodePrediction($controller, $controller, $controller);
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 it('skips non-class collections', function () {
@@ -159,17 +160,17 @@ it('skips non-class collections', function () {
     ])->getIdentifier()->__toString();
     $controller->setMetricValueByIdentifierString($funcId, MetricKey::UNUSED_PRIVATE_METHOD_COUNT, 5);
 
-    $prediction = new DeadCodePrediction();
+    $prediction = new DeadCodePrediction($controller, $controller, $controller);
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 it('problem message includes the count of unused methods', function () {
     $controller = makeDeadCodeController();
     $classId = createDeadCodeClass($controller, 'App\\CountService', 2, ['alpha', 'beta']);
 
-    $prediction = new DeadCodePrediction();
-    $prediction->predict($controller);
+    $prediction = new DeadCodePrediction($controller, $controller, $controller);
+    $prediction->predict();
 
     $problem = $controller->getMetricCollectionByIdentifierString($classId)
         ->get(MetricKey::UNUSED_PRIVATE_METHOD_COUNT)?->getProblems()[0] ?? null;

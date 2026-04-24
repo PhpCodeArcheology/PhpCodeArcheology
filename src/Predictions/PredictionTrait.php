@@ -6,20 +6,26 @@ namespace PhpCodeArch\Predictions;
 
 use PhpCodeArch\Application\AnalysisConfigInterface;
 use PhpCodeArch\Application\Service\FrameworkDetectionResult;
-use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\Controller\MetricsReaderInterface;
+use PhpCodeArch\Metrics\Controller\MetricsRegistryInterface;
+use PhpCodeArch\Metrics\Controller\MetricsWriterInterface;
 use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Predictions\Problems\AbstractProblem;
 
 trait PredictionTrait
 {
+    protected readonly MetricsReaderInterface $reader;
+    protected readonly MetricsWriterInterface $writer;
+    protected readonly MetricsRegistryInterface $registry;
+
     private ?AnalysisConfigInterface $config = null;
 
     /**
      * @param list<string>|string           $keys
      * @param class-string<AbstractProblem> $problemClass
      */
-    private function createProblem(string $identifierString, string|array $keys, string $problemClass, int $level, string $message, MetricsController $metricsController): void
+    private function createProblem(string $identifierString, string|array $keys, string $problemClass, int $level, string $message): void
     {
         if (is_string($keys)) {
             $keys = [$keys];
@@ -31,7 +37,7 @@ trait PredictionTrait
                 message: $message
             );
 
-            $metricsController->setProblemByIdentifierString(
+            $this->writer->setProblemByIdentifierString(
                 identifierString: $identifierString,
                 key: $key,
                 problem: $problem
@@ -39,7 +45,7 @@ trait PredictionTrait
         }
     }
 
-    protected function shouldSkipLcom(MetricsController $metricsController, ClassMetricsCollection $metric): bool
+    protected function shouldSkipLcom(ClassMetricsCollection $metric): bool
     {
         $id = (string) $metric->getIdentifier();
 
@@ -53,7 +59,7 @@ trait PredictionTrait
         }
 
         // Classes with 0-1 methods: LCOM is meaningless
-        $methodCollection = $metricsController->getCollectionByIdentifierString($id, 'methods');
+        $methodCollection = $this->reader->getCollectionByIdentifierString($id, 'methods');
         if (!$methodCollection instanceof \PhpCodeArch\Metrics\Model\Collections\CollectionInterface || count($methodCollection->getAsArray()) <= 1) {
             return true;
         }
@@ -75,7 +81,7 @@ trait PredictionTrait
         $configInterfaces = $this->threshold('lcomExclude.interfaces', null);
         $interfacePatterns = is_array($configInterfaces) ? $configInterfaces : $defaultInterfaces;
 
-        $implementedInterfaces = $metricsController->getCollectionByIdentifierString($id, 'interfaces');
+        $implementedInterfaces = $this->reader->getCollectionByIdentifierString($id, 'interfaces');
         if ($implementedInterfaces instanceof \PhpCodeArch\Metrics\Model\Collections\CollectionInterface) {
             foreach ($implementedInterfaces->getAsArray() as $ifaceName) {
                 if (!is_string($ifaceName) || '' === $ifaceName) {

@@ -61,18 +61,18 @@ function makeDoctrineConfig(): Config
 
 it('returns 0 when no classes exist', function () {
     $controller = makeCycleController();
-    $prediction = new DependencyCyclePrediction(new Config());
+    $prediction = new DependencyCyclePrediction($controller, $controller, $controller, new Config());
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 it('returns 0 when class is not in a cycle', function () {
     $controller = makeCycleController();
     createCycleClass($controller, 'App\\Service', false);
 
-    $prediction = new DependencyCyclePrediction(new Config());
+    $prediction = new DependencyCyclePrediction($controller, $controller, $controller, new Config());
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 it('fires ERROR when class is in a cycle', function () {
@@ -85,8 +85,8 @@ it('fires ERROR when class is in a cycle', function () {
         2
     );
 
-    $prediction = new DependencyCyclePrediction(new Config());
-    $count = $prediction->predict($controller);
+    $prediction = new DependencyCyclePrediction($controller, $controller, $controller, new Config());
+    $count = $prediction->predict();
 
     expect($count)->toBe(1);
 
@@ -108,8 +108,8 @@ it('problem message contains cycle length and class preview', function () {
         2
     );
 
-    $prediction = new DependencyCyclePrediction(new Config());
-    $prediction->predict($controller);
+    $prediction = new DependencyCyclePrediction($controller, $controller, $controller, new Config());
+    $prediction->predict();
 
     $problem = $controller->getMetricCollectionByIdentifierString($classId)
         ->get(MetricKey::IN_DEPENDENCY_CYCLE)?->getProblems()[0] ?? null;
@@ -120,7 +120,8 @@ it('problem message contains cycle length and class preview', function () {
 });
 
 it('problem level is ERROR for getLevel()', function () {
-    $prediction = new DependencyCyclePrediction(new Config());
+    $controller = makeCycleController();
+    $prediction = new DependencyCyclePrediction($controller, $controller, $controller, new Config());
 
     expect($prediction->getLevel())->toBe(PredictionInterface::ERROR);
 });
@@ -131,9 +132,9 @@ it('counts multiple cycle classes independently', function () {
     createCycleClass($controller, 'App\\B', true, ['App\\A', 'App\\B', 'App\\C'], 3);
     createCycleClass($controller, 'App\\C', false);
 
-    $prediction = new DependencyCyclePrediction(new Config());
+    $prediction = new DependencyCyclePrediction($controller, $controller, $controller, new Config());
 
-    expect($prediction->predict($controller))->toBe(2);
+    expect($prediction->predict())->toBe(2);
 });
 
 // --- Cycle preview truncation ---
@@ -151,8 +152,8 @@ it('truncates cycle preview to first 5 classes', function () {
     ];
     $classId = createCycleClass($controller, 'App\\ClassA', true, $cycleClasses, 7);
 
-    $prediction = new DependencyCyclePrediction(new Config());
-    $prediction->predict($controller);
+    $prediction = new DependencyCyclePrediction($controller, $controller, $controller, new Config());
+    $prediction->predict();
 
     $problem = $controller->getMetricCollectionByIdentifierString($classId)
         ->get(MetricKey::IN_DEPENDENCY_CYCLE)?->getProblems()[0] ?? null;
@@ -176,8 +177,8 @@ it('downgrades to INFO for Doctrine Entity/Repository cycle', function () {
         2
     );
 
-    $prediction = new DependencyCyclePrediction(makeDoctrineConfig());
-    $count = $prediction->predict($controller);
+    $prediction = new DependencyCyclePrediction($controller, $controller, $controller, makeDoctrineConfig());
+    $count = $prediction->predict();
 
     expect($count)->toBe(1);
 
@@ -199,8 +200,8 @@ it('does not downgrade Entity/Repository cycle when cycle length is not 2', func
         3
     );
 
-    $prediction = new DependencyCyclePrediction(makeDoctrineConfig());
-    $prediction->predict($controller);
+    $prediction = new DependencyCyclePrediction($controller, $controller, $controller, makeDoctrineConfig());
+    $prediction->predict();
 
     $problem = $controller->getMetricCollectionByIdentifierString($classId)
         ->get(MetricKey::IN_DEPENDENCY_CYCLE)?->getProblems()[0] ?? null;
@@ -219,8 +220,8 @@ it('does not downgrade Entity/Repository cycle when Doctrine is not detected', f
     );
 
     // No Doctrine in config → isDoctrineDetected() returns false
-    $prediction = new DependencyCyclePrediction(new Config());
-    $prediction->predict($controller);
+    $prediction = new DependencyCyclePrediction($controller, $controller, $controller, new Config());
+    $prediction->predict();
 
     $problem = $controller->getMetricCollectionByIdentifierString($classId)
         ->get(MetricKey::IN_DEPENDENCY_CYCLE)?->getProblems()[0] ?? null;
@@ -241,8 +242,8 @@ it('downgrades to INFO for Doctrine Entity relationship cycle', function () {
         3
     );
 
-    $prediction = new DependencyCyclePrediction(makeDoctrineConfig());
-    $prediction->predict($controller);
+    $prediction = new DependencyCyclePrediction($controller, $controller, $controller, makeDoctrineConfig());
+    $prediction->predict();
 
     $problem = $controller->getMetricCollectionByIdentifierString($classId)
         ->get(MetricKey::IN_DEPENDENCY_CYCLE)?->getProblems()[0] ?? null;
@@ -262,8 +263,8 @@ it('downgrades to INFO for Doctrine Model namespace cycle', function () {
         2
     );
 
-    $prediction = new DependencyCyclePrediction(makeDoctrineConfig());
-    $prediction->predict($controller);
+    $prediction = new DependencyCyclePrediction($controller, $controller, $controller, makeDoctrineConfig());
+    $prediction->predict();
 
     $problem = $controller->getMetricCollectionByIdentifierString($classId)
         ->get(MetricKey::IN_DEPENDENCY_CYCLE)?->getProblems()[0] ?? null;
@@ -284,8 +285,8 @@ it('does not downgrade Entity cycle when one class is not entity-like', function
         2
     );
 
-    $prediction = new DependencyCyclePrediction(makeDoctrineConfig());
-    $prediction->predict($controller);
+    $prediction = new DependencyCyclePrediction($controller, $controller, $controller, makeDoctrineConfig());
+    $prediction->predict();
 
     $problem = $controller->getMetricCollectionByIdentifierString($classId)
         ->get(MetricKey::IN_DEPENDENCY_CYCLE)?->getProblems()[0] ?? null;
@@ -305,8 +306,8 @@ it('does not downgrade Entity cycle when Doctrine is not detected', function () 
         2
     );
 
-    $prediction = new DependencyCyclePrediction(new Config());
-    $prediction->predict($controller);
+    $prediction = new DependencyCyclePrediction($controller, $controller, $controller, new Config());
+    $prediction->predict();
 
     $problem = $controller->getMetricCollectionByIdentifierString($classId)
         ->get(MetricKey::IN_DEPENDENCY_CYCLE)?->getProblems()[0] ?? null;
@@ -330,8 +331,8 @@ it('does not downgrade when doctrineCycles adjustment is disabled', function () 
     $config->set('frameworkDetection', new FrameworkDetectionResult(doctrineDetected: true));
     $config->set('framework', ['adjustments' => ['doctrineCycles' => false, 'entityCycles' => false]]);
 
-    $prediction = new DependencyCyclePrediction($config);
-    $prediction->predict($controller);
+    $prediction = new DependencyCyclePrediction($controller, $controller, $controller, $config);
+    $prediction->predict();
 
     $problem = $controller->getMetricCollectionByIdentifierString($classId)
         ->get(MetricKey::IN_DEPENDENCY_CYCLE)?->getProblems()[0] ?? null;
@@ -343,8 +344,8 @@ it('problem name is Circular dependency', function () {
     $controller = makeCycleController();
     $classId = createCycleClass($controller, 'App\\Foo', true, ['App\\Foo', 'App\\Bar'], 2);
 
-    $prediction = new DependencyCyclePrediction(new Config());
-    $prediction->predict($controller);
+    $prediction = new DependencyCyclePrediction($controller, $controller, $controller, new Config());
+    $prediction->predict();
 
     $problem = $controller->getMetricCollectionByIdentifierString($classId)
         ->get(MetricKey::IN_DEPENDENCY_CYCLE)?->getProblems()[0] ?? null;

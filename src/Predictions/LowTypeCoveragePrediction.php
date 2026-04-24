@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace PhpCodeArch\Predictions;
 
 use PhpCodeArch\Application\Config;
-use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\Controller\MetricsReaderInterface;
+use PhpCodeArch\Metrics\Controller\MetricsRegistryInterface;
+use PhpCodeArch\Metrics\Controller\MetricsWriterInterface;
 use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Predictions\Problems\LowTypeCoverageProblem;
@@ -14,16 +16,23 @@ class LowTypeCoveragePrediction implements PredictionInterface
 {
     use PredictionTrait;
 
-    public function __construct(?Config $config = null)
-    {
+    public function __construct(
+        MetricsReaderInterface $reader,
+        MetricsWriterInterface $writer,
+        MetricsRegistryInterface $registry,
+        ?Config $config = null,
+    ) {
+        $this->reader = $reader;
+        $this->writer = $writer;
+        $this->registry = $registry;
         $this->config = $config;
     }
 
-    public function predict(MetricsController $metricsController): int
+    public function predict(): int
     {
         $problemCount = 0;
 
-        foreach ($metricsController->getAllCollections() as $metric) {
+        foreach ($this->registry->getAllCollections() as $metric) {
             if (!$metric instanceof ClassMetricsCollection) {
                 continue;
             }
@@ -43,7 +52,7 @@ class LowTypeCoveragePrediction implements PredictionInterface
                     message: sprintf('Type coverage is critically low at %.1f%% (threshold: %d%%).', $typeCoverage, $errorThresholdInt)
                 );
 
-                $metricsController->setProblemByIdentifierString(
+                $this->writer->setProblemByIdentifierString(
                     identifierString: (string) $metric->getIdentifier(),
                     key: MetricKey::TYPE_COVERAGE,
                     problem: $problem
@@ -56,7 +65,7 @@ class LowTypeCoveragePrediction implements PredictionInterface
                     message: sprintf('Type coverage is only %.1f%% (threshold: %d%%).', $typeCoverage, $warningThresholdInt)
                 );
 
-                $metricsController->setProblemByIdentifierString(
+                $this->writer->setProblemByIdentifierString(
                     identifierString: (string) $metric->getIdentifier(),
                     key: MetricKey::TYPE_COVERAGE,
                     problem: $problem

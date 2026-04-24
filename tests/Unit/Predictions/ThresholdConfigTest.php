@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use PhpCodeArch\Application\Config;
+use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\Model\MetricsContainer;
 use PhpCodeArch\Predictions\PredictionTrait;
 use PhpCodeArch\Predictions\TooLongPrediction;
 use PhpCodeArch\Predictions\TooManyParametersPrediction;
@@ -96,11 +98,12 @@ it('TooLongPrediction uses configured thresholds', function () {
         ],
     ]);
 
-    $prediction = new TooLongPrediction($config);
+    $container = new MetricsContainer();
+    $controller = new MetricsController($container);
+    $prediction = new TooLongPrediction($controller, $controller, $controller, $config);
 
     // Use reflection to access the protected threshold() method
     $reflection = new ReflectionMethod($prediction, 'threshold');
-
 
     expect($reflection->invoke($prediction, 'tooLong.file', 400))->toBe(800)
         ->and($reflection->invoke($prediction, 'tooLong.class', 300))->toBe(500)
@@ -117,10 +120,11 @@ it('TooManyParametersPrediction uses configured thresholds', function () {
         ],
     ]);
 
-    $prediction = new TooManyParametersPrediction($config);
+    $container = new MetricsContainer();
+    $controller = new MetricsController($container);
+    $prediction = new TooManyParametersPrediction($controller, $controller, $controller, $config);
 
     $reflection = new ReflectionMethod($prediction, 'threshold');
-
 
     expect($reflection->invoke($prediction, 'tooManyParameters.warning', 4))->toBe(5)
         ->and($reflection->invoke($prediction, 'tooManyParameters.error', 7))->toBe(10);

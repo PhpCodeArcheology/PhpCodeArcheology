@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Predictions;
 
-use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\Controller\MetricsReaderInterface;
+use PhpCodeArch\Metrics\Controller\MetricsRegistryInterface;
+use PhpCodeArch\Metrics\Controller\MetricsWriterInterface;
 use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
@@ -13,13 +15,25 @@ use PhpCodeArch\Predictions\Problems\SecuritySmellProblem;
 
 class SecuritySmellPrediction implements PredictionInterface
 {
+    use PredictionTrait;
+
     private const ERROR_PATTERNS = ['eval()', 'exec()', 'system()', 'shell_exec()', 'passthru()', 'proc_open()', 'popen()', 'pcntl_exec()'];
 
-    public function predict(MetricsController $metricsController): int
+    public function __construct(
+        MetricsReaderInterface $reader,
+        MetricsWriterInterface $writer,
+        MetricsRegistryInterface $registry,
+    ) {
+        $this->reader = $reader;
+        $this->writer = $writer;
+        $this->registry = $registry;
+    }
+
+    public function predict(): int
     {
         $problemCount = 0;
 
-        foreach ($metricsController->getAllCollections() as $metric) {
+        foreach ($this->registry->getAllCollections() as $metric) {
             if (!$metric instanceof FileMetricsCollection
                 && !$metric instanceof ClassMetricsCollection
                 && !$metric instanceof FunctionMetricsCollection) {
@@ -51,7 +65,7 @@ class SecuritySmellPrediction implements PredictionInterface
                 message: sprintf('%d security smell(s): %s', $smellCount, implode('; ', array_map(fn (mixed $v): string => is_scalar($v) ? strval($v) : '', array_slice($smells, 0, 3))))
             );
 
-            $metricsController->setProblemByIdentifierString(
+            $this->writer->setProblemByIdentifierString(
                 identifierString: (string) $metric->getIdentifier(),
                 key: MetricKey::SECURITY_SMELL_COUNT,
                 problem: $problem

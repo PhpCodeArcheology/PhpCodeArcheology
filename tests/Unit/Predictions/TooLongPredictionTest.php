@@ -73,17 +73,17 @@ function createClassWithMethod(MetricsController $controller, string $className,
 
 it('returns 0 when no collections exist', function () {
     $controller = makeTooLongController();
-    $prediction = new TooLongPrediction(new Config());
+    $prediction = new TooLongPrediction($controller, $controller, $controller, new Config());
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 it('fires WARNING when file lloc exceeds threshold', function () {
     $controller = makeTooLongController();
     $fileId = createFileCollection($controller, '/src/BigFile.php', 401);
 
-    $prediction = new TooLongPrediction(new Config());
-    $count = $prediction->predict($controller);
+    $prediction = new TooLongPrediction($controller, $controller, $controller, new Config());
+    $count = $prediction->predict();
 
     expect($count)->toBe(1);
 
@@ -98,18 +98,18 @@ it('does not fire when file lloc is exactly at threshold', function () {
     $controller = makeTooLongController();
     createFileCollection($controller, '/src/OkFile.php', 400);
 
-    $prediction = new TooLongPrediction(new Config());
+    $prediction = new TooLongPrediction($controller, $controller, $controller, new Config());
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 it('does not fire when file lloc is below threshold', function () {
     $controller = makeTooLongController();
     createFileCollection($controller, '/src/ShortFile.php', 200);
 
-    $prediction = new TooLongPrediction(new Config());
+    $prediction = new TooLongPrediction($controller, $controller, $controller, new Config());
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 // --- Class-level tests ---
@@ -118,8 +118,8 @@ it('fires WARNING when class lloc exceeds threshold', function () {
     $controller = makeTooLongController();
     $classId = createLongClass($controller, 'App\\BigClass', 301);
 
-    $prediction = new TooLongPrediction(new Config());
-    $count = $prediction->predict($controller);
+    $prediction = new TooLongPrediction($controller, $controller, $controller, new Config());
+    $count = $prediction->predict();
 
     expect($count)->toBe(1);
 
@@ -135,9 +135,9 @@ it('does not fire when class lloc is at or below threshold', function () {
     $controller = makeTooLongController();
     createLongClass($controller, 'App\\NormalClass', 300);
 
-    $prediction = new TooLongPrediction(new Config());
+    $prediction = new TooLongPrediction($controller, $controller, $controller, new Config());
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 // --- Method-level tests ---
@@ -146,8 +146,8 @@ it('fires for long method and adds problem on both method and class', function (
     $controller = makeTooLongController();
     [$classId, $methodId] = createClassWithMethod($controller, 'App\\Service', 10, 'doWork', 31);
 
-    $prediction = new TooLongPrediction(new Config());
-    $count = $prediction->predict($controller);
+    $prediction = new TooLongPrediction($controller, $controller, $controller, new Config());
+    $count = $prediction->predict();
 
     // 1 problem for the long method itself
     expect($count)->toBe(1);
@@ -168,17 +168,17 @@ it('does not fire for method lloc at or below threshold', function () {
     $controller = makeTooLongController();
     createClassWithMethod($controller, 'App\\Service', 10, 'doWork', 30);
 
-    $prediction = new TooLongPrediction(new Config());
+    $prediction = new TooLongPrediction($controller, $controller, $controller, new Config());
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 it('sets predictionTooLong=true on a too-long file', function () {
     $controller = makeTooLongController();
     $fileId = createFileCollection($controller, '/src/HugeFile.php', 500);
 
-    $prediction = new TooLongPrediction(new Config());
-    $prediction->predict($controller);
+    $prediction = new TooLongPrediction($controller, $controller, $controller, new Config());
+    $prediction->predict();
 
     $flag = $controller->getMetricValueByIdentifierString($fileId, MetricKey::PREDICTION_TOO_LONG);
     expect($flag?->asBool())->toBeTrue();
@@ -188,8 +188,8 @@ it('sets predictionTooLong=false on a short file', function () {
     $controller = makeTooLongController();
     $fileId = createFileCollection($controller, '/src/TinyFile.php', 50);
 
-    $prediction = new TooLongPrediction(new Config());
-    $prediction->predict($controller);
+    $prediction = new TooLongPrediction($controller, $controller, $controller, new Config());
+    $prediction->predict();
 
     $flag = $controller->getMetricValueByIdentifierString($fileId, MetricKey::PREDICTION_TOO_LONG);
     expect($flag?->asBool())->toBeFalse();
@@ -205,9 +205,9 @@ it('uses custom file threshold from Config', function () {
     $config = new Config();
     $config->set('thresholds', ['tooLong' => ['file' => 500]]);
 
-    $prediction = new TooLongPrediction($config);
+    $prediction = new TooLongPrediction($controller, $controller, $controller, $config);
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 it('uses custom class threshold from Config', function () {
@@ -218,9 +218,9 @@ it('uses custom class threshold from Config', function () {
     $config = new Config();
     $config->set('thresholds', ['tooLong' => ['class' => 400]]);
 
-    $prediction = new TooLongPrediction($config);
+    $prediction = new TooLongPrediction($controller, $controller, $controller, $config);
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 it('uses custom method threshold from Config', function () {
@@ -231,9 +231,9 @@ it('uses custom method threshold from Config', function () {
     $config = new Config();
     $config->set('thresholds', ['tooLong' => ['method' => 50]]);
 
-    $prediction = new TooLongPrediction($config);
+    $prediction = new TooLongPrediction($controller, $controller, $controller, $config);
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 it('counts multiple long files independently', function () {
@@ -241,13 +241,14 @@ it('counts multiple long files independently', function () {
     createFileCollection($controller, '/src/FileA.php', 500);
     createFileCollection($controller, '/src/FileB.php', 600);
 
-    $prediction = new TooLongPrediction(new Config());
+    $prediction = new TooLongPrediction($controller, $controller, $controller, new Config());
 
-    expect($prediction->predict($controller))->toBe(2);
+    expect($prediction->predict())->toBe(2);
 });
 
 it('problem level is WARNING', function () {
-    $prediction = new TooLongPrediction(new Config());
+    $controller = makeTooLongController();
+    $prediction = new TooLongPrediction($controller, $controller, $controller, new Config());
 
     expect($prediction->getLevel())->toBe(PhpCodeArch\Predictions\PredictionInterface::WARNING);
 });

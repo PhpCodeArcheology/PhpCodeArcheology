@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace PhpCodeArch\Predictions;
 
 use PhpCodeArch\Application\Config;
-use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\Controller\MetricsReaderInterface;
+use PhpCodeArch\Metrics\Controller\MetricsRegistryInterface;
+use PhpCodeArch\Metrics\Controller\MetricsWriterInterface;
 use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
@@ -18,16 +20,23 @@ class TooLongPrediction implements PredictionInterface
 {
     use PredictionTrait;
 
-    public function __construct(?Config $config = null)
-    {
+    public function __construct(
+        MetricsReaderInterface $reader,
+        MetricsWriterInterface $writer,
+        MetricsRegistryInterface $registry,
+        ?Config $config = null,
+    ) {
+        $this->reader = $reader;
+        $this->writer = $writer;
+        $this->registry = $registry;
         $this->config = $config;
     }
 
-    public function predict(MetricsController $metricsController): int
+    public function predict(): int
     {
         $problemCount = 0;
 
-        foreach ($metricsController->getAllCollections() as $metric) {
+        foreach ($this->registry->getAllCollections() as $metric) {
             if ($metric instanceof ProjectMetricsCollection
                 || $metric instanceof PackageMetricsCollection) {
                 continue;
@@ -47,7 +56,7 @@ class TooLongPrediction implements PredictionInterface
             $lloc = $metric->get(MetricKey::LLOC)?->asInt() ?? 0;
             $isTooLong = $lloc > $maxLloc;
 
-            $metricsController->setMetricValueByIdentifierString(
+            $this->writer->setMetricValueByIdentifierString(
                 (string) $metric->getIdentifier(),
                 MetricKey::PREDICTION_TOO_LONG,
                 $isTooLong
@@ -61,7 +70,7 @@ class TooLongPrediction implements PredictionInterface
                     message: 'Too many logical lines of code.'
                 );
 
-                $metricsController->setProblemByIdentifierString(
+                $this->writer->setProblemByIdentifierString(
                     identifierString: (string) $metric->getIdentifier(),
                     key: MetricKey::LLOC,
                     problem: $problem
@@ -72,7 +81,7 @@ class TooLongPrediction implements PredictionInterface
                 continue;
             }
 
-            $methodCollection = $metricsController->getCollectionByIdentifierString(
+            $methodCollection = $this->reader->getCollectionByIdentifierString(
                 (string) $metric->getIdentifier(),
                 'methods'
             );
@@ -86,14 +95,14 @@ class TooLongPrediction implements PredictionInterface
                     continue;
                 }
 
-                $lloc = $metricsController->getMetricValueByIdentifierString(
+                $lloc = $this->reader->getMetricValueByIdentifierString(
                     $methodIdString,
                     MetricKey::LLOC
                 );
 
                 $isTooLong = ($lloc?->asInt() ?? 0) > $this->threshold('tooLong.method', 30);
 
-                $metricsController->setMetricValueByIdentifierString(
+                $this->writer->setMetricValueByIdentifierString(
                     $methodIdString,
                     MetricKey::PREDICTION_TOO_LONG,
                     $isTooLong
@@ -110,7 +119,7 @@ class TooLongPrediction implements PredictionInterface
                     message: 'Too many logical lines of code.'
                 );
 
-                $metricsController->setProblemByIdentifierString(
+                $this->writer->setProblemByIdentifierString(
                     identifierString: $methodIdString,
                     key: MetricKey::LLOC,
                     problem: $problem
@@ -121,7 +130,7 @@ class TooLongPrediction implements PredictionInterface
                     message: 'Too many logical lines of code in at least one method.'
                 );
 
-                $metricsController->setProblemByIdentifierString(
+                $this->writer->setProblemByIdentifierString(
                     identifierString: (string) $metric->getIdentifier(),
                     key: MetricKey::LLOC,
                     problem: $problem

@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace PhpCodeArch\Predictions;
 
 use PhpCodeArch\Application\Config;
-use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\Controller\MetricsReaderInterface;
+use PhpCodeArch\Metrics\Controller\MetricsRegistryInterface;
+use PhpCodeArch\Metrics\Controller\MetricsWriterInterface;
 use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
@@ -15,16 +17,23 @@ class TooDependentPrediction implements PredictionInterface
 {
     use PredictionTrait;
 
-    public function __construct(?Config $config = null)
-    {
+    public function __construct(
+        MetricsReaderInterface $reader,
+        MetricsWriterInterface $writer,
+        MetricsRegistryInterface $registry,
+        ?Config $config = null,
+    ) {
+        $this->reader = $reader;
+        $this->writer = $writer;
+        $this->registry = $registry;
         $this->config = $config;
     }
 
-    public function predict(MetricsController $metricsController): int
+    public function predict(): int
     {
         $problemCount = 0;
 
-        foreach ($metricsController->getAllCollections() as $metric) {
+        foreach ($this->registry->getAllCollections() as $metric) {
             switch (true) {
                 case $metric instanceof ClassMetricsCollection:
                 case $metric instanceof FunctionMetricsCollection:
@@ -44,7 +53,7 @@ class TooDependentPrediction implements PredictionInterface
 
                     $tooDependent = ($metric->get(MetricKey::USES_COUNT)?->asInt() ?? 0) > $maxDependency;
 
-                    $metricsController->setMetricValueByIdentifierString(
+                    $this->writer->setMetricValueByIdentifierString(
                         (string) $metric->getIdentifier(),
                         MetricKey::PREDICTION_TOO_DEPENDENT,
                         $tooDependent
@@ -60,7 +69,7 @@ class TooDependentPrediction implements PredictionInterface
                         message: 'The element maybe is too dependent, exceeding '.$maxDependencyStr.' dependencies.'
                     );
 
-                    $metricsController->setProblemByIdentifierString(
+                    $this->writer->setProblemByIdentifierString(
                         identifierString: (string) $metric->getIdentifier(),
                         key: MetricKey::USES,
                         problem: $problem

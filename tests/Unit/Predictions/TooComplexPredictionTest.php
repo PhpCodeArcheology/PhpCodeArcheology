@@ -198,9 +198,9 @@ function hasProblems(MetricsController $controller, string $id, string $metricKe
 
 it('returns 0 when no collections exist', function () {
     $controller = makeTooComplexController();
-    $prediction = new TooComplexPrediction(new Config());
+    $prediction = new TooComplexPrediction($controller, $controller, $controller, new Config());
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 it('returns 0 for class below all thresholds', function () {
@@ -216,9 +216,9 @@ it('returns 0 for class below all thresholds', function () {
     ]);
     setHarmlessProjectAverages($controller);
 
-    $prediction = new TooComplexPrediction(new Config());
+    $prediction = new TooComplexPrediction($controller, $controller, $controller, new Config());
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 // ============================================================
@@ -234,9 +234,9 @@ it('fires CC error for small code exceeding cc threshold', function () {
     ]);
     setHarmlessProjectAverages($controller);
 
-    $prediction = new TooComplexPrediction(new Config());
+    $prediction = new TooComplexPrediction($controller, $controller, $controller, new Config());
 
-    expect($prediction->predict($controller))->toBe(1);
+    expect($prediction->predict())->toBe(1);
 });
 
 it('does not fire CC for large code below ccLargeCode threshold', function () {
@@ -248,9 +248,9 @@ it('does not fire CC for large code below ccLargeCode threshold', function () {
     ]);
     setHarmlessProjectAverages($controller);
 
-    $prediction = new TooComplexPrediction(new Config());
+    $prediction = new TooComplexPrediction($controller, $controller, $controller, new Config());
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 it('fires CC error for large code exceeding ccLargeCode threshold', function () {
@@ -262,9 +262,9 @@ it('fires CC error for large code exceeding ccLargeCode threshold', function () 
     ]);
     setHarmlessProjectAverages($controller);
 
-    $prediction = new TooComplexPrediction(new Config());
+    $prediction = new TooComplexPrediction($controller, $controller, $controller, new Config());
 
-    expect($prediction->predict($controller))->toBe(1);
+    expect($prediction->predict())->toBe(1);
 });
 
 // ============================================================
@@ -279,9 +279,9 @@ it('fires Difficulty error when above threshold', function () {
     ]);
     setHarmlessProjectAverages($controller);
 
-    $prediction = new TooComplexPrediction(new Config());
+    $prediction = new TooComplexPrediction($controller, $controller, $controller, new Config());
 
-    expect($prediction->predict($controller))->toBe(1);
+    expect($prediction->predict())->toBe(1);
 });
 
 it('does not fire Difficulty for trivial code', function () {
@@ -293,9 +293,9 @@ it('does not fire Difficulty for trivial code', function () {
     ]);
     setHarmlessProjectAverages($controller);
 
-    $prediction = new TooComplexPrediction(new Config());
+    $prediction = new TooComplexPrediction($controller, $controller, $controller, new Config());
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 it('uses framework Difficulty threshold for Symfony project', function () {
@@ -308,9 +308,9 @@ it('uses framework Difficulty threshold for Symfony project', function () {
 
     $config = new Config();
     $config->set('frameworkDetection', new FrameworkDetectionResult(symfonyDetected: true));
-    $prediction = new TooComplexPrediction($config);
+    $prediction = new TooComplexPrediction($controller, $controller, $controller, $config);
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 it('fires Difficulty for Symfony project exceeding framework threshold', function () {
@@ -323,9 +323,9 @@ it('fires Difficulty for Symfony project exceeding framework threshold', functio
 
     $config = new Config();
     $config->set('frameworkDetection', new FrameworkDetectionResult(symfonyDetected: true));
-    $prediction = new TooComplexPrediction($config);
+    $prediction = new TooComplexPrediction($controller, $controller, $controller, $config);
 
-    expect($prediction->predict($controller))->toBe(1);
+    expect($prediction->predict())->toBe(1);
 });
 
 // ============================================================
@@ -340,9 +340,9 @@ it('fires Effort warning when above average plus tolerance', function () {
     ]);
     setHarmlessProjectAverages($controller);
 
-    $prediction = new TooComplexPrediction(new Config());
+    $prediction = new TooComplexPrediction($controller, $controller, $controller, new Config());
 
-    expect($prediction->predict($controller))->toBe(1);
+    expect($prediction->predict())->toBe(1);
 });
 
 it('does not fire Effort when within tolerance', function () {
@@ -353,9 +353,9 @@ it('does not fire Effort when within tolerance', function () {
     ]);
     setHarmlessProjectAverages($controller);
 
-    $prediction = new TooComplexPrediction(new Config());
+    $prediction = new TooComplexPrediction($controller, $controller, $controller, new Config());
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 it('does not fire Effort for trivial LLOC', function () {
@@ -371,9 +371,9 @@ it('does not fire Effort for trivial LLOC', function () {
         'Lcom' => 1.0,
     ]);
 
-    $prediction = new TooComplexPrediction(new Config());
+    $prediction = new TooComplexPrediction($controller, $controller, $controller, new Config());
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 it('uses wider framework Effort tolerance', function () {
@@ -386,9 +386,9 @@ it('uses wider framework Effort tolerance', function () {
 
     $config = new Config();
     $config->set('frameworkDetection', new FrameworkDetectionResult(symfonyDetected: true));
-    $prediction = new TooComplexPrediction($config);
+    $prediction = new TooComplexPrediction($controller, $controller, $controller, $config);
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 // ============================================================
@@ -403,9 +403,9 @@ it('fires MI warning when below average minus tolerance', function () {
     ]);
     setHarmlessProjectAverages($controller);
 
-    $prediction = new TooComplexPrediction(new Config());
+    $prediction = new TooComplexPrediction($controller, $controller, $controller, new Config());
 
-    expect($prediction->predict($controller))->toBe(1);
+    expect($prediction->predict())->toBe(1);
 });
 
 it('does not fire MI when within tolerance', function () {
@@ -416,9 +416,9 @@ it('does not fire MI when within tolerance', function () {
     ]);
     setHarmlessProjectAverages($controller);
 
-    $prediction = new TooComplexPrediction(new Config());
+    $prediction = new TooComplexPrediction($controller, $controller, $controller, new Config());
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 it('does not fire MI for trivial LLOC', function () {
@@ -430,9 +430,9 @@ it('does not fire MI for trivial LLOC', function () {
     ]);
     setHarmlessProjectAverages($controller);
 
-    $prediction = new TooComplexPrediction(new Config());
+    $prediction = new TooComplexPrediction($controller, $controller, $controller, new Config());
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 it('uses wider MI tolerance for well-typed code', function () {
@@ -444,9 +444,9 @@ it('uses wider MI tolerance for well-typed code', function () {
     ]);
     setHarmlessProjectAverages($controller);
 
-    $prediction = new TooComplexPrediction(new Config());
+    $prediction = new TooComplexPrediction($controller, $controller, $controller, new Config());
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 it('uses framework MI tolerance as max of all', function () {
@@ -460,9 +460,9 @@ it('uses framework MI tolerance as max of all', function () {
 
     $config = new Config();
     $config->set('frameworkDetection', new FrameworkDetectionResult(symfonyDetected: true));
-    $prediction = new TooComplexPrediction($config);
+    $prediction = new TooComplexPrediction($controller, $controller, $controller, $config);
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 it('fires MI when below framework tolerance', function () {
@@ -475,9 +475,9 @@ it('fires MI when below framework tolerance', function () {
 
     $config = new Config();
     $config->set('frameworkDetection', new FrameworkDetectionResult(symfonyDetected: true));
-    $prediction = new TooComplexPrediction($config);
+    $prediction = new TooComplexPrediction($controller, $controller, $controller, $config);
 
-    expect($prediction->predict($controller))->toBe(1);
+    expect($prediction->predict())->toBe(1);
 });
 
 // ============================================================
@@ -494,8 +494,8 @@ it('fires LCOM warning when above threshold', function () {
     addMethodsToTooComplexClass($controller, $classId, 'App\\HighLcomService', 2);
     setHarmlessProjectAverages($controller);
 
-    $prediction = new TooComplexPrediction(new Config());
-    $prediction->predict($controller);
+    $prediction = new TooComplexPrediction($controller, $controller, $controller, new Config());
+    $prediction->predict();
 
     expect(hasProblems($controller, $classId, MetricKey::LCOM))->toBeTrue();
 });
@@ -509,8 +509,8 @@ it('does not fire LCOM when within tolerance', function () {
     addMethodsToTooComplexClass($controller, $classId, 'App\\OkLcomService', 2);
     setHarmlessProjectAverages($controller);
 
-    $prediction = new TooComplexPrediction(new Config());
-    $prediction->predict($controller);
+    $prediction = new TooComplexPrediction($controller, $controller, $controller, new Config());
+    $prediction->predict();
 
     expect(hasProblems($controller, $classId, MetricKey::LCOM))->toBeFalse();
 });
@@ -532,8 +532,8 @@ it('uses max(1, avgLcom) floor when avgLcom is below 1', function () {
         'MaintainabilityIndex' => 80.0,
     ]);
 
-    $prediction = new TooComplexPrediction(new Config());
-    $prediction->predict($controller);
+    $prediction = new TooComplexPrediction($controller, $controller, $controller, new Config());
+    $prediction->predict();
 
     expect(hasProblems($controller, $classId, MetricKey::LCOM))->toBeTrue();
 });
@@ -551,8 +551,8 @@ it('skips LCOM for enum', function () {
     addMethodsToTooComplexClass($controller, $classId, 'App\\StatusEnum', 2);
     setHarmlessProjectAverages($controller);
 
-    $prediction = new TooComplexPrediction(new Config());
-    $prediction->predict($controller);
+    $prediction = new TooComplexPrediction($controller, $controller, $controller, new Config());
+    $prediction->predict();
 
     expect(hasProblems($controller, $classId, MetricKey::LCOM))->toBeFalse();
 });
@@ -566,8 +566,8 @@ it('skips LCOM for interface', function () {
     addMethodsToTooComplexClass($controller, $classId, 'App\\MyInterface', 2);
     setHarmlessProjectAverages($controller);
 
-    $prediction = new TooComplexPrediction(new Config());
-    $prediction->predict($controller);
+    $prediction = new TooComplexPrediction($controller, $controller, $controller, new Config());
+    $prediction->predict();
 
     expect(hasProblems($controller, $classId, MetricKey::LCOM))->toBeFalse();
 });
@@ -581,8 +581,8 @@ it('skips LCOM for trait', function () {
     addMethodsToTooComplexClass($controller, $classId, 'App\\MyTrait', 2);
     setHarmlessProjectAverages($controller);
 
-    $prediction = new TooComplexPrediction(new Config());
-    $prediction->predict($controller);
+    $prediction = new TooComplexPrediction($controller, $controller, $controller, new Config());
+    $prediction->predict();
 
     expect(hasProblems($controller, $classId, MetricKey::LCOM))->toBeFalse();
 });
@@ -595,8 +595,8 @@ it('skips LCOM for class with 1 method or fewer', function () {
     addMethodsToTooComplexClass($controller, $classId, 'App\\SingleMethod', 1);
     setHarmlessProjectAverages($controller);
 
-    $prediction = new TooComplexPrediction(new Config());
-    $prediction->predict($controller);
+    $prediction = new TooComplexPrediction($controller, $controller, $controller, new Config());
+    $prediction->predict();
 
     expect(hasProblems($controller, $classId, MetricKey::LCOM))->toBeFalse();
 });
@@ -609,8 +609,8 @@ it('skips LCOM for Exception name pattern', function () {
     addMethodsToTooComplexClass($controller, $classId, 'App\\MyException', 2);
     setHarmlessProjectAverages($controller);
 
-    $prediction = new TooComplexPrediction(new Config());
-    $prediction->predict($controller);
+    $prediction = new TooComplexPrediction($controller, $controller, $controller, new Config());
+    $prediction->predict();
 
     expect(hasProblems($controller, $classId, MetricKey::LCOM))->toBeFalse();
 });
@@ -623,8 +623,8 @@ it('skips LCOM for Error name pattern', function () {
     addMethodsToTooComplexClass($controller, $classId, 'App\\ValidationError', 2);
     setHarmlessProjectAverages($controller);
 
-    $prediction = new TooComplexPrediction(new Config());
-    $prediction->predict($controller);
+    $prediction = new TooComplexPrediction($controller, $controller, $controller, new Config());
+    $prediction->predict();
 
     expect(hasProblems($controller, $classId, MetricKey::LCOM))->toBeFalse();
 });
@@ -643,8 +643,8 @@ it('skips LCOM when class implements EventSubscriberInterface', function () {
 
     setHarmlessProjectAverages($controller);
 
-    $prediction = new TooComplexPrediction(new Config());
-    $prediction->predict($controller);
+    $prediction = new TooComplexPrediction($controller, $controller, $controller, new Config());
+    $prediction->predict();
 
     expect(hasProblems($controller, $classId, MetricKey::LCOM))->toBeFalse();
 });
@@ -659,8 +659,8 @@ it('skips LCOM for Symfony Command pattern when Symfony detected', function () {
 
     $config = new Config();
     $config->set('frameworkDetection', new FrameworkDetectionResult(symfonyDetected: true));
-    $prediction = new TooComplexPrediction($config);
-    $prediction->predict($controller);
+    $prediction = new TooComplexPrediction($controller, $controller, $controller, $config);
+    $prediction->predict();
 
     expect(hasProblems($controller, $classId, MetricKey::LCOM))->toBeFalse();
 });
@@ -675,8 +675,8 @@ it('does NOT skip LCOM for Command pattern without Symfony detection', function 
     addMethodsToTooComplexClass($controller, $classId, 'App\\ImportCommand', 2);
     setHarmlessProjectAverages($controller);
 
-    $prediction = new TooComplexPrediction(new Config());
-    $prediction->predict($controller);
+    $prediction = new TooComplexPrediction($controller, $controller, $controller, new Config());
+    $prediction->predict();
 
     expect(hasProblems($controller, $classId, MetricKey::LCOM))->toBeTrue();
 });
@@ -696,8 +696,8 @@ it('fires per-method cognitive complexity error', function () {
     ]);
     setHarmlessProjectAverages($controller);
 
-    $prediction = new TooComplexPrediction(new Config());
-    $prediction->predict($controller);
+    $prediction = new TooComplexPrediction($controller, $controller, $controller, new Config());
+    $prediction->predict();
 
     expect(hasProblems($controller, $methodIds[0], MetricKey::COGNITIVE_COMPLEXITY))->toBeTrue();
 });
@@ -713,8 +713,8 @@ it('does not fire cognitive complexity when within threshold', function () {
     ]);
     setHarmlessProjectAverages($controller);
 
-    $prediction = new TooComplexPrediction(new Config());
-    $prediction->predict($controller);
+    $prediction = new TooComplexPrediction($controller, $controller, $controller, new Config());
+    $prediction->predict();
 
     expect(hasProblems($controller, $methodIds[0], MetricKey::COGNITIVE_COMPLEXITY))->toBeFalse();
 });
@@ -735,8 +735,8 @@ it('sets classTooComplex when avgMethodCc exceeds threshold', function () {
     ]);
     setHarmlessProjectAverages($controller);
 
-    $prediction = new TooComplexPrediction(new Config());
-    $prediction->predict($controller);
+    $prediction = new TooComplexPrediction($controller, $controller, $controller, new Config());
+    $prediction->predict();
 
     $tooComplex = $controller->getMetricValueByIdentifierString($classId, MetricKey::PREDICTION_TOO_COMPLEX);
 
@@ -755,8 +755,8 @@ it('does not set classTooComplex when avgMethodCc is within threshold', function
     ]);
     setHarmlessProjectAverages($controller);
 
-    $prediction = new TooComplexPrediction(new Config());
-    $prediction->predict($controller);
+    $prediction = new TooComplexPrediction($controller, $controller, $controller, new Config());
+    $prediction->predict();
 
     $tooComplex = $controller->getMetricValueByIdentifierString($classId, MetricKey::PREDICTION_TOO_COMPLEX);
 
@@ -776,8 +776,8 @@ it('sets avgMethodCc and avgMethodCogC values on class', function () {
     ]);
     setHarmlessProjectAverages($controller);
 
-    $prediction = new TooComplexPrediction(new Config());
-    $prediction->predict($controller);
+    $prediction = new TooComplexPrediction($controller, $controller, $controller, new Config());
+    $prediction->predict();
 
     $avgCc = $controller->getMetricValueByIdentifierString($classId, MetricKey::AVG_METHOD_CC);
     $avgCogC = $controller->getMetricValueByIdentifierString($classId, MetricKey::AVG_METHOD_COG_C);
@@ -801,9 +801,9 @@ it('handles FileMetricsCollection CC check', function () {
         'MaintainabilityIndex' => 80.0,
     ]);
 
-    $prediction = new TooComplexPrediction(new Config());
+    $prediction = new TooComplexPrediction($controller, $controller, $controller, new Config());
 
-    expect($prediction->predict($controller))->toBe(1);
+    expect($prediction->predict())->toBe(1);
 });
 
 it('handles FunctionMetricsCollection CC check', function () {
@@ -817,9 +817,9 @@ it('handles FunctionMetricsCollection CC check', function () {
         'MaintainabilityIndex' => 80.0,
     ]);
 
-    $prediction = new TooComplexPrediction(new Config());
+    $prediction = new TooComplexPrediction($controller, $controller, $controller, new Config());
 
-    expect($prediction->predict($controller))->toBe(1);
+    expect($prediction->predict())->toBe(1);
 });
 
 // ============================================================
@@ -836,9 +836,9 @@ it('respects custom CC threshold from config', function () {
 
     $config = new Config();
     $config->set('thresholds', ['tooComplex' => ['cc' => 15]]);
-    $prediction = new TooComplexPrediction($config);
+    $prediction = new TooComplexPrediction($controller, $controller, $controller, $config);
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 it('respects custom cognitiveComplexity threshold from config', function () {
@@ -854,8 +854,8 @@ it('respects custom cognitiveComplexity threshold from config', function () {
 
     $config = new Config();
     $config->set('thresholds', ['tooComplex' => ['cognitiveComplexity' => 20]]);
-    $prediction = new TooComplexPrediction($config);
-    $prediction->predict($controller);
+    $prediction = new TooComplexPrediction($controller, $controller, $controller, $config);
+    $prediction->predict();
 
     $methodId = array_values($controller->getCollectionByIdentifierString($classId, 'methods')->getAsArray())[0];
 
@@ -875,13 +875,14 @@ it('counts problems from multiple checks independently', function () {
     ]);
     setHarmlessProjectAverages($controller);
 
-    $prediction = new TooComplexPrediction(new Config());
+    $prediction = new TooComplexPrediction($controller, $controller, $controller, new Config());
 
-    expect($prediction->predict($controller))->toBe(2);
+    expect($prediction->predict())->toBe(2);
 });
 
 it('problem level is ERROR', function () {
-    $prediction = new TooComplexPrediction(new Config());
+    $controller = makeTooComplexController();
+    $prediction = new TooComplexPrediction($controller, $controller, $controller, new Config());
 
     expect($prediction->getLevel())->toBe(PredictionInterface::ERROR);
 });

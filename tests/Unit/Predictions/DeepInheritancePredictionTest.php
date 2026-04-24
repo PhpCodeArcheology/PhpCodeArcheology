@@ -37,35 +37,35 @@ function createClassWithDit(
 
 it('returns 0 when no classes exist', function () {
     $controller = makeDeepInheritanceController();
-    $prediction = new DeepInheritancePrediction(new Config());
+    $prediction = new DeepInheritancePrediction($controller, $controller, $controller, new Config());
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 it('returns 0 when dit is 0', function () {
     $controller = makeDeepInheritanceController();
     createClassWithDit($controller, 'App\\RootClass', 0);
 
-    $prediction = new DeepInheritancePrediction(new Config());
+    $prediction = new DeepInheritancePrediction($controller, $controller, $controller, new Config());
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 it('returns 0 when dit is 3 (below default warning threshold of 4)', function () {
     $controller = makeDeepInheritanceController();
     createClassWithDit($controller, 'App\\ShallowChild', 3);
 
-    $prediction = new DeepInheritancePrediction(new Config());
+    $prediction = new DeepInheritancePrediction($controller, $controller, $controller, new Config());
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 it('fires WARNING when dit is exactly 4 (at default warning threshold)', function () {
     $controller = makeDeepInheritanceController();
     $classId = createClassWithDit($controller, 'App\\DeepChild', 4);
 
-    $prediction = new DeepInheritancePrediction(new Config());
-    $count = $prediction->predict($controller);
+    $prediction = new DeepInheritancePrediction($controller, $controller, $controller, new Config());
+    $count = $prediction->predict();
 
     expect($count)->toBe(1);
 
@@ -81,8 +81,8 @@ it('fires WARNING when dit is 5 (between warning and error thresholds)', functio
     $controller = makeDeepInheritanceController();
     $classId = createClassWithDit($controller, 'App\\DeeperChild', 5);
 
-    $prediction = new DeepInheritancePrediction(new Config());
-    $prediction->predict($controller);
+    $prediction = new DeepInheritancePrediction($controller, $controller, $controller, new Config());
+    $prediction->predict();
 
     $problem = $controller->getMetricCollectionByIdentifierString($classId)
         ->get(MetricKey::DIT)?->getProblems()[0] ?? null;
@@ -94,8 +94,8 @@ it('fires ERROR when dit is exactly 6 (at default error threshold)', function ()
     $controller = makeDeepInheritanceController();
     $classId = createClassWithDit($controller, 'App\\VeryDeepChild', 6);
 
-    $prediction = new DeepInheritancePrediction(new Config());
-    $prediction->predict($controller);
+    $prediction = new DeepInheritancePrediction($controller, $controller, $controller, new Config());
+    $prediction->predict();
 
     $problem = $controller->getMetricCollectionByIdentifierString($classId)
         ->get(MetricKey::DIT)?->getProblems()[0] ?? null;
@@ -108,8 +108,8 @@ it('fires ERROR when dit is greater than 6', function () {
     $controller = makeDeepInheritanceController();
     $classId = createClassWithDit($controller, 'App\\ExtremeDescent', 10);
 
-    $prediction = new DeepInheritancePrediction(new Config());
-    $prediction->predict($controller);
+    $prediction = new DeepInheritancePrediction($controller, $controller, $controller, new Config());
+    $prediction->predict();
 
     $problem = $controller->getMetricCollectionByIdentifierString($classId)
         ->get(MetricKey::DIT)?->getProblems()[0] ?? null;
@@ -121,8 +121,8 @@ it('attaches DeepInheritanceProblem to DIT metric', function () {
     $controller = makeDeepInheritanceController();
     $classId = createClassWithDit($controller, 'App\\DeepService', 4);
 
-    $prediction = new DeepInheritancePrediction(new Config());
-    $prediction->predict($controller);
+    $prediction = new DeepInheritancePrediction($controller, $controller, $controller, new Config());
+    $prediction->predict();
 
     $metric = $controller->getMetricCollectionByIdentifierString($classId)->get(MetricKey::DIT);
 
@@ -136,8 +136,8 @@ it('problem message contains the DIT value', function () {
     $controller = makeDeepInheritanceController();
     $classId = createClassWithDit($controller, 'App\\NestedClass', 5);
 
-    $prediction = new DeepInheritancePrediction(new Config());
-    $prediction->predict($controller);
+    $prediction = new DeepInheritancePrediction($controller, $controller, $controller, new Config());
+    $prediction->predict();
 
     $problem = $controller->getMetricCollectionByIdentifierString($classId)
         ->get(MetricKey::DIT)?->getProblems()[0] ?? null;
@@ -146,7 +146,8 @@ it('problem message contains the DIT value', function () {
 });
 
 it('problem level returned by getLevel() is WARNING', function () {
-    $prediction = new DeepInheritancePrediction(new Config());
+    $controller = makeDeepInheritanceController();
+    $prediction = new DeepInheritancePrediction($controller, $controller, $controller, new Config());
 
     expect($prediction->getLevel())->toBe(PredictionInterface::WARNING);
 });
@@ -157,9 +158,9 @@ it('counts multiple deep inheritance classes independently', function () {
     createClassWithDit($controller, 'App\\ClassB', 7);
     createClassWithDit($controller, 'App\\ClassC', 2);
 
-    $prediction = new DeepInheritancePrediction(new Config());
+    $prediction = new DeepInheritancePrediction($controller, $controller, $controller, new Config());
 
-    expect($prediction->predict($controller))->toBe(2);
+    expect($prediction->predict())->toBe(2);
 });
 
 it('uses configurable warning threshold', function () {
@@ -170,9 +171,9 @@ it('uses configurable warning threshold', function () {
     $config = new Config();
     $config->set('thresholds', ['deepInheritance' => ['warning' => 3, 'error' => 6]]);
 
-    $prediction = new DeepInheritancePrediction($config);
+    $prediction = new DeepInheritancePrediction($controller, $controller, $controller, $config);
 
-    expect($prediction->predict($controller))->toBe(1);
+    expect($prediction->predict())->toBe(1);
 });
 
 it('uses configurable error threshold', function () {
@@ -183,8 +184,8 @@ it('uses configurable error threshold', function () {
     $config = new Config();
     $config->set('thresholds', ['deepInheritance' => ['warning' => 4, 'error' => 4]]);
 
-    $prediction = new DeepInheritancePrediction($config);
-    $prediction->predict($controller);
+    $prediction = new DeepInheritancePrediction($controller, $controller, $controller, $config);
+    $prediction->predict();
 
     $problem = $controller->getMetricCollectionByIdentifierString($classId)
         ->get(MetricKey::DIT)?->getProblems()[0] ?? null;
@@ -206,7 +207,7 @@ it('skips non-class collections', function () {
     ])->getIdentifier()->__toString();
     $controller->setMetricValueByIdentifierString($funcId, MetricKey::DIT, 10);
 
-    $prediction = new DeepInheritancePrediction(new Config());
+    $prediction = new DeepInheritancePrediction($controller, $controller, $controller, new Config());
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });

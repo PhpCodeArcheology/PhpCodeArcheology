@@ -37,35 +37,35 @@ function createFunctionWithParams(
 
 it('returns 0 when no collections exist', function () {
     $controller = makeTooManyParamsController();
-    $prediction = new TooManyParametersPrediction(new Config());
+    $prediction = new TooManyParametersPrediction($controller, $controller, $controller, new Config());
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 it('returns 0 when paramCount is at default warning threshold (4)', function () {
     $controller = makeTooManyParamsController();
     createFunctionWithParams($controller, 'myFunc', 4);
 
-    $prediction = new TooManyParametersPrediction(new Config());
+    $prediction = new TooManyParametersPrediction($controller, $controller, $controller, new Config());
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 it('returns 0 when paramCount is below threshold', function () {
     $controller = makeTooManyParamsController();
     createFunctionWithParams($controller, 'simpleFunc', 2);
 
-    $prediction = new TooManyParametersPrediction(new Config());
+    $prediction = new TooManyParametersPrediction($controller, $controller, $controller, new Config());
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 it('fires WARNING when paramCount is 5 (just above default warning threshold)', function () {
     $controller = makeTooManyParamsController();
     $funcId = createFunctionWithParams($controller, 'heavyFunc', 5);
 
-    $prediction = new TooManyParametersPrediction(new Config());
-    $count = $prediction->predict($controller);
+    $prediction = new TooManyParametersPrediction($controller, $controller, $controller, new Config());
+    $count = $prediction->predict();
 
     expect($count)->toBe(1);
 
@@ -81,8 +81,8 @@ it('fires WARNING when paramCount is exactly 7 (at error threshold boundary)', f
     $controller = makeTooManyParamsController();
     $funcId = createFunctionWithParams($controller, 'borderlineFunc', 7);
 
-    $prediction = new TooManyParametersPrediction(new Config());
-    $prediction->predict($controller);
+    $prediction = new TooManyParametersPrediction($controller, $controller, $controller, new Config());
+    $prediction->predict();
 
     $problem = $controller->getMetricCollectionByIdentifierString($funcId)
         ->get(MetricKey::PARAMETER_COUNT)?->getProblems()[0] ?? null;
@@ -95,8 +95,8 @@ it('fires ERROR when paramCount exceeds error threshold (> 7)', function () {
     $controller = makeTooManyParamsController();
     $funcId = createFunctionWithParams($controller, 'massiveFunc', 8);
 
-    $prediction = new TooManyParametersPrediction(new Config());
-    $prediction->predict($controller);
+    $prediction = new TooManyParametersPrediction($controller, $controller, $controller, new Config());
+    $prediction->predict();
 
     $problem = $controller->getMetricCollectionByIdentifierString($funcId)
         ->get(MetricKey::PARAMETER_COUNT)?->getProblems()[0] ?? null;
@@ -109,8 +109,8 @@ it('attaches TooManyParametersProblem to parameterCount metric', function () {
     $controller = makeTooManyParamsController();
     $funcId = createFunctionWithParams($controller, 'bloatedFunc', 6);
 
-    $prediction = new TooManyParametersPrediction(new Config());
-    $prediction->predict($controller);
+    $prediction = new TooManyParametersPrediction($controller, $controller, $controller, new Config());
+    $prediction->predict();
 
     $metric = $controller->getMetricCollectionByIdentifierString($funcId)
         ->get(MetricKey::PARAMETER_COUNT);
@@ -125,8 +125,8 @@ it('problem message contains the parameter count', function () {
     $controller = makeTooManyParamsController();
     $funcId = createFunctionWithParams($controller, 'verboseFunc', 9);
 
-    $prediction = new TooManyParametersPrediction(new Config());
-    $prediction->predict($controller);
+    $prediction = new TooManyParametersPrediction($controller, $controller, $controller, new Config());
+    $prediction->predict();
 
     $problem = $controller->getMetricCollectionByIdentifierString($funcId)
         ->get(MetricKey::PARAMETER_COUNT)?->getProblems()[0] ?? null;
@@ -135,7 +135,8 @@ it('problem message contains the parameter count', function () {
 });
 
 it('problem level returned by getLevel() is WARNING', function () {
-    $prediction = new TooManyParametersPrediction(new Config());
+    $controller = makeTooManyParamsController();
+    $prediction = new TooManyParametersPrediction($controller, $controller, $controller, new Config());
 
     expect($prediction->getLevel())->toBe(PredictionInterface::WARNING);
 });
@@ -148,9 +149,9 @@ it('uses configurable warning threshold', function () {
     $config = new Config();
     $config->set('thresholds', ['tooManyParameters' => ['warning' => 2]]);
 
-    $prediction = new TooManyParametersPrediction($config);
+    $prediction = new TooManyParametersPrediction($controller, $controller, $controller, $config);
 
-    expect($prediction->predict($controller))->toBe(1);
+    expect($prediction->predict())->toBe(1);
 });
 
 it('uses configurable error threshold', function () {
@@ -161,8 +162,8 @@ it('uses configurable error threshold', function () {
     $config = new Config();
     $config->set('thresholds', ['tooManyParameters' => ['warning' => 4, 'error' => 5]]);
 
-    $prediction = new TooManyParametersPrediction($config);
-    $prediction->predict($controller);
+    $prediction = new TooManyParametersPrediction($controller, $controller, $controller, $config);
+    $prediction->predict();
 
     $problem = $controller->getMetricCollectionByIdentifierString($funcId)
         ->get(MetricKey::PARAMETER_COUNT)?->getProblems()[0] ?? null;
@@ -176,9 +177,9 @@ it('counts multiple functions with too many parameters independently', function 
     createFunctionWithParams($controller, 'funcB', 9, '/src/b.php');
     createFunctionWithParams($controller, 'funcC', 3, '/src/c.php');
 
-    $prediction = new TooManyParametersPrediction(new Config());
+    $prediction = new TooManyParametersPrediction($controller, $controller, $controller, new Config());
 
-    expect($prediction->predict($controller))->toBe(2);
+    expect($prediction->predict())->toBe(2);
 });
 
 it('skips class collections', function () {
@@ -191,9 +192,9 @@ it('skips class collections', function () {
         ->getIdentifier()->__toString();
     $controller->setMetricValueByIdentifierString($classId, MetricKey::PARAMETER_COUNT, 10);
 
-    $prediction = new TooManyParametersPrediction(new Config());
+    $prediction = new TooManyParametersPrediction($controller, $controller, $controller, new Config());
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 it('also fires for method collections (MethodCollection creates FunctionMetricsCollection)', function () {
@@ -205,7 +206,7 @@ it('also fires for method collections (MethodCollection creates FunctionMetricsC
         ->getIdentifier()->__toString();
     $controller->setMetricValueByIdentifierString($methodId, MetricKey::PARAMETER_COUNT, 6);
 
-    $prediction = new TooManyParametersPrediction(new Config());
+    $prediction = new TooManyParametersPrediction($controller, $controller, $controller, new Config());
 
-    expect($prediction->predict($controller))->toBe(1);
+    expect($prediction->predict())->toBe(1);
 });

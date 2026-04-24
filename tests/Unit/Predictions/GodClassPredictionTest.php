@@ -94,9 +94,9 @@ function addMethodsToGodClass(
 
 it('returns 0 when no classes exist', function () {
     $controller = makeGodClassController();
-    $prediction = new GodClassPrediction(new Config());
+    $prediction = new GodClassPrediction($controller, $controller, $controller, new Config());
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 it('does not fire when suspectIndex is 0', function () {
@@ -108,9 +108,9 @@ it('does not fire when suspectIndex is 0', function () {
         MetricKey::LCOM => 0.5,
     ]);
 
-    $prediction = new GodClassPrediction(new Config());
+    $prediction = new GodClassPrediction($controller, $controller, $controller, new Config());
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 it('does not fire when suspectIndex is 2 (below threshold of 3)', function () {
@@ -125,9 +125,9 @@ it('does not fire when suspectIndex is 2 (below threshold of 3)', function () {
         MetricKey::LCOM => 0.5,
     ]);
 
-    $prediction = new GodClassPrediction(new Config());
+    $prediction = new GodClassPrediction($controller, $controller, $controller, new Config());
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 it('fires when suspectIndex reaches exactly 3', function () {
@@ -143,9 +143,9 @@ it('fires when suspectIndex reaches exactly 3', function () {
     ]);
     addMethodsToGodClass($controller, $classId, 'App\\GodClass', 2);
 
-    $prediction = new GodClassPrediction(new Config());
+    $prediction = new GodClassPrediction($controller, $controller, $controller, new Config());
 
-    expect($prediction->predict($controller))->toBe(1);
+    expect($prediction->predict())->toBe(1);
 });
 
 it('fires with all 4 factors active', function () {
@@ -159,8 +159,8 @@ it('fires with all 4 factors active', function () {
     // Add methods, first one is too long
     addMethodsToGodClass($controller, $classId, 'App\\UltimateGod', 2, firstIsTooLong: true);
 
-    $prediction = new GodClassPrediction(new Config());
-    $count = $prediction->predict($controller);
+    $prediction = new GodClassPrediction($controller, $controller, $controller, new Config());
+    $count = $prediction->predict();
 
     expect($count)->toBe(1);
 
@@ -178,8 +178,8 @@ it('sets predictionGodObject=true and suspectIndex on firing class', function ()
     ]);
     addMethodsToGodClass($controller, $classId, 'App\\GodService', 2);
 
-    $prediction = new GodClassPrediction(new Config());
-    $prediction->predict($controller);
+    $prediction = new GodClassPrediction($controller, $controller, $controller, new Config());
+    $prediction->predict();
 
     $isGodObject = $controller->getMetricValueByIdentifierString($classId, MetricKey::PREDICTION_GOD_OBJECT);
     $suspectIndex = $controller->getMetricValueByIdentifierString($classId, MetricKey::GOD_OBJECT_SUSPECT_INDEX);
@@ -197,8 +197,8 @@ it('sets predictionGodObject=false when suspectIndex < 3', function () {
         MetricKey::LCOM => 0.5,
     ]);
 
-    $prediction = new GodClassPrediction(new Config());
-    $prediction->predict($controller);
+    $prediction = new GodClassPrediction($controller, $controller, $controller, new Config());
+    $prediction->predict();
 
     $isGodObject = $controller->getMetricValueByIdentifierString($classId, MetricKey::PREDICTION_GOD_OBJECT);
     expect($isGodObject?->asBool())->toBeFalse();
@@ -218,9 +218,9 @@ it('counts long methods as a suspect factor', function () {
     ]);
     addMethodsToGodClass($controller, $classId, 'App\\BigMethods', 2, firstIsTooLong: true);
 
-    $prediction = new GodClassPrediction(new Config());
+    $prediction = new GodClassPrediction($controller, $controller, $controller, new Config());
 
-    expect($prediction->predict($controller))->toBe(1);
+    expect($prediction->predict())->toBe(1);
 });
 
 it('does not count long methods factor when no method is too long', function () {
@@ -234,9 +234,9 @@ it('does not count long methods factor when no method is too long', function () 
     // 2 methods, neither too long → only 2 factors → no fire
     addMethodsToGodClass($controller, $classId, 'App\\ShortMethods', 2, firstIsTooLong: false);
 
-    $prediction = new GodClassPrediction(new Config());
+    $prediction = new GodClassPrediction($controller, $controller, $controller, new Config());
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 // --- shouldSkipLcom tests ---
@@ -252,9 +252,9 @@ it('skips LCOM factor when class has only 1 method', function () {
     ]);
     addMethodsToGodClass($controller, $classId, 'App\\SingleMethod', 1);
 
-    $prediction = new GodClassPrediction(new Config());
+    $prediction = new GodClassPrediction($controller, $controller, $controller, new Config());
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 it('skips LCOM factor when class name matches Exception pattern', function () {
@@ -268,10 +268,10 @@ it('skips LCOM factor when class name matches Exception pattern', function () {
     ]);
     addMethodsToGodClass($controller, $classId, 'App\\MyException', 2);
 
-    $prediction = new GodClassPrediction(new Config());
+    $prediction = new GodClassPrediction($controller, $controller, $controller, new Config());
 
     // suspectIndex = 2 (publicCount + coupling) → no fire
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 it('counts LCOM factor when class has >= 2 methods and no exclusions', function () {
@@ -285,9 +285,9 @@ it('counts LCOM factor when class has >= 2 methods and no exclusions', function 
     ]);
     addMethodsToGodClass($controller, $classId, 'App\\HighLcom', 2);
 
-    $prediction = new GodClassPrediction(new Config());
+    $prediction = new GodClassPrediction($controller, $controller, $controller, new Config());
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 // --- Framework controller threshold adjustment ---
@@ -307,9 +307,9 @@ it('raises coupling threshold for Symfony controller classes', function () {
     $config = new Config();
     $config->set('frameworkDetection', new FrameworkDetectionResult(symfonyDetected: true));
 
-    $prediction = new GodClassPrediction($config);
+    $prediction = new GodClassPrediction($controller, $controller, $controller, $config);
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 it('still counts coupling for Symfony controller exceeding raised threshold', function () {
@@ -327,9 +327,9 @@ it('still counts coupling for Symfony controller exceeding raised threshold', fu
     $config = new Config();
     $config->set('frameworkDetection', new FrameworkDetectionResult(symfonyDetected: true));
 
-    $prediction = new GodClassPrediction($config);
+    $prediction = new GodClassPrediction($controller, $controller, $controller, $config);
 
-    expect($prediction->predict($controller))->toBe(1);
+    expect($prediction->predict())->toBe(1);
 });
 
 it('uses default coupling threshold for non-controller Symfony classes', function () {
@@ -346,10 +346,10 @@ it('uses default coupling threshold for non-controller Symfony classes', functio
     $config = new Config();
     $config->set('frameworkDetection', new FrameworkDetectionResult(symfonyDetected: true));
 
-    $prediction = new GodClassPrediction($config);
+    $prediction = new GodClassPrediction($controller, $controller, $controller, $config);
 
     // suspectIndex=2 (publicCount + coupling) → no fire — same as without framework
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 it('counts multiple god class candidates independently', function () {
@@ -373,13 +373,14 @@ it('counts multiple god class candidates independently', function () {
     ]);
     addMethodsToGodClass($controller, $classIdB, 'App\\GodB', 2);
 
-    $prediction = new GodClassPrediction(new Config());
+    $prediction = new GodClassPrediction($controller, $controller, $controller, new Config());
 
-    expect($prediction->predict($controller))->toBe(2);
+    expect($prediction->predict())->toBe(2);
 });
 
 it('problem level is ERROR', function () {
-    $prediction = new GodClassPrediction(new Config());
+    $controller = makeGodClassController();
+    $prediction = new GodClassPrediction($controller, $controller, $controller, new Config());
 
     expect($prediction->getLevel())->toBe(PredictionInterface::ERROR);
 });

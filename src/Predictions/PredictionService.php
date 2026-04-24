@@ -7,7 +7,6 @@ namespace PhpCodeArch\Predictions;
 use PhpCodeArch\Application\CliFormatter;
 use PhpCodeArch\Application\CliOutput;
 use PhpCodeArch\Application\ProgressBar;
-use PhpCodeArch\Metrics\Controller\MetricsController;
 
 class PredictionService
 {
@@ -21,7 +20,6 @@ class PredictionService
          * @var PredictionInterface[]
          */
         private readonly array $predictions,
-        private readonly MetricsController $metricsController,
         private readonly CliOutput $output,
     ) {
         $this->problemCount = [
@@ -39,9 +37,7 @@ class PredictionService
         foreach ($this->predictions as $prediction) {
             $progressBar->advance();
 
-            $this->problemCount[$prediction->getLevel()] += $prediction->predict(
-                $this->metricsController
-            );
+            $this->problemCount[$prediction->getLevel()] += $prediction->predict();
         }
 
         $progressBar->finish();

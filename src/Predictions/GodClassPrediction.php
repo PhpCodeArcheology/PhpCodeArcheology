@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace PhpCodeArch\Predictions;
 
 use PhpCodeArch\Application\Config;
-use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\Controller\MetricsReaderInterface;
+use PhpCodeArch\Metrics\Controller\MetricsRegistryInterface;
+use PhpCodeArch\Metrics\Controller\MetricsWriterInterface;
 use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 
@@ -13,23 +15,30 @@ class GodClassPrediction implements PredictionInterface
 {
     use PredictionTrait;
 
-    public function __construct(?Config $config = null)
-    {
+    public function __construct(
+        MetricsReaderInterface $reader,
+        MetricsWriterInterface $writer,
+        MetricsRegistryInterface $registry,
+        ?Config $config = null,
+    ) {
+        $this->reader = $reader;
+        $this->writer = $writer;
+        $this->registry = $registry;
         $this->config = $config;
     }
 
-    public function predict(MetricsController $metricsController): int
+    public function predict(): int
     {
         $problemCount = 0;
 
-        foreach ($metricsController->getAllCollections() as $metric) {
+        foreach ($this->registry->getAllCollections() as $metric) {
             if (!$metric instanceof ClassMetricsCollection) {
                 continue;
             }
 
             $suspectIndex = 0;
 
-            $metricsValues = $metricsController->getMetricValuesByIdentifierString(
+            $metricsValues = $this->reader->getMetricValuesByIdentifierString(
                 (string) $metric->getIdentifier(),
                 [
                     MetricKey::PUBLIC_COUNT,
@@ -61,11 +70,11 @@ class GodClassPrediction implements PredictionInterface
                 ++$suspectIndex;
             }
 
-            if ($lcom > 1 && !$this->shouldSkipLcom($metricsController, $metric)) {
+            if ($lcom > 1 && !$this->shouldSkipLcom($metric)) {
                 ++$suspectIndex;
             }
 
-            $methodCollection = $metricsController->getCollectionByIdentifierString(
+            $methodCollection = $this->reader->getCollectionByIdentifierString(
                 (string) $metric->getIdentifier(),
                 'methods'
             );
@@ -76,7 +85,7 @@ class GodClassPrediction implements PredictionInterface
                     if (!is_string($methodIdString)) {
                         continue;
                     }
-                    $tooLong = $metricsController->getMetricValueByIdentifierString(
+                    $tooLong = $this->reader->getMetricValueByIdentifierString(
                         $methodIdString,
                         MetricKey::PREDICTION_TOO_LONG
                     );
@@ -96,7 +105,7 @@ class GodClassPrediction implements PredictionInterface
                 ++$problemCount;
             }
 
-            $metricsController->setMetricValuesByIdentifierString(
+            $this->writer->setMetricValuesByIdentifierString(
                 (string) $metric->getIdentifier(),
                 [
                     MetricKey::PREDICTION_GOD_OBJECT => $maybeIsGodObject,

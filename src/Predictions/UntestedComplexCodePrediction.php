@@ -6,7 +6,9 @@ namespace PhpCodeArch\Predictions;
 
 use PhpCodeArch\Application\Config;
 use PhpCodeArch\Application\Service\TestScanResult;
-use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\Controller\MetricsReaderInterface;
+use PhpCodeArch\Metrics\Controller\MetricsRegistryInterface;
+use PhpCodeArch\Metrics\Controller\MetricsWriterInterface;
 use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Predictions\Problems\UntestedComplexCodeProblem;
@@ -15,12 +17,19 @@ class UntestedComplexCodePrediction implements PredictionInterface
 {
     use PredictionTrait;
 
-    public function __construct(?Config $config = null)
-    {
+    public function __construct(
+        MetricsReaderInterface $reader,
+        MetricsWriterInterface $writer,
+        MetricsRegistryInterface $registry,
+        ?Config $config = null,
+    ) {
+        $this->reader = $reader;
+        $this->writer = $writer;
+        $this->registry = $registry;
         $this->config = $config;
     }
 
-    public function predict(MetricsController $metricsController): int
+    public function predict(): int
     {
         $frameworkDetection = $this->getFrameworkDetection();
         $testScanResult = $this->config?->get('testScanResult');
@@ -34,7 +43,7 @@ class UntestedComplexCodePrediction implements PredictionInterface
 
         $problemCount = 0;
 
-        foreach ($metricsController->getAllCollections() as $metric) {
+        foreach ($this->registry->getAllCollections() as $metric) {
             if (!$metric instanceof ClassMetricsCollection) {
                 continue;
             }
@@ -76,7 +85,7 @@ class UntestedComplexCodePrediction implements PredictionInterface
                 )
             );
 
-            $metricsController->setProblemByIdentifierString(
+            $this->writer->setProblemByIdentifierString(
                 identifierString: (string) $metric->getIdentifier(),
                 key: MetricKey::HAS_TEST,
                 problem: $problem

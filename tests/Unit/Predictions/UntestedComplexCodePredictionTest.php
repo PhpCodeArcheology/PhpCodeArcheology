@@ -66,26 +66,26 @@ it('returns 0 when no test infrastructure exists', function () {
     $controller = makeUntestedController();
     createComplexClass($controller, 'ComplexService', ['cc' => 15]);
 
-    $prediction = new UntestedComplexCodePrediction(new Config());
+    $prediction = new UntestedComplexCodePrediction($controller, $controller, $controller, new Config());
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 it('returns 0 when class has hasTest=true', function () {
     $controller = makeUntestedController();
     createComplexClass($controller, 'TestedService', ['cc' => 15, 'hasTest' => true]);
 
-    $prediction = new UntestedComplexCodePrediction(makeTestFrameworkConfig());
+    $prediction = new UntestedComplexCodePrediction($controller, $controller, $controller, makeTestFrameworkConfig());
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 it('fires WARNING when cc >= 8 and hasTest=false', function () {
     $controller = makeUntestedController();
     $classId = createComplexClass($controller, 'ComplexService', ['cc' => 8]);
 
-    $prediction = new UntestedComplexCodePrediction(makeTestFrameworkConfig());
-    $count = $prediction->predict($controller);
+    $prediction = new UntestedComplexCodePrediction($controller, $controller, $controller, makeTestFrameworkConfig());
+    $count = $prediction->predict();
 
     expect($count)->toBe(1);
 
@@ -101,45 +101,45 @@ it('does not fire when cc < 8', function () {
     $controller = makeUntestedController();
     createComplexClass($controller, 'SimpleService', ['cc' => 7]);
 
-    $prediction = new UntestedComplexCodePrediction(makeTestFrameworkConfig());
+    $prediction = new UntestedComplexCodePrediction($controller, $controller, $controller, makeTestFrameworkConfig());
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 it('skips interfaces', function () {
     $controller = makeUntestedController();
     createComplexClass($controller, 'MyInterface', ['cc' => 20], ['interface' => true]);
 
-    $prediction = new UntestedComplexCodePrediction(makeTestFrameworkConfig());
+    $prediction = new UntestedComplexCodePrediction($controller, $controller, $controller, makeTestFrameworkConfig());
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 it('skips traits', function () {
     $controller = makeUntestedController();
     createComplexClass($controller, 'MyTrait', ['cc' => 20], ['trait' => true]);
 
-    $prediction = new UntestedComplexCodePrediction(makeTestFrameworkConfig());
+    $prediction = new UntestedComplexCodePrediction($controller, $controller, $controller, makeTestFrameworkConfig());
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 it('skips enums', function () {
     $controller = makeUntestedController();
     createComplexClass($controller, 'MyEnum', ['cc' => 20], ['enum' => true]);
 
-    $prediction = new UntestedComplexCodePrediction(makeTestFrameworkConfig());
+    $prediction = new UntestedComplexCodePrediction($controller, $controller, $controller, makeTestFrameworkConfig());
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 it('skips abstract classes', function () {
     $controller = makeUntestedController();
     createComplexClass($controller, 'AbstractBase', ['cc' => 20], ['abstract' => true]);
 
-    $prediction = new UntestedComplexCodePrediction(makeTestFrameworkConfig());
+    $prediction = new UntestedComplexCodePrediction($controller, $controller, $controller, makeTestFrameworkConfig());
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 it('uses configurable threshold', function () {
@@ -150,18 +150,18 @@ it('uses configurable threshold', function () {
     $config->set('frameworkDetection', new FrameworkDetectionResult(pestDetected: true));
     $config->set('thresholds', ['untestedComplexCode' => ['cc' => 4]]);
 
-    $prediction = new UntestedComplexCodePrediction($config);
+    $prediction = new UntestedComplexCodePrediction($controller, $controller, $controller, $config);
 
     // cc=5 >= threshold=4 → fires
-    expect($prediction->predict($controller))->toBe(1);
+    expect($prediction->predict())->toBe(1);
 });
 
 it('attaches UntestedComplexCodeProblem to the hasTest metric', function () {
     $controller = makeUntestedController();
     $classId = createComplexClass($controller, 'ComplexService', ['cc' => 12]);
 
-    $prediction = new UntestedComplexCodePrediction(makeTestFrameworkConfig());
-    $prediction->predict($controller);
+    $prediction = new UntestedComplexCodePrediction($controller, $controller, $controller, makeTestFrameworkConfig());
+    $prediction->predict();
 
     $hasTestValue = $controller->getMetricCollectionByIdentifierString($classId)->get('hasTest');
 
@@ -178,9 +178,9 @@ it('returns 0 when testScanResult has empty testDirectories and no framework', f
     $config = new Config();
     $config->set('testScanResult', new TestScanResult(testDirectories: []));
 
-    $prediction = new UntestedComplexCodePrediction($config);
+    $prediction = new UntestedComplexCodePrediction($controller, $controller, $controller, $config);
 
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
 
 it('detects test infrastructure from testScanResult directories', function () {
@@ -190,10 +190,10 @@ it('detects test infrastructure from testScanResult directories', function () {
     $config = new Config();
     $config->set('testScanResult', new TestScanResult(testDirectories: ['/tests']));
 
-    $prediction = new UntestedComplexCodePrediction($config);
+    $prediction = new UntestedComplexCodePrediction($controller, $controller, $controller, $config);
 
     // testScanResult has directories → infrastructure detected → fires
-    expect($prediction->predict($controller))->toBe(1);
+    expect($prediction->predict())->toBe(1);
 });
 
 it('skips classes flagged as excludedByPhpunitSource', function () {
@@ -205,8 +205,8 @@ it('skips classes flagged as excludedByPhpunitSource', function () {
         ['excludedByPhpunitSource' => true],
     );
 
-    $prediction = new UntestedComplexCodePrediction(makeTestFrameworkConfig());
+    $prediction = new UntestedComplexCodePrediction($controller, $controller, $controller, makeTestFrameworkConfig());
 
     // Even though cc=15 and hasTest=false, the source exclusion wins
-    expect($prediction->predict($controller))->toBe(0);
+    expect($prediction->predict())->toBe(0);
 });
