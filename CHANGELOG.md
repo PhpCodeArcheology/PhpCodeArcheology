@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **`MetricsController` split into `MetricsRegistry` / `MetricsReader` / `MetricsWriter`.** The monolithic `MetricsController` is now decomposed into three focused classes backed by narrow interfaces (`MetricsRegistryInterface`, `MetricsReaderInterface`, `MetricsWriterInterface`). Every Calculator, Prediction, Visitor, DataProvider, and CLI-output class typehints the interface it actually needs — Calculators and Predictions declare `reader` / `writer` / `registry` separately, Visitors take writer + registry (plus reader when they read), and DataProviders take reader + registry. The `AnalysisPipeline` now returns the trio directly from `runAnalysis()` / `runQuickAnalysis()` instead of a controller. `PredictionInterface::predict()` loses its parameter; predictions receive the trio via constructor injection, analogous to Calculators. Closes #13.
+- **New `ServiceFactory::createMetricsTriple()`** is the only supported way to build the three objects so they share one `MetricsContainer` (invariant: registry, reader, and writer observe the same state).
+
+### Removed
+
+- **`CalculatorTrait`** — replaced by `MetricsReaderWriterTrait` (constructor property promotion for reader/writer/registry). Calculators with additional dependencies keep a custom constructor.
+- **`MaintainabilityIndexVisitor`** — unused dead code (never registered in `Analyzer::getVisitorClassList()`), removed together with its test file.
+
+### Deprecated
+
+- **`MetricsController`** — retained as a thin facade implementing all three narrow interfaces, so tests can still instantiate a single object. No production code path uses it anymore; it will be removed once the test suite migrates to the trio directly.
+
 ### Added
 
 - **PHAR release as a new installation option.** A standalone `phpcodearcheology.phar` is now built automatically on every `v*.*.*` tag via GitHub Actions and attached to the corresponding GitHub Release as a draft, together with a `phpcodearcheology.phar.sha256` checksum. The PHAR ships all runtime dependencies bundled, so it runs on legacy codebases where direct `composer require` conflicts with the tool's own dependencies (e.g. `nikic/php-parser` version collisions). Local builds are available via `composer build-phar` (uses Box 4.7.0, pinned SHA-256). Closes #18.
