@@ -6,9 +6,6 @@ namespace PhpCodeArch\Metrics\Controller;
 
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 use PhpCodeArch\Metrics\Model\Collections\CollectionInterface;
-use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
-use PhpCodeArch\Metrics\Model\MetricValue;
-use PhpCodeArch\Metrics\Model\ProjectMetrics\ProjectMetricsCollection;
 use PhpCodeArch\Predictions\Problems\ProblemInterface;
 
 interface MetricsWriterInterface
@@ -43,14 +40,4 @@ interface MetricsWriterInterface
     public function setCollectionDataOrCreateEmptyCollection(MetricCollectionTypeEnum $metricsType, ?array $identifierData, string $collectionKey, ?string $key, mixed $value, CollectionInterface $collection): void;
 
     public function setProblemByIdentifierString(string $identifierString, string $key, ProblemInterface $problem): void;
-
-    /** @param array{path?: string, name?: string, files?: string[]} $identifierData */
-    public function createMetricCollection(MetricCollectionTypeEnum $metricsType, array $identifierData): MetricsCollectionInterface;
-
-    /** @param string[] $files */
-    public function createProjectMetricsCollection(array $files): ProjectMetricsCollection;
-
-    public function registerMetricTypes(): void;
-
-    public function setMetricTypeToMetricValue(MetricValue $metricValue): void;
 }
