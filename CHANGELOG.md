@@ -25,6 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Search input and filter dropdown invisible in dark mode.** The search fields and problem-level dropdown in all table views (classes, methods, functions, files, git, tests, refactoring roadmap) used `text-black` without an explicit background, making them unreadable on dark backgrounds. Replaced with themed `.search-input` styling that works in both dark and light mode. Filter bar elements now have proper spacing.
+- **Markdown report: empty class column in refactoring roadmap and AI summary.** The `fullName` metric was never populated for class collections, so `refactoring-roadmap.md` showed empty cells in the `Class` column and `ai-summary.md` rendered classes as `****`. `IdentifyVisitor` now sets `fullName` centrally, which also improves the HTML report (namespace prefix now rendered correctly in the roadmap) and the MCP tools. Closes #19.
+- **Markdown report: broken footer navigation.** The footer nav on every page had three problem-category links (`File problems`, `Class problems`, `Function problems`) all pointing to `files.md`, plus a duplicated `**Packages**` heading where `**Problems**` was intended. Links now resolve to their respective `*-problems.md` pages and the section heading is correct. Closes #19.
+- **Markdown report: `problems.md` linked to `.html` files.** The problem category links in `problems.md` were hardcoded to `.html`, breaking navigation in the Markdown report. All Markdown templates now consistently link to `.md` targets. Closes #19.
+- **Security-smell false positive on SQL concat with class constants only.** The SQL string concatenation detector flagged `'INSERT INTO ' . SomeClass::TABLE . ' …'` even though the dynamic part is a compile-time constant and cannot carry attacker-controlled data. The detector now ignores concat expressions whose non-literal operands are exclusively class constants, enum cases, global constants, or magic constants. Common Doctrine subscriber / repository patterns no longer produce noise. Closes #19.
 
 ## [2.9.1] - 2026-04-08
 

@@ -1,6 +1,6 @@
 {% include('parts/header.md.twig') %}
 
-[Home](index.html) / [Classes](classes-list.html) / Coupling
+[Home](index.md) / [Classes](classes-list.md) / Coupling
 
 # Class coupling
 
@@ -25,7 +25,7 @@
 {% elseif class.get('anonymous').getValue() %}
 {% set classType = 'Anonymous' %}
 {% endif %}
-| [{{ className|length > 50 ? '...' ~ className[-47:] : className }}](classes/{{ class.getIdentifier() }}.html) | {{ classType }} |{% for metricKey in listMetricKeys %}{% set data = class.get(metricKey) %} {{ data }} |{% endfor %}
+| [{{ className|length > 50 ? '...' ~ className[-47:] : className }}](classes/{{ class.getIdentifier() }}.md) | {{ classType }} |{% for metricKey in listMetricKeys %}{% set data = class.get(metricKey) %} {{ data }} |{% endfor %}
 
 {% endfor %}
 

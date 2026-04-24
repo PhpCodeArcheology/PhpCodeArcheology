@@ -12,7 +12,7 @@
 {% set breadCrumbMiddle = isMethod ? function.get('classInfo').getValue()['singleName'] : 'Functions' %}
 {% set breadCrumbLink = isMethod ? 'classes/' ~ function.get('classInfo').getValue()['id'] : 'functions-list' %}
 
-[Home](../index.html){% if isMethod %} / [Classes](../classes-list.html){% if function.get('classInfo').getValue()['namespace'] is defined and function.get('classInfo').getValue()['namespace'] %} / {{ function.get('classInfo').getValue()['namespace'] }}{% endif %}{% endif %} / [{{ breadCrumbMiddle }}](../{{ breadCrumbLink }}.html) / {{ functionName }}
+[Home](../index.md){% if isMethod %} / [Classes](../classes-list.md){% if function.get('classInfo').getValue()['namespace'] is defined and function.get('classInfo').getValue()['namespace'] %} / {{ function.get('classInfo').getValue()['namespace'] }}{% endif %}{% endif %} / [{{ breadCrumbMiddle }}](../{{ breadCrumbLink }}.md) / {{ functionName }}
 
 # {{ h1Title }} metrics for:
 

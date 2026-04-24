@@ -1,7 +1,7 @@
 {% include('parts/header.md.twig') %}
 {% set metricCollectionId = file.getIdentifier().__toString() %}
 
-[Home](../index.html) / [Files](../files.html) / {{ file.get('fileName') }}
+[Home](../index.md) / [Files](../files.md) / {{ file.get('fileName') }}
 
 # File metrics for:
 
@@ -41,7 +41,7 @@
 {% set metricCollectionId = function.getIdentifier().__toString() %}
 {% set parameters = function.getCollection('parameters').getAsArray() %}
 {% set funcName = function.get('singleName').getValue() ? function.get('singleName') : function.getName() %}
-| [{{ funcName|length > 50 ? '...' ~ funcName[-47:] : funcName }}](../functions/{{ function.getIdentifier() }}.html) | {{ parameters|length }} |{% for metricKey in functionListMetricKeys %}{% set data = function.get(metricKey) %} {{ data }} |{% endfor %}
+| [{{ funcName|length > 50 ? '...' ~ funcName[-47:] : funcName }}](../functions/{{ function.getIdentifier() }}.md) | {{ parameters|length }} |{% for metricKey in functionListMetricKeys %}{% set data = function.get(metricKey) %} {{ data }} |{% endfor %}
 
 {% endfor %}
 {% endif %}
@@ -59,7 +59,7 @@
 {% for class in classes %}
 {% set metricCollectionId = class.getIdentifier().__toString() %}
 {% set className = class.getName() %}
-| [{{ className|length > 50 ? '...' ~ className[-47:] : className }}](../classes/{{ class.getIdentifier() }}.html) |{% for metricKey in classListMetricKeys %}{% set data = class.get(metricKey) %} {{ data }} |{% endfor %}
+| [{{ className|length > 50 ? '...' ~ className[-47:] : className }}](../classes/{{ class.getIdentifier() }}.md) |{% for metricKey in classListMetricKeys %}{% set data = class.get(metricKey) %} {{ data }} |{% endfor %}
 
 {% endfor %}
 {% endif %}

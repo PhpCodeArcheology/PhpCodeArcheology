@@ -228,14 +228,66 @@ class SecuritySmellVisitor implements NodeVisitor, VisitorInterface
         }
 
         $upper = strtoupper(trim($leftStr));
+        $startsWithSqlKeyword = false;
         foreach (self::SQL_KEYWORDS as $keyword) {
             if (str_starts_with($upper, $keyword)) {
-                $line = $node->getLine();
-                $this->addSmell("SQL string concatenation on line {$line}");
-
-                return;
+                $startsWithSqlKeyword = true;
+                break;
             }
         }
+
+        if (!$startsWithSqlKeyword) {
+            return;
+        }
+
+        // If all dynamic operands are compile-time constants (class constants, enum cases,
+        // global constants, literals, magic constants), the concat cannot carry
+        // attacker-controlled data and must not be flagged.
+        if ($this->allOperandsAreCompileTimeSafe($node)) {
+            return;
+        }
+
+        $line = $node->getLine();
+        $this->addSmell("SQL string concatenation on line {$line}");
+    }
+
+    private function allOperandsAreCompileTimeSafe(Node\Expr\BinaryOp\Concat $node): bool
+    {
+        foreach ($this->collectConcatOperands($node) as $operand) {
+            if (!$this->isCompileTimeSafe($operand)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * @return list<Node>
+     */
+    private function collectConcatOperands(Node\Expr\BinaryOp\Concat $node): array
+    {
+        $operands = [];
+        foreach ([$node->left, $node->right] as $side) {
+            if ($side instanceof Node\Expr\BinaryOp\Concat) {
+                $operands = array_merge($operands, $this->collectConcatOperands($side));
+
+                continue;
+            }
+            $operands[] = $side;
+        }
+
+        return $operands;
+    }
+
+    private function isCompileTimeSafe(Node $node): bool
+    {
+        return $node instanceof Node\Scalar\String_
+            || $node instanceof Node\Scalar\Int_
+            || $node instanceof Node\Scalar\Float_
+            || $node instanceof Node\Scalar\MagicConst
+            || $node instanceof Node\Expr\ConstFetch
+            || $node instanceof Node\Expr\ClassConstFetch;
     }
 
     private function extractStringValue(Node $node): ?string

@@ -1,6 +1,6 @@
 {% include('parts/header.md.twig') %}
 
-[Home](index.html) / Classes
+[Home](index.md) / Classes
 
 # Classes
 
@@ -11,7 +11,7 @@
 {% for class in classes %}
 {% set classKey = class.getIdentifier().__toString() %}
 {% set classLabel = class.getName() %}
-| [{{ classLabel|length > 50 ? '...' ~ classLabel[-47:] : classLabel }}](classes/{{ classKey }}.html) |{% for metricKey in listMetricKeys %}{% set data = class.get(metricKey) %} {{ data }} |{% endfor %}
+| [{{ classLabel|length > 50 ? '...' ~ classLabel[-47:] : classLabel }}](classes/{{ classKey }}.md) |{% for metricKey in listMetricKeys %}{% set data = class.get(metricKey) %} {{ data }} |{% endfor %}
 
 {% endfor %}
 
