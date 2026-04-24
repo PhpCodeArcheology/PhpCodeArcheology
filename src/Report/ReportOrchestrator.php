@@ -45,6 +45,14 @@ final class ReportOrchestrator
         $historyService = new HistoryService();
         $historyDate = $historyService->setDeltas($reader, $writer, $registry, $config);
 
+        // writeHistory must run BEFORE reports are generated so the current
+        // run is part of the history the HistoryDataProvider reads (otherwise
+        // the second run after a fresh history doesn't surface the trend
+        // chart — the data provider sees only the previous run). This was
+        // originally fixed in v2.7.1 and lost during the Application.php
+        // split that introduced the ReportOrchestrator.
+        $historyService->writeHistory($reader, $registry, $config);
+
         $reports = ReportFactory::createMultiple(
             $config,
             $dataProviderFactory,
@@ -66,8 +74,6 @@ final class ReportOrchestrator
             $output->outNl('Old report files in the root directory can be safely removed.');
             $output->outNl();
         }
-
-        $historyService->writeHistory($reader, $registry, $config);
 
         if ($config->get('generateClaudeMd')) {
             (new ClaudeMdGenerator())->generate($config, $dataProviderFactory, $output);
