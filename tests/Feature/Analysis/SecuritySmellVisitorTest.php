@@ -10,7 +10,7 @@ use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
 use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
 
-require_once __DIR__ . '/test_helpers.php';
+require_once __DIR__.'/test_helpers.php';
 
 function getSecurityVisitors(): array
 {
@@ -20,8 +20,8 @@ function getSecurityVisitors(): array
     ];
 }
 
-it('detects dangerous function calls (exec, system, shell_exec)', function() {
-    $testFile = __DIR__ . '/testfiles/security-smells.php';
+it('detects dangerous function calls (exec, system, shell_exec)', function () {
+    $testFile = __DIR__.'/testfiles/security-smells.php';
     $metricsController = getMetricsForVisitors($testFile, getSecurityVisitors());
 
     foreach ($metricsController->getAllCollections() as $metrics) {
@@ -29,14 +29,14 @@ it('detects dangerous function calls (exec, system, shell_exec)', function() {
             continue;
         }
 
-        if ($metrics->getName() === 'dangerousFunc') {
+        if ('dangerousFunc' === $metrics->getName()) {
             expect($metrics->get('securitySmellCount')->getValue())->toBe(3);
         }
     }
 });
 
-it('detects weak hash function calls (md5, sha1)', function() {
-    $testFile = __DIR__ . '/testfiles/security-smells.php';
+it('detects weak hash function calls (md5, sha1)', function () {
+    $testFile = __DIR__.'/testfiles/security-smells.php';
     $metricsController = getMetricsForVisitors($testFile, getSecurityVisitors());
 
     foreach ($metricsController->getAllCollections() as $metrics) {
@@ -44,14 +44,14 @@ it('detects weak hash function calls (md5, sha1)', function() {
             continue;
         }
 
-        if ($metrics->getName() === 'weakHashFunc') {
+        if ('weakHashFunc' === $metrics->getName()) {
             expect($metrics->get('securitySmellCount')->getValue())->toBe(1);
         }
     }
 });
 
-it('detects unsafe unserialize calls', function() {
-    $testFile = __DIR__ . '/testfiles/security-smells.php';
+it('detects unsafe unserialize calls', function () {
+    $testFile = __DIR__.'/testfiles/security-smells.php';
     $metricsController = getMetricsForVisitors($testFile, getSecurityVisitors());
 
     foreach ($metricsController->getAllCollections() as $metrics) {
@@ -59,14 +59,14 @@ it('detects unsafe unserialize calls', function() {
             continue;
         }
 
-        if ($metrics->getName() === 'unsafeUnserialize') {
+        if ('unsafeUnserialize' === $metrics->getName()) {
             expect($metrics->get('securitySmellCount')->getValue())->toBe(1);
         }
     }
 });
 
-it('detects SQL string concatenation', function() {
-    $testFile = __DIR__ . '/testfiles/security-smells.php';
+it('detects SQL string concatenation', function () {
+    $testFile = __DIR__.'/testfiles/security-smells.php';
     $metricsController = getMetricsForVisitors($testFile, getSecurityVisitors());
 
     foreach ($metricsController->getAllCollections() as $metrics) {
@@ -74,14 +74,14 @@ it('detects SQL string concatenation', function() {
             continue;
         }
 
-        if ($metrics->getName() === 'sqlConcatFunc') {
+        if ('sqlConcatFunc' === $metrics->getName()) {
             expect($metrics->get('securitySmellCount')->getValue())->toBe(1);
         }
     }
 });
 
-it('does not flag safe code', function() {
-    $testFile = __DIR__ . '/testfiles/security-smells.php';
+it('does not flag safe code', function () {
+    $testFile = __DIR__.'/testfiles/security-smells.php';
     $metricsController = getMetricsForVisitors($testFile, getSecurityVisitors());
 
     foreach ($metricsController->getAllCollections() as $metrics) {
@@ -89,14 +89,14 @@ it('does not flag safe code', function() {
             continue;
         }
 
-        if ($metrics->getName() === 'safeFunc') {
+        if ('safeFunc' === $metrics->getName()) {
             expect($metrics->get('securitySmellCount')->getValue())->toBe(0);
         }
     }
 });
 
-it('counts security smells per class method', function() {
-    $testFile = __DIR__ . '/testfiles/security-smells.php';
+it('counts security smells per class method', function () {
+    $testFile = __DIR__.'/testfiles/security-smells.php';
     $metricsController = getMetricsForVisitors($testFile, getSecurityVisitors());
 
     $dangerousClassSmellCount = null;
@@ -107,11 +107,11 @@ it('counts security smells per class method', function() {
             continue;
         }
 
-        if ($metrics->getName() === 'DangerousClass') {
+        if ('DangerousClass' === $metrics->getName()) {
             $dangerousClassSmellCount = $metrics->get('securitySmellCount')->getValue();
         }
 
-        if ($metrics->getName() === 'SafeClass') {
+        if ('SafeClass' === $metrics->getName()) {
             $safeClassSmellCount = $metrics->get('securitySmellCount')->getValue();
         }
     }
@@ -120,8 +120,8 @@ it('counts security smells per class method', function() {
         ->and($safeClassSmellCount)->toBe(0);
 });
 
-it('aggregates security smell count at file level', function() {
-    $testFile = __DIR__ . '/testfiles/security-smells.php';
+it('aggregates security smell count at file level', function () {
+    $testFile = __DIR__.'/testfiles/security-smells.php';
     $metricsController = getMetricsForVisitors($testFile, getSecurityVisitors());
 
     foreach ($metricsController->getAllCollections() as $metrics) {
@@ -129,7 +129,53 @@ it('aggregates security smell count at file level', function() {
             continue;
         }
 
-        // dangerousFunc: 3, weakHashFunc: 1, unsafeUnserialize: 1, sqlConcatFunc: 1, DangerousClass methods: 2
-        expect($metrics->get('securitySmellCount')->getValue())->toBe(8);
+        // dangerousFunc: 3, weakHashFunc: 1, unsafeUnserialize: 1, sqlConcatFunc: 1,
+        // DangerousClass methods: 2, sqlConcatWithMixedSafeAndUnsafe: 1
+        expect($metrics->get('securitySmellCount')->getValue())->toBe(9);
+    }
+});
+
+it('does not flag SQL concat when all dynamic operands are class constants', function () {
+    $testFile = __DIR__.'/testfiles/security-smells.php';
+    $metricsController = getMetricsForVisitors($testFile, getSecurityVisitors());
+
+    foreach ($metricsController->getAllCollections() as $metrics) {
+        if (!$metrics instanceof FunctionMetricsCollection) {
+            continue;
+        }
+
+        if ('sqlConcatWithClassConstants' === $metrics->getName()) {
+            expect($metrics->get('securitySmellCount')->getValue())->toBe(0);
+        }
+    }
+});
+
+it('does not flag SQL concat when all dynamic operands are global constants', function () {
+    $testFile = __DIR__.'/testfiles/security-smells.php';
+    $metricsController = getMetricsForVisitors($testFile, getSecurityVisitors());
+
+    foreach ($metricsController->getAllCollections() as $metrics) {
+        if (!$metrics instanceof FunctionMetricsCollection) {
+            continue;
+        }
+
+        if ('sqlConcatWithGlobalConstant' === $metrics->getName()) {
+            expect($metrics->get('securitySmellCount')->getValue())->toBe(0);
+        }
+    }
+});
+
+it('flags SQL concat when at least one operand is unsafe', function () {
+    $testFile = __DIR__.'/testfiles/security-smells.php';
+    $metricsController = getMetricsForVisitors($testFile, getSecurityVisitors());
+
+    foreach ($metricsController->getAllCollections() as $metrics) {
+        if (!$metrics instanceof FunctionMetricsCollection) {
+            continue;
+        }
+
+        if ('sqlConcatWithMixedSafeAndUnsafe' === $metrics->getName()) {
+            expect($metrics->get('securitySmellCount')->getValue())->toBe(1);
+        }
     }
 });

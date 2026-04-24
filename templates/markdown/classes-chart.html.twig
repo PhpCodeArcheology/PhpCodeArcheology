@@ -11,7 +11,7 @@ The interactive bubble chart (X = Efferent Coupling, Y = Cyclomatic Complexity, 
 | Class | Namespace | CC | Uses | LOC |
 |---|---|---|---|---|
 {% for class in classes %}
-| [{{ class.get('singleName') }}](classes/{{ class.getIdentifier().__toString() }}.html) | {{ class.get('namespace').getValue()|default('global') }} | {{ class.get('cc').getValue()|default(0) }} | {{ class.get('uses').getValue()|length }} | {{ class.get('loc').getValue()|default(0) }} |
+| [{{ class.get('singleName') }}](classes/{{ class.getIdentifier().__toString() }}.md) | {{ class.get('namespace').getValue()|default('global') }} | {{ class.get('cc').getValue()|default(0) }} | {{ class.get('uses').getValue()|length }} | {{ class.get('loc').getValue()|default(0) }} |
 {% endfor %}
 
 ## Dependency Matrix

@@ -1,7 +1,7 @@
 {% include('parts/header.md.twig') %}
 {% set metricCollectionId = class.getIdentifier().__toString() %}
 
-[Home](../index.html) / [Classes](../classes-list.html){% if class.get('namespace').getValue() %} / {{ class.get('namespace') }}{% endif %} / {{ class.get('singleName') }}
+[Home](../index.md) / [Classes](../classes-list.md){% if class.get('namespace').getValue() %} / {{ class.get('namespace') }}{% endif %} / {{ class.get('singleName') }}
 
 # Class metrics for:
 
@@ -108,7 +108,7 @@ No dependencies found.
 {% endif %}
 {% set parameters = function.getCollection('parameters').getAsArray() %}
 {% set funcName = function.get('singleName').getValue() ? function.get('singleName') : function.getName() %}
-| [{{ funcName }}](../methods/{{ function.getIdentifier() }}.html) |  {{ parameters|length }} |{% for metricKey in methodKeys %}{% set data = function.get(metricKey) %} {{ data }} |{% endfor %}
+| [{{ funcName }}](../methods/{{ function.getIdentifier() }}.md) |  {{ parameters|length }} |{% for metricKey in methodKeys %}{% set data = function.get(metricKey) %} {{ data }} |{% endfor %}
 
 {% endfor %}
 {% endif %}

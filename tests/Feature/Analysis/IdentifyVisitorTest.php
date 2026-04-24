@@ -7,11 +7,11 @@ namespace Test\Feature\Analysis;
 use PhpCodeArch\Analysis\IdentifyVisitor;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 
-require_once __DIR__ . '/test_helpers.php';
+require_once __DIR__.'/test_helpers.php';
 
-$testFunctions = require __DIR__ . '/fileprovider/test-functions-provider.php';
-$testClasses = require __DIR__ . '/fileprovider/test-classes-provider.php';
-$testMethods = require __DIR__ . '/fileprovider/test-methods-provider.php';
+$testFunctions = require __DIR__.'/fileprovider/test-functions-provider.php';
+$testClasses = require __DIR__.'/fileprovider/test-classes-provider.php';
+$testMethods = require __DIR__.'/fileprovider/test-methods-provider.php';
 
 function getIdVisitors(): array
 {
@@ -20,7 +20,7 @@ function getIdVisitors(): array
     ];
 }
 
-it('detects functions correctly', function($testFile, $expected) {
+it('detects functions correctly', function ($testFile, $expected) {
     $metricsController = getMetricsForVisitors($testFile, getIdVisitors());
 
     $projectMetrics = $metricsController->getMetricCollection(
@@ -45,10 +45,9 @@ it('detects functions correctly', function($testFile, $expected) {
     }
 
     expect($functionNames)->toBe($expected['functionNames']);
-
 })->with($testFunctions);
 
-it('detects classes correctly', function($testFile, $expected) {
+it('detects classes correctly', function ($testFile, $expected) {
     $metricsController = getMetricsForVisitors($testFile, getIdVisitors());
 
     $projectMetrics = $metricsController->getMetricCollection(
@@ -62,7 +61,7 @@ it('detects classes correctly', function($testFile, $expected) {
         'classes'
     )->getAsArray();
 
-    $classNamesFromClassesArray = array_map(function($className) {
+    $classNamesFromClassesArray = array_map(function ($className) {
         return str_starts_with($className, 'anonymous') ? 'anonymous' : $className;
     }, $classes);
 
@@ -78,10 +77,9 @@ it('detects classes correctly', function($testFile, $expected) {
     }
 
     expect($classNames)->toBe($expected['classNames']);
-
 })->with($testClasses);
 
-it('detects methods correctly', function($testFile, $expected) {
+it('detects methods correctly', function ($testFile, $expected) {
     $metricsController = getMetricsForVisitors($testFile, getIdVisitors());
 
     $projectMetrics = $metricsController->getMetricCollection(
@@ -125,11 +123,10 @@ it('detects methods correctly', function($testFile, $expected) {
         expect($methodCountOfAnonymousClass)->toBe($expected['methodCountAnonymousClass'])
             ->and($methodNamesOfAnonymousClass)->toBe($expected['methodNamesAnonymousClass']);
     }
-
 })->with($testMethods);
 
-it('detects correct class types', function() {
-    $testFile = __DIR__ . '/testfiles/class-types.php';
+it('detects correct class types', function () {
+    $testFile = __DIR__.'/testfiles/class-types.php';
 
     $metricsController = getMetricsForVisitors($testFile, getIdVisitors());
 
@@ -140,7 +137,7 @@ it('detects correct class types', function() {
         'enums' => [],
     ];
 
-    array_walk($collections, function(&$value, $key) use($metricsController) {
+    array_walk($collections, function (&$value, $key) use ($metricsController) {
         $value = $metricsController->getCollection(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
@@ -155,7 +152,7 @@ it('detects correct class types', function() {
 });
 
 it('extracts correct namespace when class name appears in namespace', function () {
-    $testFile = __DIR__ . '/testfiles/fqn-namespace-collision.php';
+    $testFile = __DIR__.'/testfiles/fqn-namespace-collision.php';
     $metricsController = getMetricsForVisitors($testFile, getIdVisitors());
 
     $classes = $metricsController->getCollection(
@@ -175,7 +172,7 @@ it('extracts correct namespace when class name appears in namespace', function (
 });
 
 it('extracts correct namespace when function name appears in namespace', function () {
-    $testFile = __DIR__ . '/testfiles/fqn-function-namespace-collision.php';
+    $testFile = __DIR__.'/testfiles/fqn-function-namespace-collision.php';
     $metricsController = getMetricsForVisitors($testFile, getIdVisitors());
 
     $functions = $metricsController->getCollection(
@@ -192,4 +189,52 @@ it('extracts correct namespace when function name appears in namespace', functio
         expect($fnMetrics->get('singleName')->getValue())->toBe('helper')
             ->and($fnMetrics->get('namespace')->getValue())->toBe('App\Helper\Helper');
     }
+});
+
+it('sets fullName metric on namespaced class collections', function () {
+    $testFile = __DIR__.'/testfiles/ANamespacedClass.php';
+    $metricsController = getMetricsForVisitors($testFile, getIdVisitors());
+
+    $classes = $metricsController->getCollection(
+        MetricCollectionTypeEnum::ProjectCollection,
+        null,
+        'classes'
+    )->getAsArray();
+
+    $found = false;
+    foreach ($classes as $key => $name) {
+        $classMetrics = $metricsController->getMetricCollectionByIdentifierString($key);
+        if ('ANamespacedClass' === $classMetrics->get('singleName')->getValue()) {
+            // Hand-calculated: FQN = Testfile\ANamespacedClass, namespace = Testfile
+            expect($classMetrics->get('fullName')->getValue())->toBe('Testfile\\ANamespacedClass')
+                ->and($classMetrics->get('namespace')->getValue())->toBe('Testfile');
+            $found = true;
+        }
+    }
+
+    expect($found)->toBeTrue();
+});
+
+it('sets fullName metric on global class collections', function () {
+    $testFile = __DIR__.'/testfiles/AClass.php';
+    $metricsController = getMetricsForVisitors($testFile, getIdVisitors());
+
+    $classes = $metricsController->getCollection(
+        MetricCollectionTypeEnum::ProjectCollection,
+        null,
+        'classes'
+    )->getAsArray();
+
+    $found = false;
+    foreach ($classes as $key => $name) {
+        $classMetrics = $metricsController->getMetricCollectionByIdentifierString($key);
+        if ('AClass' === $classMetrics->get('singleName')->getValue()) {
+            // Hand-calculated: FQN = AClass (no namespace), namespace = ''
+            expect($classMetrics->get('fullName')->getValue())->toBe('AClass')
+                ->and($classMetrics->get('namespace')->getValue())->toBe('');
+            $found = true;
+        }
+    }
+
+    expect($found)->toBeTrue();
 });

@@ -7,7 +7,7 @@
 |---|{% for header in tableHeaders %}---|{% endfor %}
 
 {% for file in files %}
-| [{{ file.get('dirName') }}/{{ file.get('fileName') }}](files/{{ file.getIdentifier().__toString() }}.html) |{% for metricKey in listMetricKeys %} {{ file.get(metricKey) }} |{% endfor %}
+| [{{ file.get('dirName') }}/{{ file.get('fileName') }}](files/{{ file.getIdentifier().__toString() }}.md) |{% for metricKey in listMetricKeys %} {{ file.get(metricKey) }} |{% endfor %}
 
 {% endfor %}
 

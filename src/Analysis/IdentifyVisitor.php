@@ -334,6 +334,7 @@ class IdentifyVisitor implements NodeVisitor, VisitorInterface, InitializableVis
             MetricKey::REAL_CLASS => false,
             MetricKey::ANONYMOUS => str_starts_with($className, 'anonymous@'),
             MetricKey::SINGLE_NAME => $singleName,
+            MetricKey::FULL_NAME => $className,
             MetricKey::NAMESPACE => $namespace,
         ];
 
