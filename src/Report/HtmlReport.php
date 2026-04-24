@@ -511,7 +511,14 @@ class HtmlReport implements ReportInterface
 
         // Build glossary from metric data files
         $glossary = [];
-        $metricFiles = glob(dirname(__DIR__, 2).'/data/metrics/*.php') ?: [];
+        $metricsDir = dirname(__DIR__, 2).'/data/metrics';
+        $metricFiles = array_map(
+            static fn (string $f): string => $metricsDir.'/'.$f,
+            array_values(array_filter(
+                scandir($metricsDir) ?: [],
+                static fn (string $f): bool => str_ends_with($f, '.php'),
+            )),
+        );
         foreach ($metricFiles as $file) {
             $metricsRaw = require $file;
             if (!is_array($metricsRaw)) {

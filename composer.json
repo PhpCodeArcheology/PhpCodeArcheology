@@ -78,6 +78,7 @@
     "analyse": "vendor/bin/phpstan analyse --memory-limit=1G",
     "cs-check": "vendor/bin/php-cs-fixer fix --dry-run --allow-risky=yes src/",
     "cs-fix": "vendor/bin/php-cs-fixer fix --allow-risky=yes src/",
-    "check": ["@test", "@cs-check", "@analyse"]
+    "check": ["@test", "@cs-check", "@analyse"],
+    "build-phar": "bash ./scripts/build-phar.sh"
   }
 }

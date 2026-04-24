@@ -1,0 +1,79 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-phar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, phar, tokenizer, json
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install composer deps (prod only)
+        run: composer install --no-dev --prefer-dist --optimize-autoloader
+
+      - name: Assert no dev deps present
+        run: |
+          for pkg in pestphp phpstan mockery rector friendsofphp; do
+            if [ -d "vendor/$pkg" ]; then
+              echo "ERROR: dev dependency $pkg present in vendor/"
+              exit 1
+            fi
+          done
+
+      - name: Build Tailwind CSS
+        run: |
+          npm ci
+          npm run build:css
+
+      - name: Download Box
+        run: bash ./scripts/download-box.sh
+
+      - name: Build Phar
+        run: .tools/box.phar compile
+
+      - name: Assert Composer autoloader bundled in phar
+        run: |
+          php -r '$p = new Phar("build/phpcodearcheology.phar"); $found = false; foreach (new RecursiveIteratorIterator($p) as $f) { if ($f->getFilename() === "ClassLoader.php" && str_contains($f->getPathname(), "vendor/composer")) { $found = true; break; } } if (!$found) { fwrite(STDERR, "Composer autoloader missing in phar\n"); exit(1); } echo "Composer autoloader present\n";'
+
+      - name: Smoke-test Phar (version)
+        run: php build/phpcodearcheology.phar --version
+
+      - name: Smoke-test Phar (analyze + html report)
+        run: |
+          echo "y" | php build/phpcodearcheology.phar --quick tests/Fixtures/PharSmoke/ > /dev/null
+          echo "y" | php build/phpcodearcheology.phar tests/Fixtures/PharSmoke/
+          test -f tmp/report/html/index.html || { echo "HTML report missing"; exit 1; }
+          test -f tmp/report/html/assets/css/output.css || { echo "CSS asset not copied from phar"; exit 1; }
+          grep -q '<title>' tmp/report/html/index.html || { echo "Twig rendering broken"; exit 1; }
+
+      - name: Generate SHA-256
+        run: |
+          cd build
+          sha256sum phpcodearcheology.phar > phpcodearcheology.phar.sha256
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            build/phpcodearcheology.phar
+            build/phpcodearcheology.phar.sha256
+          generate_release_notes: true
+          draft: true
+          prerelease: ${{ contains(github.ref, '-') }}

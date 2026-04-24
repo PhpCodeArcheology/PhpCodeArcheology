@@ -5,7 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.10.0] - 2026-04-10
+## [Unreleased]
+
+### Added
+
+- **PHAR release as a new installation option.** A standalone `phpcodearcheology.phar` is now built automatically on every `v*.*.*` tag via GitHub Actions and attached to the corresponding GitHub Release as a draft, together with a `phpcodearcheology.phar.sha256` checksum. The PHAR ships all runtime dependencies bundled, so it runs on legacy codebases where direct `composer require` conflicts with the tool's own dependencies (e.g. `nikic/php-parser` version collisions). Local builds are available via `composer build-phar` (uses Box 4.7.0, pinned SHA-256). Closes #18.
+
+### Changed
+
+- **Metric definition discovery uses `scandir()` instead of `glob()`** in `HtmlReport::generateGlossaryPage()`. `glob()` is unreliable inside `phar://` streams across PHP versions; `scandir()` is not. Behavior is identical for regular installations.
 
 ### Added
 

@@ -1,22 +1,25 @@
 {
     "main": "bin/phpcodearcheology",
     "output": "build/phpcodearcheology.phar",
-    "directories": [
-        "src",
-        "data",
-        "templates"
-    ],
+    "banner": "PhpCodeArcheology — https://phpcodearcheology.org — MIT License",
     "finder": [
+        {
+            "in": ["src", "data"],
+            "name": "*.php"
+        },
+        {
+            "in": ["templates"],
+            "name": ["*.twig", "*.css", "*.md", "*.html"]
+        },
         {
             "in": ["vendor"],
             "name": "*.php",
             "exclude": [
-                "tests",
-                "test",
-                "Tests",
-                "Test",
-                "docs",
-                "doc"
+                "pestphp",
+                "phpstan",
+                "mockery",
+                "rector",
+                "friendsofphp"
             ]
         }
     ],

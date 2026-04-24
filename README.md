@@ -101,6 +101,25 @@ docker run --rm -v "$(pwd)":/project -v "$(pwd)/report":/output phpcodearcheolog
 
 This mounts your project into the container and writes the HTML report to `./report/`.
 
+### PHAR (for legacy codebases)
+
+If your project has dependency conflicts with PhpCodeArcheology's requirements (e.g. an older `nikic/php-parser` version), download the standalone PHAR from the [Releases](https://github.com/PhpCodeArcheology/PhpCodeArcheology/releases) page. The PHAR ships all dependencies bundled, so it works without touching your project's `composer.json`.
+
+```bash
+# Download the PHAR and checksum from the latest release
+curl -LO https://github.com/PhpCodeArcheology/PhpCodeArcheology/releases/latest/download/phpcodearcheology.phar
+curl -LO https://github.com/PhpCodeArcheology/PhpCodeArcheology/releases/latest/download/phpcodearcheology.phar.sha256
+
+# Verify checksum
+shasum -a 256 -c phpcodearcheology.phar.sha256   # macOS
+sha256sum -c phpcodearcheology.phar.sha256       # Linux
+
+# Run it (PHP 8.2+)
+php phpcodearcheology.phar --quick src/
+```
+
+Use the PHAR when: your project's dependencies collide with PhpCodeArcheology's, you want a CI step without a `composer require --dev`, or you analyse a legacy codebase where adding dev-deps is risky.
+
 ## Using the Composer Plugin
 
 PhpCodeArcheology registers itself as a Composer plugin, so you can run the analysis directly via Composer:

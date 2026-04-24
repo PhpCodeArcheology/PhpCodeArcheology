@@ -5,6 +5,8 @@
 # Build & Output
 /report/
 /tmp/
+/build/
+/.tools/
 
 # Internal task files
 /tasks/
