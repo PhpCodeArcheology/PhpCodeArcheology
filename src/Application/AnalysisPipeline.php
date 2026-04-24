@@ -6,7 +6,9 @@ namespace PhpCodeArch\Application;
 
 use PhpCodeArch\Calculators\CalculatorService;
 use PhpCodeArch\Git\GitAnalyzer;
-use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\Controller\MetricsReaderInterface;
+use PhpCodeArch\Metrics\Controller\MetricsRegistryInterface;
+use PhpCodeArch\Metrics\Controller\MetricsWriterInterface;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 use PhpCodeArch\Predictions\PredictionInterface;
 use PhpCodeArch\Predictions\PredictionService;
@@ -16,12 +18,6 @@ use PhpParser\PhpVersion;
 
 final class AnalysisPipeline implements AnalysisPipelineInterface
 {
-    // NOTE: CalculatorRegistry requires MetricsController at construction (to wire calculators),
-    // while MetricsController is created per-run inside runAnalysis()/runQuickAnalysis().
-    // Both registries are therefore instantiated inline within each run method rather than
-    // via constructor injection. Refactor if registries are redesigned to accept MetricsController
-    // per-method instead of per-construction.
-
     public function __construct(
         private readonly ServiceFactory $factory = new ServiceFactory(),
     ) {
@@ -30,66 +26,72 @@ final class AnalysisPipeline implements AnalysisPipelineInterface
     /**
      * Run full analysis pipeline: parse → git → calculators → predictors → debt.
      *
-     * @return array{MetricsController, array<int, int>} [$metricsController, $problems]
+     * @return array{MetricsRegistryInterface, MetricsReaderInterface, MetricsWriterInterface, array<int, int>}
      */
     public function runAnalysis(Config $config, CliOutput $output): array
     {
         $fileList = $this->createFileList($config);
-        $metricsController = $this->createMetricController($config);
-        $this->createAndRunAnalyzer($config, $metricsController, $fileList, $output);
+        [$registry, $reader, $writer] = $this->bootstrapTriple($config);
+        $this->createAndRunAnalyzer($config, $registry, $reader, $writer, $fileList, $output);
 
         $gitConfigRaw = $config->get('git');
         $gitConfig = is_array($gitConfigRaw) ? $gitConfigRaw : [];
         if ($gitConfig['enable'] ?? true) {
-            $gitAnalyzer = new GitAnalyzer($config, $metricsController, $output);
+            $gitAnalyzer = new GitAnalyzer($config, $writer, $registry, $output);
             $gitAnalyzer->analyze();
         }
 
         // Store framework detection result in project metrics
         $frameworkResult = $config->getFrameworkDetection();
         if (null !== $frameworkResult) {
-            $metricsController->setMetricValues(
+            $writer->setMetricValues(
                 MetricCollectionTypeEnum::ProjectCollection,
                 null,
                 ['detectedFrameworks' => $frameworkResult->getSummary()]
             );
         }
 
-        $calculatorRegistry = $this->factory->createCalculatorRegistry($metricsController);
-        $calculatorService = new CalculatorService($calculatorRegistry->getMainCalculators($config), $metricsController, $output);
+        $calculatorRegistry = $this->factory->createCalculatorRegistry($reader, $writer, $registry);
+        $calculatorService = new CalculatorService($calculatorRegistry->getMainCalculators($config), $registry, $output);
         $calculatorService->run();
 
         $predictionRegistry = $this->factory->createPredictionRegistry();
-        $predictionService = new PredictionService($predictionRegistry->getPredictions($config), $metricsController, $output);
+        $predictionService = new PredictionService(
+            $predictionRegistry->getPredictions($config, $reader, $writer, $registry),
+            $output,
+        );
         $predictionService->predict();
         $problems = $predictionService->getProblemCount();
 
-        $this->setProblems($metricsController, $problems);
+        $this->setProblems($writer, $problems);
 
         // These calculators must run after predictors (need problem counts)
-        $postPredictionService = new CalculatorService($calculatorRegistry->getPostPredictionCalculators(), $metricsController, $output);
+        $postPredictionService = new CalculatorService($calculatorRegistry->getPostPredictionCalculators(), $registry, $output);
         $postPredictionService->run();
 
-        return [$metricsController, $problems];
+        return [$registry, $reader, $writer, $problems];
     }
 
-    public function runQuickAnalysis(Config $config, CliOutput $output): MetricsController
+    /**
+     * @return array{MetricsRegistryInterface, MetricsReaderInterface, MetricsWriterInterface}
+     */
+    public function runQuickAnalysis(Config $config, CliOutput $output): array
     {
         $fileList = $this->createFileList($config);
-        $metricsController = $this->createMetricController($config);
-        $this->createAndRunAnalyzer($config, $metricsController, $fileList, $output);
+        [$registry, $reader, $writer] = $this->bootstrapTriple($config);
+        $this->createAndRunAnalyzer($config, $registry, $reader, $writer, $fileList, $output);
 
-        $calculatorRegistry = $this->factory->createCalculatorRegistry($metricsController);
-        $calculatorService = new CalculatorService($calculatorRegistry->getQuickCalculators(), $metricsController, $output);
+        $calculatorRegistry = $this->factory->createCalculatorRegistry($reader, $writer, $registry);
+        $calculatorService = new CalculatorService($calculatorRegistry->getQuickCalculators(), $registry, $output);
         $calculatorService->run();
 
-        return $metricsController;
+        return [$registry, $reader, $writer];
     }
 
     /** @param array<int, int> $problems */
-    private function setProblems(MetricsController $metricsController, array $problems): void
+    private function setProblems(MetricsWriterInterface $writer, array $problems): void
     {
-        $metricsController->setMetricValues(
+        $writer->setMetricValues(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             [
@@ -108,18 +110,27 @@ final class AnalysisPipeline implements AnalysisPipelineInterface
         return $fileList;
     }
 
-    private function createMetricController(Config $config): MetricsController
+    /**
+     * @return array{MetricsRegistryInterface, MetricsReaderInterface, MetricsWriterInterface}
+     */
+    private function bootstrapTriple(Config $config): array
     {
-        $metricsController = $this->factory->createMetricsController();
-        $metricsController->registerMetricTypes();
+        [$registry, $reader, $writer] = $this->factory->createMetricsTriple();
+        $registry->registerMetricTypes();
         $files = array_filter($config->getFiles(), 'is_string');
-        $metricsController->createProjectMetricsCollection(array_values($files));
+        $registry->createProjectMetricsCollection(array_values($files));
 
-        return $metricsController;
+        return [$registry, $reader, $writer];
     }
 
-    private function createAndRunAnalyzer(Config $config, MetricsController $metricsController, FileList $fileList, CliOutput $output): void
-    {
+    private function createAndRunAnalyzer(
+        Config $config,
+        MetricsRegistryInterface $registry,
+        MetricsReaderInterface $reader,
+        MetricsWriterInterface $writer,
+        FileList $fileList,
+        CliOutput $output,
+    ): void {
         $phpConfigRaw = $config->get('php');
         $phpConfig = is_array($phpConfigRaw) ? $phpConfigRaw : [];
         $parser = isset($phpConfig['version']) && is_string($phpConfig['version'])
@@ -130,7 +141,9 @@ final class AnalysisPipeline implements AnalysisPipelineInterface
             $config,
             $parser,
             new NodeTraverser(),
-            $metricsController,
+            $registry,
+            $reader,
+            $writer,
             $output
         );
 

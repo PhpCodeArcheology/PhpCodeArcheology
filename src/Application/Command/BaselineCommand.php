@@ -9,7 +9,7 @@ use PhpCodeArch\Application\CliFormatter;
 use PhpCodeArch\Application\CliOutput;
 use PhpCodeArch\Application\Config;
 use PhpCodeArch\Application\Version;
-use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\Controller\MetricsRegistryInterface;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
 use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
@@ -63,9 +63,9 @@ class BaselineCommand
 
     private function create(Config $config, CliOutput $output, CliFormatter $formatter): int
     {
-        [$metricsController, $problems] = $this->application->runAnalysis($config, $output);
+        [$registry, , , $problems] = $this->application->runAnalysis($config, $output);
 
-        $baseline = $this->buildBaseline($metricsController, $problems);
+        $baseline = $this->buildBaseline($registry, $problems);
         $baselinePath = $this->getBaselinePath($config);
 
         $json = json_encode($baseline, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
@@ -103,12 +103,12 @@ class BaselineCommand
             return 1;
         }
 
-        [$metricsController, $problems] = $this->application->runAnalysis($config, $output);
+        [$registry, , , $problems] = $this->application->runAnalysis($config, $output);
 
         $baselineProblems = is_array($baselineData['problems'] ?? null) ? $baselineData['problems'] : [];
         $baselineCreatedAt = is_string($baselineData['createdAt'] ?? null) ? $baselineData['createdAt'] : 'unknown';
 
-        $currentProblems = $this->collectProblems($metricsController);
+        $currentProblems = $this->collectProblems($registry);
         $baselineSignatures = $this->buildSignatureMap($baselineProblems);
 
         $newProblems = [];
@@ -176,7 +176,7 @@ class BaselineCommand
      *
      * @return array{createdAt: string, toolVersion: string, problemCounts: array{errors: int, warnings: int, info: int}, problems: list<array{entityId: string, category: string, level: string, message: string}>}
      */
-    private function buildBaseline(MetricsController $metricsController, array $problems): array
+    private function buildBaseline(MetricsRegistryInterface $registry, array $problems): array
     {
         return [
             'createdAt' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
@@ -186,18 +186,18 @@ class BaselineCommand
                 'warnings' => $problems[PredictionInterface::WARNING] ?? 0,
                 'info' => $problems[PredictionInterface::INFO] ?? 0,
             ],
-            'problems' => $this->collectProblems($metricsController),
+            'problems' => $this->collectProblems($registry),
         ];
     }
 
     /**
      * @return list<array{entityId: string, category: string, level: string, message: string}>
      */
-    private function collectProblems(MetricsController $metricsController): array
+    private function collectProblems(MetricsRegistryInterface $registry): array
     {
         $problems = [];
 
-        foreach ($metricsController->getAllCollections() as $collection) {
+        foreach ($registry->getAllCollections() as $collection) {
             $category = match (true) {
                 $collection instanceof FileMetricsCollection => 'file',
                 $collection instanceof ClassMetricsCollection => 'class',

@@ -8,7 +8,9 @@ use PhpCodeArch\Application\ConfigFile\ConfigFileFinder;
 use PhpCodeArch\Application\ConfigFile\Exceptions\ConfigFileExtensionNotSupportedException;
 use PhpCodeArch\Application\ConfigFile\Exceptions\MultipleConfigFilesException;
 use PhpCodeArch\Mcp\Command\McpCommand;
-use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\Controller\MetricsReaderInterface;
+use PhpCodeArch\Metrics\Controller\MetricsRegistryInterface;
+use PhpCodeArch\Metrics\Controller\MetricsWriterInterface;
 use PhpCodeArch\Predictions\PredictionInterface;
 use PhpCodeArch\Report\ReportTypeNotSupported;
 
@@ -68,8 +70,8 @@ final readonly class Application implements AnalysisPipelineInterface
         $pipeline = $this->createPipeline();
 
         if ($config->isQuickMode()) {
-            $metricsController = $pipeline->runQuickAnalysis($config, $output);
-            (new QuickOutput($metricsController, $output, $formatter))->render();
+            [$registry, $reader] = $pipeline->runQuickAnalysis($config, $output);
+            (new QuickOutput($reader, $registry, $output, $formatter))->render();
 
             $frameworkResult = $config->getFrameworkDetection();
             if (null !== $frameworkResult
@@ -81,9 +83,9 @@ final readonly class Application implements AnalysisPipelineInterface
             return 0;
         }
 
-        [$metricsController, $problems] = $pipeline->runAnalysis($config, $output);
+        [$registry, $reader, $writer, $problems] = $pipeline->runAnalysis($config, $output);
 
-        $this->factory->createReportOrchestrator()->generateReports($config, $metricsController, $output, $problems);
+        $this->factory->createReportOrchestrator()->generateReports($config, $reader, $writer, $registry, $output, $problems);
 
         return $this->determineExitCode($config, $problems);
     }
@@ -91,7 +93,7 @@ final readonly class Application implements AnalysisPipelineInterface
     /**
      * Run full analysis pipeline: parse → git → calculators → predictors → debt.
      *
-     * @return array{MetricsController, array<int, int>} [$metricsController, $problems]
+     * @return array{MetricsRegistryInterface, MetricsReaderInterface, MetricsWriterInterface, array<int, int>}
      */
     public function runAnalysis(Config $config, CliOutput $output): array
     {

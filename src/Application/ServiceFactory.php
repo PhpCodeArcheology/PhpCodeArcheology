@@ -6,7 +6,12 @@ namespace PhpCodeArch\Application;
 
 use PhpCodeArch\Application\Service\BootstrapService;
 use PhpCodeArch\Calculators\CalculatorRegistry;
-use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\Controller\MetricsReader;
+use PhpCodeArch\Metrics\Controller\MetricsReaderInterface;
+use PhpCodeArch\Metrics\Controller\MetricsRegistry;
+use PhpCodeArch\Metrics\Controller\MetricsRegistryInterface;
+use PhpCodeArch\Metrics\Controller\MetricsWriter;
+use PhpCodeArch\Metrics\Controller\MetricsWriterInterface;
 use PhpCodeArch\Metrics\Model\MetricsContainer;
 use PhpCodeArch\Predictions\PredictionRegistry;
 use PhpCodeArch\Report\ReportOrchestrator;
@@ -28,9 +33,12 @@ final class ServiceFactory
         return new ReportOrchestrator();
     }
 
-    public function createCalculatorRegistry(MetricsController $mc): CalculatorRegistry
-    {
-        return new CalculatorRegistry($mc);
+    public function createCalculatorRegistry(
+        MetricsReaderInterface $reader,
+        MetricsWriterInterface $writer,
+        MetricsRegistryInterface $registry,
+    ): CalculatorRegistry {
+        return new CalculatorRegistry($reader, $writer, $registry);
     }
 
     public function createPredictionRegistry(): PredictionRegistry
@@ -38,10 +46,20 @@ final class ServiceFactory
         return new PredictionRegistry();
     }
 
-    public function createMetricsController(): MetricsController
+    /**
+     * Creates a Registry/Reader/Writer trio backed by a single shared
+     * MetricsContainer. All three objects observe the same state — this is
+     * the only supported way to obtain the trio.
+     *
+     * @return array{0: MetricsRegistry, 1: MetricsReader, 2: MetricsWriter, 3: MetricsContainer}
+     */
+    public function createMetricsTriple(): array
     {
         $container = new MetricsContainer();
+        $registry = new MetricsRegistry($container);
+        $reader = new MetricsReader($container);
+        $writer = new MetricsWriter($container);
 
-        return new MetricsController($container);
+        return [$registry, $reader, $writer, $container];
     }
 }

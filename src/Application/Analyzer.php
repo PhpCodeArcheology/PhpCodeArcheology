@@ -21,7 +21,9 @@ use PhpCodeArch\Analysis\RuntimeComplexityVisitor;
 use PhpCodeArch\Analysis\SecuritySmellVisitor;
 use PhpCodeArch\Analysis\TypeCoverageVisitor;
 use PhpCodeArch\Analysis\VisitorInterface;
-use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\Controller\MetricsReaderInterface;
+use PhpCodeArch\Metrics\Controller\MetricsRegistryInterface;
+use PhpCodeArch\Metrics\Controller\MetricsWriterInterface;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\Collections\ErrorCollection;
@@ -37,7 +39,9 @@ readonly class Analyzer
         private Config $config,
         private Parser $parser,
         private NodeTraverser $traverser,
-        private MetricsController $metricsController,
+        private MetricsRegistryInterface $registry,
+        private MetricsReaderInterface $reader,
+        private MetricsWriterInterface $writer,
         private CliOutput $output,
     ) {
     }
@@ -49,7 +53,7 @@ readonly class Analyzer
         $fileCount = count($fileList->getFiles());
         $projectFileErrors = $this->traverseFiles($fileList, $visitorObjects);
 
-        $this->metricsController->setMetricValues(
+        $this->writer->setMetricValues(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             [
@@ -98,9 +102,9 @@ readonly class Analyzer
 
         $visitorObjects = [];
         foreach ($visitorList as $visitorClass) {
-            $visitorObject = new $visitorClass(
-                metricsController: $this->metricsController
-            );
+            $visitorObject = LocVisitor::class === $visitorClass
+                ? new LocVisitor($this->writer, $this->registry, $this->reader)
+                : new $visitorClass($this->writer, $this->registry);
 
             if ($visitorObject instanceof InitializableVisitorInterface) {
                 $visitorObject->init();
@@ -146,14 +150,14 @@ readonly class Analyzer
 
             $fileErrorCollection = new ErrorCollection();
 
-            $fileMetricCollection = $this->metricsController->createMetricCollection(
+            $fileMetricCollection = $this->registry->createMetricCollection(
                 MetricCollectionTypeEnum::FileCollection,
                 ['path' => $file]
             );
 
             $fileNameCollection->set($file, (string) $fileMetricCollection->getIdentifier());
 
-            $this->metricsController->setCollection(
+            $this->writer->setCollection(
                 MetricCollectionTypeEnum::FileCollection,
                 ['path' => $file],
                 $fileErrorCollection,
@@ -199,7 +203,7 @@ readonly class Analyzer
             }
         }
 
-        $this->metricsController->setCollection(
+        $this->writer->setCollection(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             $fileNameCollection,
