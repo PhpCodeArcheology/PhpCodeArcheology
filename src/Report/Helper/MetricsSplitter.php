@@ -7,7 +7,7 @@ namespace PhpCodeArch\Report\Helper;
 use PhpCodeArch\Application\CliFormatter;
 use PhpCodeArch\Application\CliOutput;
 use PhpCodeArch\Application\ProgressBar;
-use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\Controller\MetricsRegistryInterface;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
 use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
@@ -22,7 +22,7 @@ use PhpCodeArch\Metrics\Model\PackageMetrics\PackageMetricsCollection;
 readonly class MetricsSplitter
 {
     public function __construct(
-        private MetricsController $metricsController,
+        private MetricsRegistryInterface $registry,
         private CliOutput $output)
     {
     }
@@ -42,7 +42,7 @@ readonly class MetricsSplitter
         $packageCollection = [];
 
         $formatter = $this->output->getFormatter() ?? new CliFormatter();
-        $allCollections = $this->metricsController->getAllCollections();
+        $allCollections = $this->registry->getAllCollections();
         $progressBar = new ProgressBar($this->output, $formatter, count($allCollections), 'Splitting');
 
         foreach ($allCollections as $metric) {

@@ -59,7 +59,7 @@ function makeQo(MetricsController $ctrl): array
 {
     $output = new CapturingCliOutput();
     $formatter = new CliFormatter(colorEnabled: false);
-    $qo = new QuickOutput($ctrl, $output, $formatter);
+    $qo = new QuickOutput($ctrl, $ctrl, $output, $formatter);
 
     return [$qo, $output];
 }

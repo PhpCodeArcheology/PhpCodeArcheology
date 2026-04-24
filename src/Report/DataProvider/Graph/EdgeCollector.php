@@ -11,7 +11,7 @@ use PhpCodeArch\Metrics\Model\Collections\CollectionInterface;
 class EdgeCollector
 {
     public function __construct(
-        private readonly MetricsReaderInterface $metricsController,
+        private readonly MetricsReaderInterface $reader,
     ) {
     }
 
@@ -26,7 +26,7 @@ class EdgeCollector
         $edges = [];
 
         foreach (array_keys($knownMethodIds) as $methodId) {
-            $methodCallsCollection = $this->metricsController->getCollectionByIdentifierString($methodId, 'methodCalls');
+            $methodCallsCollection = $this->reader->getCollectionByIdentifierString($methodId, 'methodCalls');
             if (!$methodCallsCollection instanceof CollectionInterface) {
                 continue;
             }

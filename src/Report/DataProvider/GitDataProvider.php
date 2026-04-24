@@ -16,7 +16,7 @@ class GitDataProvider implements ReportDataProviderInterface
     {
         $hotspots = [];
 
-        foreach ($this->metricsController->getAllCollections() as $collection) {
+        foreach ($this->registry->getAllCollections() as $collection) {
             if (!$collection instanceof FileMetricsCollection) {
                 continue;
             }
@@ -54,13 +54,13 @@ class GitDataProvider implements ReportDataProviderInterface
         unset($hotspot);
 
         $this->templateData['hotspots'] = $hotspots;
-        $this->templateData['gitTotalCommits'] = $this->metricsController->getMetricValue(
+        $this->templateData['gitTotalCommits'] = $this->reader->getMetricValue(
             MetricCollectionTypeEnum::ProjectCollection, null, MetricKey::GIT_TOTAL_COMMITS
         )?->asInt() ?? 0;
-        $this->templateData['gitActiveAuthors'] = $this->metricsController->getMetricValue(
+        $this->templateData['gitActiveAuthors'] = $this->reader->getMetricValue(
             MetricCollectionTypeEnum::ProjectCollection, null, MetricKey::GIT_ACTIVE_AUTHORS
         )?->asInt() ?? 0;
-        $this->templateData['gitAnalysisPeriod'] = $this->metricsController->getMetricValue(
+        $this->templateData['gitAnalysisPeriod'] = $this->reader->getMetricValue(
             MetricCollectionTypeEnum::ProjectCollection, null, MetricKey::GIT_ANALYSIS_PERIOD
         )?->asString() ?? 'N/A';
     }

@@ -12,13 +12,13 @@ class ClassDataProvider implements ReportDataProviderInterface
 
     public function gatherData(): void
     {
-        $classes = $this->metricsController->getMetricCollectionsByCollectionKeys(
+        $classes = $this->reader->getMetricCollectionsByCollectionKeys(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             'classes'
         );
 
-        $methods = $this->metricsController->getMetricCollectionsByCollectionKeys(
+        $methods = $this->reader->getMetricCollectionsByCollectionKeys(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             'methods'
@@ -26,7 +26,7 @@ class ClassDataProvider implements ReportDataProviderInterface
 
         $classMethods = [];
         foreach (array_keys($classes) as $classKey) {
-            $methodKeyNamePairs = $this->metricsController->getCollectionByIdentifierString(
+            $methodKeyNamePairs = $this->reader->getCollectionByIdentifierString(
                 $classKey,
                 'methods'
             )?->getAsArray() ?? [];
@@ -34,15 +34,15 @@ class ClassDataProvider implements ReportDataProviderInterface
             $classMethods[$classKey] = array_intersect_key($methods, $methodKeyNamePairs);
         }
 
-        $listMetrics = $this->metricsController->getListMetricsByCollectionType(
+        $listMetrics = $this->registry->getListMetricsByCollectionType(
             MetricCollectionTypeEnum::ClassCollection
         );
 
-        $detailMetrics = $this->metricsController->getDetailMetricsByCollectionType(
+        $detailMetrics = $this->registry->getDetailMetricsByCollectionType(
             MetricCollectionTypeEnum::ClassCollection
         );
 
-        $methodListMetrics = $this->metricsController->getListMetricsByCollectionType(
+        $methodListMetrics = $this->registry->getListMetricsByCollectionType(
             MetricCollectionTypeEnum::MethodCollection
         );
 

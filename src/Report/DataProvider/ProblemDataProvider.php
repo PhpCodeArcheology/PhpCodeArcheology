@@ -29,7 +29,7 @@ class ProblemDataProvider implements ReportDataProviderInterface
             ],
         ];
 
-        foreach ($this->metricsController->getAllCollections() as $metrics) {
+        foreach ($this->registry->getAllCollections() as $metrics) {
             switch (true) {
                 case $metrics instanceof FileMetricsCollection:
                     $problemData['files']['metrics'][(string) $metrics->getIdentifier()] = $metrics;

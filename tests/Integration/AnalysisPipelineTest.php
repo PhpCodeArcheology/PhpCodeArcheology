@@ -8,7 +8,7 @@ use PhpCodeArch\Application\AnalysisPipeline;
 use PhpCodeArch\Application\CliFormatter;
 use PhpCodeArch\Application\CliOutput;
 use PhpCodeArch\Application\Config;
-use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\Controller\MetricsRegistryInterface;
 use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
@@ -27,7 +27,7 @@ use PhpCodeArch\Predictions\PredictionInterface;
 /**
  * Run the analysis pipeline once and cache the result for all tests.
  *
- * @return array{MetricsController, array<int, int>}
+ * @return array{MetricsRegistryInterface, array<int, int>}
  */
 function runPipeline(): array
 {
@@ -49,7 +49,8 @@ function runPipeline(): array
     $output->setFormatter(new CliFormatter(false));
 
     $pipeline = new AnalysisPipeline();
-    $result = $pipeline->runAnalysis($config, $output);
+    [$registry, , , $problems] = $pipeline->runAnalysis($config, $output);
+    $result = [$registry, $problems];
 
     return $result;
 }
@@ -61,7 +62,7 @@ function runPipeline(): array
 it('runs the full analysis pipeline without throwing', function (): void {
     [$metricsController, $problems] = runPipeline();
 
-    expect($metricsController)->toBeInstanceOf(MetricsController::class);
+    expect($metricsController)->toBeInstanceOf(MetricsRegistryInterface::class);
     expect($problems)->toBeArray();
     expect($problems)->toHaveKeys([PredictionInterface::INFO, PredictionInterface::WARNING, PredictionInterface::ERROR]);
 });

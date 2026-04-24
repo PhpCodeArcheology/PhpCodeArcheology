@@ -32,7 +32,7 @@ class GraphDataProvider implements ReportDataProviderInterface
         /** @var array<string, string> $nameToId */
         $nameToId = [];
         foreach (['classes', 'interfaces', 'traits', 'enums'] as $key) {
-            $collection = $this->metricsController->getCollection(
+            $collection = $this->reader->getCollection(
                 MetricCollectionTypeEnum::ProjectCollection,
                 null,
                 $key
@@ -53,16 +53,16 @@ class GraphDataProvider implements ReportDataProviderInterface
         /** @var array<string, array{gitAuthors: array<mixed>, gitChurnCount: int, gitCodeAgeDays: mixed}> $fileGitData */
         $fileGitData = [];
 
-        foreach ($this->metricsController->getAllCollections() as $collection) {
+        foreach ($this->registry->getAllCollections() as $collection) {
             if ($collection instanceof FileMetricsCollection) {
                 $this->collectFileGitData($collection, $authorData, $fileGitData);
             }
         }
 
         // Step 3: Collect class and function nodes/edges
-        $classCollector = new ClassNodeCollector($this->metricsController);
+        $classCollector = new ClassNodeCollector($this->reader);
 
-        foreach ($this->metricsController->getAllCollections() as $collection) {
+        foreach ($this->registry->getAllCollections() as $collection) {
             $identifierString = (string) $collection->getIdentifier();
 
             if ($collection instanceof ClassMetricsCollection) {
@@ -90,7 +90,7 @@ class GraphDataProvider implements ReportDataProviderInterface
         }
 
         // Step 5: Package nodes and clusters
-        $packageCollector = new PackageNodeCollector($this->metricsController);
+        $packageCollector = new PackageNodeCollector($this->reader);
         $packageData = $packageCollector->collect($nameToId);
         $this->nodes = array_merge($this->nodes, $packageData['nodes']);
         $this->clusters = $packageData['clusters'];
@@ -99,7 +99,7 @@ class GraphDataProvider implements ReportDataProviderInterface
         $this->cycles = $this->deduplicateCycles($classCollector->getRawCycles());
 
         // Step 7: Build method call edges
-        $edgeCollector = new EdgeCollector($this->metricsController);
+        $edgeCollector = new EdgeCollector($this->reader);
         $this->edges = array_merge(
             $this->edges,
             $edgeCollector->buildMethodCallEdges($classCollector->getKnownMethodIds(), $nameToId)

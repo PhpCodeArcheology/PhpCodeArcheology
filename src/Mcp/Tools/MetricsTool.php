@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Mcp\Tools;
 
-use PhpCodeArch\Metrics\Controller\MetricsReaderInterface;
+use PhpCodeArch\Metrics\Controller\MetricsRegistryInterface;
 use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
 use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
@@ -13,7 +13,7 @@ use PhpCodeArch\Metrics\Model\FunctionMetrics\FunctionMetricsCollection;
 class MetricsTool
 {
     public function __construct(
-        private readonly MetricsReaderInterface $metricsController,
+        private readonly MetricsRegistryInterface $registry,
     ) {
     }
 
@@ -22,7 +22,7 @@ class MetricsTool
         try {
             $found = [];
 
-            foreach ($this->metricsController->getAllCollections() as $collection) {
+            foreach ($this->registry->getAllCollections() as $collection) {
                 $entityType = match (true) {
                     $collection instanceof ClassMetricsCollection => 'class',
                     $collection instanceof FileMetricsCollection => 'file',

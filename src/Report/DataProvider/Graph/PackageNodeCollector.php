@@ -11,7 +11,7 @@ use PhpCodeArch\Metrics\MetricKey;
 class PackageNodeCollector
 {
     public function __construct(
-        private readonly MetricsReaderInterface $metricsController,
+        private readonly MetricsReaderInterface $reader,
     ) {
     }
 
@@ -25,7 +25,7 @@ class PackageNodeCollector
         $nodes = [];
         $clusters = [];
 
-        $packages = $this->metricsController->getMetricCollectionsByCollectionKeys(
+        $packages = $this->reader->getMetricCollectionsByCollectionKeys(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             'packages'

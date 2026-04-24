@@ -4,15 +4,17 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Report\DataProvider;
 
-use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\Controller\MetricsReaderInterface;
+use PhpCodeArch\Metrics\Controller\MetricsRegistryInterface;
 use PhpCodeArch\Metrics\Model\MetricsCollectionInterface;
 use PhpCodeArch\Metrics\Model\MetricValue;
 
 class DataProviderFactory
 {
     public function __construct(
-        private readonly MetricsController $metricsController)
-    {
+        private readonly MetricsReaderInterface $reader,
+        private readonly MetricsRegistryInterface $registry,
+    ) {
         foreach ($this->setMetricValues() as $_) {
             // Only runs the generator
         }
@@ -20,7 +22,7 @@ class DataProviderFactory
 
     private function setMetricValues(): \Generator
     {
-        foreach ($this->metricsController->getAllCollections() as $metricCollection) {
+        foreach ($this->registry->getAllCollections() as $metricCollection) {
             foreach ($this->setMetricValuesInCollection($metricCollection) as $_) {
                 // Only runs the generator
             }
@@ -35,7 +37,7 @@ class DataProviderFactory
              * @var MetricValue $metricValue
              */
 
-            $this->metricsController->setMetricTypeToMetricValue($metricValue);
+            $this->registry->setMetricTypeToMetricValue($metricValue);
 
             yield;
         }
@@ -43,67 +45,67 @@ class DataProviderFactory
 
     public function getProjectDataProvider(): ProjectDataProvider
     {
-        return new ProjectDataProvider($this->metricsController);
+        return new ProjectDataProvider($this->reader, $this->registry);
     }
 
     public function getFilesDataProvider(): FilesDataProvider
     {
-        return new FilesDataProvider($this->metricsController);
+        return new FilesDataProvider($this->reader, $this->registry);
     }
 
     public function getClassDataProvider(): ClassDataProvider
     {
-        return new ClassDataProvider($this->metricsController);
+        return new ClassDataProvider($this->reader, $this->registry);
     }
 
     public function getPackageDataProvider(): PackagesDataProvider
     {
-        return new PackagesDataProvider($this->metricsController);
+        return new PackagesDataProvider($this->reader, $this->registry);
     }
 
     public function getClassCouplingDataProvider(): ClassCouplingDataProvider
     {
-        return new ClassCouplingDataProvider($this->metricsController);
+        return new ClassCouplingDataProvider($this->reader, $this->registry);
     }
 
     public function getClassesChartDataProvider(): ClassesChartDataProvider
     {
-        return new ClassesChartDataProvider($this->metricsController);
+        return new ClassesChartDataProvider($this->reader, $this->registry);
     }
 
     public function getFunctionDataProvider(): FunctionDataProvider
     {
-        return new FunctionDataProvider($this->metricsController);
+        return new FunctionDataProvider($this->reader, $this->registry);
     }
 
     public function getProblemDataProvider(): ProblemDataProvider
     {
-        return new ProblemDataProvider($this->metricsController);
+        return new ProblemDataProvider($this->reader, $this->registry);
     }
 
     public function getGitDataProvider(): GitDataProvider
     {
-        return new GitDataProvider($this->metricsController);
+        return new GitDataProvider($this->reader, $this->registry);
     }
 
     public function getRefactoringPriorityDataProvider(): RefactoringPriorityDataProvider
     {
-        return new RefactoringPriorityDataProvider($this->metricsController);
+        return new RefactoringPriorityDataProvider($this->reader, $this->registry);
     }
 
     public function getTestsDataProvider(): TestsDataProvider
     {
-        return new TestsDataProvider($this->metricsController);
+        return new TestsDataProvider($this->reader, $this->registry);
     }
 
     public function getGraphDataProvider(): GraphDataProvider
     {
-        return new GraphDataProvider($this->metricsController);
+        return new GraphDataProvider($this->reader, $this->registry);
     }
 
     public function getHistoryDataProvider(string $historyFile): HistoryDataProvider
     {
-        $provider = new HistoryDataProvider($this->metricsController);
+        $provider = new HistoryDataProvider($this->reader, $this->registry);
         $provider->setHistoryFile($historyFile);
 
         return $provider;

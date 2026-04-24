@@ -69,7 +69,7 @@ it('gathers test stats from project metrics', function () {
         'overallTestedClassRatio' => 25.0,
         'detectedTestFrameworks' => 'PHPUnit',
     ]);
-    $provider = new TestsDataProvider($mc);
+    $provider = new TestsDataProvider($mc, $mc);
     $stats = $provider->getTemplateData()['stats'];
 
     expect($stats['testFileCount'])->toBe(8)
@@ -98,7 +98,7 @@ it('returns top 20 untested complex classes sorted by CC descending', function (
         return $c;
     }, range(1, 30));
 
-    $provider = new TestsDataProvider(makeTestsMc($classes));
+    $provider = new TestsDataProvider(makeTestsMc($classes), makeTestsMc($classes));
     $gaps = $provider->getTemplateData()['coverageGaps'];
 
     expect($gaps)->toHaveCount(20);
@@ -121,7 +121,7 @@ it('filters out classes below the complexity threshold', function () {
         return $c;
     }, [1, 4, 7, 8, 15]);
 
-    $provider = new TestsDataProvider(makeTestsMc($classes));
+    $provider = new TestsDataProvider(makeTestsMc($classes), makeTestsMc($classes));
     $gaps = $provider->getTemplateData()['coverageGaps'];
 
     // CC < 8 are dropped; CC 8 and 15 remain
@@ -148,7 +148,7 @@ it('filters out trivial exceptions from the gaps list', function () {
     $service->set('refactoringPriority', testsMv(20.0, 'refactoringPriority'));
     $service->set('hasTest', testsMv(false, 'hasTest'));
 
-    $provider = new TestsDataProvider(makeTestsMc([$exception, $service]));
+    $provider = new TestsDataProvider(makeTestsMc([$exception, $service]), makeTestsMc([$exception, $service]));
     $gaps = $provider->getTemplateData()['coverageGaps'];
 
     expect($gaps)->toHaveCount(1)
@@ -171,7 +171,7 @@ it('excludes interfaces/traits/enums from coverage gaps', function () {
     $enum->set('hasTest', testsMv(false, 'hasTest'));
     $enum->set('cc', testsMv(2, 'cc'));
 
-    $provider = new TestsDataProvider(makeTestsMc([$interface, $trait, $enum]));
+    $provider = new TestsDataProvider(makeTestsMc([$interface, $trait, $enum]), makeTestsMc([$interface, $trait, $enum]));
     $gaps = $provider->getTemplateData()['coverageGaps'];
 
     expect($gaps)->toBeEmpty();
@@ -186,7 +186,7 @@ it('returns empty coverageGaps when all classes have tests', function () {
         return $c;
     }, range(1, 5));
 
-    $provider = new TestsDataProvider(makeTestsMc($classes));
+    $provider = new TestsDataProvider(makeTestsMc($classes), makeTestsMc($classes));
     $gaps = $provider->getTemplateData()['coverageGaps'];
 
     expect($gaps)->toBeEmpty();
@@ -212,7 +212,7 @@ it('excludes source-excluded classes from coverage gaps', function () {
     $excluded->set('refactoringPriority', testsMv(15.0, 'refactoringPriority'));
     $excluded->set('excludedByPhpunitSource', testsMv(true, 'excludedByPhpunitSource'));
 
-    $provider = new TestsDataProvider(makeTestsMc([$included, $excluded]));
+    $provider = new TestsDataProvider(makeTestsMc([$included, $excluded]), makeTestsMc([$included, $excluded]));
     $gaps = $provider->getTemplateData()['coverageGaps'];
 
     expect($gaps)->toHaveCount(1)
@@ -221,7 +221,7 @@ it('excludes source-excluded classes from coverage gaps', function () {
 
 it('exposes sourceExcludedClassCount in stats', function () {
     $mc = makeTestsMc([], ['overallSourceExcludedClassCount' => 6]);
-    $provider = new TestsDataProvider($mc);
+    $provider = new TestsDataProvider($mc, $mc);
     $stats = $provider->getTemplateData()['stats'];
 
     expect($stats['sourceExcludedClassCount'])->toBe(6);
@@ -229,7 +229,7 @@ it('exposes sourceExcludedClassCount in stats', function () {
 
 it('defaults sourceExcludedClassCount to 0 when the metric is absent', function () {
     $mc = makeTestsMc([], ['overallSourceExcludedClassCount' => null]);
-    $provider = new TestsDataProvider($mc);
+    $provider = new TestsDataProvider($mc, $mc);
     $stats = $provider->getTemplateData()['stats'];
 
     expect($stats['sourceExcludedClassCount'])->toBe(0);

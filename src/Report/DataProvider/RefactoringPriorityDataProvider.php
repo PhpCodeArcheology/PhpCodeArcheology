@@ -16,7 +16,7 @@ class RefactoringPriorityDataProvider implements ReportDataProviderInterface
     {
         $priorities = [];
 
-        foreach ($this->metricsController->getAllCollections() as $collection) {
+        foreach ($this->registry->getAllCollections() as $collection) {
             if (!$collection instanceof ClassMetricsCollection) {
                 continue;
             }
@@ -46,7 +46,7 @@ class RefactoringPriorityDataProvider implements ReportDataProviderInterface
         $distribution = ['clean' => 0, 'low' => 0, 'medium' => 0, 'high' => 0, 'critical' => 0];
         $totalClasses = 0;
 
-        foreach ($this->metricsController->getAllCollections() as $collection) {
+        foreach ($this->registry->getAllCollections() as $collection) {
             if (!$collection instanceof ClassMetricsCollection) {
                 continue;
             }
@@ -73,15 +73,15 @@ class RefactoringPriorityDataProvider implements ReportDataProviderInterface
         $this->templateData['distribution'] = $distribution;
         $this->templateData['totalClasses'] = $totalClasses;
 
-        $this->templateData['avgPriority'] = $this->metricsController->getMetricValue(
+        $this->templateData['avgPriority'] = $this->reader->getMetricValue(
             MetricCollectionTypeEnum::ProjectCollection, null, MetricKey::OVERALL_AVG_REFACTORING_PRIORITY
         )?->asFloat() ?? 0.0;
 
-        $this->templateData['maxPriority'] = $this->metricsController->getMetricValue(
+        $this->templateData['maxPriority'] = $this->reader->getMetricValue(
             MetricCollectionTypeEnum::ProjectCollection, null, MetricKey::OVERALL_MAX_REFACTORING_PRIORITY
         )?->asFloat() ?? 0.0;
 
-        $this->templateData['classesNeedingRefactoring'] = $this->metricsController->getMetricValue(
+        $this->templateData['classesNeedingRefactoring'] = $this->reader->getMetricValue(
             MetricCollectionTypeEnum::ProjectCollection, null, MetricKey::OVERALL_CLASSES_NEEDING_REFACTORING
         )?->asInt() ?? 0;
     }

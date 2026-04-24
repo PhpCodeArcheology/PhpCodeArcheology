@@ -21,7 +21,7 @@ class ClassNodeCollector
     private array $knownMethodIds = [];
 
     public function __construct(
-        private readonly MetricsReaderInterface $metricsController,
+        private readonly MetricsReaderInterface $reader,
     ) {
     }
 
@@ -91,7 +91,7 @@ class ClassNodeCollector
         }
 
         // declares edges: Class→Method
-        $methodsCollection = $this->metricsController->getCollectionByIdentifierString($identifierString, 'methods');
+        $methodsCollection = $this->reader->getCollectionByIdentifierString($identifierString, 'methods');
         if ($methodsCollection instanceof CollectionInterface) {
             foreach ($methodsCollection->getAsArray() as $methodId => $methodName) {
                 if ('' === (string) $methodId || null === $methodName) {
@@ -102,7 +102,7 @@ class ClassNodeCollector
         }
 
         // extends edges
-        $extendsCollection = $this->metricsController->getCollectionByIdentifierString($identifierString, 'extends');
+        $extendsCollection = $this->reader->getCollectionByIdentifierString($identifierString, 'extends');
         if ($extendsCollection instanceof CollectionInterface) {
             foreach ($extendsCollection->getAsArray() as $parentName) {
                 if (!is_string($parentName) || '' === $parentName) {
@@ -121,7 +121,7 @@ class ClassNodeCollector
         }
 
         // implements edges
-        $interfacesCollection = $this->metricsController->getCollectionByIdentifierString($identifierString, 'interfaces');
+        $interfacesCollection = $this->reader->getCollectionByIdentifierString($identifierString, 'interfaces');
         if ($interfacesCollection instanceof CollectionInterface) {
             foreach ($interfacesCollection->getAsArray() as $interfaceName) {
                 if (!is_string($interfaceName) || '' === $interfaceName) {
@@ -140,7 +140,7 @@ class ClassNodeCollector
         }
 
         // uses_trait edges
-        $traitsCollection = $this->metricsController->getCollectionByIdentifierString($identifierString, 'traits');
+        $traitsCollection = $this->reader->getCollectionByIdentifierString($identifierString, 'traits');
         if ($traitsCollection instanceof CollectionInterface) {
             foreach ($traitsCollection->getAsArray() as $traitName) {
                 if (!is_string($traitName) || '' === $traitName) {
@@ -159,7 +159,7 @@ class ClassNodeCollector
         }
 
         // depends_on edges
-        $usedClassesCollection = $this->metricsController->getCollectionByIdentifierString($identifierString, 'usedClasses');
+        $usedClassesCollection = $this->reader->getCollectionByIdentifierString($identifierString, 'usedClasses');
         if ($usedClassesCollection instanceof CollectionInterface) {
             foreach ($usedClassesCollection->getAsArray() as $depName) {
                 if (!is_string($depName) || '' === $depName) {
@@ -252,7 +252,7 @@ class ClassNodeCollector
 
     private function processMethodNode(string $methodId, string $classNodeId): void
     {
-        $methodCollection = $this->metricsController->getMetricCollectionByIdentifierString($methodId);
+        $methodCollection = $this->reader->getMetricCollectionByIdentifierString($methodId);
 
         $methodName = $methodCollection->getName();
 

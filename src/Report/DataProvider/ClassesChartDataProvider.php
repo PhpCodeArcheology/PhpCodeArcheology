@@ -12,7 +12,7 @@ class ClassesChartDataProvider implements ReportDataProviderInterface
 
     public function gatherData(): void
     {
-        $classes = $this->metricsController->getMetricCollectionsByCollectionKeys(
+        $classes = $this->reader->getMetricCollectionsByCollectionKeys(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             'classes'

@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace PhpCodeArch\Application;
 
-use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\Controller\MetricsReaderInterface;
+use PhpCodeArch\Metrics\Controller\MetricsRegistryInterface;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 use PhpCodeArch\Metrics\MetricKey;
 use PhpCodeArch\Metrics\Model\ClassMetrics\ClassMetricsCollection;
@@ -13,7 +14,8 @@ use PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection;
 class QuickOutput
 {
     public function __construct(
-        private readonly MetricsController $metricsController,
+        private readonly MetricsReaderInterface $reader,
+        private readonly MetricsRegistryInterface $registry,
         private readonly CliOutput $output,
         private readonly CliFormatter $formatter,
     ) {
@@ -29,7 +31,7 @@ class QuickOutput
 
     private function renderProjectOverview(): void
     {
-        $getInt = fn (string $key): int => $this->metricsController->getMetricValue(
+        $getInt = fn (string $key): int => $this->reader->getMetricValue(
             MetricCollectionTypeEnum::ProjectCollection, null, $key
         )?->asInt() ?? 0;
 
@@ -53,7 +55,7 @@ class QuickOutput
     {
         $files = [];
 
-        foreach ($this->metricsController->getAllCollections() as $collection) {
+        foreach ($this->registry->getAllCollections() as $collection) {
             if (!$collection instanceof FileMetricsCollection) {
                 continue;
             }
@@ -111,7 +113,7 @@ class QuickOutput
     {
         $classes = [];
 
-        foreach ($this->metricsController->getAllCollections() as $collection) {
+        foreach ($this->registry->getAllCollections() as $collection) {
             if (!$collection instanceof ClassMetricsCollection) {
                 continue;
             }
@@ -166,7 +168,7 @@ class QuickOutput
 
     private function renderSummary(): void
     {
-        $getFloat = fn (string $key): float => $this->metricsController->getMetricValue(
+        $getFloat = fn (string $key): float => $this->reader->getMetricValue(
             MetricCollectionTypeEnum::ProjectCollection, null, $key
         )?->asFloat() ?? 0.0;
 

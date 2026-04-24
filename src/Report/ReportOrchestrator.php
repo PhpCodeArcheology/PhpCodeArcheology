@@ -10,7 +10,9 @@ use PhpCodeArch\Application\Config;
 use PhpCodeArch\Application\Service\ClaudeMdGenerator;
 use PhpCodeArch\Application\Service\HistoryService;
 use PhpCodeArch\Application\Service\SummaryPrinter;
-use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\Controller\MetricsReaderInterface;
+use PhpCodeArch\Metrics\Controller\MetricsRegistryInterface;
+use PhpCodeArch\Metrics\Controller\MetricsWriterInterface;
 use PhpCodeArch\Report\DataProvider\DataProviderFactory;
 use Twig\Environment;
 use Twig\Extension\DebugExtension;
@@ -23,7 +25,9 @@ final class ReportOrchestrator
      */
     public function generateReports(
         Config $config,
-        MetricsController $metricsController,
+        MetricsReaderInterface $reader,
+        MetricsWriterInterface $writer,
+        MetricsRegistryInterface $registry,
         CliOutput $output,
         array $problems = [],
     ): void {
@@ -36,10 +40,10 @@ final class ReportOrchestrator
             $twig->addExtension(new DebugExtension());
         }
 
-        $dataProviderFactory = new DataProviderFactory($metricsController);
+        $dataProviderFactory = new DataProviderFactory($reader, $registry);
 
         $historyService = new HistoryService();
-        $historyDate = $historyService->setDeltas($metricsController, $config);
+        $historyDate = $historyService->setDeltas($reader, $writer, $registry, $config);
 
         $reports = ReportFactory::createMultiple(
             $config,
@@ -63,14 +67,14 @@ final class ReportOrchestrator
             $output->outNl();
         }
 
-        $historyService->writeHistory($metricsController, $config);
+        $historyService->writeHistory($reader, $registry, $config);
 
         if ($config->get('generateClaudeMd')) {
             (new ClaudeMdGenerator())->generate($config, $dataProviderFactory, $output);
         }
 
         $formatter = $output->getFormatter() ?? new CliFormatter();
-        (new SummaryPrinter())->print($metricsController, $config, $problems, $output, $formatter);
+        (new SummaryPrinter())->print($reader, $config, $problems, $output, $formatter);
 
         $frameworkDetection = $config->getFrameworkDetection();
         if (null !== $frameworkDetection

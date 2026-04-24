@@ -27,7 +27,7 @@ class TestsDataProvider implements ReportDataProviderInterface
     {
         $coverageGaps = [];
 
-        foreach ($this->metricsController->getAllCollections() as $collection) {
+        foreach ($this->registry->getAllCollections() as $collection) {
             if (!$collection instanceof ClassMetricsCollection) {
                 continue;
             }
@@ -73,34 +73,34 @@ class TestsDataProvider implements ReportDataProviderInterface
         $this->templateData['coverageGaps'] = array_slice($coverageGaps, 0, 20);
 
         $this->templateData['stats'] = [
-            'testFileCount' => $this->metricsController->getMetricValue(
+            'testFileCount' => $this->reader->getMetricValue(
                 MetricCollectionTypeEnum::ProjectCollection, null, MetricKey::OVERALL_TEST_FILE_COUNT
             )?->asInt() ?? 0,
-            'productionFileCount' => $this->metricsController->getMetricValue(
+            'productionFileCount' => $this->reader->getMetricValue(
                 MetricCollectionTypeEnum::ProjectCollection, null, MetricKey::OVERALL_PRODUCTION_FILE_COUNT
             )?->asInt() ?? 0,
-            'testRatio' => $this->metricsController->getMetricValue(
+            'testRatio' => $this->reader->getMetricValue(
                 MetricCollectionTypeEnum::ProjectCollection, null, MetricKey::OVERALL_TEST_RATIO
             )?->asFloat() ?? 0.0,
-            'testedClassCount' => $this->metricsController->getMetricValue(
+            'testedClassCount' => $this->reader->getMetricValue(
                 MetricCollectionTypeEnum::ProjectCollection, null, MetricKey::OVERALL_TESTED_CLASS_COUNT
             )?->asInt() ?? 0,
-            'untestedClassCount' => $this->metricsController->getMetricValue(
+            'untestedClassCount' => $this->reader->getMetricValue(
                 MetricCollectionTypeEnum::ProjectCollection, null, MetricKey::OVERALL_UNTESTED_CLASS_COUNT
             )?->asInt() ?? 0,
-            'testedClassRatio' => $this->metricsController->getMetricValue(
+            'testedClassRatio' => $this->reader->getMetricValue(
                 MetricCollectionTypeEnum::ProjectCollection, null, MetricKey::OVERALL_TESTED_CLASS_RATIO
             )?->asFloat() ?? 0.0,
-            'functionBasedTestFileCount' => $this->metricsController->getMetricValue(
+            'functionBasedTestFileCount' => $this->reader->getMetricValue(
                 MetricCollectionTypeEnum::ProjectCollection, null, MetricKey::OVERALL_FUNCTION_BASED_TEST_FILE_COUNT
             )?->asInt() ?? 0,
-            'sourceExcludedClassCount' => $this->metricsController->getMetricValue(
+            'sourceExcludedClassCount' => $this->reader->getMetricValue(
                 MetricCollectionTypeEnum::ProjectCollection, null, MetricKey::OVERALL_SOURCE_EXCLUDED_CLASS_COUNT
             )?->asInt() ?? 0,
-            'detectedTestFrameworks' => $this->metricsController->getMetricValue(
+            'detectedTestFrameworks' => $this->reader->getMetricValue(
                 MetricCollectionTypeEnum::ProjectCollection, null, MetricKey::DETECTED_TEST_FRAMEWORKS
             )?->asString() ?? '',
-            'overallCoveragePercent' => $this->metricsController->getMetricValue(
+            'overallCoveragePercent' => $this->reader->getMetricValue(
                 MetricCollectionTypeEnum::ProjectCollection, null, MetricKey::OVERALL_COVERAGE_PERCENT
             )?->getValue(),
         ];

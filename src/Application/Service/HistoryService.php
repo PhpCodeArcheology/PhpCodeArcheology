@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace PhpCodeArch\Application\Service;
 
 use PhpCodeArch\Application\Config;
-use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\Controller\MetricsReaderInterface;
+use PhpCodeArch\Metrics\Controller\MetricsRegistryInterface;
+use PhpCodeArch\Metrics\Controller\MetricsWriterInterface;
 use PhpCodeArch\Metrics\Model\Enums\BetterDirection;
 use PhpCodeArch\Metrics\Model\Enums\MetricValueType;
 use PhpCodeArch\Metrics\Model\Enums\MetricVisibility;
@@ -17,7 +19,7 @@ class HistoryService
     /** @var array<string, string> */
     private array $lastLineCache = [];
 
-    public function setDeltas(MetricsController $metricsController, Config $config): false|\DateTimeImmutable
+    public function setDeltas(MetricsReaderInterface $reader, MetricsWriterInterface $writer, MetricsRegistryInterface $registry, Config $config): false|\DateTimeImmutable
     {
         $reportDirRaw = $config->get('reportDir');
         $outputDir = (is_string($reportDirRaw) ? $reportDirRaw : '').DIRECTORY_SEPARATOR;
@@ -39,7 +41,7 @@ class HistoryService
 
         foreach ($this->getHistoryDataFromFile($historyFile, $isJsonl) as $historyData) {
             foreach ($historyData['data'] as $key => $historyValue) {
-                $metricValue = $metricsController->getMetricValueByIdentifierString(
+                $metricValue = $reader->getMetricValueByIdentifierString(
                     $historyData['key'],
                     (string) $key
                 );
@@ -176,7 +178,7 @@ class HistoryService
         return ['sideways', null];
     }
 
-    public function writeHistory(MetricsController $metricsController, Config $config): void
+    public function writeHistory(MetricsReaderInterface $reader, MetricsRegistryInterface $registry, Config $config): void
     {
         $reportDirRaw = $config->get('reportDir');
         $outputDir = (is_string($reportDirRaw) ? $reportDirRaw : '').DIRECTORY_SEPARATOR;
@@ -187,7 +189,7 @@ class HistoryService
             'data' => [],
         ];
 
-        foreach ($this->getHistoryData($metricsController) as $historyData) {
+        foreach ($this->getHistoryData($registry) as $historyData) {
             $collectionKey = $historyData['collectionKey'];
             // Compact format: only store project-level metrics to keep entries small.
             // Old (full) entries are still read correctly by the readers.
@@ -238,9 +240,9 @@ class HistoryService
     /**
      * @return \Generator<int, array{collectionKey: string, key: string, value: mixed}>
      */
-    private function getHistoryData(MetricsController $metricsController): \Generator
+    private function getHistoryData(MetricsRegistryInterface $registry): \Generator
     {
-        foreach ($metricsController->getAllCollections() as $metricCollectionKey => $metricCollection) {
+        foreach ($registry->getAllCollections() as $metricCollectionKey => $metricCollection) {
             foreach ($this->getMetricValues($metricCollection) as $metricValue) {
                 if (MetricVisibility::ShowNowhere === $metricValue->getMetricType()->getVisibility()) {
                     continue;

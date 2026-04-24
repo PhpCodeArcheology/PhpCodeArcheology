@@ -8,7 +8,8 @@ use PhpCodeArch\Application\CliFormatter;
 use PhpCodeArch\Application\CliOutput;
 use PhpCodeArch\Application\Config;
 use PhpCodeArch\Application\ProgressBar;
-use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\Controller\MetricsRegistryInterface;
+use PhpCodeArch\Metrics\Controller\MetricsWriterInterface;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 
 class GitAnalyzer
@@ -18,7 +19,8 @@ class GitAnalyzer
 
     public function __construct(
         private readonly Config $config,
-        private readonly MetricsController $metricsController,
+        private readonly MetricsWriterInterface $writer,
+        private readonly MetricsRegistryInterface $registry,
         private readonly CliOutput $output,
     ) {
         $gitConfig = $this->config->get('git');
@@ -66,7 +68,7 @@ class GitAnalyzer
         $files = $changes['files'];
 
         // Project-level metrics
-        $this->metricsController->setMetricValues(
+        $this->writer->setMetricValues(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             [
@@ -78,7 +80,7 @@ class GitAnalyzer
 
         // Count file collections for progress bar
         $fileCollections = [];
-        foreach ($this->metricsController->getAllCollections() as $collection) {
+        foreach ($this->registry->getAllCollections() as $collection) {
             if ($collection instanceof \PhpCodeArch\Metrics\Model\FileMetrics\FileMetricsCollection
                 && '' !== $collection->getPath()) {
                 $fileCollections[] = $collection;
@@ -102,7 +104,7 @@ class GitAnalyzer
                 $commits = $fileData['commits'];
                 $ageDays = $lastModified > 0 ? (int) round(($now - $lastModified) / 86400) : 0;
 
-                $this->metricsController->setMetricValuesByIdentifierString(
+                $this->writer->setMetricValuesByIdentifierString(
                     (string) $collection->getIdentifier(),
                     [
                         'gitChurnCount' => $commits,
@@ -117,7 +119,7 @@ class GitAnalyzer
                 $lastModified = $this->parser->getFileLastModified($filePath);
                 $ageDays = null !== $lastModified ? (int) round(($now - $lastModified) / 86400) : 0;
 
-                $this->metricsController->setMetricValuesByIdentifierString(
+                $this->writer->setMetricValuesByIdentifierString(
                     (string) $collection->getIdentifier(),
                     [
                         'gitChurnCount' => 0,
@@ -140,7 +142,7 @@ class GitAnalyzer
 
     private function setDefaults(): void
     {
-        $this->metricsController->setMetricValues(
+        $this->writer->setMetricValues(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             [

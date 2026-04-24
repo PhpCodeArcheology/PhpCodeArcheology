@@ -7,7 +7,7 @@ namespace PhpCodeArch\Application\Service;
 use PhpCodeArch\Application\CliFormatter;
 use PhpCodeArch\Application\Config;
 use PhpCodeArch\Application\OutputInterface;
-use PhpCodeArch\Metrics\Controller\MetricsController;
+use PhpCodeArch\Metrics\Controller\MetricsReaderInterface;
 use PhpCodeArch\Metrics\MetricCollectionTypeEnum;
 use PhpCodeArch\Predictions\PredictionInterface;
 
@@ -16,26 +16,26 @@ class SummaryPrinter
     /**
      * @param array<int, int> $problems
      */
-    public function print(MetricsController $metricsController, Config $config, array $problems, OutputInterface $output, CliFormatter $formatter): void
+    public function print(MetricsReaderInterface $reader, Config $config, array $problems, OutputInterface $output, CliFormatter $formatter): void
     {
-        $getInt = function (string $key) use ($metricsController): int {
-            $v = $metricsController->getMetricValue(
+        $getInt = function (string $key) use ($reader): int {
+            $v = $reader->getMetricValue(
                 MetricCollectionTypeEnum::ProjectCollection, null, $key
             )?->getValue() ?? 0;
 
             return is_numeric($v) ? (int) $v : 0;
         };
 
-        $getFloat = function (string $key) use ($metricsController): float {
-            $v = $metricsController->getMetricValue(
+        $getFloat = function (string $key) use ($reader): float {
+            $v = $reader->getMetricValue(
                 MetricCollectionTypeEnum::ProjectCollection, null, $key
             )?->getValue() ?? 0;
 
             return is_numeric($v) ? (float) $v : 0.0;
         };
 
-        $getRaw = function (string $key) use ($metricsController): mixed {
-            return $metricsController->getMetricValue(
+        $getRaw = function (string $key) use ($reader): mixed {
+            return $reader->getMetricValue(
                 MetricCollectionTypeEnum::ProjectCollection, null, $key
             )?->getValue() ?? null;
         };

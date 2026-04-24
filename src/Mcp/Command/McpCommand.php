@@ -51,19 +51,19 @@ class McpCommand
         // MCP uses STDOUT for JSON-RPC — all application output must go to STDERR
         $stderrOutput = new StderrOutput();
 
-        [$metricsController, $problems] = $this->application->runAnalysis($config, $stderrOutput);
+        [$registry, $reader, , $problems] = $this->application->runAnalysis($config, $stderrOutput);
 
-        $dataProviderFactory = new DataProviderFactory($metricsController);
+        $dataProviderFactory = new DataProviderFactory($reader, $registry);
 
         $healthTool = new HealthScoreTool($dataProviderFactory);
         $problemsTool = new ProblemsTool($dataProviderFactory);
         $hotspotsTool = new HotspotsTool($dataProviderFactory);
         $refactoringTool = new RefactoringTool($dataProviderFactory);
         $classListTool = new ClassListTool($dataProviderFactory);
-        $metricsTool = new MetricsTool($metricsController);
+        $metricsTool = new MetricsTool($registry);
         $dependenciesTool = new DependenciesTool($dataProviderFactory);
         $graphTool = new GraphTool($dataProviderFactory);
-        $searchCodeTool = new SearchCodeTool($metricsController);
+        $searchCodeTool = new SearchCodeTool($registry);
         $impactAnalysisTool = new ImpactAnalysisTool($dataProviderFactory);
         $testCoverageTool = new GetTestCoverageTool($dataProviderFactory);
 

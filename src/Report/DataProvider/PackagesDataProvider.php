@@ -13,7 +13,7 @@ class PackagesDataProvider implements ReportDataProviderInterface
 
     public function gatherData(): void
     {
-        $packages = $this->metricsController->getMetricCollectionsByCollectionKeys(
+        $packages = $this->reader->getMetricCollectionsByCollectionKeys(
             MetricCollectionTypeEnum::ProjectCollection,
             null,
             'packages'
@@ -25,7 +25,7 @@ class PackagesDataProvider implements ReportDataProviderInterface
             return null !== $classes && 0 !== count($classes->getAsArray());
         });
 
-        $listMetrics = $this->metricsController->getListMetricsByCollectionType(
+        $listMetrics = $this->registry->getListMetricsByCollectionType(
             MetricCollectionTypeEnum::PackageCollection
         );
 
