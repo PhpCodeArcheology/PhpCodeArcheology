@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.11.0] - 2026-04-24
+
 ### Changed
 
 - **`MetricsController` split into `MetricsRegistry` / `MetricsReader` / `MetricsWriter`.** The monolithic `MetricsController` is now decomposed into three focused classes backed by narrow interfaces (`MetricsRegistryInterface`, `MetricsReaderInterface`, `MetricsWriterInterface`). Every Calculator, Prediction, Visitor, DataProvider, and CLI-output class typehints the interface it actually needs — Calculators and Predictions declare `reader` / `writer` / `registry` separately, Visitors take writer + registry (plus reader when they read), and DataProviders take reader + registry. The `AnalysisPipeline` now returns the trio directly from `runAnalysis()` / `runQuickAnalysis()` instead of a controller. `PredictionInterface::predict()` loses its parameter; predictions receive the trio via constructor injection, analogous to Calculators. Closes #13.
@@ -44,6 +46,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Markdown report: broken footer navigation.** The footer nav on every page had three problem-category links (`File problems`, `Class problems`, `Function problems`) all pointing to `files.md`, plus a duplicated `**Packages**` heading where `**Problems**` was intended. Links now resolve to their respective `*-problems.md` pages and the section heading is correct. Closes #19.
 - **Markdown report: `problems.md` linked to `.html` files.** The problem category links in `problems.md` were hardcoded to `.html`, breaking navigation in the Markdown report. All Markdown templates now consistently link to `.md` targets. Closes #19.
 - **Security-smell false positive on SQL concat with class constants only.** The SQL string concatenation detector flagged `'INSERT INTO ' . SomeClass::TABLE . ' …'` even though the dynamic part is a compile-time constant and cannot carry attacker-controlled data. The detector now ignores concat expressions whose non-literal operands are exclusively class constants, enum cases, global constants, or magic constants. Common Doctrine subscriber / repository patterns no longer produce noise. Closes #19.
+- **`PHP Warning: Undefined array key 1` in `HistoryService`** when an older history entry stored a plain numeric value for a metric that now carries the `'label: value'` prefix. `explode(': ', …)[1]` was accessed unconditionally; it now falls back to `[0]` when no colon is present — same effective delta, no warning.
+- **Trend chart missing on the second run after a fresh history.** A regression introduced when the `ReportOrchestrator` was extracted from `Application.php` inverted the order of `writeHistory()` and report generation: the current run was only appended AFTER reports were rendered, so the `HistoryDataProvider` never saw it. The chart only surfaced on the third run. `writeHistory()` now runs before reports again, matching the original v2.7.1 fix.
 
 ## [2.9.1] - 2026-04-08
 
