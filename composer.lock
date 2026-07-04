@@ -8,16 +8,16 @@
     "packages": [
         {
             "name": "logiscape/mcp-sdk-php",
-            "version": "v1.7.1",
+            "version": "v1.7.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/logiscape/mcp-sdk-php.git",
-                "reference": "1ed29680249488e2e028ee5b8f169fe9881e01a7"
+                "reference": "febd211afba98b8067e4e493cd2eccb980885148"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/logiscape/mcp-sdk-php/zipball/1ed29680249488e2e028ee5b8f169fe9881e01a7",
-                "reference": "1ed29680249488e2e028ee5b8f169fe9881e01a7",
+                "url": "https://api.github.com/repos/logiscape/mcp-sdk-php/zipball/febd211afba98b8067e4e493cd2eccb980885148",
+                "reference": "febd211afba98b8067e4e493cd2eccb980885148",
                 "shasum": ""
             },
             "require": {
@@ -47,9 +47,9 @@
             "description": "Model Context Protocol SDK for PHP",
             "support": {
                 "issues": "https://github.com/logiscape/mcp-sdk-php/issues",
-                "source": "https://github.com/logiscape/mcp-sdk-php/tree/v1.7.1"
+                "source": "https://github.com/logiscape/mcp-sdk-php/tree/v1.7.4"
             },
-            "time": "2026-04-23T03:47:26+00:00"
+            "time": "2026-07-03T19:44:39+00:00"
         },
         {
             "name": "nikic/php-parser",
