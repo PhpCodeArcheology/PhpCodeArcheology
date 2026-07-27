@@ -9,7 +9,7 @@
         },
         {
             "in": ["templates"],
-            "name": ["*.twig", "*.css", "*.md", "*.html"]
+            "name": ["*.twig", "*.css", "*.md", "*.html", "*.js", "*.svg", "*.woff2"]
         },
         {
             "in": ["vendor"],
