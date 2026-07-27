@@ -107,3 +107,15 @@ it('does not merge boolean flags with next argument (--quick src/ should NOT bec
     expect($config->get('quickMode'))->toBeTrue()
         ->and($config->get('files'))->toContain('src/');
 });
+
+it('keeps a path that ends with the tool name (issue #35)', function () {
+    $config = $this->parser->parse(['src/phpcodearcheology']);
+
+    expect($config->get('files'))->toBe(['src/phpcodearcheology']);
+});
+
+it('keeps a path that ends with the phar name (issue #35)', function () {
+    $config = $this->parser->parse(['/usr/local/bin/phpcodearcheology.phar']);
+
+    expect($config->get('files'))->toBe(['/usr/local/bin/phpcodearcheology.phar']);
+});

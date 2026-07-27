@@ -25,7 +25,7 @@ final readonly class Application implements AnalysisPipelineInterface
     }
 
     /**
-     * @param array<int, string> $argv
+     * @param array<int, string> $argv arguments only, without the script name
      *
      * @throws ConfigFileExtensionNotSupportedException
      * @throws MultipleConfigFilesException
@@ -54,6 +54,16 @@ final readonly class Application implements AnalysisPipelineInterface
         $command = $config->getCommand();
         if (null !== $command) {
             return $this->dispatchCommand($command, $config, $output, $formatter);
+        }
+
+        // Checked here rather than at the very top so --help, --version and the
+        // subcommands stay usable on installations missing an extension.
+        $requirements = new RequirementsChecker();
+        $missingExtensions = $requirements->getMissingExtensions();
+        if ([] !== $missingExtensions) {
+            fwrite(STDERR, $requirements->getErrorMessage($missingExtensions));
+
+            return 1;
         }
 
         $config->applyMemoryLimit();

@@ -20,5 +20,6 @@ if (
   );
 };
 
-$exitCode = (new Application())->run($argv);
+// Drop $argv[0] (the script name) — Application::run() expects arguments only.
+$exitCode = (new Application())->run(array_slice($argv, 1));
 exit($exitCode);
