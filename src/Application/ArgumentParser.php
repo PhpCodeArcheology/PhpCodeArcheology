@@ -6,7 +6,15 @@ namespace PhpCodeArch\Application;
 
 final class ArgumentParser
 {
-    /** @param array<int, string> $argv */
+    /**
+     * Parse CLI arguments into a Config.
+     *
+     * Expects arguments only — the script name ($argv[0]) must already be removed
+     * by the caller. Otherwise the script itself ends up in the list of files to
+     * analyze.
+     *
+     * @param array<int, string> $argv
+     */
     public function parse(array $argv): Config
     {
         $config = new Config();
@@ -15,23 +23,17 @@ final class ArgumentParser
             return $config;
         }
 
-        if (str_ends_with((string) $argv[0], 'phpcodearcheology')) {
-            array_shift($argv);
-        }
-
         // Detect subcommand (first non-flag argument)
         $commands = ['init', 'compare', 'baseline', 'mcp'];
-        if ([] !== $argv) {
-            $firstKey = array_key_first($argv);
-            $firstArg = $argv[$firstKey];
-            if (!str_starts_with((string) $firstArg, '-') && in_array($firstArg, $commands, true)) {
-                $config->set('command', $firstArg);
-                unset($argv[$firstKey]);
+        $firstKey = array_key_first($argv);
+        $firstArg = $argv[$firstKey];
+        if (!str_starts_with((string) $firstArg, '-') && in_array($firstArg, $commands, true)) {
+            $config->set('command', $firstArg);
+            unset($argv[$firstKey]);
 
-                // Store remaining positional args as commandArgs (won't be overwritten by config file)
-                $commandArgs = array_values(array_filter($argv, fn ($v): bool => !str_starts_with((string) $v, '-')));
-                $config->set('commandArgs', $commandArgs);
-            }
+            // Store remaining positional args as commandArgs (won't be overwritten by config file)
+            $commandArgs = array_values(array_filter($argv, fn ($v): bool => !str_starts_with((string) $v, '-')));
+            $config->set('commandArgs', $commandArgs);
         }
 
         // Normalize space-separated value params: --param value → --param=value
