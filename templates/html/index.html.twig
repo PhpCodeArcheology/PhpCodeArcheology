@@ -258,7 +258,7 @@
       </div>
       <div class="dash-panel-label" style="margin-top: 1.25rem;">Problems Trend</div>
       <div class="chart-container" style="height: 220px;">
-        <canvas id="problemsChart"></canvas>
+        <canvas id="problemsTrendChart"></canvas>
       </div>
     </div>
     {% endif %}
@@ -543,7 +543,7 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   // Problems Trend: Errors + Warnings + Tech Debt
-  new Chart(document.getElementById('problemsChart'), {
+  new Chart(document.getElementById('problemsTrendChart'), {
     type: 'line',
     data: {
       labels: trendData.labels,
