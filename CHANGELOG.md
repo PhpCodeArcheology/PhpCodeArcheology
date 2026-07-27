@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **CLI arguments now win over the config file.** `--report-dir` was silently overruled by `reportDir` from `php-codearch-config.yaml`, and the same applied to `--exclude`, `--extensions`, `--git-root` and any path argument (which lost against `include`). The precedence chain is now CLI, then config file, then defaults. To make that work, the default `src` path is no longer set by `ArgumentParser` but by `Application` after the config file was read, so a default can never outrank `include`. For `git`, the CLI root wins while the file's remaining git settings still apply.
+- **Problems chart and Problems Trend no longer collide in the HTML report.** Both canvases used the id `problemsChart`, so the trend chart was drawn onto the Problems panel and the trend area stayed empty. Only visible in projects with more than one run. The trend canvas is now `problemsTrendChart`.
+
+### Changed
+
+- **Release workflow builds with Node 22.** Node 20 reached end of life in April 2026.
+
 ## [2.11.1] - 2026-07-27
 
 ### Fixed
