@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **The PHAR no longer analyzes itself.** `ArgumentParser` only stripped `$argv[0]` when the script name ended in `phpcodearcheology`, so running `phpcodearcheology.phar` left the PHAR path in the list of files to analyze. It then showed up at the top of every report, and a run without any path argument analyzed the PHAR instead of the default `src` directory. The script name is now removed in `bin/phpcodearcheology` before `Application::run()` sees it, which works for any file name (`.phar`, symlink, renamed binary). As a side effect, a path that happens to end in `phpcodearcheology` is no longer swallowed. Closes #35.
+- **Clear error message when a required PHP extension is missing.** `simplexml_load_file()` was used without `ext-simplexml` being declared, so installations without the extension (Debian and Ubuntu ship it separately in `php-xml`) died with a fatal error deep inside the analysis. `ext-simplexml` is now a declared requirement, and a runtime check reports missing extensions with the package to install. `--version`, `--help` and the subcommands keep working without it. Thanks to @netbrothers-tr for reporting and for the pull request. Closes #34.
+- **PHAR reports ship their assets again.** The `box.json` finder only picked up `*.twig`, `*.css`, `*.md` and `*.html` from `templates/`, so PHAR-built reports were missing every script, image and font: no charts, no sortable tables, no logo. `*.js`, `*.svg` and `*.woff2` are now bundled as well. This affects all reports generated with the v2.11.0 PHAR. The PHAR grows from roughly 1.0 MB to 2.4 MB.
+
+### Changed
+
+- **Dependency updates.** `nikic/php-parser` 5.8.0, `twig/twig` 3.28.0, `logiscape/mcp-sdk-php` 1.7.4, `symfony/yaml` 7.4.14 (closes three low severity advisories in the YAML parser: CVE-2026-45133, CVE-2026-45304, CVE-2026-45305), plus `phpstan/phpstan` 2.2.6, `rector/rector` 2.5.8, `friendsofphp/php-cs-fixer` 3.95.17 and `composer/composer` 2.10.2 on the dev side. Tailwind CSS moves to 4.3.2 with a rebuilt `output.css`. GitHub Actions: `actions/checkout` v7, `actions/setup-node` v7, `softprops/action-gh-release` v3.
+- **Constant value detection in `ClassMemberAnalyzer` rewritten as a single branch.** Value and value type were determined in two places, which PHPStan 2.2 correctly flagged as a redundant `instanceof`. Behavior is unchanged.
+
+### Added
+
+- **Release workflow guards against broken PHARs.** The smoke test now asserts that the PHAR does not list itself in the report (regression guard for #35) and that every asset referenced by the generated HTML was actually bundled, including fonts (regression guard for the missing assets above). `simplexml` was added to the extensions installed for the build, and a `workflow_dispatch` trigger allows verifying the build chain without cutting a release. The upload step is limited to tag pushes so a manual run cannot create a release.
+
 ## [2.11.0] - 2026-04-24
 
 ### Changed
