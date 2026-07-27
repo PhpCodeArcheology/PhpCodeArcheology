@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.11.2] - 2026-07-27
+
 ### Fixed
 
 - **CLI arguments now win over the config file.** `--report-dir` was silently overruled by `reportDir` from `php-codearch-config.yaml`, and the same applied to `--exclude`, `--extensions`, `--git-root` and any path argument (which lost against `include`). The precedence chain is now CLI, then config file, then defaults. To make that work, the default `src` path is no longer set by `ArgumentParser` but by `Application` after the config file was read, so a default can never outrank `include`. For `git`, the CLI root wins while the file's remaining git settings still apply.
