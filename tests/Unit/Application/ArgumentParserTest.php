@@ -72,13 +72,18 @@ it('stores commandArgs separately', function () {
         ->and($commandArgs[1])->toBe('fileB.json');
 });
 
-it('defaults to src directory when no files given', function () {
+it('sets no files when none are given, so the config file can provide them', function () {
+    // The default src/ path is applied by Application after the config file was
+    // read. Setting it here would silently win over "include" from the file.
     $config = $this->parser->parse(['--quick']);
 
-    $files = $config->get('files');
+    expect($config->has('files'))->toBeFalse();
+});
 
-    expect($files)->toBeArray()
-        ->and($files[0])->toEndWith('/src');
+it('returns files as a gapless list even when flags sit between paths', function () {
+    $config = $this->parser->parse(['src/', '--quick', 'tests/']);
+
+    expect($config->get('files'))->toBe(['src/', 'tests/']);
 });
 
 it('throws on unknown parameters', function () {

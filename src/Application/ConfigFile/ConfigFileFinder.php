@@ -20,8 +20,10 @@ readonly class ConfigFileFinder
      */
     public function checkRunningDir(): bool
     {
+        // A config file is only consulted when the run targets a single path, or
+        // no path at all (in which case "include" from the file decides).
         $filesRaw = $this->config->get('files');
-        if (!is_array($filesRaw) || 1 !== count($filesRaw)) {
+        if (null !== $filesRaw && (!is_array($filesRaw) || 1 !== count($filesRaw))) {
             return false;
         }
 

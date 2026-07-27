@@ -26,15 +26,18 @@ class ConfigFileParserJson implements ConfigFileParserInterface
             return;
         }
 
-        if (isset($data['include'])) {
+        // Anything the user passed on the command line wins over the config file.
+        // Config::has() is the marker for that: values are only present at this
+        // point when ArgumentParser put them there. Defaults are applied later.
+        if (isset($data['include']) && !$config->has('files')) {
             $config->set('files', $data['include']);
         }
 
-        if (isset($data['exclude'])) {
+        if (isset($data['exclude']) && !$config->has('exclude')) {
             $config->set('exclude', $data['exclude']);
         }
 
-        if (isset($data['extensions'])) {
+        if (isset($data['extensions']) && !$config->has('extensions')) {
             $config->set('extensions', $data['extensions']);
         }
 
@@ -42,12 +45,11 @@ class ConfigFileParserJson implements ConfigFileParserInterface
             $config->set('packageSize', $data['packageSize']);
         }
 
-        // CLI flags take precedence over config file
         if (isset($data['reportType']) && !$config->has('reportType')) {
             $config->set('reportType', $data['reportType']);
         }
 
-        if (isset($data['reportDir'])) {
+        if (isset($data['reportDir']) && !$config->has('reportDir')) {
             $reportDirValue = $data['reportDir'];
             $reportDir = is_scalar($reportDirValue) ? (string) $reportDirValue : '';
 
@@ -81,10 +83,17 @@ class ConfigFileParserJson implements ConfigFileParserInterface
                 }
                 // If still unresolved, keep original — GitAnalyzer will report the error
             }
+
+            // --git-root wins over the file's root, but the file's other git
+            // settings still apply, so the arrays are merged instead of replaced.
+            $existingGit = $config->get('git');
+            if (is_array($existingGit) && isset($existingGit['root'])) {
+                $data['git']['root'] = $existingGit['root'];
+            }
+
             $config->set('git', $data['git']);
         }
 
-        // CLI flag takes precedence over config file
         if (isset($data['coverageFile']) && !$config->has('coverageFile')) {
             $coverageValue = $data['coverageFile'];
             $coveragePath = is_scalar($coverageValue) ? (string) $coverageValue : '';

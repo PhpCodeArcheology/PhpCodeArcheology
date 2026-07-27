@@ -137,6 +137,13 @@ final readonly class Application implements AnalysisPipelineInterface
         $configFileFinder = new ConfigFileFinder($config);
         $configFileFinder->checkRunningDir();
 
+        // Last step of the precedence chain: CLI arguments, then the config file's
+        // "include", then this default.
+        $files = $config->get('files');
+        if (!is_array($files) || [] === $files) {
+            $config->set('files', [$config->getRunningDir().'/src']);
+        }
+
         if (!$config->get('reportType')) {
             $config->set('reportType', 'html');
         }

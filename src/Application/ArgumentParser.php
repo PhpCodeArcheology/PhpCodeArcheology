@@ -133,13 +133,12 @@ final class ArgumentParser
             }
         }
 
-        if ([] === $argv) {
-            $config->set('files', [getcwd().'/src']);
-
-            return $config;
+        // No fallback to a default path here: the config file may provide "include",
+        // and a default set at this point would silently win over it. Application
+        // fills in the default after the config file had its say.
+        if ([] !== $argv) {
+            $config->set('files', array_values($argv));
         }
-
-        $config->set('files', $argv);
 
         return $config;
     }

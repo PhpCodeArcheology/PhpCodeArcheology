@@ -212,6 +212,71 @@ it('json: config file reportType is used when CLI did not set it', function () {
 });
 
 // ──────────────────────────────────────────────────────────────────────────────
+// JSON parser — CLI precedence for the remaining overlapping keys
+// ──────────────────────────────────────────────────────────────────────────────
+
+it('json: CLI reportDir is not overwritten by config file', function () {
+    $cliDir = sys_get_temp_dir().'/phpca_cli_reportdir';
+    $file = writeTempJson(['reportDir' => 'tmp/report']);
+    $config = new Config();
+    $config->set('runningDir', sys_get_temp_dir());
+    $config->set('reportDir', $cliDir); // simulates --report-dir
+    parseJsonFile($file, $config);
+    unlink($file);
+
+    expect($config->get('reportDir'))->toBe($cliDir);
+});
+
+it('json: CLI paths are not overwritten by config file include', function () {
+    $file = writeTempJson(['include' => ['lib/']]);
+    $config = new Config();
+    $config->set('files', ['src/']); // simulates a path argument
+    parseJsonFile($file, $config);
+    unlink($file);
+
+    expect($config->get('files'))->toBe(['src/']);
+});
+
+it('json: config file include is used when no path was given', function () {
+    $file = writeTempJson(['include' => ['lib/']]);
+    $config = new Config();
+    parseJsonFile($file, $config);
+    unlink($file);
+
+    expect($config->get('files'))->toBe(['lib/']);
+});
+
+it('json: CLI exclude is not overwritten by config file', function () {
+    $file = writeTempJson(['exclude' => ['vendor']]);
+    $config = new Config();
+    $config->set('exclude', ['build']); // simulates --exclude
+    parseJsonFile($file, $config);
+    unlink($file);
+
+    expect($config->get('exclude'))->toBe(['build']);
+});
+
+it('json: CLI extensions are not overwritten by config file', function () {
+    $file = writeTempJson(['extensions' => ['php', 'inc']]);
+    $config = new Config();
+    $config->set('extensions', ['php']); // simulates --extensions
+    parseJsonFile($file, $config);
+    unlink($file);
+
+    expect($config->get('extensions'))->toBe(['php']);
+});
+
+it('json: CLI git root wins but other git settings from the file still apply', function () {
+    $file = writeTempJson(['git' => ['root' => '/from/file', 'enabled' => false]]);
+    $config = new Config();
+    $config->set('git', ['root' => '/from/cli']); // simulates --git-root
+    parseJsonFile($file, $config);
+    unlink($file);
+
+    expect($config->get('git'))->toBe(['root' => '/from/cli', 'enabled' => false]);
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
 // JSON parser — reportDir resolved relative to runningDir
 // ──────────────────────────────────────────────────────────────────────────────
 
