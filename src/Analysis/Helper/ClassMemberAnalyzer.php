@@ -234,28 +234,25 @@ class ClassMemberAnalyzer
             if ($element instanceof Node\Stmt\ClassConst && $prop instanceof Node\Const_) {
                 $value = $prop->value->getAttribute('rawValue');
 
-                $valueType = match (true) {
-                    $prop->value instanceof Node\Expr\Array_ => 'array',
-                    $prop->value instanceof Node\Expr\ConstFetch, $prop->value instanceof Node\Expr\ClassConstFetch => 'constant',
-                    default => match (true) {
-                        $prop->value instanceof Node\Scalar\Int_,
-                        $prop->value instanceof Node\Scalar\Float_,
-                        $prop->value instanceof Node\Scalar\String_ => gettype($prop->value->value),
-                        default => '',
-                    },
-                };
-
-                if ('' === $valueType) {
-                    $prettyPrinter = new Standard();
-                    $value = $prettyPrinter->prettyPrintExpr($prop->value);
-                }
-
-                if ('constant' === $valueType) {
-                    if ($prop->value instanceof Node\Expr\ConstFetch) {
-                        $value = $prop->value->name->toString();
-                    } elseif ($prop->value instanceof Node\Expr\ClassConstFetch && $prop->value->name instanceof Node\Identifier) {
+                // Constants resolve to their name and carry no value type; scalars report
+                // their PHP type; anything else falls back to the pretty-printed expression.
+                if ($prop->value instanceof Node\Expr\Array_) {
+                    $valueType = 'array';
+                } elseif ($prop->value instanceof Node\Expr\ConstFetch) {
+                    $value = $prop->value->name->toString();
+                    $valueType = '';
+                } elseif ($prop->value instanceof Node\Expr\ClassConstFetch) {
+                    // The name is an Expr for dynamic fetches like Foo::{$bar}.
+                    if ($prop->value->name instanceof Node\Identifier) {
                         $value = $prop->value->name->toString();
                     }
+                    $valueType = '';
+                } elseif ($prop->value instanceof Node\Scalar\Int_
+                    || $prop->value instanceof Node\Scalar\Float_
+                    || $prop->value instanceof Node\Scalar\String_) {
+                    $valueType = gettype($prop->value->value);
+                } else {
+                    $value = (new Standard())->prettyPrintExpr($prop->value);
                     $valueType = '';
                 }
             }
