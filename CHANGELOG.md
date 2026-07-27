@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.11.1] - 2026-07-27
+
 ### Fixed
 
 - **The PHAR no longer analyzes itself.** `ArgumentParser` only stripped `$argv[0]` when the script name ended in `phpcodearcheology`, so running `phpcodearcheology.phar` left the PHAR path in the list of files to analyze. It then showed up at the top of every report, and a run without any path argument analyzed the PHAR instead of the default `src` directory. The script name is now removed in `bin/phpcodearcheology` before `Application::run()` sees it, which works for any file name (`.phar`, symlink, renamed binary). As a side effect, a path that happens to end in `phpcodearcheology` is no longer swallowed. Closes #35.
