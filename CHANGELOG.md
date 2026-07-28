@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.11.3] - 2026-07-28
+
+### Fixed
+
+- **The project homepage pointed to a domain that does not exist.** `composer.json` declared `https://PhpCodeArcheology.org` as the package homepage, so the link on Packagist led nowhere. It now points to the actual website at https://phpcodearcheology.github.io/. The same URL was used in the PHAR banner and is corrected there as well.
+- **Author URL and copyright year.** The author homepage in `composer.json` and the copyright line in `LICENSE` used `marcuskober.com`, which only redirects. Both now use `marcuskober.de`, and the copyright covers 2024-2026.
+
 ## [2.11.2] - 2026-07-27
 
 ### Fixed

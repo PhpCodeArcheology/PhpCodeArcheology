@@ -34,11 +34,11 @@
     {
       "name": "Marcus Kober",
       "email": "hello@marcuskober.de",
-      "homepage": "https://marcuskober.com",
+      "homepage": "https://marcuskober.de",
       "role": "Copyright Holder"
     }
   ],
-  "homepage": "https://PhpCodeArcheology.org",
+  "homepage": "https://phpcodearcheology.github.io/",
   "support": {
     "issues": "https://github.com/PhpCodeArcheology/PhpCodeArcheology/issues"
   },
